@@ -62,20 +62,33 @@ After upload, you can click on any file to:
   alt="Parsing demo"
 />
 
-
 ## Step three: Create a RAG pipeline
 
-Now let's create a simple RAG pipeline using the imported documents.
+Now let's create a RAG flow to process your documents and build an intelligent question-answering system.
 
-1. In the left sidebar, click **Pipelines** > **Create New Pipeline**
-2. Name your pipeline "QuickstartPipeline"
-3. You'll see the visual pipeline builder with the following components:
-   - **Data Source**: Where your documents come from
-   - **Chunking**: How documents are split for processing
-   - **Embedding**: How text is converted to vector representations
-   - **Storage**: Where the processed data is stored
-   - **Retrieval**: How relevant information is fetched
-   - **Generation**: How responses are created using an LLM
+1. In the left sidebar, click **Flows** to navigate to the Flows dashboard
+2. Click **New flow** to start creating your pipeline
+3. Enter a descriptive name for your flow (e.g., "DocumentQA")
+4. Click **Create** to open the visual flow builder
+
+You'll see the visual flow builder interface with components that can be connected to form your RAG pipeline:
+
+- **Dataset**: Select the documents you uploaded in the previous step
+- **Chunking**: Configure how your documents are segmented for optimal retrieval
+- **Retrieval**: Define how relevant information is searched and ranked
+- **Testset**: Create evaluation scenarios with ground-truth answers
+- **Questions**: Define sample queries to test your pipeline
+- **LLM**: Connect to language models for generating responses
+- **Evaluation**: Measure the quality and accuracy of your pipeline
+- **Response**: View the final output of your RAG system
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/blank-flow-demo.png"
+  alt="Blank flow demo"
+/>
+
+The flow builder uses a drag-and-drop interface where you can connect these components to create your custom RAG pipeline.
 
 ## Step four: Configure pipeline components
 
