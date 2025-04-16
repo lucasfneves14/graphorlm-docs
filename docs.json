@@ -3,9 +3,9 @@
   "theme": "mint",
   "name": "GraphorLM Docs",
   "colors": {
-    "primary": "#6e2f84",
-    "light": "#6e2f84",
-    "dark": "#cc6ca7"
+    "primary": "#cc6ca7",
+    "light": "#cc6ca7",
+    "dark": "#6e2f84"
   },
   "appearance": {
     "default": "system",
