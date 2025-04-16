@@ -4,11 +4,12 @@
   "name": "GraphorLM Docs",
   "colors": {
     "primary": "#6e2f84",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "light": "#6e2f84",
+    "dark": "#cc6ca7"
   },
   "appearance": {
-    "strict": false
+    "default": "system",
+    "strict": true
   },
   "favicon": "/favicon.ico",
   "navigation": {
