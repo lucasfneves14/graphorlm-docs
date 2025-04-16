@@ -1,39 +1,53 @@
 ---
-title: 'The Very Quick GraphorLM Quickstart'
+title: 'Quickstart'
 description: 'Build your first RAG pipeline in minutes'
 ---
 
 This quickstart gets you up and running with GraphorLM as quickly as possible. It introduces you to the platform's interface and core RAG pipeline components without diving into technical details or complex configurations.
 
 In this tutorial, you will:
-- Load documents into GraphorLM
+- Load your data into GraphorLM
 - Configure a basic RAG pipeline with intelligent chunking
-- Test your pipeline with sample queries
+- Test your pipeline
 
-<img
-  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
-  src="/images/quickstart-flow.png"
-  alt="GraphorLM RAG Pipeline"
-/>
-
-## Step one: Set up GraphorLM
+## Step one: Set up GraphorLM Project
 
 This quickstart uses the GraphorLM Cloud platform. A free trial is available for new users.
 
-1. Sign up for a [GraphorLM Cloud account](https://cloud.graphorlm.com/signup)
+1. Sign up for a [GraphorLM Cloud account](https://app.graphorlm.com/register)
+2. Login to your account [Login](https://app.graphorlm.com/login)
 2. Once logged in, you'll see the GraphorLM dashboard
-3. Select **Create New Project** and name it "QuickstartRAG"
+3. Select **New project** and name it as you want
 
-## Step two: Load documents
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/project-list-demo.png"
+  alt="Project list demo"
+/>
 
-GraphorLM provides sample documents to get you started without needing to upload your own files.
+## Step two: Load your data
 
-1. In your project, navigate to **Data Sources** in the left sidebar
-2. Click **Add Data Source** and select **Sample Documents**
-3. Choose the "Technical Documentation" sample collection
-4. Click **Import** to load these documents into your project
+GraphorLM allows you to easily upload your own documents to use in your RAG pipeline.
 
-These documents contain technical information that we'll use to build and test our RAG pipeline.
+1. In your project, navigate to **Sources** in the left sidebar
+2. Click **Add Sources** to open the data upload interface
+3. Choose your preferred import method:
+   - **Local files**: Upload files from your computer (PDF, MD, PNG, JPG, DOCX, TXT, CSV and others are supported)
+   - **URL**: Import content directly from a web address
+4. Select or drag and drop your files into the upload area
+5. Click **Finish** to begin the ingestion process
+
+During processing, GraphorLM will automatically:
+- Extract text using advanced OCR for images and scanned documents
+- Identify document structure and metadata
+- Prepare your content for chunking in the pipeline
+
+You can monitor the ingestion progress on the Sources dashboard.
+
+After upload, you can click on any file to:
+- Customize the parsing method and configure element classification to improve document structure recognition
+- Preview the extracted content before pipeline processing
+
 
 ## Step three: Create a RAG pipeline
 
