@@ -23,6 +23,15 @@
               "introduction",
               "quickstart"
             ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/data-ingestion",
+              "guides/chunking",
+              "guides/evaluation",
+              "guides/integrate-workflow"
+            ]
           }
         ]
       },
