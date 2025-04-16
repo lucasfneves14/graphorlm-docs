@@ -92,26 +92,57 @@ The flow builder uses a drag-and-drop interface where you can connect these comp
 
 ## Step four: Configure pipeline components
 
-Now let's set up the key components of your pipeline:
+Now let's build your RAG pipeline by adding and connecting the essential components:
 
-1. Click on the **Data Source** component
-   - Select the "Technical Documentation" source you imported earlier
-   - Keep the default OCR settings
+1. Add the **Dataset** component
+   - Drag the Dataset component from the sidebar onto the canvas
+   - Double-click on the component to open its configuration panel
+   - Select the sources you imported earlier from the files menu
+   - Close the configuration panel
+   - This component provides your documents to the pipeline
 
-2. Click on the **Chunking** component
-   - Set Chunk Size to 1000
-   - Set Chunk Overlap to 200
-   - Select "Semantic" as the chunking method
+2. Add the **Chunking** component
+   - Drag the Chunking component onto the canvas
+   - Connect the output of the Dataset component to the input of the Chunking component
+   - Double-click to configure with these recommended settings:
+     - **Embedding / Indexer**: text-embedding-3-small (provides semantic understanding)
+     - **Elements to remove**: None (or select elements to exclude)
+     - **Splitter**: Smart chunking (maintains semantic coherence)
+     - **Chunk Size**: 5000 (adjust based on your document complexity)
+   - Close the configuration panel
+   - This component divides your documents into smaller pieces for efficient retrieval
 
-3. Click on the **Embedding** component
-   - Choose "OpenAI" as the embedding model
-   - Select "text-embedding-3-small" from the dropdown
+3. Add the **Retrieval** component
+   - Drag the Retrieval component onto the canvas
+   - Connect the output of the Chunking component to the input of the Retrieval
+   - Double-click to configure:
+     - **Search Type**: Similarity (recommended for semantic relevance)
+     - **Top K**: 5 (number of chunks to retrieve)
+     - **Score Threshold**: 0.5 (minimum relevance score)
+   - Close the configuration panel
+   - This component searches your chunked documents for relevant information
 
-4. Click on the **LLM** component
-   - Choose "OpenAI" as the provider
-   - Select "gpt-3.5-turbo" as the model
+4. Add the **Response** component
+   - Drag the Response component onto the canvas
+   - Connect the output of the Retrieval component to the input of the Response
+   - This component formats and displays the final output of your pipeline
 
-5. Click **Save Pipeline** at the top right
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/simple-flow-demo.png"
+  alt="Simple flow demo"
+/>
+
+After configuring each component, you can test individual nodes by:
+- Double-clicking the component to open its configuration panel
+- Clicking **Update results** to see the component's output based on current settings
+- Examining the processed data to verify it meets your expectations
+
+**Important Note**: To fully simulate a flow with retrieval nodes, you must add either:
+- A **Question** node: For testing individual queries
+- A **Testset** node: For batch testing multiple questions
+
+These input nodes provide the questions that drive the retrieval process in your RAG pipeline.
 
 ## Step five: Test your RAG pipeline
 
