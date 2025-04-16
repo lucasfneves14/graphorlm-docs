@@ -144,25 +144,73 @@ After configuring each component, you can test individual nodes by:
 
 These input nodes provide the questions that drive the retrieval process in your RAG pipeline.
 
-## Step five: Test your RAG pipeline
+## Step five: Deploy your RAG pipeline
 
-Let's test the pipeline with some sample queries:
+After building and testing your flow, it's time to deploy it for production use. Deployment makes your RAG pipeline accessible via API and MCP ([Model Context Protocol](https://modelcontextprotocol.io/)), allowing integration with applications, websites, or other systems.
 
-1. Navigate to the **Chat** tab in the left sidebar
-2. Select your "QuickstartPipeline" from the dropdown
-3. Type a question related to the technical documentation, such as: "What are the system requirements?"
-4. Click **Send** to see the response
+To deploy your pipeline:
 
-The response combines information retrieved from the documents with natural language generation from the LLM. Notice how the system:
-- Retrieves relevant chunks from the documentation
-- Highlights the source of information
-- Provides a coherent response
+1. Click on the **Deploy new revision** button in the top-right corner of the flow builder
+2. In the deployment modal, add a detailed **Tool description for MCP Server**:
+   - This description helps LLMs understand when and how to use your flow
+   - Write a clear, concise explanation of what questions your flow can answer
+   - Example: "This tool answers questions about technical documentation and product specifications"
+3. Under **Traffic Configuration**:
+   - Select the checkbox to display this revision immediately
+   - This sets 100% of traffic to use this revision, replacing any existing traffic splits
+4. Click **Create** to deploy the revision
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/new-revision-demo.png"
+  alt="New revision demo"
+/>
+
+Congratulations! Your pipeline is now online and accessible through these integration methods:
+
+Click the **Connect to flow** button to view integration options:
+   - **REST API**: Direct HTTP endpoint for custom applications
+   - **MCP Server**: Model Context Protocol integration for LLM tools
+
+Your RAG pipeline is now ready for production use with real users and data!
+
+You can test your online pipeline by clicking on the chat button at the bottom right corner of the GraphorLM interface. This built-in chat interface allows you to:
+- Send questions directly to your deployed flow
+- View retrieved context from your documents
+- Experience the pipeline from an end-user perspective
+- Verify that your deployment is working correctly
 
 ## Next steps
 
 Congratulations! You've built and tested your first RAG pipeline with GraphorLM. Here's what you can explore next:
 
-- Learn how to [upload your own documents](/guides/data-ingestion)
-- Explore [advanced chunking strategies](/guides/chunking) for better retrieval
-- Understand [evaluation metrics](/guides/evaluation) to improve your RAG pipeline
-- Connect your pipeline to [external applications](/guides/integrate-workflow) via API
+<CardGroup cols={2}>
+  <Card
+    title="Data Ingestion"
+    icon="file-lines"
+    href="guides/data-ingestion"
+  >
+    Transform unstructured documents into processable data using advanced OCR and classification
+  </Card>
+  <Card
+    title="Chunking"
+    icon="file-dashed-line"
+    href="guides/chunking"
+  >
+    Optimize document segmentation with intelligent chunking for maximum retrieval relevance
+  </Card>
+  <Card
+    title="Evaluation"
+    icon="square-poll-vertical"
+    href="guides/evaluation"
+  >
+    Measure and improve your RAG pipeline performance with comprehensive metrics
+  </Card>
+  <Card
+    title="Integrate Workflow"
+    icon="plug"
+    href="guides/integrate-workflow"
+  >
+    Connect your RAG systems to applications via REST API and MCP Server integration
+  </Card>
+</CardGroup>
