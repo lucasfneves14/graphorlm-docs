@@ -75,87 +75,88 @@ GraphorLM utilizes state-of-the-art OCR (Optical Character Recognition) to extra
 - **Image text extraction** - Identify and capture text embedded in images
 - **Handwriting recognition** - Process handwritten notes (with varying accuracy)
 
-### Configuring OCR Settings
+## Document Parsing Methods and Classification
 
-To customize OCR processing for a specific document:
+GraphorLM offers four parsing and classification methods to optimize document processing based on your needs:
 
-1. Upload your document
-2. Click on the document in the Sources list
-3. Navigate to the **OCR Settings** tab
-4. Adjust settings such as:
-   - Language detection
-   - Image resolution
-   - Text confidence threshold
-   - Layout analysis settings
+### Basic
+
+- Does not utilize OCR processing
+- Classifies document elements using heuristic methods
+- Suitable for simple text documents with clear structure
+- Fastest processing option
+
+### OCR Only
+
+- Utilizes OCR for text extraction and parsing
+- Classifies document elements using heuristic methods
+- Recommended for scanned documents and images
+- Balances processing speed and accuracy
+
+### YOLOX
+
+- Utilizes OCR for text extraction and parsing
+- Classifies document elements using the YOLOX model
+- Better recognition of document structure and components
+- Improved accuracy for complex documents
+
+### Advanced (Premium)
+
+- Utilizes OCR for text extraction and parsing
+- Classifies document elements using a fine-tuned model
+- Highest accuracy for document structure recognition
+- Optimized for specialized document types
+
+To select a parsing method for your document:
+
+1. Upload your document to GraphorLM
+2. Select the document in the Sources list to open the document settings
+3. In the document settings modal, locate the Methods dropdown in the top-right corner
+4. Select your preferred parsing method from the dropdown menu
+5. Click "Reprocess elements" to apply the new parsing method to your document
+6. Wait for the reprocessing to complete - this may take a few moments depending on document size and complexity
+
+When reprocessing is complete, you'll see the updated document structure and classification results in the preview panel.
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
-  src="/images/ocr-settings.png"
-  alt="OCR settings"
+  src="/images/local-files-upload.png"
+  alt="Parsing method selection"
 />
-
-## Document Parsing Methods
-
-GraphorLM offers multiple parsing methods to optimize text extraction based on document type:
-
-### Standard Parsing
-
-Default parsing suitable for most document types. Extracts text while preserving basic structure.
-
-### Smart Parsing
-
-Enhanced parsing that better preserves document hierarchy, identifies semantic sections, and recognizes specialized content like code blocks, equations, and citations.
-
-### Custom Parsing Rules
-
-For complex documents with unique structures, you can define custom parsing rules:
-
-1. Select a document in the Sources list
-2. Click on **Parsing Method**
-3. Select **Custom** from the dropdown
-4. Define extraction rules based on:
-   - Document structure
-   - Content patterns
-   - Section identifiers
-   - Formatting cues
 
 ## Content Classification
 
 GraphorLM can automatically classify document sections to improve retrieval relevance:
 
-### Automatic Classification
+### Document Element Types
 
-The platform uses AI to identify and tag content types:
+The platform classifies content into the following specific element types:
 
-- Headings and titles
-- Paragraphs and body text
-- Lists and bullet points
-- Tables and structured data
-- Code blocks and technical content
-- Citations and references
-- Metadata and document properties
+- **TITLE** - Document and section titles
+- **NARRATIVE_TEXT** - Main body paragraphs and content
+- **LIST_ITEM** - Items in bullet points or numbered lists
+- **TABLE** - Complete data tables
+- **TABLE_ROW** - Individual rows within tables
+- **IMAGE** - Picture or graphic elements
+- **FOOTER** - Footer content at bottom of pages
+- **FORMULA** - Mathematical formulas and equations
+- **COMPOSITE_ELEMENT** - Elements containing multiple types
+- **FIGURE_CAPTION** - Text describing images or figures
+- **PAGE_BREAK** - Indicators of page separation
+- **ADDRESS** - Physical address information
+- **EMAIL_ADDRESS** - Email contact information
+- **PAGE_NUMBER** - Page numbering elements
+- **CODE_SNIPPET** - Programming code segments
+- **HEADER** - Header content at top of pages
+- **FORM_KEYS_VALUES** - Key-value pairs in forms
+- **LINK** - Hyperlinks and references
+- **UNCATEGORIZED_TEXT** - Text that doesn't fit other categories
 
-### Manual Classification
-
-For specialized documents, you can manually classify content:
-
-1. Select a document in the Sources list
-2. Click on **Classification**
-3. Navigate through the document preview
-4. Select text sections and assign appropriate classifications
-5. Save your changes
-
-<img
-  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
-  src="/images/manual-classification.png"
-  alt="Manual classification"
-/>
+These classifications help GraphorLM understand document structure and improve retrieval accuracy by prioritizing relevant element types when responding to queries.
 
 ## Metadata Extraction
 
 GraphorLM automatically extracts and processes document metadata:
-
-### Standard Metadata
 
 - File name and type
 - Creation and modification dates
@@ -163,38 +164,13 @@ GraphorLM automatically extracts and processes document metadata:
 - Author information (when available)
 - Title and description
 
-### Custom Metadata
-
-You can add custom metadata to enhance document organization:
-
-1. Select a document in the Sources list
-2. Click on **Metadata**
-3. Click **Add Custom Field**
-4. Define field name and value
-5. Save changes
-
-Custom metadata can significantly improve retrieval performance by providing additional context for search operations.
-
-## Batch Processing
-
-For large document collections, GraphorLM offers batch processing capabilities:
-
-1. Navigate to **Sources** in the left sidebar
-2. Click **Add Sources**
-3. Select multiple files or URLs
-4. Configure batch processing settings:
-   - OCR parameters
-   - Parsing method
-   - Classification options
-5. Click **Process All** to begin batch ingestion
-
 ## Monitoring Processing Status
 
 Monitor the progress of document processing in the Sources dashboard:
 
-- **Queued** - Documents waiting to be processed
+- **Uploading** - Documents currently being uploaded
 - **Processing** - Documents currently being converted
-- **Completed** - Documents ready for use in RAG pipelines
+- **New** - Documents ready for use in RAG pipelines
 - **Failed** - Documents that encountered errors during processing
 
 For failed documents, you can view error details and retry processing with adjusted settings.
@@ -203,12 +179,10 @@ For failed documents, you can view error details and retry processing with adjus
 
 To optimize data ingestion results:
 
-1. **Organize documents** - Group related documents for batch processing
-2. **Use consistent formats** - When possible, standardize document formats
-3. **Check processing results** - Review extracted text for accuracy
-4. **Customize for complex documents** - Use advanced parsing for specialized content
-5. **Add metadata** - Enhance documents with relevant custom metadata
-6. **Monitor processing status** - Check for failed documents and resolve issues
+1. **Use consistent formats** - When possible, standardize document formats
+2. **Check processing results** - Review extracted text for accuracy
+3. **Customize for complex documents** - Use advanced parsing for specialized content
+4. **Monitor processing status** - Check for failed documents and resolve issues
 
 ## Troubleshooting
 
@@ -217,22 +191,19 @@ Common issues and solutions:
 <AccordionGroup>
   <Accordion icon="file-excel" title="Poor OCR quality">
     For low-quality scanned documents, try:
-    - Increasing image resolution settings
-    - Adjusting contrast settings
-    - Using Smart Parsing instead of Standard
+    - Using OCR Only, YOLOX, or Advanced methods instead of Basic
     - Breaking large documents into smaller files
+    - Improving document quality before upload if possible
   </Accordion>
   <Accordion icon="table" title="Table extraction problems">
     If tables aren't being properly recognized:
-    - Enable table detection in OCR settings
-    - Use Custom Parsing with table-specific rules
+    - Use YOLOX or Advanced method for better table detection
     - Convert complex tables to simpler formats before upload
   </Accordion>
   <Accordion icon="language" title="Multi-language document issues">
     For documents with multiple languages:
-    - Specify all languages in OCR settings
     - Process different language sections as separate documents
-    - Use Smart Parsing which has better multi-language support
+    - Use YOLOX or Advanced method which has better multi-language support
   </Accordion>
 </AccordionGroup>
 
