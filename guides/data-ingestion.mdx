@@ -120,7 +120,7 @@ When reprocessing is complete, you'll see the updated document structure and cla
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
-  src="/images/local-files-upload.png"
+  src="/images/data-ingestion-overview.png"
   alt="Parsing method selection"
 />
 
@@ -132,25 +132,25 @@ GraphorLM can automatically classify document sections to improve retrieval rele
 
 The platform classifies content into the following specific element types:
 
-- **TITLE** - Document and section titles
-- **NARRATIVE_TEXT** - Main body paragraphs and content
-- **LIST_ITEM** - Items in bullet points or numbered lists
-- **TABLE** - Complete data tables
-- **TABLE_ROW** - Individual rows within tables
-- **IMAGE** - Picture or graphic elements
-- **FOOTER** - Footer content at bottom of pages
-- **FORMULA** - Mathematical formulas and equations
-- **COMPOSITE_ELEMENT** - Elements containing multiple types
-- **FIGURE_CAPTION** - Text describing images or figures
-- **PAGE_BREAK** - Indicators of page separation
-- **ADDRESS** - Physical address information
-- **EMAIL_ADDRESS** - Email contact information
-- **PAGE_NUMBER** - Page numbering elements
-- **CODE_SNIPPET** - Programming code segments
-- **HEADER** - Header content at top of pages
-- **FORM_KEYS_VALUES** - Key-value pairs in forms
-- **LINK** - Hyperlinks and references
-- **UNCATEGORIZED_TEXT** - Text that doesn't fit other categories
+- **Title** - Document and section titles
+- **Narrative text** - Main body paragraphs and content
+- **List item** - Items in bullet points or numbered lists
+- **Table** - Complete data tables
+- **Table row** - Individual rows within tables
+- **Image** - Picture or graphic elements
+- **Footer** - Footer content at bottom of pages
+- **Formula** - Mathematical formulas and equations
+- **Composite element** - Elements containing multiple types
+- **Figure caption** - Text describing images or figures
+- **Page break** - Indicators of page separation
+- **Address** - Physical address information
+- **Email address** - Email contact information
+- **Page number** - Page numbering elements
+- **Code snippet** - Programming code segments
+- **Header** - Header content at top of pages
+- **Form keys values** - Key-value pairs in forms
+- **Link** - Hyperlinks and references
+- **Uncategorized text** - Text that doesn't fit other categories
 
 These classifications help GraphorLM understand document structure and perform more intelligent chunking during the RAG pipeline process. By recognizing different element types, the system can make better decisions about how to segment documents, keeping related elements together and creating more semantically meaningful chunks.
 
