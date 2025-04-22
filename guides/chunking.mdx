@@ -48,7 +48,7 @@ GraphorLM provides multiple chunking strategies, each with specific use cases an
 
 - **How it works**: Uses document structure and element classification to make intelligent splitting decisions
 - **Configuration required**: 
-  - Chunk Size: Maximum size of each chunk
+  - Chunk Size: Maximum size of each chunk (actual chunks are typically smaller based on content boundaries)
 - **Best for**: Complex documents with varied structures, headings, and special elements
 - **Advantages**: Preserves meaning, maintains context, respects document hierarchy
 - **Limitations**: May produce variable chunk sizes
@@ -57,7 +57,7 @@ GraphorLM provides multiple chunking strategies, each with specific use cases an
 
 - **How it works**: Splits text based on a fixed number of characters
 - **Configuration required**:
-  - Chunk Size: Number of characters per chunk
+  - Chunk Size: Maximum number of characters per chunk (actual chunks may be smaller when using separators)
   - Overlap: Number of characters to overlap between chunks
   - Separator (optional): Character or string to use as chunk boundary
 - **Best for**: Simple, uniform documents with straightforward content
@@ -76,7 +76,7 @@ GraphorLM provides multiple chunking strategies, each with specific use cases an
 
 - **How it works**: Creates chunks with a specific token count limit
 - **Configuration required**:
-  - Chunk Size: Maximum number of tokens per chunk
+  - Chunk Size: Maximum number of tokens per chunk (actual chunks will often be smaller due to sentence or paragraph boundaries)
   - Overlap: Number of tokens to overlap between chunks
 - **Best for**: Optimizing for LLM context window sizes
 - **Advantages**: Precise control over token usage, better for managing API costs
@@ -134,9 +134,11 @@ Select your preferred chunking strategy from the available options (Smart chunki
 #### 4. Chunk Size and Other Parameters
 
 Configure the additional parameters required for your selected strategy:
-- For Smart Chunking: Set Chunk Size
-- For By Character: Set Chunk Size, Overlap, and optional Separator
-- For By Tokens: Set Chunk Size and Overlap
+- For Smart Chunking: Set Chunk Size (maximum allowed size; actual chunks will typically be smaller)
+- For By Character: Set Chunk Size (maximum), Overlap, and optional Separator
+- For By Tokens: Set Chunk Size (maximum) and Overlap
+
+**Important Note**: The Chunk Size setting in all strategies represents the maximum allowed size, not a fixed size. The actual chunks created will often be smaller than this value, as the chunking algorithm respects content boundaries like paragraphs, sentences, and document elements.
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
