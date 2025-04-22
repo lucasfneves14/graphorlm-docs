@@ -3,15 +3,13 @@ title: 'Chunking'
 description: 'Learn how to optimize document segmentation for maximum retrieval relevance'
 ---
 
-# Document Chunking in GraphorLM
-
-## Overview
-
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
   src="/images/chunking-overview.png"
   alt="Chunking overview"
 />
+
+## Overview
 
 Effective document chunking is critical for RAG pipeline performance. This guide explains:
 
@@ -118,14 +116,17 @@ Select the embedding model to use for converting text chunks into vector represe
 
 #### 2. Elements to Remove
 
-Choose which document element types to exclude from chunking:
+Choose which document element types to exclude from chunking using the multi-select dropdown:
 
 - **None**: Include all document elements (default)
-- **Headers/Footers**: Remove repetitive page headers and footers
-- **Page numbers**: Remove page numbering
-- **Custom selection**: Select specific element types to exclude
+- Or select specific element types to exclude, such as:
+  - **Header**: Remove headers at the top of pages
+  - **Footer**: Remove footers at the bottom of pages
+  - **Page number**: Remove page numbering elements
+  - **Figure caption**: Remove image captions
+  - And other element types as needed
 
-Excluding certain elements can improve retrieval quality by removing noise and repetitive content.
+You can select multiple element types to exclude from your chunks. This helps improve retrieval quality by removing noise and repetitive content that might not contribute meaningful information.
 
 #### 3. Splitter Type
 
