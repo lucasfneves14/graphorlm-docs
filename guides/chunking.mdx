@@ -114,6 +114,15 @@ Select the embedding model to use for converting text chunks into vector represe
 - **text-embedding-3-small**: OpenAI's efficient embedding model (recommended for most use cases)
 - **text-embedding-3-large**: OpenAI's larger, more precise embedding model
 - **text-embedding-ada-002**: Legacy OpenAI embedding model
+- **colqwen2-v0.1 (vision)**: Uses Colpali technology to generate embeddings from images rather than text
+  - Only compatible with PDF documents and images (PNG, JPG, etc.)
+  - Documents in other formats will be ignored during chunking when this option is selected
+  - Creates multimodal chunks that leverage both visual and textual information
+  - Particularly effective for documents where visual elements are important to understanding
+  - **Performance note**: Using Colpali technology can impact both simulation and runtime performance of your RAG pipeline
+    - Requires more computational resources and may increase processing time
+    - May result in slower response times during retrieval operations
+    - Consider these tradeoffs when choosing this option for production workflows
 - **Other models**: Depending on your GraphorLM configuration
 
 #### 2. Elements to Remove
