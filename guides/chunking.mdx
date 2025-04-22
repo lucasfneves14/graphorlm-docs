@@ -1,0 +1,240 @@
+---
+title: 'Chunking'
+description: 'Learn how to optimize document segmentation for maximum retrieval relevance'
+---
+
+# Document Chunking in GraphorLM
+
+## Overview
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/chunking-overview.png"
+  alt="Chunking overview"
+/>
+
+Effective document chunking is critical for RAG pipeline performance. This guide explains:
+
+1. What chunking is and why it matters
+2. GraphorLM's chunking strategies and capabilities
+3. How to configure chunking for your specific use case
+4. Best practices for optimizing retrieval quality
+
+## What is Chunking?
+
+Chunking is the process of breaking down documents into smaller, manageable segments (chunks) that can be:
+- Embedded effectively as vectors
+- Retrieved efficiently during the search process
+- Processed meaningfully by language models
+
+The way you chunk your documents directly impacts:
+- **Retrieval accuracy**: How well the system finds relevant information
+- **Context quality**: How complete and coherent the retrieved information is
+- **Processing efficiency**: How quickly the system can handle and respond to queries
+
+## Element-Aware Chunking in GraphorLM
+
+GraphorLM leverages document structure and element classifications (from the data ingestion phase) to make intelligent chunking decisions:
+
+- **Preserves semantic units**: Keeps related content together
+- **Respects document hierarchies**: Maintains the relationship between headings and content
+- **Handles special elements**: Properly processes tables, lists, and code blocks
+
+## Available Chunking Strategies
+
+GraphorLM provides multiple chunking strategies, each with specific use cases and configuration requirements:
+
+### Smart Chunking
+
+- **How it works**: Uses document structure and element classification to make intelligent splitting decisions
+- **Configuration required**: 
+  - Chunk Size: Maximum size of each chunk
+- **Best for**: Complex documents with varied structures, headings, and special elements
+- **Advantages**: Preserves meaning, maintains context, respects document hierarchy
+- **Limitations**: May produce variable chunk sizes
+
+### By Character
+
+- **How it works**: Splits text based on a fixed number of characters
+- **Configuration required**:
+  - Chunk Size: Number of characters per chunk
+  - Overlap: Number of characters to overlap between chunks
+  - Separator (optional): Character or string to use as chunk boundary
+- **Best for**: Simple, uniform documents with straightforward content
+- **Advantages**: Fast processing, consistent chunk sizes
+- **Limitations**: May break semantic units and natural document flow
+
+### By Element
+
+- **How it works**: Creates chunks based on document element types from the classification process
+- **Configuration required**: None (automatically uses element boundaries)
+- **Best for**: Documents with well-defined structural elements
+- **Advantages**: Preserves natural document elements (paragraphs, sections, tables)
+- **Limitations**: Chunk sizes can vary dramatically based on element length
+
+### By Tokens
+
+- **How it works**: Creates chunks with a specific token count limit
+- **Configuration required**:
+  - Chunk Size: Maximum number of tokens per chunk
+  - Overlap: Number of tokens to overlap between chunks
+- **Best for**: Optimizing for LLM context window sizes
+- **Advantages**: Precise control over token usage, better for managing API costs
+- **Limitations**: May not respect semantic boundaries
+
+### By Semantic
+
+- **How it works**: Uses semantic analysis to identify natural conceptual boundaries in text
+- **Configuration required**: None (automatically determines semantic boundaries)
+- **Best for**: Documents where semantic meaning spans across structural elements
+- **Advantages**: Creates more meaningful chunks based on content rather than just structure
+- **Limitations**: More computationally intensive, may produce less predictable chunks
+
+## Using the Chunking Component
+
+In the Flow Builder, the Chunking component processes your documents for optimal retrieval:
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/chunking-component.png"
+  alt="Chunking component"
+/>
+
+### Step-by-Step Configuration
+
+1. Add the **Chunking** component to your flow
+2. Connect your **Dataset** component to the Chunking component's input
+3. Double-click the Chunking component to open its configuration panel
+4. Configure the following settings:
+
+#### 1. Embedding / Indexer
+
+Select the embedding model to use for converting text chunks into vector representations:
+
+- **text-embedding-3-small**: OpenAI's efficient embedding model (recommended for most use cases)
+- **text-embedding-3-large**: OpenAI's larger, more precise embedding model
+- **text-embedding-ada-002**: Legacy OpenAI embedding model
+- **Other models**: Depending on your GraphorLM configuration
+
+#### 2. Elements to Remove
+
+Choose which document element types to exclude from chunking:
+
+- **None**: Include all document elements (default)
+- **Headers/Footers**: Remove repetitive page headers and footers
+- **Page numbers**: Remove page numbering
+- **Custom selection**: Select specific element types to exclude
+
+Excluding certain elements can improve retrieval quality by removing noise and repetitive content.
+
+#### 3. Splitter Type
+
+Select your preferred chunking strategy from the available options (Smart chunking, By Character, By Element, By Tokens, By Semantic).
+
+#### 4. Chunk Size and Other Parameters
+
+Configure the additional parameters required for your selected strategy:
+- For Smart Chunking: Set Chunk Size
+- For By Character: Set Chunk Size, Overlap, and optional Separator
+- For By Tokens: Set Chunk Size and Overlap
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/chunking-settings.png"
+  alt="Chunking settings"
+/>
+
+## Chunk Size Considerations
+
+The size of your chunks is a critical factor in retrieval quality:
+
+<AccordionGroup>
+  <Accordion icon="text-size" title="Small chunks (1000-2000 characters)">
+    **Advantages**:
+    - More precise retrieval for specific information
+    - Reduced token usage when processing retrieved chunks
+    - Better for simple, direct questions
+    
+    **Disadvantages**:
+    - May lose important context
+    - Can fragment related concepts
+    - Might require retrieving multiple chunks to get complete information
+  </Accordion>
+  <Accordion icon="text-size" title="Medium chunks (3000-5000 characters)">
+    **Advantages**:
+    - Good balance between precision and context
+    - Preserves most semantic relationships
+    - Works well for most general-purpose applications
+    
+    **Disadvantages**:
+    - May still split some complex discussions
+    - Moderate token usage
+  </Accordion>
+  <Accordion icon="text-size" title="Large chunks (6000-8000 characters)">
+    **Advantages**:
+    - Maximizes context preservation
+    - Better for complex, multi-part questions
+    - Reduces fragmentation of ideas
+    
+    **Disadvantages**:
+    - May include irrelevant information
+    - Higher token usage when processing retrieved chunks
+    - Can reduce precision for simple queries
+  </Accordion>
+</AccordionGroup>
+
+## Recommended Settings by Document Type
+
+Different documents require different chunking approaches:
+
+| Document Type | Recommended Strategy | Typical Chunk Size | Notes |
+|---------------|----------------------|-------------------|-------|
+| Technical documentation | Smart chunking | 3000-5000 | Preserves structure |
+| Articles and blogs | Smart chunking | 3000-4000 | Good for narrative flow |
+| Legal documents | By Tokens | 4000-6000 | Precise token control |
+| Code and technical specs | By Element | N/A | Keeps code blocks intact |
+| Structured data | By Element | N/A | Preserves table structures |
+| Multi-language content | By Semantic | N/A | Better language boundary handling |
+
+## Troubleshooting Common Issues
+
+<AccordionGroup>
+  <Accordion icon="magnifying-glass-minus" title="Missing important information in retrieval">
+    **Solutions**:
+    - Increase chunk size
+    - Switch to Smart chunking or By Semantic
+    - Ensure important element types aren't being removed
+    - Verify document parsing quality
+  </Accordion>
+  <Accordion icon="repeat" title="Repetitive or duplicate content">
+    **Solutions**:
+    - Reduce overlap settings
+    - Remove headers/footers and page numbers
+    - Check for duplicate content in your dataset
+    - Use By Element strategy for structured documents
+  </Accordion>
+  <Accordion icon="puzzle-piece" title="Contextual relationships lost">
+    **Solutions**:
+    - Switch from By Character to Smart chunking
+    - Review document classification results
+    - Increase chunk size to preserve more context
+    - Use By Semantic for context-heavy documents
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+1. **Match strategy to content**: Choose your chunking strategy based on document type and structure
+2. **Start with Smart chunking**: This works well for most general documents
+3. **Test different approaches**: Experiment with strategies and settings using the same queries
+4. **Consider user questions**: Align chunking with the types of questions users will ask
+5. **Remove noise**: Configure element removal to exclude irrelevant content
+6. **Evaluate and iterate**: Use evaluation tools to measure and refine your approach
+
+## Next Steps
+
+After optimizing your chunking configuration, explore:
+
+- [Retrieval Guide](/guides/retrieval): Configure search parameters and algorithms
+- [Evaluation Guide](/guides/evaluation): Measure and improve your RAG pipeline performance
+- [LLM Integration](/guides/llm-integration): Connect language models to utilize your chunked content
