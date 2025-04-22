@@ -29,6 +29,7 @@
             "pages": [
               "guides/data-ingestion",
               "guides/chunking",
+              "guides/retrieval",
               "guides/evaluation",
               "guides/integrate-workflow"
             ]
