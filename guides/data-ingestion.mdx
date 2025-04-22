@@ -3,17 +3,15 @@ title: 'Data Ingestion'
 description: 'Learn how to efficiently import and process unstructured documents in GraphorLM'
 ---
 
-# Data Ingestion
-
 Transforming unstructured documents into processable data is the foundation of any effective RAG pipeline. GraphorLM's data ingestion capabilities provide advanced tools for extracting, processing, and organizing information from various document formats.
-
-## Overview
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
   src="/images/data-ingestion-overview.png"
   alt="Data ingestion overview"
 />
+
+## Overview
 
 GraphorLM's data ingestion process involves:
 
@@ -29,12 +27,11 @@ GraphorLM supports a wide range of document formats:
 
 | Document Type | Extensions | Features |
 | ------------ | ---------- | -------- |
-| Text Documents | PDF, DOCX, TXT, MD | Full text extraction, structure preservation |
-| Images | PNG, JPG, JPEG, TIFF | OCR for text extraction, image analysis |
+| Text Documents | PDF, TXT, TEXT, MD, DOC, DOCX, ODT, HTML, HTM | Full text extraction, structure preservation |
+| Images | PNG, JPG, JPEG, TIFF, BMP, HEIC | OCR for text extraction, image analysis |
 | Presentations | PPT, PPTX | Slide extraction, image processing |
-| Spreadsheets | XLS, XLSX, CSV | Table parsing, data extraction |
-| Web Content | HTML, URL | Web scraping, content extraction |
-| Email | EML, MSG | Thread analysis, attachment processing |
+| Spreadsheets | XLS, XLSX, CSV, TSV | Table parsing, data extraction |
+| Web Content | URL | Web scraping, content extraction |
 
 ## Importing Documents
 
