@@ -207,6 +207,50 @@ Common issues and solutions:
   </Accordion>
 </AccordionGroup>
 
+## Using Ingested Data in Your RAG Pipeline
+
+After successfully ingesting your documents, you'll need to connect them to your RAG pipeline using the Dataset component in the Flow Builder.
+
+### The Dataset Component
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/dataset-component.png"
+  alt="Dataset component"
+/>
+
+The Dataset component is the entry point to your RAG pipeline that connects your ingested documents to the subsequent processing steps:
+
+1. Navigate to the **Flows** section in the left sidebar
+2. Create a new flow or open an existing one
+3. Drag the **Dataset** component from the component palette onto the canvas
+4. Double-click the component to open its configuration panel
+
+### Configuring the Dataset Component
+
+In the configuration panel, you can:
+
+1. **Select Sources**: Choose which documents from your Sources library to include
+   - Click on document thumbnails to select/deselect specific documents
+   - Select multiple documents for comprehensive knowledge bases
+
+2. **Preview Content**: See a preview of the selected documents to confirm you've chosen the right sources
+
+Once configured, the Dataset component will process the selected documents and make them available to subsequent components in your flow, particularly the Chunking component.
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/dataset-configuration.png"
+  alt="Dataset configuration"
+/>
+
+### Best Practices for Dataset Configuration
+
+- **Start focused**: Begin with a smaller, high-quality set of documents for initial testing
+- **Group related content**: Include documents that cover similar or related topics in the same dataset
+- **Consider performance**: Very large datasets may impact processing time and performance
+- **Review regularly**: Update your dataset selection as your document library evolves
+
 ## Next Steps
 
 After successfully ingesting your documents, you're ready to move on to [Chunking](/guides/chunking) to prepare your data for efficient retrieval in your RAG pipeline.
