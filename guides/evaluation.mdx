@@ -55,6 +55,16 @@ The Evaluation node requires:
 - A properly configured **Testset** or **Question** node with questions and expected answers
 - A **Retrieval** or **LLM** node to evaluate
 
+### Comparing Multiple Strategies
+
+One powerful feature of GraphorLM's evaluation system is the ability to compare different configurations simultaneously:
+
+- You can connect **multiple Retrieval nodes** to a single Evaluation node
+- You can connect **multiple LLM nodes** to a single Evaluation node
+- Each connection creates a separate evaluation dataset for easy comparison
+
+This capability enables direct A/B testing of different retrieval strategies, embedding models, chunking approaches, or LLM configurations using the same test questions.
+
 ## Creating Effective Testsets
 
 Testsets are collections of queries and expected answers that serve as ground truth for your evaluation:
@@ -173,6 +183,23 @@ To evaluate the complete RAG pipeline with LLM (if using):
 2. Analyze both retrieval and response metrics
 3. Identify which component may be limiting performance
 4. Optimize components individually and test again
+
+### Comparative Evaluation
+
+To directly compare different strategies:
+1. Connect a single Testset node to multiple pipeline branches
+2. Create different configurations for each branch (e.g., different retrieval settings or LLM prompts)
+3. Connect all branches to the same Evaluation node
+4. Analyze metrics side-by-side to determine which configuration performs best
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/comparative-evaluation.png"
+  alt="Comparing multiple strategies"
+  loading="lazy"
+/>
+
+This approach allows you to identify optimal configurations more quickly and make data-driven decisions about which strategies to implement in your production pipeline.
 
 ## Troubleshooting Evaluation Issues
 
