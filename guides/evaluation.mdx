@@ -44,16 +44,18 @@ This component can be attached to:
 To set up evaluation for your RAG pipeline:
 
 1. Add the **Evaluation** component to your flow
-2. Connect it to the output of the component you want to evaluate
+2. Connect it to the output of the component(s) you want to evaluate
 3. Make sure you have a **Testset** or **Question** node connected to your flow
 4. Double-click the Evaluation component to open its configuration panel
-5. Click **Update result** to generate metrics
+5. Click **Update Results** to generate the evaluation
+
+Once you click Update Results, the system will automatically calculate and display all five metrics (Relevance, Precision, Recall, Answer Relevance, and Faithfulness) in the dashboard.
 
 ### Required Components
 
 The Evaluation node requires:
 - A properly configured **Testset** or **Question** node with questions and expected answers
-- A **Retrieval** or **LLM** node to evaluate
+- One or more **Retrieval** or **LLM** nodes to evaluate (you can connect multiple for comparison)
 
 ### Comparing Multiple Strategies
 
@@ -172,7 +174,7 @@ When analyzing results:
 
 To evaluate just the retrieval component:
 1. Connect a Testset node → Retrieval node → Evaluation node
-2. Focus on Precision@K and Recall@K metrics
+2. Focus on Relevance, Precision, and Recall metrics
 3. Experiment with different retrieval settings (Search Type, Top K, Score Threshold)
 4. Compare results across configurations
 
@@ -214,11 +216,11 @@ This approach allows you to identify optimal configurations more quickly and mak
   </Accordion>
   <Accordion icon="comment-slash" title="Poor response metrics (if using LLM)">
     **Solutions**:
-    - Check if the retrieval is returning relevant chunks first
+    - Check if the retrieval is returning relevant chunks first (check Relevance scores)
     - Review and refine your system prompt and instructions to the LLM
     - Try a different model that may perform better for your specific use case
     - Ensure your expected answers are comprehensive but not overly specific
-    - Adjust temperature settings to balance creativity and factual accuracy
+    - Focus on improving Answer Relevance and Faithfulness scores
   </Accordion>
   <Accordion icon="bug" title="Inconsistent evaluation results">
     **Solutions**:
