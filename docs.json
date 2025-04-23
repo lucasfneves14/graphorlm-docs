@@ -45,6 +45,16 @@
           "anchor": "Product",
           "href": "https://app.graphorlm.com",
           "icon": "earth-americas"
+        },
+        {
+          "anchor": "LinkedIn",
+          "href": "https://www.linkedin.com/company/graphorlm",
+          "icon": "linkedin"
+        },
+        {
+          "anchor": "X",
+          "href": "https://x.com/graphorlm",
+          "icon": "x"
         }
       ]
     }
