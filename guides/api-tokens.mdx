@@ -1,0 +1,163 @@
+---
+title: 'API Tokens'
+description: 'Create and manage API tokens for secure programmatic access to GraphorLM'
+---
+
+This guide explains how to create, manage, and use API tokens to securely connect external applications and AI assistants to your GraphorLM flows.
+
+## Overview
+
+API tokens provide secure authentication for programmatic access to your GraphorLM projects and flows. They are essential for:
+
+- Connecting applications to your RAG pipelines via REST API
+- Integrating with AI assistants through MCP Server
+- Automating processes with GraphorLM resources
+- Building custom integrations with your existing tools
+
+## Creating API Tokens
+
+To create a new API token:
+
+1. Navigate to your project in GraphorLM
+2. Click on **API Tokens** in the left sidebar
+3. Click the **Create New Token** button
+4. Enter a descriptive name for your token (e.g., "Production REST API" or "Claude Integration")
+5. Click **Create**
+6. **Important**: Copy your token immediately and store it securely. For security reasons, the full token will only be displayed once.
+
+## Managing Tokens
+
+The API Tokens page provides several management capabilities:
+
+### Revoking Tokens
+
+To revoke a token that is no longer needed or may be compromised:
+
+1. Navigate to the API Tokens page
+2. Find the token you want to revoke
+3. Click the **Delete** icon next to the token
+4. Confirm the revocation
+
+Once revoked, a token cannot be restored. Any services using the token will immediately lose access to your GraphorLM resources.
+
+## Using API Tokens
+
+API tokens are used in different ways depending on your integration method:
+
+### REST API
+
+For REST API integrations, include your token as a Bearer token in the Authorization header:
+
+```javascript
+fetch("https://{flow_name}.flows.graphorlm.com", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer YOUR_API_TOKEN",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    query: "your search query"
+  })
+})
+```
+
+### MCP Server
+
+For MCP Server integrations, include your token in the environment configuration:
+
+```json
+{
+  "mcpServers": {
+    "your-mcp-server-name": {
+      "command": "uvx",
+      "args": [
+        "--refresh",
+        "mcp-proxy",
+        "https://{flow_name}.flows.graphorlm.com/mcp/sse"
+      ],
+      "env": {
+        "API_ACCESS_TOKEN": "YOUR_API_TOKEN"
+      }
+    }
+  }
+}
+```
+
+## Token Security Best Practices
+
+API tokens provide access to your GraphorLM resources, so it's important to handle them securely:
+
+### Storage
+
+- Never store tokens in public repositories or client-side code
+- Use environment variables or secure secret management systems
+- For development environments, consider using .env files (excluded from version control)
+
+### Distribution
+
+- Share tokens securely with team members who need access
+- Use encrypted channels for token distribution
+
+### Rotation
+
+- Regularly rotate tokens used in production systems
+- Immediately revoke tokens when team members leave or roles change
+- Create new tokens rather than sharing existing ones for new integrations
+
+## Troubleshooting Token Issues
+
+<AccordionGroup>
+  <Accordion icon="key" title="Authentication failures">
+    **Solutions**:
+    - Verify you're using the full token string
+    - Check that the token hasn't been revoked
+    - Confirm you're using the correct Authorization format
+  </Accordion>
+  <Accordion icon="arrow-right-to-bracket" title="Access denied errors">
+    **Solutions**:
+    - Verify the token is assigned to the correct project
+    - Ensure the resources you're accessing exist
+    - Create a new token with appropriate permissions if needed
+  </Accordion>
+  <Accordion icon="shield-exclamation" title="Security concerns">
+    **Solutions**:
+    - Immediately revoke any potentially compromised tokens
+    - Create new tokens with fresh credentials
+    - Update security practices for token storage
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After setting up your API tokens, explore:
+
+<CardGroup cols={2}>
+  <Card
+    title="Integrate Workflow"
+    icon="plug"
+    href="/guides/integrate-workflow"
+  >
+    Connect your RAG pipeline to applications and AI assistants
+  </Card>
+  <Card
+    title="Retrieval"
+    icon="magnifying-glass"
+    href="/guides/retrieval"
+  >
+    Optimize information retrieval for your connected applications
+  </Card>
+  <Card
+    title="Evaluation"
+    icon="square-poll-vertical"
+    href="/guides/evaluation"
+  >
+    Measure your RAG pipeline's performance
+  </Card>
+  <Card
+    title="LLM Integration"
+    icon="brain"
+    href="/guides/llm"
+  >
+    Connect language models to your workflow
+  </Card>
+</CardGroup>

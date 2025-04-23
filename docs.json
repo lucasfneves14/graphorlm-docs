@@ -32,6 +32,7 @@
               "guides/retrieval",
               "guides/llm-integration",
               "guides/evaluation",
+              "guides/api-tokens",
               "guides/integrate-workflow"
             ]
           }
