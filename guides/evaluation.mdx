@@ -124,12 +124,20 @@ The Evaluation component displays results in a comprehensive dashboard:
   loading="lazy"
 />
 
-When analyzing results:
+The interface is divided into two main sections:
+- **Question list**: On the left side, you'll see all the questions from your testset
+- **Metrics dashboard**: On the right side, you'll see the evaluation metrics and results
 
-1. **Look for patterns**: Are certain types of questions performing poorly?
-2. **Compare configurations**: Test different retrieval settings and compare metrics
-3. **Identify thresholds**: Determine acceptable performance levels for your use case
-4. **Track over time**: Monitor how changes to your pipeline affect performance
+### Analyzing Individual Questions
+
+To analyze the performance of specific questions:
+
+1. Select a question from the list on the left side of the Evaluation component
+2. The dashboard will update to display metrics specifically related to that question
+3. Compare how different questions perform across various metrics
+4. Identify patterns in which types of questions perform better or worse
+
+This question-level analysis helps you understand which types of queries your RAG pipeline handles well and which may need optimization.
 
 ### Understanding Metric Scores
 
@@ -140,6 +148,13 @@ Each metric score includes additional context to help you understand the evaluat
 - **Score range**: All metrics are normalized on a scale from 0.0 to 1.0, with higher values indicating better performance
 
 This contextual information helps you pinpoint specific areas for improvement in your RAG pipeline and understand why certain configurations perform better than others.
+
+When analyzing results:
+
+1. **Look for patterns**: Are certain types of questions performing poorly?
+2. **Compare configurations**: Test different retrieval settings and compare metrics
+3. **Identify thresholds**: Determine acceptable performance levels for your use case
+4. **Track over time**: Monitor how changes to your pipeline affect performance
 
 ## Common Evaluation Workflows
 
