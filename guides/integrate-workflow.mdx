@@ -1,0 +1,367 @@
+---
+title: 'Integrate Workflow'
+description: 'Connect your RAG systems to applications via REST API and MCP Server integration'
+---
+
+This guide explains how to connect your deployed GraphorLM RAG pipelines to external applications and AI assistants, making your information retrieval capabilities accessible through standardized interfaces.
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/integration-overview.png"
+  alt="Integration overview"
+  loading="lazy"
+/>
+
+## Overview
+
+After building and optimizing your RAG pipeline, the final step is integrating it with your applications or AI assistants. GraphorLM offers two primary integration methods:
+
+1. **REST API** - Direct HTTP endpoint integration for custom applications
+2. **MCP Server** - Model Context Protocol integration for AI assistants like Claude and Cursor
+
+Each method provides different capabilities and is suitable for different use cases.
+
+## Prerequisites
+
+Before integrating your GraphorLM workflow, ensure you have:
+
+- A fully configured and tested RAG pipeline in GraphorLM
+- A deployed flow revision with 100% traffic allocation
+- API tokens for authentication (generated in the API Tokens section)
+
+## Integration Methods
+
+### REST API Integration
+
+The REST API provides a simple HTTP endpoint that allows applications to send queries and receive structured responses from your RAG pipeline.
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/rest-api-integration.png"
+  alt="REST API integration"
+  loading="lazy"
+/>
+
+#### Endpoint
+
+When you deploy a flow, a unique endpoint URL is created. You can find this URL by:
+
+1. Opening your flow in the Flow Builder
+2. Clicking the **Connect to flow** button
+3. Selecting the **REST API** tab
+
+The endpoint follows this format:
+```
+https://api.graphorlm.com/v1/projects/{project_id}/flows/{flow_id}/query
+```
+
+#### Authentication
+
+All API requests require authentication using a Bearer token:
+
+1. Navigate to the **API Tokens** section in your project
+2. Click **Create New Token**
+3. Name your token and set appropriate permissions
+4. Copy the generated token (Note: It will only be shown once)
+5. Include the token in the `Authorization` header of your requests as `Bearer YOUR_API_TOKEN`
+
+#### Request Format
+
+Send a POST request with a JSON body containing the following optional parameters:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `query` | string | The search query for your RAG pipeline |
+| `page` | number | The page number for pagination (default: 1) |
+| `page_size` | number | Number of items per page (default: 10) |
+
+#### Example Request
+
+```javascript
+// POST request to https://api.graphorlm.com/v1/projects/{project_id}/flows/{flow_id}/query
+// Headers must include a Bearer token for authentication
+
+fetch("https://api.graphorlm.com/v1/projects/{project_id}/flows/{flow_id}/query", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer YOUR_API_TOKEN",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    query: "your search query",  // Optional
+    page: 1,                     // Optional, default: 1
+    page_size: 10                // Optional, default: 10
+  })
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Error:', error));
+```
+
+#### Response Format
+
+The API returns a JSON object with the following structure:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `items` | array | Documents matching your query |
+| `total` | number | Total number of matching documents |
+| `page` | number | Current page number |
+| `page_size` | number | Number of items per page |
+| `total_pages` | number | Total number of pages |
+
+#### Example Response
+
+```json
+{
+  "items": [
+    {
+      "id": "doc-123",
+      "page_content": "Document content text...",
+      "metadata": {
+        // Additional document metadata
+      },
+      "type": "Document"
+    },
+    // More documents...
+  ],
+  "total": 42,
+  "page": 1,
+  "page_size": 10,
+  "total_pages": 5
+}
+```
+
+### MCP Server Integration
+
+The MCP (Model Context Protocol) Server integration allows AI assistants like Claude and Cursor to directly utilize your RAG pipeline as a tool, enabling more natural and powerful interactions.
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/mcp-integration.png"
+  alt="MCP Server integration"
+  loading="lazy"
+/>
+
+#### What is MCP?
+
+Model Context Protocol (MCP) is an open specification for connecting language models to external tools and data sources. It allows AI assistants to:
+
+- Access your RAG pipeline's knowledge base
+- Use the retrieved information to generate better responses
+- Maintain context across interactions
+- Dynamically fetch relevant information based on the conversation
+
+#### Tool Description Importance
+
+When deploying your flow for MCP Server integration, providing a detailed tool description is critical. This helps AI assistants understand:
+
+- When to use your RAG pipeline
+- What kind of queries it can handle
+- What information it contains
+- Any limitations or special considerations
+
+A good tool description ensures more accurate and relevant use of your RAG pipeline by AI assistants.
+
+#### Example Tool Description
+
+```
+This tool retrieves information from AI research papers based on user queries.
+
+Purpose: Find relevant content from scientific articles on artificial intelligence topics.
+
+Input: Natural language questions or keywords about AI research.
+
+Output: Text passages from academic papers.
+
+Capabilities:
+- Finds specific AI methodologies and techniques
+- Retrieves state-of-the-art results
+- Provides explanations of AI concepts from academic sources
+
+Limitations:
+- Papers published before June 2023 only
+- English-language publications only
+- Text only, no images or tables
+
+Example queries:
+"Latest advances in transformer models"
+"Compare LSTM and GRU performance"
+"Techniques to reduce hallucinations in LLMs"
+```
+
+## Setting Up MCP Server Integration
+
+Follow these steps to connect your RAG pipeline to AI assistants using MCP:
+
+### Step 1: Install UV Library
+
+Install the UV library using the appropriate command for your operating system:
+
+- **macOS**: `brew install uv`
+- **Linux**: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- **Windows**: `winget install uv`
+
+### Step 2: Obtain an API Token
+
+Create an API token from the **API Tokens** page in your GraphorLM project.
+
+### Step 3: Configure MCP Server Connection
+
+#### For Claude Desktop
+
+1. Find or create the Claude Desktop config file at:
+   - **macOS/Linux**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+2. Add the following configuration to the file:
+
+```json
+{
+  "mcpServers": {
+    "your-flow-name": {
+      "command": "uvx",
+      "args": [
+        "--refresh",
+        "mcp-proxy",
+        "https://api.graphorlm.com/v1/projects/{project_id}/flows/{flow_id}/mcp/sse"
+      ],
+      "env": {
+        "API_ACCESS_TOKEN": "YOUR_API_TOKEN"
+      }
+    }
+  }
+}
+```
+
+3. Replace `your-flow-name` with a unique name for your flow and `YOUR_API_TOKEN` with your API token.
+
+4. Restart Claude Desktop.
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/claude-integration.png"
+  alt="Claude Desktop integration"
+  loading="lazy"
+/>
+
+#### For Cursor
+
+1. Go to Settings → Cursor Settings
+2. Navigate to the MCP tab
+3. Click on "Add new global MCP server"
+4. This will open the Cursor MCP configuration file (mcp.json)
+5. Add the following configuration to the file:
+
+```json
+{
+  "mcpServers": {
+    "your-flow-name": {
+      "command": "uvx",
+      "args": [
+        "--refresh",
+        "mcp-proxy",
+        "https://api.graphorlm.com/v1/projects/{project_id}/flows/{flow_id}/mcp/sse"
+      ],
+      "env": {
+        "API_ACCESS_TOKEN": "YOUR_API_TOKEN"
+      }
+    }
+  }
+}
+```
+
+6. Replace `your-flow-name` with a unique name for your flow and `YOUR_API_TOKEN` with your API token.
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/cursor-integration.png"
+  alt="Cursor integration"
+  loading="lazy"
+/>
+
+### Step 4: Using MCP in Cursor Chat
+
+To use your MCP flow in Cursor's chat:
+
+1. Open a chat in Cursor
+2. Click on the mode menu (usually shows "Manual" by default)
+3. Select "Agent" from the dropdown menu
+4. Your configured MCP flow will now be available for use in the chat
+
+## Integration Best Practices
+
+### REST API
+
+- **Cache responses**: Implement caching to reduce API calls for common queries
+- **Handle errors gracefully**: Implement proper error handling for API failures
+- **Monitor usage**: Keep track of API usage to optimize performance
+- **Implement rate limiting**: Protect your endpoints from excessive requests
+
+### MCP Server
+
+- **Create detailed tool descriptions**: Be specific and comprehensive to help AI assistants use your tool effectively
+- **Update tool descriptions**: Refine descriptions based on observed usage patterns
+- **Test different queries**: Verify that a wide range of query types work as expected
+- **Provide examples**: Include sample queries in your tool description
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="plug-circle-xmark" title="Connection issues">
+    **Solutions**:
+    - Verify that your flow has an active deployed revision
+    - Check that your API token is valid and has the correct permissions
+    - Ensure the endpoint URL is correct
+    - Verify network connectivity
+  </Accordion>
+  <Accordion icon="key" title="Authentication errors">
+    **Solutions**:
+    - Generate a new API token
+    - Make sure you're using the correct Bearer token format in the Authorization header
+    - Check if the token has expired
+    - Verify the token has the necessary permissions
+  </Accordion>
+  <Accordion icon="diamond-exclamation" title="MCP tool not appearing">
+    **Solutions**:
+    - Restart the client application (Claude Desktop or Cursor)
+    - Verify the MCP configuration is correctly formatted
+    - Check that the UV library is installed
+    - Ensure the flow is properly deployed with 100% traffic allocation
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After successfully integrating your RAG pipeline, consider exploring:
+
+<CardGroup cols={2}>
+  <Card
+    title="Evaluation"
+    icon="square-poll-vertical"
+    href="/guides/evaluation"
+  >
+    Measure and improve your RAG pipeline performance with comprehensive metrics
+  </Card>
+  <Card
+    title="LLM Integration"
+    icon="brain"
+    href="/guides/llm"
+  >
+    Enhance your RAG system with language model capabilities
+  </Card>
+  <Card
+    title="Data Ingestion"
+    icon="file-lines"
+    href="/guides/data-ingestion"
+  >
+    Add more content to your knowledge base
+  </Card>
+  <Card
+    title="Retrieval"
+    icon="magnifying-glass"
+    href="/guides/retrieval"
+  >
+    Further optimize your search algorithms
+  </Card>
+</CardGroup>
