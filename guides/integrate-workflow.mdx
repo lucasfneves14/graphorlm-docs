@@ -52,7 +52,7 @@ When you deploy a flow, a unique endpoint URL is created. You can find this URL 
 
 The endpoint follows this format:
 ```
-https://api.graphorlm.com/v1/projects/{project_id}/flows/{flow_id}/query
+https://{flow_name}.flows.graphorlm.com/
 ```
 
 #### Authentication
@@ -73,15 +73,15 @@ Send a POST request with a JSON body containing the following optional parameter
 |-----------|------|-------------|
 | `query` | string | The search query for your RAG pipeline |
 | `page` | number | The page number for pagination (default: 1) |
-| `page_size` | number | Number of items per page (default: 10) |
+| `page_size` | number | Number of items per page (default: None) |
 
 #### Example Request
 
 ```javascript
-// POST request to https://api.graphorlm.com/v1/projects/{project_id}/flows/{flow_id}/query
+// POST request to https://{flow_name}.flows.graphorlm.com/
 // Headers must include a Bearer token for authentication
 
-fetch("https://api.graphorlm.com/v1/projects/{project_id}/flows/{flow_id}/query", {
+fetch("https://{flow_name}.flows.graphorlm.com/", {
   method: "POST",
   headers: {
     "Authorization": "Bearer YOUR_API_TOKEN",
@@ -90,7 +90,7 @@ fetch("https://api.graphorlm.com/v1/projects/{project_id}/flows/{flow_id}/query"
   body: JSON.stringify({
     query: "your search query",  // Optional
     page: 1,                     // Optional, default: 1
-    page_size: 10                // Optional, default: 10
+    page_size: 10                // Optional, default: None
   })
 })
 .then(response => response.json())
@@ -224,7 +224,7 @@ Create an API token from the **API Tokens** page in your GraphorLM project.
       "args": [
         "--refresh",
         "mcp-proxy",
-        "https://api.graphorlm.com/v1/projects/{project_id}/flows/{flow_id}/mcp/sse"
+        "https://{flow_name}.flows.graphorlm.com/mcp/sse"
       ],
       "env": {
         "API_ACCESS_TOKEN": "YOUR_API_TOKEN"
@@ -261,7 +261,7 @@ Create an API token from the **API Tokens** page in your GraphorLM project.
       "args": [
         "--refresh",
         "mcp-proxy",
-        "https://api.graphorlm.com/v1/projects/{project_id}/flows/{flow_id}/mcp/sse"
+        "https://{flow_name}.flows.graphorlm.com/mcp/sse"
       ],
       "env": {
         "API_ACCESS_TOKEN": "YOUR_API_TOKEN"
