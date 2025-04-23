@@ -52,7 +52,7 @@ When you deploy a flow, a unique endpoint URL is created. You can find this URL 
 
 The endpoint follows this format:
 ```
-https://{flow_name}.flows.graphorlm.com/
+https://{flow_name}.flows.graphorlm.com
 ```
 
 #### Authentication
@@ -78,10 +78,10 @@ Send a POST request with a JSON body containing the following optional parameter
 #### Example Request
 
 ```javascript
-// POST request to https://{flow_name}.flows.graphorlm.com/
+// POST request to https://{flow_name}.flows.graphorlm.com
 // Headers must include a Bearer token for authentication
 
-fetch("https://{flow_name}.flows.graphorlm.com/", {
+fetch("https://{flow_name}.flows.graphorlm.com", {
   method: "POST",
   headers: {
     "Authorization": "Bearer YOUR_API_TOKEN",
@@ -142,6 +142,21 @@ The MCP (Model Context Protocol) Server integration allows AI assistants like Cl
   alt="MCP Server integration"
   loading="lazy"
 />
+
+#### Finding Your MCP Endpoint
+
+To locate your flow's MCP endpoint:
+
+1. Open your flow in the Flow Builder
+2. Click the **Connect to flow** button in the top right corner
+3. Select the **MCP Server** tab
+4. You'll see the complete MCP endpoint URL in the following format:
+   ```
+   https://{flow_name}.flows.graphorlm.com/mcp/sse
+   ```
+5. This is the URL you'll need to configure in your MCP client
+
+The flow name in the URL corresponds to the name you gave your flow when you created it or its automatically generated identifier.
 
 #### What is MCP?
 
@@ -234,7 +249,7 @@ Create an API token from the **API Tokens** page in your GraphorLM project.
 }
 ```
 
-3. Replace `your-flow-name` with a unique name for your flow and `YOUR_API_TOKEN` with your API token.
+3. Replace `your-flow-name` with a unique name for MCP server and `YOUR_API_TOKEN` with your API token.
 
 4. Restart Claude Desktop.
 
@@ -271,7 +286,7 @@ Create an API token from the **API Tokens** page in your GraphorLM project.
 }
 ```
 
-6. Replace `your-flow-name` with a unique name for your flow and `YOUR_API_TOKEN` with your API token.
+6. Replace `your-flow-name` with a unique name for your MCP server and `YOUR_API_TOKEN` with your API token.
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
