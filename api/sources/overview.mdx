@@ -1,0 +1,608 @@
+---
+title: 'Sources API Overview'
+description: 'Complete guide to managing documents in GraphorLM via the REST API'
+---
+
+The GraphorLM Sources API provides a comprehensive set of endpoints for managing documents in your projects. From uploading files to processing content with advanced AI models, these endpoints enable you to build powerful document ingestion pipelines and RAG applications.
+
+## What are Sources?
+
+Sources in GraphorLM represent documents that serve as the foundation of your knowledge base. These can include:
+
+- **Local files**: PDFs, Word documents, text files, images, spreadsheets, presentations
+- **Web content**: URLs, web pages, online articles
+- **Code repositories**: GitHub repositories and documentation
+- **Media content**: Audio and video files for transcription and analysis
+
+All sources are processed through GraphorLM's advanced AI pipeline to extract text, recognize structure, and prepare content for retrieval-augmented generation (RAG) workflows.
+
+## API Endpoints Overview
+
+The Sources API consists of four main endpoints that provide complete document lifecycle management:
+
+<CardGroup cols={2}>
+  <Card
+    title="Upload Source"
+    icon="arrow-up-from-bracket"
+    href="/api/sources/upload"
+  >
+    **POST** `https://sources.graphorlm.com/upload`
+    
+    Upload documents from your local system to GraphorLM for processing
+  </Card>
+  
+  <Card
+    title="Process Source"
+    icon="gears"
+    href="/api/sources/process"
+  >
+    **POST** `https://sources.graphorlm.com/process`
+    
+    Reprocess existing documents with different AI models and parsing methods
+  </Card>
+  
+  <Card
+    title="List Sources"
+    icon="list"
+    href="/api/sources/list"
+  >
+    **GET** `https://sources.graphorlm.com`
+    
+    Retrieve information about all documents in your project
+  </Card>
+  
+  <Card
+    title="Delete Source"
+    icon="trash"
+    href="/api/sources/delete"
+  >
+    **DELETE** `https://sources.graphorlm.com/delete`
+    
+    Permanently remove documents from your project
+  </Card>
+</CardGroup>
+
+## Document Processing Pipeline
+
+Understanding how GraphorLM processes your documents helps you make the most of the Sources API:
+
+### 1. Upload Stage
+When you upload a document using the [Upload Source](/api/sources/upload) endpoint:
+- File is validated for type and size (max 100MB)
+- Document is securely stored in your project
+- Initial metadata is extracted (filename, size, type)
+- Processing begins automatically with the default method
+
+### 2. Processing Methods
+GraphorLM offers multiple processing methods, selectable via the [Process Source](/api/sources/process) endpoint:
+
+<AccordionGroup>
+  <Accordion icon="gauge-simple" title="Basic Method">
+    **Speed**: ⚡⚡⚡ **Accuracy**: ⭐⭐
+    
+    - Fastest processing option
+    - Heuristic-based text extraction
+    - No OCR processing
+    - Ideal for plain text and simple documents
+  </Accordion>
+  
+  <Accordion icon="eye" title="OCR Method">
+    **Speed**: ⚡⚡ **Accuracy**: ⭐⭐⭐
+    
+    - Optical Character Recognition for scanned documents
+    - Heuristic-based structure classification
+    - Perfect for images and scanned PDFs
+    - Balances speed and accuracy
+  </Accordion>
+  
+  <Accordion icon="brain" title="YOLOX Method">
+    **Speed**: ⚡ **Accuracy**: ⭐⭐⭐⭐
+    
+    - AI-powered document structure recognition
+    - Advanced table and figure detection
+    - Superior layout analysis
+    - Recommended for complex documents
+  </Accordion>
+  
+  <Accordion icon="sparkles" title="Advanced Method">
+    **Speed**: ⚡ **Accuracy**: ⭐⭐⭐⭐⭐
+    
+    - Premium fine-tuned AI models
+    - Highest accuracy for specialized documents
+    - Advanced structure recognition
+    - Best-in-class text extraction
+  </Accordion>
+</AccordionGroup>
+
+### 3. Document Status Lifecycle
+Documents progress through various states that you can monitor using the [List Sources](/api/sources/list) endpoint:
+
+| Status | Description | Next Steps |
+|--------|-------------|------------|
+| **New** | Document uploaded, awaiting processing | Processing will begin automatically |
+| **Processing** | AI models are analyzing the document | Wait for completion |
+| **Completed** | Document ready for use in RAG pipelines | Can be used in flows |
+| **Failed** | Processing encountered an error | Try different processing method |
+
+## Authentication
+
+All Sources API endpoints require authentication using API tokens:
+
+```bash
+Authorization: Bearer grlm_your_api_token_here
+```
+
+<Note>
+  Learn how to create and manage API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Common Workflows
+
+### Basic Document Upload Workflow
+
+```mermaid
+graph LR
+    A[Upload Document] --> B[Automatic Processing]
+    B --> C[Document Ready]
+    C --> D[Use in RAG Pipeline]
+```
+
+1. **Upload**: Use [Upload Source](/api/sources/upload) to add your document
+2. **Monitor**: Check status with [List Sources](/api/sources/list)
+3. **Optimize**: Reprocess with [Process Source](/api/sources/process) if needed
+4. **Use**: Document is ready for your RAG workflows
+
+### Quality Optimization Workflow
+
+```mermaid
+graph LR
+    A[Upload with Basic] --> B[Review Results]
+    B --> C{Quality Good?}
+    C -->|Yes| D[Use Document]
+    C -->|No| E[Reprocess with YOLOX]
+    E --> F[Review Again]
+    F --> G{Better?}
+    G -->|Yes| D
+    G -->|No| H[Try Advanced Method]
+```
+
+1. Start with Basic method for speed
+2. Review extraction quality
+3. Upgrade to YOLOX or Advanced if needed
+4. Use best results in your application
+
+### Document Lifecycle Management
+
+```mermaid
+graph LR
+    A[Upload Documents] --> B[Process & Use]
+    B --> C[Monitor Performance]
+    C --> D{Update Needed?}
+    D -->|Yes| E[Reprocess]
+    D -->|No| F[Continue Using]
+    E --> B
+    F --> G{Remove?}
+    G -->|Yes| H[Delete Document]
+    G -->|No| C
+```
+
+## Supported File Types
+
+The Sources API supports a wide range of document formats:
+
+### Documents & Text
+- **PDF**: Portable Document Format files
+- **Microsoft Office**: DOC, DOCX, PPT, PPTX, XLS, XLSX
+- **OpenDocument**: ODT (Text documents)
+- **Text Files**: TXT, TEXT, MD (Markdown), HTML, HTM
+- **Data Files**: CSV, TSV (Comma/Tab-separated values)
+
+### Images & Media
+- **Images**: PNG, JPG, JPEG, TIFF, BMP, HEIC
+- **Audio**: MP3, WAV, M4A, OGG, FLAC
+- **Video**: MP4, MOV, AVI, MKV, WEBM
+
+### Processing Recommendations
+
+| File Type | Recommended Method | Notes |
+|-----------|-------------------|-------|
+| Clean PDFs | Basic or OCR | Fast processing for digital PDFs |
+| Scanned PDFs | OCR or YOLOX | OCR needed for text extraction |
+| Complex Documents | YOLOX or Advanced | Better structure recognition |
+| Images with Text | OCR or YOLOX | Requires OCR for text extraction |
+| Spreadsheets | Basic or YOLOX | YOLOX better for complex tables |
+| Presentations | YOLOX or Advanced | Better slide layout recognition |
+
+## Rate Limits and Best Practices
+
+### Rate Limits
+- **Upload**: No strict limits, but large files may take longer
+- **Processing**: Allow adequate time for complex methods
+- **List/Delete**: Standard API rate limits apply
+
+### Best Practices
+
+<AccordionGroup>
+  <Accordion icon="upload" title="Upload Optimization">
+    **File Preparation**:
+    - Compress large files when possible (max 100MB)
+    - Use descriptive filenames for easy identification
+    - Ensure files are not corrupted before upload
+    
+    **Error Handling**:
+    - Implement retry logic for network issues
+    - Validate file types client-side
+    - Monitor upload progress for large files
+  </Accordion>
+  
+  <Accordion icon="gears" title="Processing Strategy">
+    **Method Selection**:
+    - Start with Basic for testing and simple documents
+    - Use OCR for scanned documents and images
+    - Choose YOLOX for complex layouts and tables
+    - Reserve Advanced for premium accuracy needs
+    
+    **Quality Monitoring**:
+    - Review processing results in GraphorLM dashboard
+    - Test different methods for optimal results
+    - Monitor processing times and costs
+  </Accordion>
+  
+  <Accordion icon="list" title="Management & Monitoring">
+    **Regular Monitoring**:
+    - Check document status regularly
+    - Monitor failed processing attempts
+    - Review processing quality periodically
+    
+    **Maintenance**:
+    - Remove outdated documents to save storage
+    - Reprocess with better methods as they become available
+    - Keep track of which methods work best for your document types
+  </Accordion>
+</AccordionGroup>
+
+## Error Handling
+
+All Sources API endpoints use consistent error responses:
+
+### Common Error Codes
+
+| Status Code | Meaning | Common Causes |
+|-------------|---------|---------------|
+| **400** | Bad Request | Invalid file type, missing parameters, malformed request |
+| **401** | Unauthorized | Invalid or missing API token |
+| **403** | Forbidden | Insufficient permissions for the project |
+| **404** | Not Found | File or project not found |
+| **413** | Payload Too Large | File exceeds 100MB limit |
+| **500** | Internal Server Error | Processing failure or server issues |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Descriptive error message explaining what went wrong"
+}
+```
+
+### Retry Strategy
+
+```python
+import time
+import requests
+from typing import Optional
+
+def api_call_with_retry(
+    method: str, 
+    url: str, 
+    headers: dict, 
+    max_retries: int = 3,
+    **kwargs
+) -> Optional[requests.Response]:
+    """Make API call with exponential backoff retry logic."""
+    
+    for attempt in range(max_retries):
+        try:
+            response = requests.request(method, url, headers=headers, **kwargs)
+            
+            # Success cases
+            if response.status_code < 400:
+                return response
+            
+            # Don't retry client errors (4xx)
+            if 400 <= response.status_code < 500:
+                response.raise_for_status()
+            
+            # Retry server errors (5xx)
+            if response.status_code >= 500 and attempt < max_retries - 1:
+                wait_time = 2 ** attempt  # Exponential backoff
+                print(f"Server error {response.status_code}, retrying in {wait_time}s...")
+                time.sleep(wait_time)
+                continue
+            
+            response.raise_for_status()
+            
+        except requests.exceptions.RequestException as e:
+            if attempt < max_retries - 1:
+                wait_time = 2 ** attempt
+                print(f"Request failed: {e}, retrying in {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                raise
+    
+    return None
+```
+
+## Integration Examples
+
+### Complete Document Management System
+
+```python
+import requests
+from typing import List, Dict, Optional
+import time
+
+class GraphorLMSourcesClient:
+    def __init__(self, api_token: str):
+        self.api_token = api_token
+        self.base_url = "https://sources.graphorlm.com"
+        self.headers = {
+            "Authorization": f"Bearer {api_token}",
+            "Content-Type": "application/json"
+        }
+    
+    def upload_document(self, file_path: str) -> Dict:
+        """Upload a document to GraphorLM."""
+        upload_headers = {"Authorization": f"Bearer {self.api_token}"}
+        
+        with open(file_path, "rb") as f:
+            files = {"file": (file_path, f)}
+            response = requests.post(
+                f"{self.base_url}/upload",
+                headers=upload_headers,
+                files=files,
+                timeout=300
+            )
+        
+        response.raise_for_status()
+        return response.json()
+    
+    def process_document(self, file_name: str, method: str = "yolox") -> Dict:
+        """Reprocess a document with specified method."""
+        payload = {
+            "file_name": file_name,
+            "partition_method": method
+        }
+        
+        response = requests.post(
+            f"{self.base_url}/process",
+            headers=self.headers,
+            json=payload,
+            timeout=300
+        )
+        
+        response.raise_for_status()
+        return response.json()
+    
+    def list_documents(self) -> List[Dict]:
+        """Get all documents in the project."""
+        response = requests.get(
+            self.base_url,
+            headers=self.headers,
+            timeout=30
+        )
+        
+        response.raise_for_status()
+        return response.json()
+    
+    def delete_document(self, file_name: str) -> Dict:
+        """Delete a document from the project."""
+        payload = {"file_name": file_name}
+        
+        response = requests.delete(
+            f"{self.base_url}/delete",
+            headers=self.headers,
+            json=payload,
+            timeout=60
+        )
+        
+        response.raise_for_status()
+        return response.json()
+    
+    def wait_for_processing(self, file_name: str, timeout: int = 300) -> str:
+        """Wait for document processing to complete."""
+        start_time = time.time()
+        
+        while time.time() - start_time < timeout:
+            documents = self.list_documents()
+            doc = next((d for d in documents if d['file_name'] == file_name), None)
+            
+            if not doc:
+                raise ValueError(f"Document {file_name} not found")
+            
+            status = doc['status'].lower()
+            if status == 'completed':
+                return 'completed'
+            elif status == 'failed':
+                return 'failed'
+            
+            time.sleep(5)  # Check every 5 seconds
+        
+        raise TimeoutError(f"Processing timeout for {file_name}")
+
+# Usage Example
+client = GraphorLMSourcesClient("grlm_your_api_token")
+
+# Upload and process a document
+upload_result = client.upload_document("./document.pdf")
+print(f"Uploaded: {upload_result['file_name']}")
+
+# Wait for initial processing
+status = client.wait_for_processing(upload_result['file_name'])
+print(f"Initial processing: {status}")
+
+# Upgrade to better processing method
+if status == 'completed':
+    process_result = client.process_document(
+        upload_result['file_name'], 
+        "yolox"
+    )
+    print(f"Reprocessed with YOLOX: {process_result['partition_method']}")
+```
+
+### Document Quality Assessment Pipeline
+
+```javascript
+class DocumentQualityPipeline {
+  constructor(apiToken) {
+    this.apiToken = apiToken;
+    this.baseUrl = 'https://sources.graphorlm.com';
+  }
+
+  async assessAndOptimize(fileName) {
+    const methods = ['basic', 'ocr', 'yolox', 'advanced'];
+    let bestResult = null;
+    let bestScore = 0;
+
+    for (const method of methods) {
+      try {
+        console.log(`Testing ${method} method for ${fileName}...`);
+        
+        const result = await this.processDocument(fileName, method);
+        const score = this.calculateQualityScore(result);
+        
+        console.log(`${method}: score ${score}`);
+        
+        if (score > bestScore) {
+          bestScore = score;
+          bestResult = { method, result, score };
+        }
+        
+        // If score is good enough, don't try more expensive methods
+        if (score >= 0.8 && method !== 'advanced') {
+          break;
+        }
+        
+      } catch (error) {
+        console.error(`Failed with ${method}:`, error.message);
+      }
+    }
+
+    return bestResult;
+  }
+
+  calculateQualityScore(result) {
+    // Implement your quality assessment logic
+    // This is a simple example based on available data
+    let score = 0;
+    
+    // Base score for successful processing
+    if (result.status === 'success') score += 0.5;
+    
+    // Higher score for more advanced methods
+    const methodScores = {
+      'basic': 0.1,
+      'ocr': 0.2,
+      'yolox': 0.3,
+      'advanced': 0.4
+    };
+    score += methodScores[result.partition_method] || 0;
+    
+    // File size and type considerations
+    if (result.file_size > 1000000) score += 0.1; // Larger files
+    if (result.file_type === 'pdf') score += 0.1;  // PDFs often need better processing
+    
+    return Math.min(score, 1.0);
+  }
+
+  async processDocument(fileName, method) {
+    const response = await fetch(`${this.baseUrl}/process`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        file_name: fileName,
+        partition_method: method
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    }
+
+    return response.json();
+  }
+}
+
+// Usage
+const pipeline = new DocumentQualityPipeline('grlm_your_token');
+pipeline.assessAndOptimize('complex_document.pdf')
+  .then(result => {
+    if (result) {
+      console.log(`Best method: ${result.method} (score: ${result.score})`);
+    } else {
+      console.log('No processing method succeeded');
+    }
+  });
+```
+
+## Next Steps
+
+Now that you understand the Sources API, explore these related topics:
+
+<CardGroup cols={2}>
+  <Card
+    title="Data Ingestion Guide"
+    icon="file-lines"
+    href="/guides/data-ingestion"
+  >
+    Learn best practices for document processing and optimization
+  </Card>
+  
+  <Card
+    title="API Tokens"
+    icon="key"
+    href="/guides/api-tokens"
+  >
+    Set up authentication for accessing the Sources API
+  </Card>
+  
+  <Card
+    title="Chunking Guide"
+    icon="file-dashed-line"
+    href="/guides/chunking"
+  >
+    Optimize document segmentation after processing for better RAG performance
+  </Card>
+  
+  <Card
+    title="Flows API"
+    icon="diagram-project"
+    href="/api/flows/overview"
+  >
+    Build RAG pipelines using your processed documents
+  </Card>
+</CardGroup>
+
+## Support and Resources
+
+<AccordionGroup>
+  <Accordion icon="question-circle" title="Getting Help">
+    - **Documentation**: Complete API reference and guides
+    - **Email Support**: [lucas@graphorlm.com](mailto:lucas@graphorlm.com)
+    - **Dashboard**: Monitor and manage documents at [app.graphorlm.com](https://app.graphorlm.com)
+  </Accordion>
+  
+  <Accordion icon="code" title="Code Examples">
+    - **GitHub**: Sample integrations and SDKs (coming soon)
+    - **Documentation**: Code examples in multiple languages
+    - **Community**: Share integration patterns and best practices
+  </Accordion>
+  
+  <Accordion icon="chart-line" title="Monitoring & Analytics">
+    - **Processing Status**: Track document processing in real-time
+    - **Quality Metrics**: Evaluate extraction and processing quality
+    - **Usage Analytics**: Monitor API usage and performance
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,461 @@
+---
+title: 'Upload Source'
+description: 'Upload documents to your project via the GraphorLM REST API'
+---
+
+The Upload Source endpoint allows you to programmatically upload documents to your GraphorLM project using the REST API. This enables integration with external applications, automated workflows, and custom document ingestion pipelines.
+
+## Endpoint Overview
+
+<CardGroup cols={2}>
+  <Card title="HTTP Method" icon="arrow-up">
+    **POST**
+  </Card>
+  <Card title="Endpoint URL" icon="link">
+    **https://sources.graphorlm.com/upload**
+  </Card>
+</CardGroup>
+
+## Authentication
+
+This endpoint requires authentication using an API token. You must include your API token as a Bearer token in the Authorization header.
+
+<Note>
+  Learn how to create and manage API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | ✅ Yes |
+| `Content-Type` | `multipart/form-data` | ✅ Yes |
+
+### Request Body
+
+The request must be sent as `multipart/form-data` with the following field:
+
+| Field | Type | Description | Required |
+|-------|------|-------------|----------|
+| `file` | File | The document file to upload | ✅ Yes |
+
+### File Requirements
+
+<AccordionGroup>
+  <Accordion icon="file-text" title="Supported File Types">
+    GraphorLM supports a wide range of document formats:
+    
+    **Documents**: PDF, DOC, DOCX, ODT, TXT, TEXT, MD, HTML, HTM
+    
+    **Presentations**: PPT, PPTX
+    
+    **Spreadsheets**: CSV, TSV, XLS, XLSX
+    
+    **Images**: PNG, JPG, JPEG, TIFF, BMP, HEIC
+    
+    **Audio**: MP3, WAV, M4A, OGG, FLAC
+    
+    **Video**: MP4, MOV, AVI, MKV, WEBM
+  </Accordion>
+  
+  <Accordion icon="weight-scale" title="File Size Limits">
+    **Maximum file size**: 100MB per file
+    
+    For larger files, consider:
+    - Compressing the file if possible
+    - Splitting large documents into smaller sections
+    - Using file optimization tools before upload
+  </Accordion>
+  
+  <Accordion icon="file-signature" title="File Name Requirements">
+    - File must have a valid filename with extension
+    - Extension determines the processing method
+    - File names should be descriptive for easy identification
+  </Accordion>
+</AccordionGroup>
+
+## Response Format
+
+### Success Response (200 OK)
+
+```json
+{
+  "status": "New",
+  "message": "File document.pdf processed successfully",
+  "file_name": "document.pdf",
+  "file_size": 2048576,
+  "file_type": "pdf",
+  "file_source": "local file",
+  "project_id": "550e8400-e29b-41d4-a716-446655440000",
+  "project_name": "My Project",
+  "partition_method": "basic"
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | string | Processing status (`New`, `Processing`, `Completed`, `Failed`) |
+| `message` | string | Human-readable success message |
+| `file_name` | string | Name of the uploaded file |
+| `file_size` | integer | Size of the file in bytes |
+| `file_type` | string | File extension/type |
+| `file_source` | string | Source type (always "local file" for uploads) |
+| `project_id` | string | UUID of the target project |
+| `project_name` | string | Name of the target project |
+| `partition_method` | string | Document processing method used |
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+const uploadDocument = async (apiToken, filePath) => {
+  const formData = new FormData();
+  const fileStream = fs.createReadStream(filePath);
+  formData.append('file', fileStream);
+
+  const response = await fetch('https://sources.graphorlm.com/upload', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`
+    },
+    body: formData
+  });
+
+  if (response.ok) {
+    const result = await response.json();
+    console.log('Upload successful:', result);
+    return result;
+  } else {
+    throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+  }
+};
+
+// Usage
+uploadDocument('grlm_your_api_token_here', './document.pdf')
+  .then(result => console.log('Document uploaded:', result.file_name))
+  .catch(error => console.error('Error:', error));
+```
+
+### Python
+
+```python
+import requests
+
+def upload_document(api_token, file_path):
+    url = "https://sources.graphorlm.com/upload"
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}"
+    }
+    
+    with open(file_path, "rb") as file:
+        files = {"file": (file_path, file)}
+        
+        response = requests.post(url, headers=headers, files=files, timeout=300)
+        
+        if response.status_code == 200:
+            result = response.json()
+            print(f"Upload successful: {result['file_name']}")
+            return result
+        else:
+            response.raise_for_status()
+
+# Usage
+try:
+    result = upload_document("grlm_your_api_token_here", "document.pdf")
+    print(f"Document uploaded: {result['file_name']}")
+except requests.exceptions.RequestException as e:
+    print(f"Error uploading document: {e}")
+```
+
+### cURL
+
+```bash
+curl -X POST https://sources.graphorlm.com/upload \
+  -H "Authorization: Bearer grlm_your_api_token_here" \
+  -F "file=@document.pdf"
+```
+
+### PHP
+
+```php
+<?php
+function uploadDocument($apiToken, $filePath) {
+    $url = "https://sources.graphorlm.com/upload";
+    
+    $headers = [
+        "Authorization: Bearer " . $apiToken
+    ];
+    
+    $postData = [
+        'file' => new CURLFile($filePath)
+    ];
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 300);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode === 200) {
+        return json_decode($response, true);
+    } else {
+        throw new Exception("Upload failed with HTTP code: " . $httpCode);
+    }
+}
+
+// Usage
+try {
+    $result = uploadDocument("grlm_your_api_token_here", "document.pdf");
+    echo "Document uploaded: " . $result['file_name'] . "\n";
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+}
+?>
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Error Type | Description |
+|-------------|------------|-------------|
+| `400` | Bad Request | Invalid file type, missing filename, or malformed request |
+| `401` | Unauthorized | Invalid or missing API token |
+| `403` | Forbidden | Access denied to the specified project |
+| `404` | Not Found | Project not found |
+| `413` | Payload Too Large | File exceeds 100MB limit |
+| `500` | Internal Server Error | Server-side processing error |
+
+### Error Response Format
+
+```json
+{
+  "detail": "File type '.xyz' is not supported. Allowed types: .pdf, .md, .png, .jpg, ..."
+}
+```
+
+### Error Examples
+
+<AccordionGroup>
+  <Accordion icon="file-xmark" title="Unsupported File Type (400)">
+    ```json
+    {
+      "detail": "File type '.xyz' is not supported. Allowed types: .pdf, .md, .png, .jpg, .jpeg, .tiff, .bmp, .heic, .csv, .tsv, .xls, .xlsx, .odt, .ppt, .pptx, .doc, .docx, .html, .htm, .txt, .text, .mp3, .wav, .m4a, .ogg, .flac, .mp4, .mov, .avi, .mkv, .webm"
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="key" title="Invalid API Token (401)">
+    ```json
+    {
+      "detail": "Invalid authentication credentials"
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="weight-scale" title="File Too Large (413)">
+    ```json
+    {
+      "detail": "File size exceeds the maximum allowed limit of 100MB"
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Document Processing
+
+After a successful upload, GraphorLM automatically processes your document:
+
+### Processing Stages
+
+1. **Upload Complete** - File is securely stored in your project
+2. **Text Extraction** - Content is extracted using advanced OCR and parsing
+3. **Structure Recognition** - Document elements are identified and classified
+4. **Ready for Use** - Document is available for chunking and retrieval
+
+### Processing Methods
+
+The system automatically selects the optimal processing method based on file type:
+
+| File Type | Default Method | Description |
+|-----------|----------------|-------------|
+| PDF, Documents | Basic | Fast processing with heuristic classification |
+| Images | OCR | Optical character recognition for text extraction |
+| Text files | Basic | Direct text processing |
+| Spreadsheets | Basic | Table structure preservation |
+
+<Note>
+  You can reprocess documents with different methods using the [Process Source](/api/sources/process) endpoint after upload.
+</Note>
+
+## Best Practices
+
+### File Preparation
+
+- **Optimize file size**: Compress large files when possible while maintaining quality
+- **Use descriptive names**: Include relevant keywords in filenames for easy identification
+- **Check file integrity**: Ensure files are not corrupted before upload
+
+### Error Handling
+
+- **Implement retry logic**: Handle temporary network issues with exponential backoff
+- **Validate before upload**: Check file types and sizes client-side before making requests
+- **Monitor upload status**: Use the response to track processing progress
+
+### Security
+
+- **Protect API tokens**: Never expose tokens in client-side code or public repositories
+- **Use HTTPS only**: All API requests are automatically secured with TLS encryption
+- **Rotate tokens regularly**: Update API tokens periodically for enhanced security
+
+## Integration Examples
+
+### Batch Upload Script
+
+```python
+import os
+import requests
+from pathlib import Path
+
+def batch_upload_documents(api_token, directory_path):
+    """Upload all supported documents from a directory."""
+    supported_extensions = {'.pdf', '.doc', '.docx', '.txt', '.md', '.html'}
+    uploaded_files = []
+    failed_files = []
+    
+    for file_path in Path(directory_path).iterdir():
+        if file_path.suffix.lower() in supported_extensions:
+            try:
+                result = upload_document(api_token, str(file_path))
+                uploaded_files.append(result['file_name'])
+                print(f"✅ Uploaded: {file_path.name}")
+            except Exception as e:
+                failed_files.append((file_path.name, str(e)))
+                print(f"❌ Failed: {file_path.name} - {e}")
+    
+    print(f"\nSummary: {len(uploaded_files)} uploaded, {len(failed_files)} failed")
+    return uploaded_files, failed_files
+
+# Usage
+uploaded, failed = batch_upload_documents("grlm_your_token", "./documents/")
+```
+
+### Upload with Progress Tracking
+
+```javascript
+const uploadWithProgress = async (apiToken, file, onProgress) => {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const formData = new FormData();
+    formData.append('file', file);
+
+    xhr.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = (event.loaded / event.total) * 100;
+        onProgress(percentComplete);
+      }
+    });
+
+    xhr.addEventListener('load', () => {
+      if (xhr.status === 200) {
+        resolve(JSON.parse(xhr.responseText));
+      } else {
+        reject(new Error(`Upload failed: ${xhr.status}`));
+      }
+    });
+
+    xhr.addEventListener('error', () => reject(new Error('Upload failed')));
+
+    xhr.open('POST', 'https://sources.graphorlm.com/upload');
+    xhr.setRequestHeader('Authorization', `Bearer ${apiToken}`);
+    xhr.send(formData);
+  });
+};
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="clock" title="Upload timeouts">
+    **Causes**: Large files, slow connection, or server load
+    
+    **Solutions**:
+    - Increase request timeout (recommend 5+ minutes for large files)
+    - Retry failed uploads with exponential backoff
+    - Consider compressing large files before upload
+  </Accordion>
+  
+  <Accordion icon="file-xmark" title="File processing failures">
+    **Causes**: Corrupted files, unsupported formats, or complex layouts
+    
+    **Solutions**:
+    - Verify file integrity before upload
+    - Try converting to a more standard format
+    - Use the [Process Source](/api/sources/process) endpoint with different methods
+  </Accordion>
+  
+  <Accordion icon="key" title="Authentication issues">
+    **Causes**: Invalid tokens, expired tokens, or incorrect headers
+    
+    **Solutions**:
+    - Verify token format starts with "grlm_"
+    - Check token hasn't been revoked in the dashboard
+    - Ensure correct Authorization header format
+  </Accordion>
+  
+  <Accordion icon="network-wired" title="Network connectivity">
+    **Causes**: DNS issues, firewall restrictions, or network timeouts
+    
+    **Solutions**:
+    - Test connectivity to sources.graphorlm.com
+    - Check firewall allows outbound HTTPS traffic
+    - Use appropriate timeout values for your network
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After successfully uploading your documents:
+
+<CardGroup cols={2}>
+  <Card
+    title="Process Source"
+    icon="gears"
+    href="/api/sources/process"
+  >
+    Reprocess documents with different parsing methods for optimal results
+  </Card>
+  <Card
+    title="List Sources"
+    icon="list"
+    href="/api/sources/list"
+  >
+    Retrieve information about all uploaded documents in your project
+  </Card>
+  <Card
+    title="Chunking"
+    icon="file-dashed-line"
+    href="/guides/chunking"
+  >
+    Learn how to optimize document segmentation for your RAG pipeline
+  </Card>
+  <Card
+    title="Delete Source"
+    icon="trash"
+    href="/api/sources/delete"
+  >
+    Remove documents that are no longer needed from your project
+  </Card>
+</CardGroup>

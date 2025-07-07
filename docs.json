@@ -37,6 +37,21 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "API",
+        "groups": [
+          {
+            "group": "Sources",
+            "pages": [
+              "api/sources/overview",
+              "api/sources/upload",
+              "api/sources/process",
+              "api/sources/list",
+              "api/sources/delete"
+            ]
+          }
+        ]
       }
     ],
     "global": {

@@ -1,0 +1,889 @@
+---
+title: 'Delete Source'
+description: 'Remove documents from your project via the GraphorLM REST API'
+---
+
+The Delete Source endpoint allows you to permanently remove documents from your GraphorLM project using the REST API. This endpoint provides a secure way to clean up your document collection, automatically updating related flows and removing all associated data including partition nodes and metadata.
+
+## Endpoint Overview
+
+<CardGroup cols={2}>
+  <Card title="HTTP Method" icon="trash">
+    **DELETE**
+  </Card>
+  <Card title="Endpoint URL" icon="link">
+    **https://sources.graphorlm.com/delete**
+  </Card>
+</CardGroup>
+
+## Authentication
+
+This endpoint requires authentication using an API token. You must include your API token as a Bearer token in the Authorization header.
+
+<Note>
+  Learn how to create and manage API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | ✅ Yes |
+| `Content-Type` | `application/json` | ✅ Yes |
+
+### Request Body
+
+The request must be sent as JSON with the following field:
+
+| Field | Type | Description | Required |
+|-------|------|-------------|----------|
+| `file_name` | string | Name of the file to delete (case-sensitive) | ✅ Yes |
+
+### Important Considerations
+
+<AccordionGroup>
+  <Accordion icon="warning" title="Permanent Deletion">
+    **Warning**: This operation is irreversible
+    
+    - All document content and metadata will be permanently removed
+    - Associated partition nodes and embeddings will be deleted
+    - Flows using this document will be automatically updated
+    - No backup or recovery options are available
+  </Accordion>
+  
+  <Accordion icon="file-text" title="File Name Requirements">
+    **Exact match required**
+    
+    - File names are case-sensitive
+    - Must match the exact name from upload or list endpoints
+    - Include the full filename with extension
+    - Use the [List Sources](/api/sources/list) endpoint to verify file names
+  </Accordion>
+  
+  <Accordion icon="flow-chart" title="Flow Impact">
+    **Automatic flow updates**
+    
+    - Dataset nodes using this document will be updated automatically
+    - Successor nodes in affected flows will be marked as outdated
+    - Flow execution may be impacted until nodes are reconfigured
+    - Multiple flows can be affected by a single deletion
+  </Accordion>
+</AccordionGroup>
+
+## Request Example
+
+```json
+{
+  "file_name": "document.pdf"
+}
+```
+
+## Response Format
+
+### Success Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "message": "Source deleted successfully",
+  "file_name": "document.pdf",
+  "project_id": "550e8400-e29b-41d4-a716-446655440000",
+  "project_name": "My Project"
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | string | Deletion result (typically "success") |
+| `message` | string | Human-readable confirmation message |
+| `file_name` | string | Name of the deleted file |
+| `project_id` | string | UUID of the project the file was removed from |
+| `project_name` | string | Name of the project |
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+const deleteDocument = async (apiToken, fileName) => {
+  const response = await fetch('https://sources.graphorlm.com/delete', {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      file_name: fileName
+    })
+  });
+
+  if (response.ok) {
+    const result = await response.json();
+    console.log('Deletion successful:', result);
+    return result;
+  } else {
+    const error = await response.text();
+    throw new Error(`Deletion failed: ${response.status} ${error}`);
+  }
+};
+
+// Usage
+deleteDocument('grlm_your_api_token_here', 'document.pdf')
+  .then(result => console.log('Document deleted:', result.file_name))
+  .catch(error => console.error('Error:', error));
+```
+
+### Python
+
+```python
+import requests
+import json
+
+def delete_document(api_token, file_name):
+    url = "https://sources.graphorlm.com/delete"
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "file_name": file_name
+    }
+    
+    response = requests.delete(
+        url, 
+        headers=headers, 
+        json=payload, 
+        timeout=60
+    )
+    
+    if response.status_code == 200:
+        result = response.json()
+        print(f"Deletion successful: {result['file_name']}")
+        return result
+    else:
+        response.raise_for_status()
+
+# Usage - with confirmation prompt for safety
+def safe_delete_document(api_token, file_name):
+    """Delete document with confirmation prompt for safety."""
+    print(f"⚠️  WARNING: This will permanently delete '{file_name}'")
+    confirmation = input("Type 'DELETE' to confirm: ")
+    
+    if confirmation == 'DELETE':
+        try:
+            result = delete_document(api_token, file_name)
+            print(f"✅ Document '{file_name}' deleted successfully")
+            return result
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Error deleting document: {e}")
+            raise
+    else:
+        print("❌ Deletion cancelled")
+        return None
+
+# Usage
+try:
+    result = safe_delete_document("grlm_your_api_token_here", "document.pdf")
+except requests.exceptions.RequestException as e:
+    print(f"Error: {e}")
+```
+
+### cURL
+
+```bash
+curl -X DELETE https://sources.graphorlm.com/delete \
+  -H "Authorization: Bearer grlm_your_api_token_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "file_name": "document.pdf"
+  }'
+```
+
+### PHP
+
+```php
+<?php
+function deleteDocument($apiToken, $fileName) {
+    $url = "https://sources.graphorlm.com/delete";
+    
+    $headers = [
+        "Authorization: Bearer " . $apiToken,
+        "Content-Type: application/json"
+    ];
+    
+    $payload = json_encode([
+        'file_name' => $fileName
+    ]);
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode === 200) {
+        return json_decode($response, true);
+    } else {
+        throw new Exception("Deletion failed with HTTP code: " . $httpCode);
+    }
+}
+
+// Safe deletion function with confirmation
+function safeDeleteDocument($apiToken, $fileName) {
+    echo "⚠️  WARNING: This will permanently delete '$fileName'\n";
+    echo "Type 'DELETE' to confirm: ";
+    $confirmation = trim(fgets(STDIN));
+    
+    if ($confirmation === 'DELETE') {
+        try {
+            $result = deleteDocument($apiToken, $fileName);
+            echo "✅ Document '$fileName' deleted successfully\n";
+            return $result;
+        } catch (Exception $e) {
+            echo "❌ Error: " . $e->getMessage() . "\n";
+            throw $e;
+        }
+    } else {
+        echo "❌ Deletion cancelled\n";
+        return null;
+    }
+}
+
+// Usage
+try {
+    $result = safeDeleteDocument("grlm_your_api_token_here", "document.pdf");
+    if ($result) {
+        echo "Project: " . $result['project_name'] . "\n";
+        echo "Status: " . $result['status'] . "\n";
+    }
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+}
+?>
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Error Type | Description |
+|-------------|------------|-------------|
+| `400` | Bad Request | Invalid request format or missing file name |
+| `401` | Unauthorized | Invalid or missing API token |
+| `403` | Forbidden | Access denied to the specified project |
+| `404` | Not Found | File not found in the project |
+| `500` | Internal Server Error | Server-side error during deletion |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Source not found"
+}
+```
+
+### Error Examples
+
+<AccordionGroup>
+  <Accordion icon="file-xmark" title="File Not Found (404)">
+    ```json
+    {
+      "detail": "Source not found"
+    }
+    ```
+    
+    **Cause**: The specified file doesn't exist in your project
+    
+    **Solutions**:
+    - Verify the exact file name (case-sensitive)
+    - Use the [List Sources](/api/sources/list) endpoint to check available files
+    - Ensure the file wasn't already deleted
+  </Accordion>
+  
+  <Accordion icon="key" title="Invalid API Token (401)">
+    ```json
+    {
+      "detail": "Invalid authentication credentials"
+    }
+    ```
+    
+    **Cause**: API token is invalid, expired, or malformed
+    
+    **Solutions**:
+    - Check your API token format (should start with "grlm_")
+    - Verify the token hasn't been revoked in the dashboard
+    - Ensure correct Authorization header format
+  </Accordion>
+  
+  <Accordion icon="lock" title="Access Denied (403)">
+    ```json
+    {
+      "detail": "Permission denied"
+    }
+    ```
+    
+    **Cause**: Insufficient permissions or API token doesn't have access
+    
+    **Solutions**:
+    - Verify you're using the correct API token for this project
+    - Check that you have delete permissions
+    - Contact your project administrator
+  </Accordion>
+  
+  <Accordion icon="ban" title="Invalid Request (400)">
+    ```json
+    {
+      "detail": "Invalid input: file_name is required"
+    }
+    ```
+    
+    **Cause**: Missing or invalid file name in request body
+    
+    **Solutions**:
+    - Ensure `file_name` field is included in JSON body
+    - Verify the file name is not empty
+    - Check JSON format is valid
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+### Pre-Deletion Verification
+
+<AccordionGroup>
+  <Accordion icon="list-check" title="Always verify before deletion">
+    ```python
+    def verify_and_delete(api_token, file_name):
+        # 1. List available sources first
+        sources = list_sources(api_token)
+        available_files = [s['file_name'] for s in sources]
+        
+        if file_name not in available_files:
+            print(f"❌ File '{file_name}' not found in project")
+            print(f"Available files: {available_files}")
+            return None
+        
+        # 2. Show file info before deletion
+        file_info = next(s for s in sources if s['file_name'] == file_name)
+        print(f"File to delete: {file_info['file_name']}")
+        print(f"Size: {file_info['file_size']} bytes")
+        print(f"Type: {file_info['file_type']}")
+        print(f"Status: {file_info['status']}")
+        
+        # 3. Confirm deletion
+        confirm = input("Proceed with deletion? (yes/no): ")
+        if confirm.lower() == 'yes':
+            return delete_document(api_token, file_name)
+        else:
+            print("Deletion cancelled")
+            return None
+    ```
+  </Accordion>
+  
+  <Accordion icon="clock" title="Check for active processing">
+    Before deleting documents that are currently processing:
+    
+    - Wait for processing to complete when possible
+    - Processing documents may be in an inconsistent state
+    - Consider the impact on any dependent workflows
+    - Monitor processing status using the [List Sources](/api/sources/list) endpoint
+  </Accordion>
+  
+  <Accordion icon="flow-chart" title="Review flow dependencies">
+    Before deletion, consider:
+    
+    - Which flows use this document
+    - Impact on downstream processing
+    - Whether alternative documents can serve the same purpose
+    - Need to reconfigure affected flows after deletion
+  </Accordion>
+</AccordionGroup>
+
+### Safety Measures
+
+- **Implement confirmation prompts** in interactive applications
+- **Log all deletion operations** for audit trails
+- **Use descriptive variable names** to avoid accidental deletions
+- **Test with non-production data** when implementing deletion features
+- **Consider soft deletion** patterns for critical applications
+
+### Error Handling
+
+- **Implement retry logic** for transient network errors (not for 404/403 errors)
+- **Validate file names** before making deletion requests
+- **Handle batch operations** carefully to avoid partial failures
+- **Provide clear error messages** to end users
+
+## Integration Examples
+
+### Batch Deletion with Safety Checks
+
+```python
+import requests
+import time
+from typing import List, Dict
+
+def safe_batch_delete(api_token: str, file_names: List[str], 
+                     confirm_each: bool = True) -> Dict:
+    """Safely delete multiple files with comprehensive checks."""
+    
+    # First, get current sources to validate all files exist
+    print("🔍 Verifying files exist before deletion...")
+    try:
+        sources_response = requests.get(
+            "https://sources.graphorlm.com",
+            headers={"Authorization": f"Bearer {api_token}"},
+            timeout=30
+        )
+        sources = sources_response.json() if sources_response.status_code == 200 else []
+        available_files = {s['file_name']: s for s in sources}
+    except Exception as e:
+        print(f"❌ Error fetching source list: {e}")
+        return {"error": "Could not verify file existence"}
+    
+    # Validate all files exist
+    missing_files = [f for f in file_names if f not in available_files]
+    if missing_files:
+        print(f"❌ Files not found: {missing_files}")
+        return {"error": f"Missing files: {missing_files}"}
+    
+    print(f"✅ All {len(file_names)} files found in project")
+    
+    # Show summary
+    total_size = sum(available_files[f]['file_size'] for f in file_names)
+    print(f"\n📋 Deletion Summary:")
+    print(f"  Files to delete: {len(file_names)}")
+    print(f"  Total size: {total_size:,} bytes")
+    
+    for file_name in file_names:
+        file_info = available_files[file_name]
+        print(f"  - {file_name} ({file_info['file_type']}, {file_info['status']})")
+    
+    # Global confirmation
+    if confirm_each:
+        confirm = input(f"\n⚠️  Delete {len(file_names)} files permanently? (type 'DELETE'): ")
+        if confirm != 'DELETE':
+            print("❌ Batch deletion cancelled")
+            return {"cancelled": True}
+    
+    # Perform deletions
+    results = {"successful": [], "failed": []}
+    
+    for i, file_name in enumerate(file_names, 1):
+        print(f"\n[{i}/{len(file_names)}] Deleting {file_name}...")
+        
+        try:
+            response = requests.delete(
+                "https://sources.graphorlm.com/delete",
+                headers={
+                    "Authorization": f"Bearer {api_token}",
+                    "Content-Type": "application/json"
+                },
+                json={"file_name": file_name},
+                timeout=60
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                results["successful"].append({
+                    "file_name": file_name,
+                    "result": result
+                })
+                print(f"  ✅ Deleted successfully")
+            else:
+                error_detail = response.text
+                results["failed"].append({
+                    "file_name": file_name,
+                    "error": f"HTTP {response.status_code}: {error_detail}"
+                })
+                print(f"  ❌ Failed: {error_detail}")
+                
+        except Exception as e:
+            results["failed"].append({
+                "file_name": file_name,
+                "error": str(e)
+            })
+            print(f"  ❌ Error: {e}")
+        
+        # Small delay between deletions
+        if i < len(file_names):
+            time.sleep(0.5)
+    
+    # Final summary
+    print(f"\n🏁 Batch deletion complete:")
+    print(f"  ✅ Successful: {len(results['successful'])}")
+    print(f"  ❌ Failed: {len(results['failed'])}")
+    
+    return results
+
+# Usage
+files_to_delete = ["old_document.pdf", "temp_file.txt", "archive.docx"]
+results = safe_batch_delete("grlm_your_token", files_to_delete)
+```
+
+### Project Cleanup Tool
+
+```javascript
+class ProjectCleanupTool {
+  constructor(apiToken) {
+    this.apiToken = apiToken;
+    this.baseUrl = 'https://sources.graphorlm.com';
+  }
+
+  async getSourcesByStatus(status = null) {
+    const response = await fetch(this.baseUrl, {
+      headers: { 'Authorization': `Bearer ${this.apiToken}` }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch sources: ${response.status}`);
+    }
+    
+    const sources = await response.json();
+    return status ? sources.filter(s => s.status === status) : sources;
+  }
+
+  async deleteSource(fileName) {
+    const response = await fetch(`${this.baseUrl}/delete`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${this.apiToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ file_name: fileName })
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Deletion failed: ${response.status} ${error}`);
+    }
+
+    return response.json();
+  }
+
+  async cleanupFailedSources(interactive = true) {
+    console.log('🔍 Finding failed sources...');
+    
+    const failedSources = await this.getSourcesByStatus('Failed');
+    
+    if (failedSources.length === 0) {
+      console.log('✅ No failed sources found');
+      return { deleted: 0, skipped: 0 };
+    }
+
+    console.log(`📋 Found ${failedSources.length} failed sources:`);
+    failedSources.forEach((source, i) => {
+      console.log(`  ${i + 1}. ${source.file_name} (${source.file_type})`);
+    });
+
+    if (interactive) {
+      const readline = require('readline').createInterface({
+        input: process.stdin,
+        output: process.stdout
+      });
+
+      const answer = await new Promise(resolve => {
+        readline.question(`\n⚠️  Delete all ${failedSources.length} failed sources? (yes/no): `, resolve);
+      });
+      
+      readline.close();
+
+      if (answer.toLowerCase() !== 'yes') {
+        console.log('❌ Cleanup cancelled');
+        return { deleted: 0, skipped: failedSources.length };
+      }
+    }
+
+    // Delete failed sources
+    let deleted = 0;
+    for (const source of failedSources) {
+      try {
+        await this.deleteSource(source.file_name);
+        console.log(`✅ Deleted: ${source.file_name}`);
+        deleted++;
+        
+        // Small delay between deletions
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error) {
+        console.log(`❌ Failed to delete ${source.file_name}: ${error.message}`);
+      }
+    }
+
+    console.log(`\n🏁 Cleanup complete: ${deleted} sources deleted`);
+    return { deleted, skipped: failedSources.length - deleted };
+  }
+
+  async cleanupOldSources(daysOld = 30, fileTypes = []) {
+    console.log(`🔍 Finding sources older than ${daysOld} days...`);
+    
+    const allSources = await this.getSourcesByStatus();
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+
+    const oldSources = allSources.filter(source => {
+      const createdAt = new Date(source.created_at || 0);
+      const matchesAge = createdAt < cutoffDate;
+      const matchesType = fileTypes.length === 0 || fileTypes.includes(source.file_type);
+      return matchesAge && matchesType;
+    });
+
+    if (oldSources.length === 0) {
+      console.log(`✅ No sources older than ${daysOld} days found`);
+      return { deleted: 0 };
+    }
+
+    console.log(`📋 Found ${oldSources.length} old sources`);
+    // Implementation continues...
+  }
+}
+
+// Usage
+const cleanup = new ProjectCleanupTool('grlm_your_token');
+
+// Clean up failed sources
+cleanup.cleanupFailedSources()
+  .then(result => console.log('Cleanup result:', result))
+  .catch(error => console.error('Cleanup error:', error));
+```
+
+### File Lifecycle Management
+
+```python
+from datetime import datetime, timedelta
+from typing import List, Dict, Optional
+import requests
+
+class DocumentLifecycleManager:
+    def __init__(self, api_token: str):
+        self.api_token = api_token
+        self.base_url = "https://sources.graphorlm.com"
+    
+    def get_headers(self):
+        return {
+            "Authorization": f"Bearer {self.api_token}",
+            "Content-Type": "application/json"
+        }
+    
+    def list_sources(self) -> List[Dict]:
+        response = requests.get(self.base_url, headers=self.get_headers())
+        response.raise_for_status()
+        return response.json()
+    
+    def delete_source(self, file_name: str) -> Dict:
+        response = requests.delete(
+            f"{self.base_url}/delete",
+            headers=self.get_headers(),
+            json={"file_name": file_name}
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def archive_by_criteria(self, 
+                          max_age_days: Optional[int] = None,
+                          file_types: Optional[List[str]] = None,
+                          min_file_size: Optional[int] = None,
+                          max_file_size: Optional[int] = None,
+                          status_filter: Optional[str] = None,
+                          dry_run: bool = True) -> Dict:
+        """
+        Archive (delete) sources based on multiple criteria.
+        """
+        
+        print("🔍 Analyzing sources for archival...")
+        sources = self.list_sources()
+        
+        candidates = []
+        
+        for source in sources:
+            # Age check
+            if max_age_days:
+                # Note: This would need actual creation date from source
+                # For demo purposes, we'll skip this check
+                pass
+            
+            # File type check
+            if file_types and source['file_type'] not in file_types:
+                continue
+            
+            # Size checks
+            size = source['file_size']
+            if min_file_size and size < min_file_size:
+                continue
+            if max_file_size and size > max_file_size:
+                continue
+            
+            # Status check
+            if status_filter and source['status'] != status_filter:
+                continue
+            
+            candidates.append(source)
+        
+        print(f"📋 Found {len(candidates)} sources matching criteria:")
+        
+        total_size = 0
+        for source in candidates:
+            size = source['file_size']
+            total_size += size
+            size_mb = size / (1024 * 1024)
+            print(f"  - {source['file_name']} ({source['file_type']}, {size_mb:.1f}MB, {source['status']})")
+        
+        total_size_mb = total_size / (1024 * 1024)
+        print(f"\nTotal size to be freed: {total_size_mb:.1f}MB")
+        
+        if dry_run:
+            print("\n🔬 DRY RUN - No files will be deleted")
+            return {
+                "dry_run": True,
+                "candidates": len(candidates),
+                "total_size_mb": total_size_mb
+            }
+        
+        # Confirm deletion
+        confirm = input(f"\n⚠️  Delete {len(candidates)} sources? (type 'DELETE'): ")
+        if confirm != 'DELETE':
+            print("❌ Archival cancelled")
+            return {"cancelled": True}
+        
+        # Perform deletions
+        deleted = []
+        failed = []
+        
+        for source in candidates:
+            try:
+                result = self.delete_source(source['file_name'])
+                deleted.append(source['file_name'])
+                print(f"✅ Archived: {source['file_name']}")
+            except Exception as e:
+                failed.append({"file_name": source['file_name'], "error": str(e)})
+                print(f"❌ Failed: {source['file_name']} - {e}")
+        
+        return {
+            "deleted": deleted,
+            "failed": failed,
+            "total_deleted": len(deleted),
+            "total_failed": len(failed),
+            "size_freed_mb": sum(s['file_size'] for s in candidates if s['file_name'] in deleted) / (1024 * 1024)
+        }
+
+# Usage examples
+manager = DocumentLifecycleManager("grlm_your_token")
+
+# Archive large files over 50MB
+result = manager.archive_by_criteria(
+    min_file_size=50 * 1024 * 1024,  # 50MB
+    dry_run=True  # Check what would be deleted first
+)
+
+# Archive failed documents
+result = manager.archive_by_criteria(
+    status_filter="Failed",
+    dry_run=False
+)
+
+# Archive specific file types
+result = manager.archive_by_criteria(
+    file_types=["tmp", "temp", "test"],
+    dry_run=True
+)
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="file-xmark" title="File not found errors">
+    **Causes**: File doesn't exist, wrong name, or already deleted
+    
+    **Solutions**:
+    - Use [List Sources](/api/sources/list) to verify exact file names
+    - Check for case sensitivity (file names are case-sensitive)
+    - Verify you're using the correct project/API token
+    - Consider that the file may have been deleted by another process
+  </Accordion>
+  
+  <Accordion icon="key" title="Authentication failures">
+    **Causes**: Invalid token, token revoked, or wrong project access
+    
+    **Solutions**:
+    - Verify API token format (should start with "grlm_")
+    - Check token status in the GraphorLM dashboard
+    - Ensure token has delete permissions for the project
+    - Try regenerating the API token if needed
+  </Accordion>
+  
+  <Accordion icon="clock" title="Deletion timeouts">
+    **Causes**: Large files, complex cleanup operations, or server load
+    
+    **Solutions**:
+    - Increase request timeout (60+ seconds recommended)
+    - Retry the operation after a short delay
+    - Contact support for persistent timeout issues
+    - Consider deleting files during off-peak hours
+  </Accordion>
+  
+  <Accordion icon="flow-chart" title="Flow synchronization issues">
+    **Causes**: Flows updating asynchronously after deletion
+    
+    **Solutions**:
+    - Allow time for flow updates to propagate
+    - Refresh flow data in your application
+    - Reconfigure affected flows manually if needed
+    - Monitor flow status after bulk deletions
+  </Accordion>
+  
+  <Accordion icon="network-wired" title="Network connectivity">
+    **Causes**: DNS issues, firewall restrictions, or network timeouts
+    
+    **Solutions**:
+    - Test connectivity to sources.graphorlm.com
+    - Check firewall allows outbound HTTPS traffic
+    - Verify DNS resolution is working
+    - Try from a different network if issues persist
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After successfully deleting your documents:
+
+<CardGroup cols={2}>
+  <Card
+    title="List Sources"
+    icon="list"
+    href="/api/sources/list"
+  >
+    Verify the deletion and view remaining documents in your project
+  </Card>
+  <Card
+    title="Upload Source"
+    icon="arrow-up-from-bracket"
+    href="/api/sources/upload"
+  >
+    Add new documents to replace the deleted ones
+  </Card>
+  <Card
+    title="Process Source"
+    icon="gears"
+    href="/api/sources/process"
+  >
+    Reprocess remaining documents with different methods
+  </Card>
+  <Card
+    title="Data Ingestion Guide"
+    icon="file-lines"
+    href="/guides/data-ingestion"
+  >
+    Learn best practices for managing your document collection
+  </Card>
+</CardGroup>
