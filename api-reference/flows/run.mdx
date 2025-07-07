@@ -1,0 +1,606 @@
+---
+title: 'Run Flow'
+description: 'Execute deployed flows via the GraphorLM REST API'
+---
+
+Execute deployed flows in your GraphorLM project to process queries and generate responses through your configured RAG pipeline.
+
+## Overview
+
+The Run Flow endpoint allows you to execute deployed flows by sending queries and receiving processed results. Each flow represents a complete RAG pipeline that can include document retrieval, LLM processing, and custom logic.
+
+- **Method**: `POST`
+- **URL**: `https://{flow_name}.flows.graphorlm.com`
+- **Authentication**: Required (API Token)
+
+## Authentication
+
+All requests must include a valid API token in the Authorization header:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+| `Content-Type` | `application/json` | Yes |
+
+### Request Body
+
+The request body should be a JSON object with the following optional fields:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `query` | string | No | The query or question to process through the flow |
+| `page` | integer | No | Page number for paginated results (default: 1) |
+| `page_size` | integer | No | Number of items per page for results |
+
+### Example Request
+
+```json
+{
+  "query": "What are the key features of attention mechanisms in transformers?",
+  "page": 1,
+  "page_size": 10
+}
+```
+
+## Response Format
+
+### Success Response (200 OK)
+
+The response contains processed results from your flow execution with pagination information:
+
+```json
+{
+  "items": [
+    {
+      "page_content": "Attention mechanisms allow models to focus on relevant parts of the input...",
+      "metadata": {
+        "source": "attention_paper.pdf",
+        "page": 3,
+        "chunk_id": "chunk_123",
+        "relevance_score": 0.95
+      }
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "page_size": 10,
+  "total_pages": 1
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `items` | array | Array of result documents with content and metadata |
+| `total` | integer | Total number of results found |
+| `page` | integer | Current page number |
+| `page_size` | integer | Number of items per page |
+| `total_pages` | integer | Total number of pages available |
+
+### Document Object Structure
+
+Each item in the `items` array contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `page_content` | string | The main content or answer from the document |
+| `metadata` | object | Additional information about the document |
+
+Common metadata fields include:
+- `source`: Source file or document name
+- `page`: Page number in the original document
+- `chunk_id`: Unique identifier for the text chunk
+- `relevance_score`: Relevance score for the query (if available)
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+async function runFlow(flowName, query) {
+  const response = await fetch(`https://${flowName}.flows.graphorlm.com`, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer YOUR_API_TOKEN',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query: query,
+      page: 1,
+      page_size: 10
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+// Usage
+runFlow('my-rag-pipeline', 'What is machine learning?')
+  .then(result => {
+    console.log('Flow Results:', result);
+    result.items.forEach(item => {
+      console.log('Content:', item.page_content);
+      console.log('Source:', item.metadata.source);
+    });
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+### Python
+
+```python
+import requests
+import json
+
+def run_flow(flow_name, query, api_token, page=1, page_size=10):
+    url = f"https://{flow_name}.flows.graphorlm.com"
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "query": query,
+        "page": page,
+        "page_size": page_size
+    }
+    
+    response = requests.post(url, headers=headers, json=payload)
+    response.raise_for_status()
+    
+    return response.json()
+
+# Usage
+try:
+    result = run_flow(
+        flow_name="my-rag-pipeline",
+        query="What is machine learning?",
+        api_token="YOUR_API_TOKEN"
+    )
+    
+    print(f"Found {result['total']} results")
+    for item in result['items']:
+        print(f"Content: {item['page_content']}")
+        print(f"Source: {item['metadata'].get('source', 'Unknown')}")
+        print("---")
+        
+except requests.exceptions.HTTPError as e:
+    print(f"Error: {e}")
+```
+
+### cURL
+
+```bash
+curl -X POST https://my-rag-pipeline.flows.graphorlm.com \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "What is machine learning?",
+    "page": 1,
+    "page_size": 10
+  }'
+```
+
+### PHP
+
+```php
+<?php
+function runFlow($flowName, $query, $apiToken, $page = 1, $pageSize = 10) {
+    $url = "https://{$flowName}.flows.graphorlm.com";
+    
+    $data = [
+        'query' => $query,
+        'page' => $page,
+        'page_size' => $pageSize
+    ];
+    
+    $options = [
+        'http' => [
+            'header' => [
+                "Authorization: Bearer {$apiToken}",
+                "Content-Type: application/json"
+            ],
+            'method' => 'POST',
+            'content' => json_encode($data)
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    
+    if ($result === FALSE) {
+        throw new Exception('Failed to execute flow');
+    }
+    
+    return json_decode($result, true);
+}
+
+// Usage
+try {
+    $result = runFlow(
+        'my-rag-pipeline',
+        'What is machine learning?',
+        'YOUR_API_TOKEN'
+    );
+    
+    echo "Found {$result['total']} results\n";
+    foreach ($result['items'] as $item) {
+        echo "Content: {$item['page_content']}\n";
+        echo "Source: " . ($item['metadata']['source'] ?? 'Unknown') . "\n";
+        echo "---\n";
+    }
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+}
+?>
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Description | Example Response |
+|-------------|-------------|------------------|
+| 400 | Bad Request - Invalid query parameters | `{"detail": "Invalid request format"}` |
+| 401 | Unauthorized - Invalid or missing API token | `{"detail": "Invalid authentication credentials"}` |
+| 404 | Not Found - Flow not found or not deployed | `{"detail": "Flow not found"}` |
+| 500 | Internal Server Error - Flow execution failed | `{"detail": "Error running flow: execution failed"}` |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+### Example Error Responses
+
+#### Invalid API Token
+```json
+{
+  "detail": "Invalid authentication credentials"
+}
+```
+
+#### Flow Not Found
+```json
+{
+  "detail": "Flow not found"
+}
+```
+
+#### Flow Not Deployed
+```json
+{
+  "detail": "No deployed revision found for flow my-rag-pipeline"
+}
+```
+
+#### Flow Execution Error
+```json
+{
+  "detail": "Error running flow: execution failed"
+}
+```
+
+## Flow Requirements
+
+Before you can execute a flow, ensure:
+
+1. **Flow is Deployed**: The flow must have a deployed revision
+2. **Valid Configuration**: All flow components must be properly configured
+3. **Source Documents**: Required documents must be uploaded and processed
+4. **API Access**: Your API token must have access to the project
+
+<Note>
+Use the [Deploy Flow endpoint](/api-reference/flows/deploy) to deploy your flow before execution.
+</Note>
+
+## Pagination
+
+The Run Flow endpoint supports pagination for large result sets:
+
+### Request Pagination Parameters
+
+```json
+{
+  "query": "your query here",
+  "page": 2,
+  "page_size": 20
+}
+```
+
+### Response Pagination Information
+
+```json
+{
+  "items": [...],
+  "total": 156,
+  "page": 2,
+  "page_size": 20,
+  "total_pages": 8
+}
+```
+
+### Pagination Best Practices
+
+- Use reasonable page sizes (10-50 items)
+- Handle empty result sets gracefully
+- Implement proper navigation between pages
+- Cache results when appropriate
+
+## Integration Examples
+
+### Complete RAG Query System
+
+```javascript
+class GraphorLMClient {
+  constructor(flowName, apiToken) {
+    this.flowName = flowName;
+    this.apiToken = apiToken;
+    this.baseUrl = `https://${flowName}.flows.graphorlm.com`;
+  }
+
+  async query(question, options = {}) {
+    const {
+      page = 1,
+      pageSize = 10,
+      includeMetadata = true
+    } = options;
+
+    try {
+      const response = await fetch(this.baseUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: question,
+          page,
+          page_size: pageSize
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Flow execution failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      return {
+        answer: this.extractMainAnswer(result),
+        sources: this.extractSources(result),
+        pagination: {
+          total: result.total,
+          page: result.page,
+          totalPages: result.total_pages
+        },
+        metadata: includeMetadata ? result : null
+      };
+    } catch (error) {
+      console.error('Query failed:', error);
+      throw error;
+    }
+  }
+
+  extractMainAnswer(result) {
+    // Extract the primary answer from the first result
+    return result.items[0]?.page_content || 'No answer found';
+  }
+
+  extractSources(result) {
+    // Extract unique sources from all results
+    const sources = new Set();
+    result.items.forEach(item => {
+      if (item.metadata?.source) {
+        sources.add(item.metadata.source);
+      }
+    });
+    return Array.from(sources);
+  }
+}
+
+// Usage
+const client = new GraphorLMClient('my-rag-pipeline', 'YOUR_API_TOKEN');
+
+client.query('What are the benefits of using transformers?')
+  .then(result => {
+    console.log('Answer:', result.answer);
+    console.log('Sources:', result.sources);
+    console.log('Total Results:', result.pagination.total);
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+### Batch Query Processing
+
+```python
+import asyncio
+import aiohttp
+import json
+from typing import List, Dict, Any
+
+class FlowExecutor:
+    def __init__(self, flow_name: str, api_token: str):
+        self.flow_name = flow_name
+        self.api_token = api_token
+        self.url = f"https://{flow_name}.flows.graphorlm.com"
+        
+    async def execute_single_query(self, session: aiohttp.ClientSession, query: str) -> Dict[str, Any]:
+        headers = {
+            "Authorization": f"Bearer {self.api_token}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "query": query,
+            "page": 1,
+            "page_size": 5
+        }
+        
+        async with session.post(self.url, headers=headers, json=payload) as response:
+            if response.status == 200:
+                return {
+                    "query": query,
+                    "status": "success",
+                    "result": await response.json()
+                }
+            else:
+                error_text = await response.text()
+                return {
+                    "query": query,
+                    "status": "error",
+                    "error": error_text
+                }
+    
+    async def execute_batch_queries(self, queries: List[str]) -> List[Dict[str, Any]]:
+        async with aiohttp.ClientSession() as session:
+            tasks = [
+                self.execute_single_query(session, query) 
+                for query in queries
+            ]
+            return await asyncio.gather(*tasks, return_exceptions=True)
+
+# Usage
+async def main():
+    executor = FlowExecutor("my-rag-pipeline", "YOUR_API_TOKEN")
+    
+    queries = [
+        "What is machine learning?",
+        "How do neural networks work?",
+        "What are the applications of AI?",
+        "Explain deep learning concepts"
+    ]
+    
+    results = await executor.execute_batch_queries(queries)
+    
+    for result in results:
+        if isinstance(result, dict) and result["status"] == "success":
+            print(f"Query: {result['query']}")
+            print(f"Results: {len(result['result']['items'])}")
+            print("---")
+        else:
+            print(f"Failed query: {result}")
+
+# Run the batch processing
+# asyncio.run(main())
+```
+
+## Best Practices
+
+### Query Optimization
+- **Be Specific**: More specific queries yield better results
+- **Use Context**: Include relevant context in your queries
+- **Test Different Phrasings**: Try variations of your questions
+
+### Performance
+- **Use Pagination**: Don't request all results at once
+- **Cache Results**: Cache responses for repeated queries
+- **Batch Processing**: Use async/parallel processing for multiple queries
+
+### Error Handling
+- **Implement Retries**: Add retry logic for transient failures
+- **Validate Responses**: Check response structure before processing
+- **Log Errors**: Keep detailed logs for debugging
+
+### Security
+- **Protect API Tokens**: Never expose tokens in client-side code
+- **Use HTTPS**: Always use secure connections
+- **Rate Limiting**: Implement client-side rate limiting
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="exclamation-triangle" title="Flow Not Found Error">
+    **Solution**: Verify that:
+    - The flow name in the URL is correct
+    - The flow exists in your project
+    - Your API token has access to the correct project
+  </Accordion>
+  
+  <Accordion icon="ban" title="No Deployed Revision Error">
+    **Solution**: Deploy your flow before execution:
+    - Use the [Deploy Flow endpoint](/api-reference/flows/deploy)
+    - Ensure all flow components are properly configured
+    - Check that deployment completed successfully
+  </Accordion>
+  
+  <Accordion icon="clock" title="Flow Execution Timeout">
+    **Solution**: For slow-performing flows:
+    - Optimize your flow configuration
+    - Reduce the complexity of queries
+    - Consider breaking complex flows into smaller components
+    - Contact support if timeouts persist
+  </Accordion>
+  
+  <Accordion icon="circle-xmark" title="Empty Results">
+    **Solution**: If no results are returned:
+    - Verify that documents are uploaded and processed
+    - Check query relevance to your document content
+    - Review flow configuration and component settings
+    - Try simpler or more general queries
+  </Accordion>
+  
+  <Accordion icon="wifi" title="Network Connection Issues">
+    **Solution**: For connectivity problems:
+    - Check your internet connection
+    - Verify the flow URL is accessible
+    - Ensure your firewall allows HTTPS traffic
+    - Try accessing the endpoint from a different network
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After successfully running flows, you might want to:
+
+<CardGroup cols={2}>
+  <Card
+    title="Deploy Flow"
+    icon="rocket"
+    href="/api-reference/flows/deploy"
+  >
+    Learn how to deploy and update your flows
+  </Card>
+  <Card
+    title="Flow Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
+  >
+    Explore all available flow management endpoints
+  </Card>
+  <Card
+    title="Integrate Workflow"
+    icon="plug"
+    href="/guides/integrate-workflow"
+  >
+    Advanced integration patterns and best practices
+  </Card>
+  <Card
+    title="API Tokens"
+    icon="key"
+    href="/guides/api-tokens"
+  >
+    Learn how to generate and manage API tokens
+  </Card>
+</CardGroup>

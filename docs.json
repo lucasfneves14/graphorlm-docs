@@ -50,6 +50,23 @@
               "api-reference/sources/list",
               "api-reference/sources/delete"
             ]
+          },
+          {
+            "group": "Flows",
+            "pages": [
+              "api-reference/flows/overview",
+              "api-reference/flows/list",
+              "api-reference/flows/run",
+              "api-reference/flows/deploy",
+              {
+                "group": "Datasets",
+                "pages": [
+                  "api-reference/flows/datasets/overview",
+                  "api-reference/flows/datasets/list",
+                  "api-reference/flows/datasets/update"
+                ]
+              }
+            ]
           }
         ]
       }

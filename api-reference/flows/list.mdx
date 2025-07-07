@@ -1,0 +1,793 @@
+---
+title: 'List Flows'
+description: 'Retrieve all flows in your project via the GraphorLM REST API'
+---
+
+Get a comprehensive list of all flows in your GraphorLM project, including their status, descriptions, and public URLs. This endpoint provides an overview of your entire flow collection for monitoring and management purposes.
+
+## Overview
+
+The List Flows endpoint returns all flows within your project, providing essential information about each flow including deployment status and public access URLs.
+
+- **Method**: `GET`
+- **URL**: `https://flows.graphorlm.com`
+- **Authentication**: Required (API Token)
+
+## Authentication
+
+All requests must include a valid API token in the Authorization header:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+
+### Query Parameters
+
+This endpoint does not accept query parameters. All flows in your project will be returned.
+
+### Example Request
+
+```bash
+GET https://flows.graphorlm.com
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+## Response Format
+
+### Success Response (200 OK)
+
+```json
+{
+  "flows": [
+    {
+      "name": "customer-support-rag",
+      "description": "Customer support Q&A system with knowledge base integration",
+      "status": "Deployed",
+      "url": "https://customer-support-rag.flows.graphorlm.com"
+    },
+    {
+      "name": "technical-docs-assistant",
+      "description": "Technical documentation assistant with advanced search",
+      "status": "Not deployed",
+      "url": null
+    },
+    {
+      "name": "legal-research-pipeline",
+      "description": "Legal document analysis and research tool",
+      "status": "Deployed",
+      "url": "https://legal-research-pipeline.flows.graphorlm.com"
+    }
+  ],
+  "total": 3
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `flows` | array | Array of flow objects containing flow information |
+| `total` | integer | Total number of flows in the project |
+
+### Flow Object Structure
+
+Each flow object contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Unique name of the flow |
+| `description` | string | Description of the flow's purpose (may be null) |
+| `status` | string | Current deployment status of the flow |
+| `url` | string | Public URL for the deployed flow (null if not deployed) |
+
+### Flow Status Values
+
+<AccordionGroup>
+  <Accordion icon="rocket" title="Deployed">
+    The flow is successfully deployed and accessible via its public URL. It can receive and process requests.
+    
+    **Next Steps**: Use the flow URL to execute queries or monitor performance.
+  </Accordion>
+  
+  <Accordion icon="clock" title="Not deployed">
+    The flow exists but hasn't been deployed yet. It's not accessible via public URL.
+    
+    **Next Steps**: Use the [Deploy Flow endpoint](/api-reference/flows/deploy) to make it available.
+  </Accordion>
+  
+  <Accordion icon="file-circle-plus" title="New">
+    A newly created flow that hasn't been configured or deployed yet.
+    
+    **Next Steps**: Configure the flow in the GraphorLM interface and then deploy it.
+  </Accordion>
+  
+  <Accordion icon="triangle-exclamation" title="Failed">
+    The last deployment attempt failed. The flow may have configuration issues.
+    
+    **Next Steps**: Check flow configuration and attempt deployment again.
+  </Accordion>
+</AccordionGroup>
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+async function listFlows(apiToken) {
+  const response = await fetch('https://flows.graphorlm.com', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+// Usage
+listFlows('YOUR_API_TOKEN')
+  .then(data => {
+    console.log(`Found ${data.total} flows:`);
+    data.flows.forEach(flow => {
+      console.log(`📊 ${flow.name} (${flow.status})`);
+      if (flow.url) {
+        console.log(`   🔗 ${flow.url}`);
+      }
+      if (flow.description) {
+        console.log(`   📝 ${flow.description}`);
+      }
+      console.log('');
+    });
+  })
+  .catch(error => console.error('Error:', error));
+
+// Filter flows by status
+listFlows('YOUR_API_TOKEN')
+  .then(data => {
+    const deployedFlows = data.flows.filter(flow => flow.status === 'Deployed');
+    console.log(`Deployed flows: ${deployedFlows.length}`);
+    
+    const notDeployedFlows = data.flows.filter(flow => flow.status !== 'Deployed');
+    console.log(`Flows needing deployment: ${notDeployedFlows.length}`);
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+### Python
+
+```python
+import requests
+import json
+
+def list_flows(api_token):
+    url = "https://flows.graphorlm.com"
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}"
+    }
+    
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    
+    return response.json()
+
+# Usage
+try:
+    flows_data = list_flows("YOUR_API_TOKEN")
+    
+    print(f"📊 Found {flows_data['total']} flows in your project:")
+    print("-" * 50)
+    
+    for flow in flows_data['flows']:
+        status_emoji = {
+            'Deployed': '✅',
+            'Not deployed': '⏳',
+            'New': '🆕',
+            'Failed': '❌'
+        }.get(flow['status'], '❓')
+        
+        print(f"{status_emoji} {flow['name']} ({flow['status']})")
+        
+        if flow['description']:
+            print(f"   📝 {flow['description']}")
+        
+        if flow['url']:
+            print(f"   🔗 {flow['url']}")
+        else:
+            print(f"   ⚠️  Not accessible (not deployed)")
+        
+        print()
+    
+    # Summary statistics
+    deployed_count = len([f for f in flows_data['flows'] if f['status'] == 'Deployed'])
+    not_deployed_count = flows_data['total'] - deployed_count
+    
+    print(f"📈 Summary:")
+    print(f"   ✅ Deployed: {deployed_count}")
+    print(f"   ⏳ Not Deployed: {not_deployed_count}")
+    
+except requests.exceptions.HTTPError as e:
+    if e.response.status_code == 401:
+        print("❌ Authentication failed. Check your API token.")
+    elif e.response.status_code == 403:
+        print("❌ Access denied. Insufficient permissions.")
+    else:
+        print(f"❌ Error: {e}")
+        try:
+            error_detail = e.response.json().get('detail', 'Unknown error')
+            print(f"Details: {error_detail}")
+        except:
+            print(f"HTTP {e.response.status_code}: {e.response.text}")
+
+except Exception as e:
+    print(f"❌ Unexpected error: {e}")
+
+# Function to get only deployed flows
+def get_deployed_flows(api_token):
+    flows_data = list_flows(api_token)
+    return [flow for flow in flows_data['flows'] if flow['status'] == 'Deployed']
+
+# Usage for deployed flows only
+deployed_flows = get_deployed_flows("YOUR_API_TOKEN")
+print(f"Ready to use flows: {len(deployed_flows)}")
+for flow in deployed_flows:
+    print(f"🚀 {flow['name']}: {flow['url']}")
+```
+
+### cURL
+
+```bash
+# Basic request
+curl -X GET https://flows.graphorlm.com \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+
+# Pretty-printed JSON output
+curl -X GET https://flows.graphorlm.com \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | jq '.'
+
+# Extract only flow names and status
+curl -X GET https://flows.graphorlm.com \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq '.flows[] | {name: .name, status: .status}'
+
+# Get only deployed flows
+curl -X GET https://flows.graphorlm.com \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq '.flows[] | select(.status == "Deployed")'
+```
+
+### PHP
+
+```php
+<?php
+function listFlows($apiToken) {
+    $url = "https://flows.graphorlm.com";
+    
+    $options = [
+        'http' => [
+            'header' => "Authorization: Bearer {$apiToken}",
+            'method' => 'GET'
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    
+    if ($result === FALSE) {
+        throw new Exception('Failed to fetch flows');
+    }
+    
+    // Check HTTP response code
+    $httpCode = null;
+    if (isset($http_response_header)) {
+        foreach ($http_response_header as $header) {
+            if (strpos($header, 'HTTP/') === 0) {
+                $httpCode = (int) substr($header, 9, 3);
+                break;
+            }
+        }
+    }
+    
+    if ($httpCode !== 200) {
+        throw new Exception("HTTP error: {$httpCode}");
+    }
+    
+    return json_decode($result, true);
+}
+
+// Usage
+try {
+    $flowsData = listFlows('YOUR_API_TOKEN');
+    
+    echo "📊 Found {$flowsData['total']} flows in your project:\n";
+    echo str_repeat("-", 50) . "\n";
+    
+    foreach ($flowsData['flows'] as $flow) {
+        $statusEmojis = [
+            'Deployed' => '✅',
+            'Not deployed' => '⏳',
+            'New' => '🆕',
+            'Failed' => '❌'
+        ];
+        
+        $emoji = $statusEmojis[$flow['status']] ?? '❓';
+        echo "{$emoji} {$flow['name']} ({$flow['status']})\n";
+        
+        if (!empty($flow['description'])) {
+            echo "   📝 {$flow['description']}\n";
+        }
+        
+        if (!empty($flow['url'])) {
+            echo "   🔗 {$flow['url']}\n";
+        } else {
+            echo "   ⚠️  Not accessible (not deployed)\n";
+        }
+        
+        echo "\n";
+    }
+    
+    // Calculate summary
+    $deployedCount = count(array_filter($flowsData['flows'], function($flow) {
+        return $flow['status'] === 'Deployed';
+    }));
+    
+    $notDeployedCount = $flowsData['total'] - $deployedCount;
+    
+    echo "📈 Summary:\n";
+    echo "   ✅ Deployed: {$deployedCount}\n";
+    echo "   ⏳ Not Deployed: {$notDeployedCount}\n";
+    
+} catch (Exception $e) {
+    echo "❌ Error: " . $e->getMessage() . "\n";
+}
+
+// Function to get only deployed flows
+function getDeployedFlows($apiToken) {
+    $flowsData = listFlows($apiToken);
+    return array_filter($flowsData['flows'], function($flow) {
+        return $flow['status'] === 'Deployed';
+    });
+}
+
+// Usage
+$deployedFlows = getDeployedFlows('YOUR_API_TOKEN');
+echo "Ready to use flows: " . count($deployedFlows) . "\n";
+foreach ($deployedFlows as $flow) {
+    echo "🚀 {$flow['name']}: {$flow['url']}\n";
+}
+?>
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Description | Example Response |
+|-------------|-------------|------------------|
+| 401 | Unauthorized - Invalid or missing API token | `{"detail": "Invalid authentication credentials"}` |
+| 403 | Forbidden - Insufficient permissions | `{"detail": "Access denied"}` |
+| 500 | Internal Server Error - Server-side error | `{"detail": "Internal server error"}` |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+### Example Error Responses
+
+#### Invalid API Token
+```json
+{
+  "detail": "Invalid authentication credentials"
+}
+```
+
+#### Insufficient Permissions
+```json
+{
+  "detail": "Access denied"
+}
+```
+
+#### Server Error
+```json
+{
+  "detail": "Internal server error"
+}
+```
+
+## Integration Examples
+
+### Flow Management Dashboard
+
+```javascript
+class FlowManager {
+  constructor(apiToken) {
+    this.apiToken = apiToken;
+    this.baseUrl = 'https://flows.graphorlm.com';
+  }
+
+  async getAllFlows() {
+    const response = await fetch(this.baseUrl, {
+      headers: {
+        'Authorization': `Bearer ${this.apiToken}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch flows: ${response.status}`);
+    }
+
+    return await response.json();
+  }
+
+  async getFlowsByStatus(status) {
+    const data = await this.getAllFlows();
+    return data.flows.filter(flow => flow.status === status);
+  }
+
+  async getDeployedFlowUrls() {
+    const deployedFlows = await this.getFlowsByStatus('Deployed');
+    return deployedFlows.map(flow => ({
+      name: flow.name,
+      url: flow.url
+    }));
+  }
+
+  async displayFlowSummary() {
+    try {
+      const data = await this.getAllFlows();
+      
+      const statusCounts = data.flows.reduce((acc, flow) => {
+        acc[flow.status] = (acc[flow.status] || 0) + 1;
+        return acc;
+      }, {});
+
+      console.log('📊 Flow Summary:');
+      console.log(`Total Flows: ${data.total}`);
+      console.log('Status Breakdown:');
+      
+      Object.entries(statusCounts).forEach(([status, count]) => {
+        const emoji = {
+          'Deployed': '✅',
+          'Not deployed': '⏳',
+          'New': '🆕',
+          'Failed': '❌'
+        }[status] || '❓';
+        
+        console.log(`  ${emoji} ${status}: ${count}`);
+      });
+
+      return statusCounts;
+    } catch (error) {
+      console.error('Error fetching flow summary:', error);
+      throw error;
+    }
+  }
+
+  async monitorFlowHealth() {
+    const deployedFlows = await this.getFlowsByStatus('Deployed');
+    const healthChecks = [];
+
+    for (const flow of deployedFlows) {
+      try {
+        // Test if the flow is responding
+        const testResponse = await fetch(flow.url, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.apiToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            query: 'health check',
+            page_size: 1
+          })
+        });
+
+        healthChecks.push({
+          name: flow.name,
+          url: flow.url,
+          healthy: testResponse.ok,
+          status: testResponse.status
+        });
+      } catch (error) {
+        healthChecks.push({
+          name: flow.name,
+          url: flow.url,
+          healthy: false,
+          error: error.message
+        });
+      }
+    }
+
+    return healthChecks;
+  }
+}
+
+// Usage
+const flowManager = new FlowManager('YOUR_API_TOKEN');
+
+// Display summary
+flowManager.displayFlowSummary()
+  .then(summary => {
+    console.log('Summary generated successfully');
+  })
+  .catch(error => {
+    console.error('Failed to generate summary:', error);
+  });
+
+// Monitor flow health
+flowManager.monitorFlowHealth()
+  .then(healthChecks => {
+    console.log('\n🏥 Flow Health Check Results:');
+    healthChecks.forEach(check => {
+      const status = check.healthy ? '✅ Healthy' : '❌ Unhealthy';
+      console.log(`${status} - ${check.name}`);
+      if (!check.healthy && check.error) {
+        console.log(`   Error: ${check.error}`);
+      }
+    });
+  })
+  .catch(error => {
+    console.error('Health check failed:', error);
+  });
+```
+
+### Automated Flow Status Monitoring
+
+```python
+import requests
+import time
+import json
+from datetime import datetime
+from typing import Dict, List, Any
+
+class FlowMonitor:
+    def __init__(self, api_token: str, check_interval: int = 300):
+        self.api_token = api_token
+        self.check_interval = check_interval  # seconds
+        self.base_url = "https://flows.graphorlm.com"
+        
+    def get_flows(self) -> Dict[str, Any]:
+        """Get all flows from the API"""
+        headers = {"Authorization": f"Bearer {self.api_token}"}
+        response = requests.get(self.base_url, headers=headers)
+        response.raise_for_status()
+        return response.json()
+    
+    def check_flow_health(self, flow_url: str) -> Dict[str, Any]:
+        """Check if a deployed flow is responding"""
+        headers = {
+            "Authorization": f"Bearer {self.api_token}",
+            "Content-Type": "application/json"
+        }
+        
+        test_payload = {
+            "query": "health check",
+            "page_size": 1
+        }
+        
+        try:
+            response = requests.post(flow_url, headers=headers, json=test_payload, timeout=30)
+            return {
+                "healthy": response.status_code == 200,
+                "status_code": response.status_code,
+                "response_time": response.elapsed.total_seconds(),
+                "error": None
+            }
+        except requests.exceptions.RequestException as e:
+            return {
+                "healthy": False,
+                "status_code": None,
+                "response_time": None,
+                "error": str(e)
+            }
+    
+    def generate_status_report(self) -> Dict[str, Any]:
+        """Generate a comprehensive status report"""
+        flows_data = self.get_flows()
+        
+        report = {
+            "timestamp": datetime.now().isoformat(),
+            "total_flows": flows_data["total"],
+            "flows_by_status": {},
+            "deployed_flows_health": [],
+            "summary": {}
+        }
+        
+        # Count flows by status
+        for flow in flows_data["flows"]:
+            status = flow["status"]
+            if status not in report["flows_by_status"]:
+                report["flows_by_status"][status] = []
+            report["flows_by_status"][status].append(flow["name"])
+        
+        # Check health of deployed flows
+        deployed_flows = [f for f in flows_data["flows"] if f["status"] == "Deployed"]
+        
+        for flow in deployed_flows:
+            health_check = self.check_flow_health(flow["url"])
+            report["deployed_flows_health"].append({
+                "name": flow["name"],
+                "url": flow["url"],
+                **health_check
+            })
+        
+        # Generate summary
+        healthy_count = len([h for h in report["deployed_flows_health"] if h["healthy"]])
+        unhealthy_count = len(report["deployed_flows_health"]) - healthy_count
+        
+        report["summary"] = {
+            "deployed_flows": len(deployed_flows),
+            "healthy_flows": healthy_count,
+            "unhealthy_flows": unhealthy_count,
+            "deployment_rate": len(deployed_flows) / flows_data["total"] if flows_data["total"] > 0 else 0
+        }
+        
+        return report
+    
+    def print_status_report(self, report: Dict[str, Any]):
+        """Print a formatted status report"""
+        print(f"\n📊 Flow Status Report - {report['timestamp']}")
+        print("=" * 60)
+        
+        print(f"\n📈 Overview:")
+        print(f"   Total Flows: {report['total_flows']}")
+        print(f"   Deployed: {report['summary']['deployed_flows']}")
+        print(f"   Healthy: {report['summary']['healthy_flows']}")
+        print(f"   Unhealthy: {report['summary']['unhealthy_flows']}")
+        print(f"   Deployment Rate: {report['summary']['deployment_rate']:.1%}")
+        
+        print(f"\n📋 Flows by Status:")
+        for status, flow_names in report["flows_by_status"].items():
+            emoji = {
+                "Deployed": "✅",
+                "Not deployed": "⏳",
+                "New": "🆕",
+                "Failed": "❌"
+            }.get(status, "❓")
+            print(f"   {emoji} {status}: {len(flow_names)}")
+            for name in flow_names:
+                print(f"      - {name}")
+        
+        if report["deployed_flows_health"]:
+            print(f"\n🏥 Deployed Flow Health:")
+            for flow_health in report["deployed_flows_health"]:
+                status_emoji = "✅" if flow_health["healthy"] else "❌"
+                print(f"   {status_emoji} {flow_health['name']}")
+                if flow_health["healthy"]:
+                    print(f"      Response time: {flow_health['response_time']:.2f}s")
+                else:
+                    print(f"      Error: {flow_health['error']}")
+    
+    def monitor_continuously(self):
+        """Monitor flows continuously with specified interval"""
+        print(f"🔄 Starting continuous monitoring (checking every {self.check_interval}s)")
+        print("Press Ctrl+C to stop monitoring")
+        
+        try:
+            while True:
+                try:
+                    report = self.generate_status_report()
+                    self.print_status_report(report)
+                    
+                    # Alert for unhealthy flows
+                    unhealthy_flows = [f for f in report["deployed_flows_health"] if not f["healthy"]]
+                    if unhealthy_flows:
+                        print(f"\n🚨 ALERT: {len(unhealthy_flows)} unhealthy flows detected!")
+                        for flow in unhealthy_flows:
+                            print(f"   ❌ {flow['name']}: {flow['error']}")
+                    
+                except Exception as e:
+                    print(f"❌ Error during monitoring check: {e}")
+                
+                print(f"\n⏰ Next check in {self.check_interval} seconds...")
+                time.sleep(self.check_interval)
+                
+        except KeyboardInterrupt:
+            print("\n🛑 Monitoring stopped by user")
+
+# Usage
+monitor = FlowMonitor("YOUR_API_TOKEN", check_interval=300)  # Check every 5 minutes
+
+# Generate single report
+report = monitor.generate_status_report()
+monitor.print_status_report(report)
+
+# Start continuous monitoring
+# monitor.monitor_continuously()
+```
+
+## Use Cases
+
+### Project Overview and Management
+- **Portfolio Monitoring**: Get a complete view of all flows in your project
+- **Deployment Tracking**: Monitor which flows are deployed and accessible
+- **Status Monitoring**: Track flow health and deployment status
+- **Resource Planning**: Understand flow distribution and usage patterns
+
+### Development Workflow
+- **Pre-Deployment Check**: Verify flows before deployment
+- **Health Monitoring**: Ensure deployed flows are functioning correctly
+- **Project Cleanup**: Identify unused or failed flows for cleanup
+- **Team Coordination**: Share flow status across development teams
+
+### Integration Scenarios
+- **Dashboard Integration**: Display flow status in management dashboards
+- **Automated Monitoring**: Set up alerts for flow health issues
+- **CI/CD Pipeline**: Include flow status checks in deployment pipelines
+- **API Gateway**: Route requests based on flow availability
+
+## Best Practices
+
+### Regular Monitoring
+- **Check Status Regularly**: Monitor flow status to ensure availability
+- **Health Checks**: Test deployed flows periodically
+- **Performance Tracking**: Monitor response times and error rates
+- **Capacity Planning**: Track flow usage for resource allocation
+
+### Error Handling
+- **Graceful Degradation**: Handle API failures gracefully
+- **Retry Logic**: Implement retry mechanisms for transient failures
+- **Logging**: Log API calls and responses for debugging
+- **Alerting**: Set up alerts for flow health issues
+
+### Security Considerations
+- **Token Management**: Secure API token storage and rotation
+- **Access Control**: Limit access to flow management functions
+- **Audit Trails**: Log flow status changes and access patterns
+- **Network Security**: Use HTTPS for all API communications
+
+## Next Steps
+
+After retrieving your flow list, you can:
+
+<CardGroup cols={2}>
+  <Card
+    title="Deploy Flow"
+    icon="rocket"
+    href="/api-reference/flows/deploy"
+  >
+    Deploy flows to make them publicly accessible
+  </Card>
+  <Card
+    title="Run Flow"
+    icon="play"
+    href="/api-reference/flows/run"
+  >
+    Execute deployed flows with queries
+  </Card>
+  <Card
+    title="Flow Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
+  >
+    Explore all flow management capabilities
+  </Card>
+  <Card
+    title="Integrate Workflow"
+    icon="plug"
+    href="/guides/integrate-workflow"
+  >
+    Advanced integration patterns and monitoring
+  </Card>
+</CardGroup>

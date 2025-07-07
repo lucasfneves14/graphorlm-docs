@@ -1,0 +1,751 @@
+---
+title: 'List Dataset Nodes'
+description: 'Retrieve dataset nodes from flows via the GraphorLM REST API'
+---
+
+Retrieve all dataset nodes from a specific flow in your GraphorLM project. Dataset nodes represent the document sources configured within a flow and are essential for managing the data inputs to your RAG pipelines.
+
+## Overview
+
+The List Dataset Nodes endpoint allows you to retrieve information about dataset nodes within a flow. Dataset nodes are components that connect document sources to your flow pipeline, containing configuration details about which files are included and how they're processed.
+
+- **Method**: `GET`
+- **URL**: `https://{flow_name}.flows.graphorlm.com/datasets`
+- **Authentication**: Required (API Token)
+
+## Authentication
+
+All requests must include a valid API token in the Authorization header:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+
+### Parameters
+
+No query parameters are required for this endpoint.
+
+### Example Request
+
+```bash
+GET https://my-rag-pipeline.flows.graphorlm.com/datasets
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+## Response Format
+
+### Success Response (200 OK)
+
+The response contains an array of dataset node objects:
+
+```json
+[
+  {
+    "id": "dataset-1748287628684",
+    "type": "dataset",
+    "position": {
+      "x": 100,
+      "y": 200
+    },
+    "style": {
+      "height": 150,
+      "width": 250
+    },
+    "data": {
+      "name": "Document Sources",
+      "config": {
+        "files": ["attention.pdf", "bert.pdf", "transformer_architecture.pdf"]
+      },
+      "result": {
+        "updated": true,
+        "total_documents": 3,
+        "total_chunks": 156
+      }
+    }
+  }
+]
+```
+
+### Response Structure
+
+Each dataset node in the array contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique identifier for the dataset node |
+| `type` | string | Node type (always "dataset" for dataset nodes) |
+| `position` | object | Position coordinates in the flow canvas |
+| `style` | object | Visual styling properties (height, width) |
+| `data` | object | Dataset node configuration and results |
+
+### Position Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `x` | number | X coordinate position in the flow canvas |
+| `y` | number | Y coordinate position in the flow canvas |
+
+### Style Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `height` | integer | Height of the node in pixels |
+| `width` | integer | Width of the node in pixels |
+
+### Data Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Display name of the dataset node |
+| `config` | object | Node configuration including file list |
+| `result` | object | Processing results and metadata (optional) |
+
+### Config Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `files` | array | List of file names included in this dataset node |
+
+### Result Object (Optional)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `updated` | boolean | Whether the node has been processed with current configuration |
+| `total_documents` | integer | Number of documents processed (if available) |
+| `total_chunks` | integer | Number of text chunks generated (if available) |
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+async function listDatasetNodes(flowName, apiToken) {
+  const response = await fetch(`https://${flowName}.flows.graphorlm.com/datasets`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+// Usage
+listDatasetNodes('my-rag-pipeline', 'YOUR_API_TOKEN')
+  .then(datasetNodes => {
+    console.log(`Found ${datasetNodes.length} dataset node(s)`);
+    
+    datasetNodes.forEach(node => {
+      console.log(`\nNode: ${node.data.name} (${node.id})`);
+      console.log(`Files: ${node.data.config.files.length} file(s)`);
+      
+      if (node.data.config.files.length > 0) {
+        console.log('Configured files:');
+        node.data.config.files.forEach((file, index) => {
+          console.log(`  ${index + 1}. ${file}`);
+        });
+      }
+      
+      if (node.data.result) {
+        console.log(`Status: ${node.data.result.updated ? 'Updated' : 'Needs Update'}`);
+        if (node.data.result.total_chunks) {
+          console.log(`Total chunks: ${node.data.result.total_chunks}`);
+        }
+      }
+    });
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+### Python
+
+```python
+import requests
+import json
+
+def list_dataset_nodes(flow_name, api_token):
+    url = f"https://{flow_name}.flows.graphorlm.com/datasets"
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}"
+    }
+    
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    
+    return response.json()
+
+def analyze_dataset_nodes(dataset_nodes):
+    """Analyze dataset nodes and provide summary"""
+    total_files = 0
+    updated_nodes = 0
+    needs_update = 0
+    
+    print(f"📊 Dataset Nodes Analysis")
+    print(f"Total dataset nodes: {len(dataset_nodes)}")
+    print("-" * 50)
+    
+    for node in dataset_nodes:
+        node_data = node.get('data', {})
+        config = node_data.get('config', {})
+        result = node_data.get('result', {})
+        
+        files = config.get('files', [])
+        total_files += len(files)
+        
+        print(f"\n🔗 Node: {node_data.get('name', 'Unnamed')} ({node['id']})")
+        print(f"   Files configured: {len(files)}")
+        
+        if files:
+            print("   📁 Files:")
+            for i, file_name in enumerate(files[:5], 1):  # Show first 5
+                print(f"      {i}. {file_name}")
+            if len(files) > 5:
+                print(f"      ... and {len(files) - 5} more files")
+        
+        if result:
+            is_updated = result.get('updated', False)
+            if is_updated:
+                updated_nodes += 1
+                print("   ✅ Status: Updated")
+            else:
+                needs_update += 1
+                print("   ⚠️  Status: Needs Update")
+                
+            if result.get('total_chunks'):
+                print(f"   📄 Total chunks: {result['total_chunks']}")
+    
+    print(f"\n📈 Summary:")
+    print(f"   Total files across all nodes: {total_files}")
+    print(f"   Nodes up to date: {updated_nodes}")
+    print(f"   Nodes needing update: {needs_update}")
+
+# Usage
+try:
+    dataset_nodes = list_dataset_nodes("my-rag-pipeline", "YOUR_API_TOKEN")
+    analyze_dataset_nodes(dataset_nodes)
+    
+except requests.exceptions.HTTPError as e:
+    print(f"Error: {e}")
+    if e.response.status_code == 404:
+        print("Flow not found or no dataset nodes in this flow")
+    elif e.response.status_code == 401:
+        print("Invalid API token or insufficient permissions")
+```
+
+### cURL
+
+```bash
+# Basic request
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/datasets \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+
+# With jq for formatted output
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/datasets \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | jq '.'
+
+# Extract just the file lists
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/datasets \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq -r '.[] | "\(.data.name): \(.data.config.files | join(", "))"'
+
+# Count total files across all nodes
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/datasets \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq '[.[] | .data.config.files | length] | add'
+```
+
+### PHP
+
+```php
+<?php
+function listDatasetNodes($flowName, $apiToken) {
+    $url = "https://{$flowName}.flows.graphorlm.com/datasets";
+    
+    $options = [
+        'http' => [
+            'header' => "Authorization: Bearer {$apiToken}",
+            'method' => 'GET'
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    
+    if ($result === FALSE) {
+        throw new Exception('Failed to retrieve dataset nodes');
+    }
+    
+    return json_decode($result, true);
+}
+
+function analyzeDatasetNodes($datasetNodes) {
+    $totalFiles = 0;
+    $updatedNodes = 0;
+    $needsUpdate = 0;
+    
+    echo "📊 Dataset Nodes Analysis\n";
+    echo "Total dataset nodes: " . count($datasetNodes) . "\n";
+    echo str_repeat("-", 50) . "\n";
+    
+    foreach ($datasetNodes as $node) {
+        $data = $node['data'] ?? [];
+        $config = $data['config'] ?? [];
+        $result = $data['result'] ?? [];
+        
+        $files = $config['files'] ?? [];
+        $totalFiles += count($files);
+        
+        echo "\n🔗 Node: " . ($data['name'] ?? 'Unnamed') . " ({$node['id']})\n";
+        echo "   Files configured: " . count($files) . "\n";
+        
+        if (!empty($files)) {
+            echo "   📁 Files:\n";
+            $displayFiles = array_slice($files, 0, 5);
+            foreach ($displayFiles as $index => $fileName) {
+                echo "      " . ($index + 1) . ". {$fileName}\n";
+            }
+            if (count($files) > 5) {
+                $remaining = count($files) - 5;
+                echo "      ... and {$remaining} more files\n";
+            }
+        }
+        
+        if (!empty($result)) {
+            $isUpdated = $result['updated'] ?? false;
+            if ($isUpdated) {
+                $updatedNodes++;
+                echo "   ✅ Status: Updated\n";
+            } else {
+                $needsUpdate++;
+                echo "   ⚠️  Status: Needs Update\n";
+            }
+            
+            if (isset($result['total_chunks'])) {
+                echo "   📄 Total chunks: {$result['total_chunks']}\n";
+            }
+        }
+    }
+    
+    echo "\n📈 Summary:\n";
+    echo "   Total files across all nodes: {$totalFiles}\n";
+    echo "   Nodes up to date: {$updatedNodes}\n";
+    echo "   Nodes needing update: {$needsUpdate}\n";
+}
+
+// Usage
+try {
+    $datasetNodes = listDatasetNodes('my-rag-pipeline', 'YOUR_API_TOKEN');
+    analyzeDatasetNodes($datasetNodes);
+    
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+}
+?>
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Description | Example Response |
+|-------------|-------------|------------------|
+| 401 | Unauthorized - Invalid or missing API token | `{"detail": "Invalid authentication credentials"}` |
+| 404 | Not Found - Flow not found | `{"detail": "Flow not found"}` |
+| 500 | Internal Server Error - Server error | `{"detail": "Failed to retrieve dataset nodes"}` |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+### Example Error Responses
+
+#### Invalid API Token
+```json
+{
+  "detail": "Invalid authentication credentials"
+}
+```
+
+#### Flow Not Found
+```json
+{
+  "detail": "Flow not found"
+}
+```
+
+#### Server Error
+```json
+{
+  "detail": "Failed to retrieve dataset nodes"
+}
+```
+
+## Use Cases
+
+### Dataset Node Management
+
+Use this endpoint to:
+
+- **Configuration Overview**: See which files are configured in each dataset node
+- **Status Monitoring**: Check if dataset nodes need updates after file changes
+- **Flow Analysis**: Understand the data sources used in your flow
+- **Debugging**: Identify configuration issues in dataset nodes
+
+### Integration Examples
+
+#### Dataset Health Checker
+
+```javascript
+class DatasetHealthChecker {
+  constructor(flowName, apiToken) {
+    this.flowName = flowName;
+    this.apiToken = apiToken;
+  }
+
+  async checkDatasetHealth() {
+    try {
+      const nodes = await this.listDatasetNodes();
+      const healthReport = {
+        totalNodes: nodes.length,
+        healthyNodes: 0,
+        outdatedNodes: 0,
+        emptyNodes: 0,
+        totalFiles: 0,
+        issues: []
+      };
+
+      for (const node of nodes) {
+        const files = node.data.config.files || [];
+        const result = node.data.result || {};
+        
+        healthReport.totalFiles += files.length;
+
+        if (files.length === 0) {
+          healthReport.emptyNodes++;
+          healthReport.issues.push({
+            nodeId: node.id,
+            nodeName: node.data.name,
+            issue: 'No files configured',
+            severity: 'warning'
+          });
+        } else if (!result.updated) {
+          healthReport.outdatedNodes++;
+          healthReport.issues.push({
+            nodeId: node.id,
+            nodeName: node.data.name,
+            issue: 'Node needs update',
+            severity: 'info'
+          });
+        } else {
+          healthReport.healthyNodes++;
+        }
+      }
+
+      return healthReport;
+    } catch (error) {
+      throw new Error(`Health check failed: ${error.message}`);
+    }
+  }
+
+  async listDatasetNodes() {
+    const response = await fetch(`https://${this.flowName}.flows.graphorlm.com/datasets`, {
+      headers: { 'Authorization': `Bearer ${this.apiToken}` }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  async generateReport() {
+    const health = await this.checkDatasetHealth();
+    
+    console.log('📊 Dataset Health Report');
+    console.log('========================');
+    console.log(`Total Nodes: ${health.totalNodes}`);
+    console.log(`Healthy Nodes: ${health.healthyNodes}`);
+    console.log(`Outdated Nodes: ${health.outdatedNodes}`);
+    console.log(`Empty Nodes: ${health.emptyNodes}`);
+    console.log(`Total Files: ${health.totalFiles}`);
+    
+    if (health.issues.length > 0) {
+      console.log('\n⚠️  Issues Found:');
+      health.issues.forEach(issue => {
+        const icon = issue.severity === 'warning' ? '⚠️' : 'ℹ️';
+        console.log(`${icon} ${issue.nodeName} (${issue.nodeId}): ${issue.issue}`);
+      });
+    } else {
+      console.log('\n✅ All dataset nodes are healthy!');
+    }
+
+    return health;
+  }
+}
+
+// Usage
+const checker = new DatasetHealthChecker('my-rag-pipeline', 'YOUR_API_TOKEN');
+checker.generateReport().catch(console.error);
+```
+
+#### Configuration Audit Tool
+
+```python
+import requests
+from typing import List, Dict, Any
+
+class DatasetConfigAuditor:
+    def __init__(self, flow_name: str, api_token: str):
+        self.flow_name = flow_name
+        self.api_token = api_token
+        self.base_url = f"https://{flow_name}.flows.graphorlm.com"
+    
+    def get_dataset_nodes(self) -> List[Dict[str, Any]]:
+        """Retrieve all dataset nodes from the flow"""
+        response = requests.get(
+            f"{self.base_url}/datasets",
+            headers={"Authorization": f"Bearer {self.api_token}"}
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def audit_configurations(self) -> Dict[str, Any]:
+        """Audit dataset node configurations"""
+        nodes = self.get_dataset_nodes()
+        
+        audit_report = {
+            "summary": {
+                "total_nodes": len(nodes),
+                "configured_nodes": 0,
+                "empty_nodes": 0,
+                "unique_files": set(),
+                "duplicate_files": {},
+                "total_file_references": 0
+            },
+            "nodes": [],
+            "recommendations": []
+        }
+        
+        file_usage = {}  # Track which nodes use which files
+        
+        for node in nodes:
+            node_info = {
+                "id": node["id"],
+                "name": node["data"]["name"],
+                "files": node["data"]["config"].get("files", []),
+                "file_count": len(node["data"]["config"].get("files", [])),
+                "is_updated": node["data"].get("result", {}).get("updated", False),
+                "position": node["position"]
+            }
+            
+            # Count files and track usage
+            files = node_info["files"]
+            audit_report["summary"]["total_file_references"] += len(files)
+            
+            if files:
+                audit_report["summary"]["configured_nodes"] += 1
+                audit_report["summary"]["unique_files"].update(files)
+                
+                # Track file usage across nodes
+                for file_name in files:
+                    if file_name not in file_usage:
+                        file_usage[file_name] = []
+                    file_usage[file_name].append(node["id"])
+            else:
+                audit_report["summary"]["empty_nodes"] += 1
+                audit_report["recommendations"].append({
+                    "type": "empty_node",
+                    "node_id": node["id"],
+                    "node_name": node_info["name"],
+                    "message": "Dataset node has no files configured"
+                })
+            
+            # Check if node needs update
+            if files and not node_info["is_updated"]:
+                audit_report["recommendations"].append({
+                    "type": "needs_update",
+                    "node_id": node["id"],
+                    "node_name": node_info["name"],
+                    "message": "Dataset node configuration has changed and needs update"
+                })
+            
+            audit_report["nodes"].append(node_info)
+        
+        # Find duplicate file usage
+        for file_name, node_ids in file_usage.items():
+            if len(node_ids) > 1:
+                audit_report["summary"]["duplicate_files"][file_name] = node_ids
+                audit_report["recommendations"].append({
+                    "type": "duplicate_file",
+                    "file_name": file_name,
+                    "node_ids": node_ids,
+                    "message": f"File '{file_name}' is used in multiple dataset nodes"
+                })
+        
+        # Convert set to list for JSON serialization
+        audit_report["summary"]["unique_files"] = list(audit_report["summary"]["unique_files"])
+        audit_report["summary"]["unique_file_count"] = len(audit_report["summary"]["unique_files"])
+        
+        return audit_report
+    
+    def print_audit_report(self, report: Dict[str, Any]):
+        """Print a formatted audit report"""
+        summary = report["summary"]
+        
+        print("🔍 Dataset Configuration Audit Report")
+        print("=" * 50)
+        print(f"Flow: {self.flow_name}")
+        print(f"Total Dataset Nodes: {summary['total_nodes']}")
+        print(f"Configured Nodes: {summary['configured_nodes']}")
+        print(f"Empty Nodes: {summary['empty_nodes']}")
+        print(f"Unique Files: {summary['unique_file_count']}")
+        print(f"Total File References: {summary['total_file_references']}")
+        
+        if summary['duplicate_files']:
+            print(f"Files Used Multiple Times: {len(summary['duplicate_files'])}")
+        
+        print("\n📋 Node Details:")
+        print("-" * 30)
+        for node in report["nodes"]:
+            status = "✅ Updated" if node["is_updated"] else "⚠️ Needs Update"
+            print(f"\n🔗 {node['name']} ({node['id']})")
+            print(f"   Files: {node['file_count']}")
+            print(f"   Status: {status}")
+            print(f"   Position: ({node['position']['x']}, {node['position']['y']})")
+        
+        if report["recommendations"]:
+            print(f"\n💡 Recommendations ({len(report['recommendations'])}):")
+            print("-" * 40)
+            for rec in report["recommendations"]:
+                icon = {"empty_node": "📁", "needs_update": "🔄", "duplicate_file": "📄"}.get(rec["type"], "ℹ️")
+                print(f"{icon} {rec['message']}")
+
+# Usage
+auditor = DatasetConfigAuditor("my-rag-pipeline", "YOUR_API_TOKEN")
+try:
+    report = auditor.audit_configurations()
+    auditor.print_audit_report(report)
+except Exception as e:
+    print(f"Audit failed: {e}")
+```
+
+## Best Practices
+
+### Monitoring and Management
+
+- **Regular Health Checks**: Monitor dataset nodes to ensure they're configured properly
+- **Configuration Validation**: Verify that all referenced files exist in your sources
+- **Update Tracking**: Keep track of which nodes need updates after configuration changes
+- **Documentation**: Maintain clear naming conventions for dataset nodes
+
+### Performance Optimization
+
+- **Efficient Polling**: Don't poll this endpoint too frequently; cache results when possible
+- **Batch Operations**: Group multiple dataset node operations together
+- **Resource Monitoring**: Monitor the impact of dataset size on flow performance
+
+### Error Handling
+
+- **Network Resilience**: Implement retry logic for network failures
+- **Graceful Degradation**: Handle cases where flows have no dataset nodes
+- **Detailed Logging**: Log dataset node configurations for debugging
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="exclamation-triangle" title="Flow Not Found Error">
+    **Solution**: Verify that:
+    - The flow name in the URL is correct and matches exactly
+    - The flow exists in your project
+    - Your API token has access to the correct project
+    - The flow has been created and saved properly
+  </Accordion>
+  
+  <Accordion icon="list" title="Empty Dataset Nodes Array">
+    **Solution**: If no dataset nodes are returned:
+    - Verify the flow contains dataset components
+    - Check that dataset nodes have been added to the flow
+    - Ensure the flow has been saved after adding dataset nodes
+    - Confirm you're checking the correct flow
+  </Accordion>
+  
+  <Accordion icon="file-xmark" title="Missing Files in Configuration">
+    **Solution**: If dataset nodes reference non-existent files:
+    - Use the [List Sources endpoint](/api-reference/sources/list) to verify file availability
+    - Upload missing files using the [Upload Source endpoint](/api-reference/sources/upload)
+    - Update dataset node configuration to remove references to deleted files
+  </Accordion>
+  
+  <Accordion icon="refresh" title="Outdated Node Status">
+    **Solution**: If nodes show `"updated": false`:
+    - The node configuration has changed since last processing
+    - Use the [Update Dataset endpoint](/api-reference/flows/datasets/update) to apply changes
+    - Re-run the flow after updating configurations
+    - This is normal after adding/removing files from the dataset
+  </Accordion>
+  
+  <Accordion icon="wifi" title="Connection Issues">
+    **Solution**: For connectivity problems:
+    - Check your internet connection
+    - Verify the flow URL is accessible
+    - Ensure your firewall allows HTTPS traffic to *.flows.graphorlm.com
+    - Try accessing the endpoint from a different network
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After retrieving dataset node information, you might want to:
+
+<CardGroup cols={2}>
+  <Card
+    title="Update Dataset"
+    icon="pencil"
+    href="/api-reference/flows/datasets/update"
+  >
+    Modify dataset node configurations and file selections
+  </Card>
+  <Card
+    title="List Sources"
+    icon="folder-open"
+    href="/api-reference/sources/list"
+  >
+    View all available source files for configuration
+  </Card>
+  <Card
+    title="Run Flow"
+    icon="play"
+    href="/api-reference/flows/run"
+  >
+    Execute your flow with the configured dataset nodes
+  </Card>
+  <Card
+    title="Flow Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
+  >
+    Learn about all available flow management endpoints
+  </Card>
+</CardGroup>

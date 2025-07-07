@@ -1,0 +1,802 @@
+---
+title: 'Update Dataset'
+description: 'Modify dataset node configurations in flows via the GraphorLM REST API'
+---
+
+Update the configuration of a specific dataset node within a flow in your GraphorLM project. This endpoint allows you to modify which files are included in a dataset node and automatically marks the node for reprocessing.
+
+## Overview
+
+The Update Dataset endpoint allows you to modify the configuration of dataset nodes within your flows. Dataset nodes are components that connect document sources to your flow pipeline, and updating them is essential for managing data inputs and keeping your RAG pipelines current.
+
+- **Method**: `PATCH`
+- **URL**: `https://{flow_name}.flows.graphorlm.com/datasets/{node_id}`
+- **Authentication**: Required (API Token)
+
+## Authentication
+
+All requests must include a valid API token in the Authorization header:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+| `Content-Type` | `application/json` | Yes |
+
+### URL Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `flow_name` | string | Yes | The name of the flow containing the dataset node |
+| `node_id` | string | Yes | The unique identifier of the dataset node to update |
+
+### Request Body
+
+The request body should be a JSON object with the following structure:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `config` | object | Yes | The new configuration for the dataset node |
+| `config.files` | array | No | List of file names to include in the dataset node |
+
+### Example Request
+
+```bash
+PATCH https://my-rag-pipeline.flows.graphorlm.com/datasets/dataset-1748287628684
+Authorization: Bearer YOUR_API_TOKEN
+Content-Type: application/json
+```
+
+```json
+{
+  "config": {
+    "files": [
+      "attention.pdf",
+      "bert.pdf",
+      "transformer_architecture.pdf"
+    ]
+  }
+}
+```
+
+## Response Format
+
+### Success Response (200 OK)
+
+The response contains confirmation of the successful update:
+
+```json
+{
+  "success": true,
+  "message": "Dataset node 'dataset-1748287628684' updated successfully",
+  "node_id": "dataset-1748287628684"
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Whether the update operation was successful |
+| `message` | string | Descriptive message about the operation result |
+| `node_id` | string | The ID of the updated dataset node |
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+async function updateDatasetNode(flowName, nodeId, files, apiToken) {
+  const response = await fetch(`https://${flowName}.flows.graphorlm.com/datasets/${nodeId}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      config: {
+        files: files
+      }
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+// Usage
+updateDatasetNode(
+  'my-rag-pipeline',
+  'dataset-1748287628684',
+  ['attention.pdf', 'bert.pdf', 'transformer_architecture.pdf'],
+  'YOUR_API_TOKEN'
+)
+  .then(result => {
+    console.log('Dataset updated:', result);
+    console.log(`Node ${result.node_id} updated successfully`);
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+### Python
+
+```python
+import requests
+import json
+
+def update_dataset_node(flow_name, node_id, files, api_token):
+    url = f"https://{flow_name}.flows.graphorlm.com/datasets/{node_id}"
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "config": {
+            "files": files
+        }
+    }
+    
+    response = requests.patch(url, headers=headers, json=payload)
+    response.raise_for_status()
+    
+    return response.json()
+
+def manage_dataset_configuration(flow_name, node_id, api_token):
+    """Example of comprehensive dataset management"""
+    
+    # First, get current configuration
+    current_config = get_current_dataset_config(flow_name, node_id, api_token)
+    print(f"Current files: {current_config.get('files', [])}")
+    
+    # Define new file configuration
+    new_files = [
+        "attention.pdf",
+        "bert.pdf", 
+        "transformer_architecture.pdf",
+        "neural_networks.pdf"
+    ]
+    
+    print(f"Updating to {len(new_files)} files...")
+    
+    try:
+        result = update_dataset_node(flow_name, node_id, new_files, api_token)
+        
+        print("✅ Update successful!")
+        print(f"Success: {result['success']}")
+        print(f"Message: {result['message']}")
+        print(f"Updated Node ID: {result['node_id']}")
+        
+        return result
+        
+    except requests.exceptions.HTTPError as e:
+        print(f"❌ Update failed: {e}")
+        if e.response.status_code == 404:
+            print("Flow or dataset node not found")
+        elif e.response.status_code == 400:
+            print("Invalid configuration or files not found")
+        raise
+
+def get_current_dataset_config(flow_name, node_id, api_token):
+    """Helper function to get current dataset configuration"""
+    # This would use the List Dataset Nodes endpoint
+    url = f"https://{flow_name}.flows.graphorlm.com/datasets"
+    headers = {"Authorization": f"Bearer {api_token}"}
+    
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    
+    nodes = response.json()
+    for node in nodes:
+        if node['id'] == node_id:
+            return node['data']['config']
+    
+    raise ValueError(f"Dataset node {node_id} not found")
+
+# Usage
+try:
+    result = manage_dataset_configuration(
+        flow_name="my-rag-pipeline",
+        node_id="dataset-1748287628684",
+        api_token="YOUR_API_TOKEN"
+    )
+except Exception as e:
+    print(f"Error managing dataset: {e}")
+```
+
+### cURL
+
+```bash
+# Basic update
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/datasets/dataset-1748287628684 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "files": [
+        "attention.pdf",
+        "bert.pdf",
+        "transformer_architecture.pdf"
+      ]
+    }
+  }'
+
+# Update with empty files list (clear all files)
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/datasets/dataset-1748287628684 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "files": []
+    }
+  }'
+
+# Add single file to configuration
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/datasets/dataset-1748287628684 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "files": ["new_document.pdf"]
+    }
+  }'
+```
+
+### PHP
+
+```php
+<?php
+function updateDatasetNode($flowName, $nodeId, $files, $apiToken) {
+    $url = "https://{$flowName}.flows.graphorlm.com/datasets/{$nodeId}";
+    
+    $data = [
+        'config' => [
+            'files' => $files
+        ]
+    ];
+    
+    $options = [
+        'http' => [
+            'header' => [
+                "Authorization: Bearer {$apiToken}",
+                "Content-Type: application/json"
+            ],
+            'method' => 'PATCH',
+            'content' => json_encode($data)
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    
+    if ($result === FALSE) {
+        throw new Exception('Failed to update dataset node');
+    }
+    
+    return json_decode($result, true);
+}
+
+function manageDatasetFiles($flowName, $nodeId, $apiToken) {
+    // Define file operations
+    $operations = [
+        'add_research_papers' => [
+            'attention.pdf',
+            'bert.pdf',
+            'transformer_architecture.pdf'
+        ],
+        'add_documentation' => [
+            'api_guide.pdf',
+            'user_manual.pdf'
+        ],
+        'minimal_set' => [
+            'quick_reference.pdf'
+        ]
+    ];
+    
+    foreach ($operations as $operation => $files) {
+        echo "🔄 Operation: {$operation}\n";
+        echo "Files: " . implode(', ', $files) . "\n";
+        
+        try {
+            $result = updateDatasetNode($flowName, $nodeId, $files, $apiToken);
+            
+            echo "✅ Success: {$result['message']}\n";
+            echo "Updated Node: {$result['node_id']}\n\n";
+            
+            // Wait between operations
+            sleep(1);
+            
+        } catch (Exception $e) {
+            echo "❌ Failed: " . $e->getMessage() . "\n\n";
+        }
+    }
+}
+
+// Usage
+try {
+    $result = updateDatasetNode(
+        'my-rag-pipeline',
+        'dataset-1748287628684',
+        ['attention.pdf', 'bert.pdf'],
+        'YOUR_API_TOKEN'
+    );
+    
+    echo "Dataset updated successfully!\n";
+    echo "Result: " . json_encode($result, JSON_PRETTY_PRINT) . "\n";
+    
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+}
+?>
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Description | Example Response |
+|-------------|-------------|------------------|
+| 400 | Bad Request - Invalid configuration or files not found | `{"detail": "The following files do not exist as sources in the dataset: missing_file.pdf"}` |
+| 401 | Unauthorized - Invalid or missing API token | `{"detail": "Invalid authentication credentials"}` |
+| 404 | Not Found - Flow or dataset node not found | `{"detail": "Dataset node with id 'invalid-node' not found in flow 'my-flow'"}` |
+| 500 | Internal Server Error - Server error | `{"detail": "Failed to update dataset node"}` |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+### Example Error Responses
+
+#### Files Not Found in Dataset
+```json
+{
+  "detail": "The following files do not exist as sources in the dataset: nonexistent_file.pdf, another_missing.pdf"
+}
+```
+
+#### Dataset Node Not Found
+```json
+{
+  "detail": "Dataset node with id 'dataset-invalid' not found in flow 'my-rag-pipeline'"
+}
+```
+
+#### Flow Not Found
+```json
+{
+  "detail": "Flow with name 'nonexistent-flow' not found"
+}
+```
+
+#### Invalid API Token
+```json
+{
+  "detail": "Invalid authentication credentials"
+}
+```
+
+## Update Behavior
+
+### Node Status Changes
+
+When you update a dataset node:
+
+1. **Configuration Updated**: The node's file list is replaced with the new configuration
+2. **Status Reset**: The node is marked as `"updated": false` to indicate it needs reprocessing
+3. **Successor Nodes**: All downstream nodes in the flow are also marked as needing updates
+4. **Flow State**: The flow maintains its deployed status but requires redeployment to apply changes
+
+### File Validation
+
+The endpoint validates that:
+- All specified files exist as sources in the project
+- At least one file is specified (empty lists are not allowed)
+- File names exactly match uploaded source files (case-sensitive)
+
+## Integration Examples
+
+### Dataset Configuration Manager
+
+```javascript
+class DatasetConfigManager {
+  constructor(flowName, apiToken) {
+    this.flowName = flowName;
+    this.apiToken = apiToken;
+    this.baseUrl = `https://${flowName}.flows.graphorlm.com`;
+  }
+
+  async getCurrentNodes() {
+    const response = await fetch(`${this.baseUrl}/datasets`, {
+      headers: { 'Authorization': `Bearer ${this.apiToken}` }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get dataset nodes: ${response.status}`);
+    }
+
+    return await response.json();
+  }
+
+  async updateNode(nodeId, files) {
+    const response = await fetch(`${this.baseUrl}/datasets/${nodeId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${this.apiToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        config: { files }
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`Update failed: ${error.detail}`);
+    }
+
+    return await response.json();
+  }
+
+  async addFilesToNode(nodeId, newFiles) {
+    // Get current configuration
+    const nodes = await this.getCurrentNodes();
+    const targetNode = nodes.find(node => node.id === nodeId);
+    
+    if (!targetNode) {
+      throw new Error(`Dataset node ${nodeId} not found`);
+    }
+
+    const currentFiles = targetNode.data.config.files || [];
+    const updatedFiles = [...new Set([...currentFiles, ...newFiles])]; // Remove duplicates
+
+    console.log(`Adding ${newFiles.length} files to node ${nodeId}`);
+    console.log(`Total files after update: ${updatedFiles.length}`);
+
+    return await this.updateNode(nodeId, updatedFiles);
+  }
+
+  async removeFilesFromNode(nodeId, filesToRemove) {
+    // Get current configuration
+    const nodes = await this.getCurrentNodes();
+    const targetNode = nodes.find(node => node.id === nodeId);
+    
+    if (!targetNode) {
+      throw new Error(`Dataset node ${nodeId} not found`);
+    }
+
+    const currentFiles = targetNode.data.config.files || [];
+    const updatedFiles = currentFiles.filter(file => !filesToRemove.includes(file));
+
+    console.log(`Removing ${filesToRemove.length} files from node ${nodeId}`);
+    console.log(`Files remaining: ${updatedFiles.length}`);
+
+    return await this.updateNode(nodeId, updatedFiles);
+  }
+
+  async replaceAllFiles(nodeId, newFiles) {
+    console.log(`Replacing all files in node ${nodeId} with ${newFiles.length} new files`);
+    return await this.updateNode(nodeId, newFiles);
+  }
+
+  async auditNodeConfiguration() {
+    const nodes = await this.getCurrentNodes();
+    const audit = {
+      totalNodes: nodes.length,
+      totalFiles: 0,
+      nodeDetails: [],
+      duplicateFiles: {},
+      emptyNodes: []
+    };
+
+    const fileUsage = {};
+
+    for (const node of nodes) {
+      const files = node.data.config.files || [];
+      const nodeDetail = {
+        id: node.id,
+        name: node.data.name,
+        fileCount: files.length,
+        files: files,
+        needsUpdate: !node.data.result?.updated
+      };
+
+      audit.nodeDetails.push(nodeDetail);
+      audit.totalFiles += files.length;
+
+      if (files.length === 0) {
+        audit.emptyNodes.push(nodeDetail);
+      }
+
+      // Track file usage
+      for (const file of files) {
+        if (!fileUsage[file]) {
+          fileUsage[file] = [];
+        }
+        fileUsage[file].push(node.id);
+      }
+    }
+
+    // Find duplicate files
+    for (const [file, nodeIds] of Object.entries(fileUsage)) {
+      if (nodeIds.length > 1) {
+        audit.duplicateFiles[file] = nodeIds;
+      }
+    }
+
+    return audit;
+  }
+}
+
+// Usage
+const manager = new DatasetConfigManager('my-rag-pipeline', 'YOUR_API_TOKEN');
+
+manager.auditNodeConfiguration()
+  .then(audit => {
+    console.log('Configuration Audit:', audit);
+    
+    if (audit.emptyNodes.length > 0) {
+      console.log('Empty nodes found:', audit.emptyNodes.map(n => n.id));
+    }
+    
+    if (Object.keys(audit.duplicateFiles).length > 0) {
+      console.log('Duplicate files found:', audit.duplicateFiles);
+    }
+  })
+  .catch(console.error);
+```
+
+### Batch Configuration Tool
+
+```python
+import requests
+from typing import List, Dict, Any
+import time
+
+class BatchDatasetUpdater:
+    def __init__(self, flow_name: str, api_token: str):
+        self.flow_name = flow_name
+        self.api_token = api_token
+        self.base_url = f"https://{flow_name}.flows.graphorlm.com"
+        
+    def get_dataset_nodes(self) -> List[Dict[str, Any]]:
+        """Get all dataset nodes in the flow"""
+        response = requests.get(
+            f"{self.base_url}/datasets",
+            headers={"Authorization": f"Bearer {self.api_token}"}
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def update_single_node(self, node_id: str, files: List[str]) -> Dict[str, Any]:
+        """Update a single dataset node"""
+        response = requests.patch(
+            f"{self.base_url}/datasets/{node_id}",
+            headers={
+                "Authorization": f"Bearer {self.api_token}",
+                "Content-Type": "application/json"
+            },
+            json={"config": {"files": files}}
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def batch_update_nodes(self, updates: Dict[str, List[str]], delay: float = 1.0) -> Dict[str, Any]:
+        """
+        Update multiple dataset nodes with different file configurations
+        
+        Args:
+            updates: Dictionary mapping node_ids to lists of files
+            delay: Delay between updates in seconds
+        """
+        results = {
+            "successful_updates": [],
+            "failed_updates": [],
+            "total_nodes": len(updates)
+        }
+        
+        for node_id, files in updates.items():
+            try:
+                print(f"Updating node {node_id} with {len(files)} files...")
+                result = self.update_single_node(node_id, files)
+                results["successful_updates"].append({
+                    "node_id": node_id,
+                    "files": files,
+                    "result": result
+                })
+                print(f"✅ Success: {result['message']}")
+                
+            except Exception as e:
+                error_info = {
+                    "node_id": node_id,
+                    "files": files,
+                    "error": str(e)
+                }
+                results["failed_updates"].append(error_info)
+                print(f"❌ Failed: {e}")
+            
+            # Delay between updates
+            if delay > 0:
+                time.sleep(delay)
+        
+        return results
+    
+    def standardize_node_configurations(self, file_groups: Dict[str, List[str]]) -> Dict[str, Any]:
+        """
+        Apply standardized file configurations to dataset nodes
+        
+        Args:
+            file_groups: Dictionary mapping group names to file lists
+        """
+        nodes = self.get_dataset_nodes()
+        
+        # Interactive selection of nodes for each group
+        assignments = {}
+        
+        for group_name, files in file_groups.items():
+            print(f"\n📁 Group: {group_name}")
+            print(f"Files: {', '.join(files)}")
+            print("Available nodes:")
+            
+            for i, node in enumerate(nodes):
+                current_files = node['data']['config'].get('files', [])
+                print(f"  {i+1}. {node['id']} - {node['data']['name']} ({len(current_files)} files)")
+            
+            # In a real implementation, you'd get user input here
+            # For this example, we'll assign the first node to each group
+            if nodes:
+                selected_node = nodes[0]['id']
+                assignments[selected_node] = files
+                print(f"Assigned {group_name} to node {selected_node}")
+        
+        return self.batch_update_nodes(assignments)
+
+# Usage
+updater = BatchDatasetUpdater("my-rag-pipeline", "YOUR_API_TOKEN")
+
+# Example: Standardize configurations
+file_groups = {
+    "research_papers": [
+        "attention.pdf",
+        "bert.pdf",
+        "transformer_architecture.pdf"
+    ],
+    "documentation": [
+        "api_guide.pdf",
+        "user_manual.pdf",
+        "troubleshooting.pdf"
+    ],
+    "datasets": [
+        "training_data.csv",
+        "validation_data.csv"
+    ]
+}
+
+try:
+    results = updater.standardize_node_configurations(file_groups)
+    print(f"\nBatch update completed:")
+    print(f"Successful: {len(results['successful_updates'])}")
+    print(f"Failed: {len(results['failed_updates'])}")
+    
+except Exception as e:
+    print(f"Batch update failed: {e}")
+```
+
+## Best Practices
+
+### Configuration Management
+
+- **Validate Files First**: Use the [List Sources endpoint](/api-reference/sources/list) to verify file availability before updating
+- **Backup Configurations**: Save current configurations before making changes
+- **Incremental Updates**: Make small, incremental changes rather than large configuration replacements
+- **Document Changes**: Keep track of configuration changes for rollback purposes
+
+### File Organization
+
+- **Consistent Naming**: Use clear, consistent file naming conventions
+- **Logical Grouping**: Group related files in the same dataset nodes
+- **Version Control**: Include version information in file names when appropriate
+- **Size Considerations**: Balance the number of files per node for optimal performance
+
+### Error Handling
+
+- **Validate Before Update**: Check that files exist before attempting updates
+- **Handle Partial Failures**: In batch operations, handle individual failures gracefully
+- **Retry Logic**: Implement retry mechanisms for transient failures
+- **Detailed Logging**: Log all configuration changes for audit trails
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="exclamation-triangle" title="Files Not Found Error">
+    **Solution**: Verify that all files in your configuration exist as sources:
+    - Use the [List Sources endpoint](/api-reference/sources/list) to check available files
+    - Ensure file names match exactly (case-sensitive)
+    - Upload missing files using the [Upload Source endpoint](/api-reference/sources/upload)
+    - Check for typos in file names
+  </Accordion>
+  
+  <Accordion icon="search" title="Dataset Node Not Found">
+    **Solution**: Verify the node ID is correct:
+    - Use the [List Dataset Nodes endpoint](/api-reference/flows/datasets/list) to get valid node IDs
+    - Ensure the node exists in the specified flow
+    - Check that the node type is actually "dataset"
+    - Verify you're using the correct flow name
+  </Accordion>
+  
+  <Accordion icon="ban" title="Empty Files Configuration">
+    **Solution**: At least one file must be specified:
+    - Include at least one valid file in the `files` array
+    - Remove the node from the flow if no files are needed
+    - Consider using a different node type if files aren't required
+  </Accordion>
+  
+  <Accordion icon="clock" title="Update Not Reflected">
+    **Solution**: After updating configuration:
+    - The node is marked as `"updated": false` and needs reprocessing
+    - Deploy the flow again to apply configuration changes
+    - Check the node status using the List Dataset Nodes endpoint
+    - Allow time for the system to process the changes
+  </Accordion>
+  
+  <Accordion icon="wifi" title="Network Connection Issues">
+    **Solution**: For connectivity problems:
+    - Check your internet connection
+    - Verify the flow URL is accessible
+    - Ensure your firewall allows HTTPS traffic
+    - Try the request from a different network
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After updating dataset configurations, you might want to:
+
+<CardGroup cols={2}>
+  <Card
+    title="List Dataset Nodes"
+    icon="list"
+    href="/api-reference/flows/datasets/list"
+  >
+    View updated dataset node configurations and status
+  </Card>
+  <Card
+    title="Deploy Flow"
+    icon="rocket"
+    href="/api-reference/flows/deploy"
+  >
+    Deploy your flow to apply configuration changes
+  </Card>
+  <Card
+    title="List Sources"
+    icon="folder-open"
+    href="/api-reference/sources/list"
+  >
+    View available source files for configuration
+  </Card>
+  <Card
+    title="Run Flow"
+    icon="play"
+    href="/api-reference/flows/run"
+  >
+    Execute your flow with updated configurations
+  </Card>
+</CardGroup>

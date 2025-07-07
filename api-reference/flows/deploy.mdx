@@ -1,0 +1,766 @@
+---
+title: 'Deploy Flow'
+description: 'Deploy flows to make them accessible via the GraphorLM REST API'
+---
+
+Deploy your configured flows to make them publicly accessible and executable via the GraphorLM REST API. Deployment creates a new revision and makes your flow available at a public URL.
+
+## Overview
+
+The Deploy Flow endpoint creates a new revision of your flow and deploys it, making it accessible for execution via the public API. Once deployed, your flow will be available at `https://{flow_name}.flows.graphorlm.com`.
+
+- **Method**: `POST`
+- **URL**: `https://{flow_name}.flows.graphorlm.com/deploy`
+- **Authentication**: Required (API Token)
+
+## Authentication
+
+All requests must include a valid API token in the Authorization header:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+| `Content-Type` | `application/json` | Yes |
+
+### Request Body
+
+The request body should be a JSON object with the following optional fields:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `tool_description` | string | No | Custom description for the deployed flow that will be used in tool definitions |
+
+### Example Request
+
+```json
+{
+  "tool_description": "Advanced RAG pipeline for technical documentation with semantic search and context-aware responses"
+}
+```
+
+### Minimal Request
+
+For a basic deployment without custom tool description:
+
+```json
+{}
+```
+
+## Response Format
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Flow 'my-rag-pipeline' deployed successfully",
+  "revision_id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "Deployed"
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Whether the deployment was successful |
+| `message` | string | Human-readable message about the deployment |
+| `revision_id` | string | Unique identifier for the created revision |
+| `status` | string | Current status of the flow (should be "Deployed") |
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+async function deployFlow(flowName, toolDescription = null) {
+  const url = `https://${flowName}.flows.graphorlm.com/deploy`;
+  
+  const payload = {};
+  if (toolDescription) {
+    payload.tool_description = toolDescription;
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer YOUR_API_TOKEN',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(`Deployment failed: ${errorData.detail}`);
+  }
+
+  return await response.json();
+}
+
+// Usage
+deployFlow('my-rag-pipeline', 'Advanced document Q&A system')
+  .then(result => {
+    console.log('✅ Deployment successful!');
+    console.log('Revision ID:', result.revision_id);
+    console.log('Status:', result.status);
+    console.log('Message:', result.message);
+  })
+  .catch(error => {
+    console.error('❌ Deployment failed:', error.message);
+  });
+
+// Simple deployment without custom description
+deployFlow('my-rag-pipeline')
+  .then(result => console.log('Deployed:', result))
+  .catch(error => console.error('Error:', error));
+```
+
+### Python
+
+```python
+import requests
+import json
+
+def deploy_flow(flow_name, api_token, tool_description=None):
+    url = f"https://{flow_name}.flows.graphorlm.com/deploy"
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {}
+    if tool_description:
+        payload["tool_description"] = tool_description
+    
+    response = requests.post(url, headers=headers, json=payload)
+    response.raise_for_status()
+    
+    return response.json()
+
+# Usage
+try:
+    result = deploy_flow(
+        flow_name="my-rag-pipeline",
+        api_token="YOUR_API_TOKEN",
+        tool_description="Technical documentation assistant with advanced search capabilities"
+    )
+    
+    print("✅ Deployment successful!")
+    print(f"Revision ID: {result['revision_id']}")
+    print(f"Status: {result['status']}")
+    print(f"Message: {result['message']}")
+    
+    # Flow is now available at:
+    flow_url = f"https://{result.get('flow_name', 'my-rag-pipeline')}.flows.graphorlm.com"
+    print(f"🚀 Flow available at: {flow_url}")
+    
+except requests.exceptions.HTTPError as e:
+    if e.response.status_code == 404:
+        print("❌ Flow not found. Make sure the flow exists and is properly configured.")
+    elif e.response.status_code == 400:
+        print("❌ Invalid flow configuration. Check your flow setup.")
+    else:
+        print(f"❌ Deployment failed: {e}")
+        try:
+            error_detail = e.response.json().get('detail', 'Unknown error')
+            print(f"Error details: {error_detail}")
+        except:
+            print(f"HTTP {e.response.status_code}: {e.response.text}")
+
+except Exception as e:
+    print(f"❌ Unexpected error: {e}")
+```
+
+### cURL
+
+```bash
+# Deploy with custom tool description
+curl -X POST https://my-rag-pipeline.flows.graphorlm.com/deploy \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tool_description": "Advanced RAG pipeline for technical documentation"
+  }'
+
+# Simple deployment without custom description
+curl -X POST https://my-rag-pipeline.flows.graphorlm.com/deploy \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+### PHP
+
+```php
+<?php
+function deployFlow($flowName, $apiToken, $toolDescription = null) {
+    $url = "https://{$flowName}.flows.graphorlm.com/deploy";
+    
+    $payload = [];
+    if ($toolDescription) {
+        $payload['tool_description'] = $toolDescription;
+    }
+    
+    $options = [
+        'http' => [
+            'header' => [
+                "Authorization: Bearer {$apiToken}",
+                "Content-Type: application/json"
+            ],
+            'method' => 'POST',
+            'content' => json_encode($payload)
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    
+    if ($result === FALSE) {
+        $error = error_get_last();
+        throw new Exception("Failed to deploy flow: " . $error['message']);
+    }
+    
+    $httpCode = null;
+    if (isset($http_response_header)) {
+        foreach ($http_response_header as $header) {
+            if (strpos($header, 'HTTP/') === 0) {
+                $httpCode = (int) substr($header, 9, 3);
+                break;
+            }
+        }
+    }
+    
+    $response = json_decode($result, true);
+    
+    if ($httpCode !== 200) {
+        $errorMessage = $response['detail'] ?? 'Unknown error';
+        throw new Exception("Deployment failed: {$errorMessage}");
+    }
+    
+    return $response;
+}
+
+// Usage
+try {
+    $result = deployFlow(
+        'my-rag-pipeline',
+        'YOUR_API_TOKEN',
+        'Advanced document analysis and Q&A system'
+    );
+    
+    echo "✅ Deployment successful!\n";
+    echo "Revision ID: {$result['revision_id']}\n";
+    echo "Status: {$result['status']}\n";
+    echo "Message: {$result['message']}\n";
+    
+    $flowUrl = "https://my-rag-pipeline.flows.graphorlm.com";
+    echo "🚀 Flow available at: {$flowUrl}\n";
+    
+} catch (Exception $e) {
+    echo "❌ Deployment failed: " . $e->getMessage() . "\n";
+}
+?>
+```
+
+## Deployment Process
+
+The deployment process involves several steps:
+
+1. **Validation**: Checks if the flow exists and is properly configured
+2. **Revision Creation**: Creates a new revision with updated node IDs
+3. **Graph Update**: Updates the flow graph with the new revision
+4. **Component Deployment**: Deploys all flow components (dataset, chunking, retrieval, LLM, etc.)
+5. **Traffic Routing**: Routes 100% of traffic to the new revision
+6. **Status Update**: Updates the flow status to "Deployed"
+
+<Warning>
+Deployment can take several minutes depending on flow complexity and the number of components that need to be processed.
+</Warning>
+
+## Deployment Requirements
+
+Before deploying a flow, ensure:
+
+### 1. Flow Configuration
+- ✅ Flow has been created and saved
+- ✅ All required components are configured
+- ✅ Dataset node has source documents selected
+- ✅ LLM configuration is complete and valid
+
+### 2. Source Documents
+- ✅ Documents are uploaded to the project
+- ✅ Documents are processed and in "Completed" status
+- ✅ At least one document is selected in dataset nodes
+
+### 3. Flow Components
+- ✅ All nodes have valid configurations
+- ✅ Node connections are properly established
+- ✅ Required parameters are set for each component
+
+### 4. API Access
+- ✅ Valid API token with deployment permissions
+- ✅ Flow name is unique and follows naming conventions
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Description | Common Causes |
+|-------------|-------------|---------------|
+| 400 | Bad Request | Invalid flow configuration, missing required components |
+| 401 | Unauthorized | Invalid or missing API token |
+| 404 | Not Found | Flow doesn't exist or insufficient permissions |
+| 500 | Internal Server Error | Deployment process failed, infrastructure issues |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+### Example Error Responses
+
+#### Flow Not Found
+```json
+{
+  "detail": "Flow with name 'my-rag-pipeline' not found"
+}
+```
+
+#### Invalid Configuration
+```json
+{
+  "detail": "Flow configuration is invalid: Dataset node is missing source documents"
+}
+```
+
+#### Deployment Failed
+```json
+{
+  "detail": "Failed to deploy flow: Component validation failed"
+}
+```
+
+#### Insufficient Permissions
+```json
+{
+  "detail": "You don't have permission to deploy flows in this project"
+}
+```
+
+## Tool Description Usage
+
+The `tool_description` parameter is used when your deployed flow is accessed via MCP (Model Context Protocol) or when it's used as a tool in other systems. It helps describe what your flow does and how it should be used.
+
+### Best Practices for Tool Descriptions
+
+- **Be Specific**: Clearly describe what your flow does
+- **Include Use Cases**: Mention what types of queries it handles best
+- **Mention Data Sources**: Indicate what kind of documents or data it processes
+
+### Examples of Good Tool Descriptions
+
+```json
+{
+  "tool_description": "Technical documentation Q&A system that searches through software manuals, API docs, and troubleshooting guides to provide accurate answers to development questions"
+}
+```
+
+```json
+{
+  "tool_description": "Legal document analysis tool that processes contracts, regulations, and case studies to answer legal research questions with cited sources"
+}
+```
+
+```json
+{
+  "tool_description": "Customer support knowledge base that searches through product manuals, FAQ documents, and support tickets to provide helpful customer service responses"
+}
+```
+
+## Integration Examples
+
+### Automated Deployment Pipeline
+
+```javascript
+class FlowDeploymentManager {
+  constructor(apiToken) {
+    this.apiToken = apiToken;
+  }
+
+  async deployWithValidation(flowName, toolDescription) {
+    try {
+      // Step 1: Validate flow configuration
+      console.log('📋 Validating flow configuration...');
+      await this.validateFlowConfiguration(flowName);
+      
+      // Step 2: Deploy the flow
+      console.log('🚀 Starting deployment...');
+      const result = await this.deployFlow(flowName, toolDescription);
+      
+      // Step 3: Verify deployment
+      console.log('✅ Verifying deployment...');
+      await this.verifyDeployment(flowName);
+      
+      console.log('🎉 Deployment completed successfully!');
+      return result;
+      
+    } catch (error) {
+      console.error('❌ Deployment failed:', error.message);
+      throw error;
+    }
+  }
+
+  async deployFlow(flowName, toolDescription) {
+    const url = `https://${flowName}.flows.graphorlm.com/deploy`;
+    
+    const payload = {};
+    if (toolDescription) {
+      payload.tool_description = toolDescription;
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Deployment failed: ${errorData.detail}`);
+    }
+
+    return await response.json();
+  }
+
+  async validateFlowConfiguration(flowName) {
+    // Check if flow exists and is properly configured
+    // This would typically involve checking dataset nodes, etc.
+    const datasetsUrl = `https://${flowName}.flows.graphorlm.com/datasets`;
+    
+    const response = await fetch(datasetsUrl, {
+      headers: {
+        'Authorization': `Bearer ${this.apiToken}`,
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Flow configuration validation failed');
+    }
+
+    const datasets = await response.json();
+    if (datasets.length === 0) {
+      throw new Error('Flow has no dataset nodes configured');
+    }
+
+    // Additional validation logic here
+    console.log('✅ Flow configuration is valid');
+  }
+
+  async verifyDeployment(flowName) {
+    // Test the deployed flow with a simple query
+    const testUrl = `https://${flowName}.flows.graphorlm.com`;
+    
+    const response = await fetch(testUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: 'test query',
+        page_size: 1
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Deployment verification failed - flow is not responding');
+    }
+
+    console.log('✅ Flow is responding correctly');
+  }
+}
+
+// Usage
+const deploymentManager = new FlowDeploymentManager('YOUR_API_TOKEN');
+
+deploymentManager.deployWithValidation(
+  'my-rag-pipeline',
+  'Advanced technical documentation assistant'
+).then(result => {
+  console.log('Deployment result:', result);
+}).catch(error => {
+  console.error('Deployment error:', error);
+});
+```
+
+### Batch Deployment for Multiple Flows
+
+```python
+import asyncio
+import aiohttp
+import json
+from typing import List, Dict, Any
+
+class BatchFlowDeployer:
+    def __init__(self, api_token: str):
+        self.api_token = api_token
+        
+    async def deploy_single_flow(
+        self, 
+        session: aiohttp.ClientSession, 
+        flow_name: str, 
+        tool_description: str = None
+    ) -> Dict[str, Any]:
+        url = f"https://{flow_name}.flows.graphorlm.com/deploy"
+        
+        payload = {}
+        if tool_description:
+            payload["tool_description"] = tool_description
+            
+        headers = {
+            "Authorization": f"Bearer {self.api_token}",
+            "Content-Type": "application/json"
+        }
+        
+        try:
+            async with session.post(url, headers=headers, json=payload) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    return {
+                        "flow_name": flow_name,
+                        "status": "success",
+                        "revision_id": result["revision_id"],
+                        "message": result["message"]
+                    }
+                else:
+                    error_text = await response.text()
+                    return {
+                        "flow_name": flow_name,
+                        "status": "error",
+                        "error": error_text
+                    }
+        except Exception as e:
+            return {
+                "flow_name": flow_name,
+                "status": "error",
+                "error": str(e)
+            }
+    
+    async def deploy_multiple_flows(
+        self, 
+        flows: List[Dict[str, str]]
+    ) -> List[Dict[str, Any]]:
+        """
+        Deploy multiple flows concurrently.
+        
+        Args:
+            flows: List of dicts with 'name' and optional 'tool_description'
+        """
+        async with aiohttp.ClientSession() as session:
+            tasks = [
+                self.deploy_single_flow(
+                    session, 
+                    flow["name"], 
+                    flow.get("tool_description")
+                )
+                for flow in flows
+            ]
+            return await asyncio.gather(*tasks, return_exceptions=True)
+
+# Usage
+async def deploy_all_flows():
+    deployer = BatchFlowDeployer("YOUR_API_TOKEN")
+    
+    flows_to_deploy = [
+        {
+            "name": "customer-support-flow",
+            "tool_description": "Customer support Q&A system"
+        },
+        {
+            "name": "technical-docs-flow", 
+            "tool_description": "Technical documentation assistant"
+        },
+        {
+            "name": "legal-research-flow",
+            "tool_description": "Legal document research tool"
+        }
+    ]
+    
+    print("🚀 Starting batch deployment...")
+    results = await deployer.deploy_multiple_flows(flows_to_deploy)
+    
+    successful = 0
+    failed = 0
+    
+    for result in results:
+        if isinstance(result, dict):
+            if result["status"] == "success":
+                print(f"✅ {result['flow_name']}: {result['message']}")
+                successful += 1
+            else:
+                print(f"❌ {result['flow_name']}: {result['error']}")
+                failed += 1
+        else:
+            print(f"❌ Unexpected error: {result}")
+            failed += 1
+    
+    print(f"\n📊 Deployment Summary:")
+    print(f"✅ Successful: {successful}")
+    print(f"❌ Failed: {failed}")
+
+# Run batch deployment
+# asyncio.run(deploy_all_flows())
+```
+
+## Best Practices
+
+### Pre-Deployment Checklist
+- ✅ Test your flow configuration in the GraphorLM interface
+- ✅ Verify all documents are processed and available
+- ✅ Ensure dataset nodes have appropriate source selections
+- ✅ Test component configurations individually
+- ✅ Validate LLM settings and API keys
+
+### Deployment Strategy
+- **Start Small**: Deploy simple flows first to validate the process
+- **Monitor Performance**: Watch deployment progress and check for errors
+- **Version Control**: Keep track of revision IDs for rollback if needed
+- **Gradual Rollout**: Test thoroughly before production deployment
+
+### Post-Deployment
+- **Verify Functionality**: Test the deployed flow with sample queries
+- **Monitor Performance**: Check response times and accuracy
+- **Update Documentation**: Document the deployment and any custom configurations
+- **Set Up Monitoring**: Implement logging and error tracking
+
+### Security Considerations
+- **API Token Management**: Use environment variables for tokens
+- **Access Control**: Ensure only authorized users can deploy flows
+- **Network Security**: Use HTTPS for all deployment requests
+- **Audit Trail**: Keep logs of all deployments for compliance
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="exclamation-triangle" title="Flow Not Found Error">
+    **Solution**: Verify that:
+    - The flow exists in your GraphorLM project
+    - The flow name in the URL exactly matches the flow name in the system
+    - Your API token has access to the correct project
+    - The flow has been saved properly in the flow builder
+  </Accordion>
+  
+  <Accordion icon="cog" title="Invalid Configuration Error">
+    **Solution**: Check your flow configuration:
+    - Ensure all required nodes are present
+    - Verify dataset nodes have source documents selected
+    - Check that all node parameters are properly configured
+    - Validate LLM configuration and API keys
+    - Ensure all node connections are properly established
+  </Accordion>
+  
+  <Accordion icon="clock" title="Deployment Timeout">
+    **Solution**: For slow deployments:
+    - Complex flows may take several minutes to deploy
+    - Check if large datasets are being processed
+    - Try deploying during off-peak hours
+    - Contact support if deployment consistently times out
+  </Accordion>
+  
+  <Accordion icon="database" title="Source Document Issues">
+    **Solution**: Verify your documents:
+    - All documents are uploaded and processed
+    - Documents have "Completed" status in the sources list
+    - At least one document is selected in dataset nodes
+    - Documents are accessible and not corrupted
+  </Accordion>
+  
+  <Accordion icon="key" title="Authentication Failures">
+    **Solution**: Check your API authentication:
+    - Verify API token is valid and not expired
+    - Ensure token has deployment permissions
+    - Check that token belongs to the correct project
+    - Regenerate token if necessary
+  </Accordion>
+  
+  <Accordion icon="server" title="Internal Server Errors">
+    **Solution**: For deployment infrastructure issues:
+    - Check GraphorLM status page for service incidents
+    - Try deployment again after a few minutes
+    - Simplify flow configuration if possible
+    - Contact support with revision ID if error persists
+  </Accordion>
+</AccordionGroup>
+
+## Monitoring and Management
+
+After successful deployment, you can:
+
+### Check Deployment Status
+- Monitor flow execution through the GraphorLM dashboard
+- Use the [Run Flow endpoint](/api-reference/flows/run) to test functionality
+- Review logs and performance metrics
+
+### Update Deployments
+- Modify your flow configuration in the GraphorLM interface
+- Deploy again to create a new revision
+- Previous revisions are automatically replaced
+
+### Rollback if Needed
+- Contact support if you need to rollback to a previous revision
+- Keep track of working revision IDs for reference
+
+## Next Steps
+
+After successfully deploying your flow, you can:
+
+<CardGroup cols={2}>
+  <Card
+    title="Run Flow"
+    icon="play"
+    href="/api-reference/flows/run"
+  >
+    Execute your deployed flow with queries and get responses
+  </Card>
+  <Card
+    title="Flow Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
+  >
+    Explore all available flow management endpoints
+  </Card>
+  <Card
+    title="Integrate Workflow"
+    icon="plug"
+    href="/guides/integrate-workflow"
+  >
+    Advanced integration patterns and MCP server usage
+  </Card>
+  <Card
+    title="API Tokens"
+    icon="key"
+    href="/guides/api-tokens"
+  >
+    Learn how to generate and manage API tokens
+  </Card>
+</CardGroup>
