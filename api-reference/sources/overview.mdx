@@ -24,7 +24,7 @@ The Sources API consists of four main endpoints that provide complete document l
   <Card
     title="Upload Source"
     icon="arrow-up-from-bracket"
-    href="/api/sources/upload"
+    href="/api-reference/sources/upload"
   >
     **POST** `https://sources.graphorlm.com/upload`
     
@@ -34,7 +34,7 @@ The Sources API consists of four main endpoints that provide complete document l
   <Card
     title="Process Source"
     icon="gears"
-    href="/api/sources/process"
+    href="/api-reference/sources/process"
   >
     **POST** `https://sources.graphorlm.com/process`
     
@@ -44,7 +44,7 @@ The Sources API consists of four main endpoints that provide complete document l
   <Card
     title="List Sources"
     icon="list"
-    href="/api/sources/list"
+    href="/api-reference/sources/list"
   >
     **GET** `https://sources.graphorlm.com`
     
@@ -54,7 +54,7 @@ The Sources API consists of four main endpoints that provide complete document l
   <Card
     title="Delete Source"
     icon="trash"
-    href="/api/sources/delete"
+    href="/api-reference/sources/delete"
   >
     **DELETE** `https://sources.graphorlm.com/delete`
     
@@ -67,14 +67,14 @@ The Sources API consists of four main endpoints that provide complete document l
 Understanding how GraphorLM processes your documents helps you make the most of the Sources API:
 
 ### 1. Upload Stage
-When you upload a document using the [Upload Source](/api/sources/upload) endpoint:
+When you upload a document using the [Upload Source](/api-reference/sources/upload) endpoint:
 - File is validated for type and size (max 100MB)
 - Document is securely stored in your project
 - Initial metadata is extracted (filename, size, type)
 - Processing begins automatically with the default method
 
 ### 2. Processing Methods
-GraphorLM offers multiple processing methods, selectable via the [Process Source](/api/sources/process) endpoint:
+GraphorLM offers multiple processing methods, selectable via the [Process Source](/api-reference/sources/process) endpoint:
 
 <AccordionGroup>
   <Accordion icon="gauge-simple" title="Basic Method">
@@ -115,7 +115,7 @@ GraphorLM offers multiple processing methods, selectable via the [Process Source
 </AccordionGroup>
 
 ### 3. Document Status Lifecycle
-Documents progress through various states that you can monitor using the [List Sources](/api/sources/list) endpoint:
+Documents progress through various states that you can monitor using the [List Sources](/api-reference/sources/list) endpoint:
 
 | Status | Description | Next Steps |
 |--------|-------------|------------|
@@ -147,9 +147,9 @@ graph LR
     C --> D[Use in RAG Pipeline]
 ```
 
-1. **Upload**: Use [Upload Source](/api/sources/upload) to add your document
-2. **Monitor**: Check status with [List Sources](/api/sources/list)
-3. **Optimize**: Reprocess with [Process Source](/api/sources/process) if needed
+1. **Upload**: Use [Upload Source](/api-reference/sources/upload) to add your document
+2. **Monitor**: Check status with [List Sources](/api-reference/sources/list)
+3. **Optimize**: Reprocess with [Process Source](/api-reference/sources/process) if needed
 4. **Use**: Document is ready for your RAG workflows
 
 ### Quality Optimization Workflow

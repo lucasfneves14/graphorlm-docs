@@ -297,7 +297,7 @@ The system automatically selects the optimal processing method based on file typ
 | Spreadsheets | Basic | Table structure preservation |
 
 <Note>
-  You can reprocess documents with different methods using the [Process Source](/api/sources/process) endpoint after upload.
+  You can reprocess documents with different methods using the [Process Source](/api-reference/sources/process) endpoint after upload.
 </Note>
 
 ## Best Practices
@@ -403,7 +403,7 @@ const uploadWithProgress = async (apiToken, file, onProgress) => {
     **Solutions**:
     - Verify file integrity before upload
     - Try converting to a more standard format
-    - Use the [Process Source](/api/sources/process) endpoint with different methods
+    - Use the [Process Source](/api-reference/sources/process) endpoint with different methods
   </Accordion>
   
   <Accordion icon="key" title="Authentication issues">
@@ -433,14 +433,14 @@ After successfully uploading your documents:
   <Card
     title="Process Source"
     icon="gears"
-    href="/api/sources/process"
+    href="/api-reference/sources/process"
   >
     Reprocess documents with different parsing methods for optimal results
   </Card>
   <Card
     title="List Sources"
     icon="list"
-    href="/api/sources/list"
+    href="/api-reference/sources/list"
   >
     Retrieve information about all uploaded documents in your project
   </Card>
@@ -454,7 +454,7 @@ After successfully uploading your documents:
   <Card
     title="Delete Source"
     icon="trash"
-    href="/api/sources/delete"
+    href="/api-reference/sources/delete"
   >
     Remove documents that are no longer needed from your project
   </Card>

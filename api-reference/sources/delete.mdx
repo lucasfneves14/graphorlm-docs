@@ -59,7 +59,7 @@ The request must be sent as JSON with the following field:
     - File names are case-sensitive
     - Must match the exact name from upload or list endpoints
     - Include the full filename with extension
-    - Use the [List Sources](/api/sources/list) endpoint to verify file names
+    - Use the [List Sources](/api-reference/sources/list) endpoint to verify file names
   </Accordion>
   
   <Accordion icon="flow-chart" title="Flow Impact">
@@ -308,7 +308,7 @@ try {
     
     **Solutions**:
     - Verify the exact file name (case-sensitive)
-    - Use the [List Sources](/api/sources/list) endpoint to check available files
+    - Use the [List Sources](/api-reference/sources/list) endpoint to check available files
     - Ensure the file wasn't already deleted
   </Accordion>
   
@@ -398,7 +398,7 @@ try {
     - Wait for processing to complete when possible
     - Processing documents may be in an inconsistent state
     - Consider the impact on any dependent workflows
-    - Monitor processing status using the [List Sources](/api/sources/list) endpoint
+    - Monitor processing status using the [List Sources](/api-reference/sources/list) endpoint
   </Accordion>
   
   <Accordion icon="flow-chart" title="Review flow dependencies">
@@ -806,7 +806,7 @@ result = manager.archive_by_criteria(
     **Causes**: File doesn't exist, wrong name, or already deleted
     
     **Solutions**:
-    - Use [List Sources](/api/sources/list) to verify exact file names
+    - Use [List Sources](/api-reference/sources/list) to verify exact file names
     - Check for case sensitivity (file names are case-sensitive)
     - Verify you're using the correct project/API token
     - Consider that the file may have been deleted by another process
@@ -861,21 +861,21 @@ After successfully deleting your documents:
   <Card
     title="List Sources"
     icon="list"
-    href="/api/sources/list"
+    href="/api-reference/sources/list"
   >
     Verify the deletion and view remaining documents in your project
   </Card>
   <Card
     title="Upload Source"
     icon="arrow-up-from-bracket"
-    href="/api/sources/upload"
+    href="/api-reference/sources/upload"
   >
     Add new documents to replace the deleted ones
   </Card>
   <Card
     title="Process Source"
     icon="gears"
-    href="/api/sources/process"
+    href="/api-reference/sources/process"
   >
     Reprocess remaining documents with different methods
   </Card>
