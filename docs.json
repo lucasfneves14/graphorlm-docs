@@ -42,6 +42,12 @@
         "tab": "API Reference",
         "groups": [
           {
+            "group": "Get Started",
+            "pages": [
+              "api-reference/overview"
+            ]
+          },
+          {
             "group": "Sources",
             "pages": [
               "api-reference/sources/overview",

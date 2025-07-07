@@ -1,0 +1,776 @@
+---
+title: 'API Reference Overview'
+description: 'Complete guide to the GraphorLM REST API - from source management to flow execution'
+---
+
+The GraphorLM REST API provides comprehensive programmatic access to all platform capabilities. Build, deploy, and execute RAG pipelines, manage documents, and integrate GraphorLM into your applications with powerful, well-documented endpoints.
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/api-overview.png"
+  alt="GraphorLM API Overview"
+  loading="lazy"
+/>
+
+## API Architecture
+
+GraphorLM's REST API is organized around two main resource types that mirror the platform's core functionality:
+
+### **Sources API** - Document Management
+Handle document ingestion, processing, and lifecycle management.
+
+### **Flows API** - Pipeline Management  
+Control RAG pipeline deployment, execution, and dataset configuration.
+
+## Available Endpoints
+
+The API provides complete coverage of GraphorLM's capabilities through organized endpoint groups:
+
+### Sources Management
+
+Manage your document library with full CRUD operations:
+
+<CardGroup cols={2}>
+  <Card
+    title="Sources Overview"
+    icon="file-lines"
+    href="/api-reference/sources/overview"
+  >
+    Complete guide to document management endpoints
+  </Card>
+  <Card
+    title="Upload Source"
+    icon="upload"
+    href="/api-reference/sources/upload"
+  >
+    Import documents from files, URLs, GitHub, and YouTube
+  </Card>
+  <Card
+    title="Process Source"
+    icon="gear"
+    href="/api-reference/sources/process"
+  >
+    Configure OCR and parsing methods for documents
+  </Card>
+  <Card
+    title="List Sources"
+    icon="list"
+    href="/api-reference/sources/list"
+  >
+    Retrieve all sources with status and metadata
+  </Card>
+  <Card
+    title="Delete Source"
+    icon="trash"
+    href="/api-reference/sources/delete"
+  >
+    Remove sources and update dependent flows
+  </Card>
+</CardGroup>
+
+### Flow Management
+
+Control RAG pipelines from configuration to execution:
+
+<CardGroup cols={2}>
+  <Card
+    title="Flows Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
+  >
+    Complete guide to flow and dataset management
+  </Card>
+  <Card
+    title="List Flows"
+    icon="list"
+    href="/api-reference/flows/list"
+  >
+    Get all flows with deployment status and URLs
+  </Card>
+  <Card
+    title="Deploy Flow"
+    icon="rocket"
+    href="/api-reference/flows/deploy"
+  >
+    Deploy flows to make them accessible via API
+  </Card>
+  <Card
+    title="Run Flow"
+    icon="play"
+    href="/api-reference/flows/run"
+  >
+    Execute deployed flows with queries and get results
+  </Card>
+</CardGroup>
+
+### Dataset Operations
+
+Specialized endpoints for managing flow data sources:
+
+<CardGroup cols={2}>
+  <Card
+    title="Dataset Overview"
+    icon="database"
+    href="/api-reference/flows/datasets/overview"
+  >
+    Comprehensive guide to dataset node management
+  </Card>
+  <Card
+    title="List Dataset Nodes"
+    icon="list"
+    href="/api-reference/flows/datasets/list"
+  >
+    Retrieve dataset configurations from flows
+  </Card>
+  <Card
+    title="Update Dataset"
+    icon="pen-to-square"
+    href="/api-reference/flows/datasets/update"
+  >
+    Modify dataset file selections and configurations
+  </Card>
+</CardGroup>
+
+## Authentication
+
+All API endpoints require authentication using API tokens. Include your token in the Authorization header:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate and manage API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+### Token Security
+
+- **Never expose tokens** in client-side code or public repositories
+- **Use environment variables** to store tokens securely
+- **Rotate tokens regularly** for enhanced security
+- **Use different tokens** for different environments (dev/staging/prod)
+
+## URL Structure
+
+GraphorLM API endpoints follow consistent URL patterns based on their scope and purpose:
+
+### Global Operations
+```
+https://sources.graphorlm.com      # Source management
+https://flows.graphorlm.com        # Flow listing and global operations
+```
+
+### Resource-Specific Operations
+```
+https://{flow_name}.flows.graphorlm.com                 # Flow execution
+https://{flow_name}.flows.graphorlm.com/datasets        # Dataset management
+https://{flow_name}.flows.graphorlm.com/datasets/{id}   # Specific dataset operations
+```
+
+## Response Formats
+
+All API responses follow consistent JSON structures with appropriate HTTP status codes:
+
+### Success Response Pattern
+```json
+{
+  "status": "success",
+  "message": "Operation completed successfully",
+  "data": {
+    // Resource-specific data
+  }
+}
+```
+
+### Error Response Pattern
+```json
+{
+  "detail": "Descriptive error message explaining what went wrong"
+}
+```
+
+### Common Status Codes
+
+| Code | Meaning | Usage |
+|------|---------|-------|
+| **200** | OK | Successful GET, POST, PATCH operations |
+| **400** | Bad Request | Invalid parameters or malformed requests |
+| **401** | Unauthorized | Invalid or missing API token |
+| **404** | Not Found | Resource doesn't exist |
+| **413** | Payload Too Large | File size exceeds limits |
+| **500** | Internal Server Error | Server-side processing errors |
+
+## Complete Workflow Example
+
+Here's how the APIs work together in a typical RAG pipeline setup:
+
+### 1. Document Upload and Processing
+
+```javascript
+// Upload a document
+const uploadResponse = await fetch('https://sources.graphorlm.com/upload', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_TOKEN'
+  },
+  body: formData // File data
+});
+
+// Process with advanced OCR
+const processResponse = await fetch('https://sources.graphorlm.com/process', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    file_name: 'research-paper.pdf',
+    partition_method: 'YOLOX'
+  })
+});
+```
+
+### 2. Flow Configuration and Deployment
+
+```javascript
+// Configure dataset in flow
+const datasetResponse = await fetch('https://my-rag-flow.flows.graphorlm.com/datasets/dataset-123', {
+  method: 'PATCH',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    config: {
+      files: ['research-paper.pdf', 'additional-source.pdf']
+    }
+  })
+});
+
+// Deploy the flow
+const deployResponse = await fetch('https://my-rag-flow.flows.graphorlm.com/deploy', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    tool_description: 'Research paper analysis pipeline'
+  })
+});
+```
+
+### 3. Flow Execution
+
+```javascript
+// Execute the deployed flow
+const executionResponse = await fetch('https://my-rag-flow.flows.graphorlm.com', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    query: 'What are the key findings in these research papers?',
+    page: 1,
+    page_size: 10
+  })
+});
+
+const results = await executionResponse.json();
+console.log(`Found ${results.total} relevant results`);
+```
+
+## Integration Patterns
+
+### Complete API Client
+
+```javascript
+class GraphorLMClient {
+  constructor(apiToken) {
+    this.apiToken = apiToken;
+    this.headers = {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  // Sources API methods
+  async uploadSource(file, filename) {
+    const formData = new FormData();
+    formData.append('file', file, filename);
+    
+    const response = await fetch('https://sources.graphorlm.com/upload', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${this.apiToken}` },
+      body: formData
+    });
+    return await response.json();
+  }
+
+  async listSources() {
+    const response = await fetch('https://sources.graphorlm.com', {
+      headers: this.headers
+    });
+    return await response.json();
+  }
+
+  async processSource(fileName, partitionMethod = 'BASIC') {
+    const response = await fetch('https://sources.graphorlm.com/process', {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify({
+        file_name: fileName,
+        partition_method: partitionMethod
+      })
+    });
+    return await response.json();
+  }
+
+  // Flows API methods
+  async listFlows() {
+    const response = await fetch('https://flows.graphorlm.com', {
+      headers: this.headers
+    });
+    return await response.json();
+  }
+
+  async deployFlow(flowName, toolDescription) {
+    const response = await fetch(`https://${flowName}.flows.graphorlm.com/deploy`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify({ tool_description: toolDescription })
+    });
+    return await response.json();
+  }
+
+  async executeFlow(flowName, query, options = {}) {
+    const { page = 1, pageSize = 10 } = options;
+    const response = await fetch(`https://${flowName}.flows.graphorlm.com`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify({
+        query,
+        page,
+        page_size: pageSize
+      })
+    });
+    return await response.json();
+  }
+
+  // Dataset API methods
+  async getDatasetNodes(flowName) {
+    const response = await fetch(`https://${flowName}.flows.graphorlm.com/datasets`, {
+      headers: this.headers
+    });
+    return await response.json();
+  }
+
+  async updateDatasetNode(flowName, nodeId, files) {
+    const response = await fetch(`https://${flowName}.flows.graphorlm.com/datasets/${nodeId}`, {
+      method: 'PATCH',
+      headers: this.headers,
+      body: JSON.stringify({ config: { files } })
+    });
+    return await response.json();
+  }
+}
+
+// Usage example
+const client = new GraphorLMClient('YOUR_API_TOKEN');
+
+// Complete workflow
+async function buildRAGPipeline() {
+  try {
+    // 1. Upload and process documents
+    const file = document.getElementById('fileInput').files[0];
+    const uploadResult = await client.uploadSource(file, file.name);
+    console.log('Upload successful:', uploadResult);
+
+    await client.processSource(file.name, 'YOLOX');
+    console.log('Processing initiated');
+
+    // 2. Configure flow datasets
+    const datasets = await client.getDatasetNodes('my-research-flow');
+    if (datasets.length > 0) {
+      await client.updateDatasetNode(
+        'my-research-flow',
+        datasets[0].id,
+        [file.name]
+      );
+      console.log('Dataset configured');
+    }
+
+    // 3. Deploy flow
+    const deployResult = await client.deployFlow(
+      'my-research-flow',
+      'Research document analysis pipeline'
+    );
+    console.log('Flow deployed:', deployResult);
+
+    // 4. Execute queries
+    const result = await client.executeFlow(
+      'my-research-flow',
+      'What are the main research contributions?'
+    );
+    console.log('Query results:', result);
+
+  } catch (error) {
+    console.error('Pipeline setup failed:', error);
+  }
+}
+```
+
+### Python Integration
+
+```python
+import requests
+from typing import Dict, List, Any, Optional
+import os
+
+class GraphorLMAPI:
+    def __init__(self, api_token: str):
+        self.api_token = api_token
+        self.headers = {
+            "Authorization": f"Bearer {api_token}",
+            "Content-Type": "application/json"
+        }
+    
+    # Sources API
+    def upload_source(self, file_path: str) -> Dict[str, Any]:
+        """Upload a source file"""
+        url = "https://sources.graphorlm.com/upload"
+        
+        with open(file_path, 'rb') as f:
+            files = {'file': (os.path.basename(file_path), f)}
+            headers = {"Authorization": f"Bearer {self.api_token}"}
+            response = requests.post(url, headers=headers, files=files)
+            
+        response.raise_for_status()
+        return response.json()
+    
+    def list_sources(self) -> List[Dict[str, Any]]:
+        """List all sources"""
+        response = requests.get("https://sources.graphorlm.com", headers=self.headers)
+        response.raise_for_status()
+        return response.json()
+    
+    def process_source(self, file_name: str, partition_method: str = "BASIC") -> Dict[str, Any]:
+        """Process a source with specified method"""
+        url = "https://sources.graphorlm.com/process"
+        payload = {
+            "file_name": file_name,
+            "partition_method": partition_method
+        }
+        response = requests.post(url, headers=self.headers, json=payload)
+        response.raise_for_status()
+        return response.json()
+    
+    # Flows API
+    def list_flows(self) -> Dict[str, Any]:
+        """List all flows"""
+        response = requests.get("https://flows.graphorlm.com", headers=self.headers)
+        response.raise_for_status()
+        return response.json()
+    
+    def deploy_flow(self, flow_name: str, tool_description: Optional[str] = None) -> Dict[str, Any]:
+        """Deploy a flow"""
+        url = f"https://{flow_name}.flows.graphorlm.com/deploy"
+        payload = {}
+        if tool_description:
+            payload["tool_description"] = tool_description
+            
+        response = requests.post(url, headers=self.headers, json=payload)
+        response.raise_for_status()
+        return response.json()
+    
+    def execute_flow(self, flow_name: str, query: str, page: int = 1, page_size: int = 10) -> Dict[str, Any]:
+        """Execute a deployed flow"""
+        url = f"https://{flow_name}.flows.graphorlm.com"
+        payload = {
+            "query": query,
+            "page": page,
+            "page_size": page_size
+        }
+        response = requests.post(url, headers=self.headers, json=payload)
+        response.raise_for_status()
+        return response.json()
+
+# Usage
+api = GraphorLMAPI(os.getenv("GRAPHORLM_API_TOKEN"))
+
+# Complete workflow
+def setup_research_pipeline(documents: List[str], flow_name: str):
+    try:
+        print("🚀 Setting up research pipeline...")
+        
+        # Upload and process documents
+        processed_files = []
+        for doc_path in documents:
+            print(f"📄 Processing {doc_path}")
+            upload_result = api.upload_source(doc_path)
+            file_name = upload_result['file_name']
+            
+            api.process_source(file_name, 'YOLOX')
+            processed_files.append(file_name)
+            print(f"✅ {file_name} processed")
+        
+        # Deploy flow
+        deploy_result = api.deploy_flow(
+            flow_name, 
+            f"Research pipeline with {len(processed_files)} documents"
+        )
+        print(f"🚀 Flow deployed: {deploy_result['message']}")
+        
+        # Test execution
+        test_query = "What are the key research findings?"
+        results = api.execute_flow(flow_name, test_query)
+        print(f"📊 Test query returned {results['total']} results")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Setup failed: {e}")
+        return False
+```
+
+## Rate Limits and Best Practices
+
+### Performance Guidelines
+
+- **Batch Operations**: Group multiple related requests when possible
+- **Asynchronous Processing**: Use async/await for multiple concurrent requests
+- **Retry Logic**: Implement exponential backoff for transient failures
+- **Caching**: Cache frequently accessed data like flow configurations
+
+### Error Handling Best Practices
+
+```javascript
+async function robustAPICall(url, options, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`HTTP ${response.status}: ${errorData.detail}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.warn(`Attempt ${attempt} failed:`, error.message);
+      
+      if (attempt === maxRetries) {
+        throw error;
+      }
+      
+      // Exponential backoff
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+    }
+  }
+}
+```
+
+## Testing and Development
+
+### API Testing Tools
+
+You can test GraphorLM API endpoints using:
+
+- **cURL**: Command-line testing and scripting
+- **Postman**: Interactive API testing and documentation
+- **Bruno/Insomnia**: Alternative API clients
+- **Custom Scripts**: Automated testing suites
+
+### Example cURL Commands
+
+```bash
+# List all sources
+curl -X GET "https://sources.graphorlm.com" \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+
+# Upload a file
+curl -X POST "https://sources.graphorlm.com/upload" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -F "file=@document.pdf"
+
+# Execute a flow
+curl -X POST "https://my-flow.flows.graphorlm.com" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is machine learning?", "page": 1, "page_size": 5}'
+```
+
+## Common Use Cases
+
+### Content Management System Integration
+
+Build intelligent document search and retrieval:
+
+```javascript
+class ContentSearchAPI {
+  constructor(apiToken, flowName) {
+    this.client = new GraphorLMClient(apiToken);
+    this.flowName = flowName;
+  }
+
+  async addDocument(file, metadata = {}) {
+    // Upload and process new document
+    const uploadResult = await this.client.uploadSource(file, file.name);
+    await this.client.processSource(file.name, 'YOLOX');
+    
+    // Update flow configuration
+    const datasets = await this.client.getDatasetNodes(this.flowName);
+    const currentFiles = datasets[0]?.data.config.files || [];
+    const updatedFiles = [...currentFiles, file.name];
+    
+    await this.client.updateDatasetNode(this.flowName, datasets[0].id, updatedFiles);
+    await this.client.deployFlow(this.flowName, `Updated with ${file.name}`);
+    
+    return { success: true, fileName: file.name };
+  }
+
+  async search(query, options = {}) {
+    return await this.client.executeFlow(this.flowName, query, options);
+  }
+}
+```
+
+### Automated Research Pipeline
+
+Process and analyze research documents:
+
+```python
+class ResearchPipeline:
+    def __init__(self, api_token: str, flow_name: str):
+        self.api = GraphorLMAPI(api_token)
+        self.flow_name = flow_name
+    
+    def analyze_papers(self, paper_paths: List[str]) -> Dict[str, Any]:
+        """Analyze multiple research papers"""
+        # Upload and process all papers
+        for paper_path in paper_paths:
+            self.api.upload_source(paper_path)
+            filename = os.path.basename(paper_path)
+            self.api.process_source(filename, "YOLOX")
+        
+        # Deploy updated flow
+        self.api.deploy_flow(self.flow_name, f"Analysis of {len(paper_paths)} papers")
+        
+        # Run analysis queries
+        queries = [
+            "What are the main research contributions?",
+            "What methodologies are used?",
+            "What are the key limitations?",
+            "How do these papers relate to each other?"
+        ]
+        
+        analysis_results = {}
+        for query in queries:
+            results = self.api.execute_flow(self.flow_name, query)
+            analysis_results[query] = results
+        
+        return analysis_results
+```
+
+## Migration and Versioning
+
+### API Versioning
+
+The GraphorLM API follows semantic versioning principles:
+
+- **Current Version**: v1 (stable)
+- **Endpoint Paths**: Include version in URL structure where applicable
+- **Backward Compatibility**: Breaking changes will increment major version
+
+### Migration Best Practices
+
+- **Monitor API Updates**: Subscribe to API changelog notifications
+- **Version Pinning**: Specify API versions in your integrations
+- **Gradual Migration**: Test new versions in staging before production deployment
+- **Fallback Strategies**: Implement graceful degradation for API changes
+
+## Support and Resources
+
+### Getting Help
+
+<CardGroup cols={2}>
+  <Card
+    title="API Tokens Guide"
+    icon="key"
+    href="/guides/api-tokens"
+  >
+    Learn how to generate and manage authentication tokens
+  </Card>
+  <Card
+    title="Integration Guide"
+    icon="plug"
+    href="/guides/integrate-workflow"
+  >
+    Advanced patterns for production integrations
+  </Card>
+  <Card
+    title="Data Ingestion"
+    icon="file-lines"
+    href="/guides/data-ingestion"
+  >
+    Best practices for document upload and processing
+  </Card>
+  <Card
+    title="Contact Support"
+    icon="envelope"
+    href="mailto:lucas@graphorlm.com"
+  >
+    Direct support for technical questions and issues
+  </Card>
+</CardGroup>
+
+### Community and Updates
+
+- **Documentation Updates**: This documentation is continuously updated with new features
+- **API Changelog**: Monitor changes and new endpoint releases
+- **Best Practices**: Learn from community implementations and use cases
+
+## Next Steps
+
+Ready to start building with GraphorLM APIs? Choose your path:
+
+### For Beginners
+
+<CardGroup cols={2}>
+  <Card
+    title="Sources Overview"
+    icon="file-lines"
+    href="/api-reference/sources/overview"
+  >
+    Start with document management fundamentals
+  </Card>
+  <Card
+    title="API Tokens"
+    icon="key"
+    href="/guides/api-tokens"
+  >
+    Set up authentication for API access
+  </Card>
+</CardGroup>
+
+### For Advanced Users
+
+<CardGroup cols={2}>
+  <Card
+    title="Flows Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
+  >
+    Master RAG pipeline management and execution
+  </Card>
+  <Card
+    title="Integration Patterns"
+    icon="plug"
+    href="/guides/integrate-workflow"
+  >
+    Build production-ready integrations
+  </Card>
+</CardGroup>
+
+The GraphorLM REST API provides the foundation for building intelligent, document-driven applications. Whether you're building content management systems, research tools, or custom AI workflows, these APIs give you the power and flexibility to succeed.
