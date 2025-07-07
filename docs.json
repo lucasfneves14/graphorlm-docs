@@ -44,7 +44,7 @@
           {
             "group": "Sources",
             "pages": [
-              "sources-overview",
+              "api-reference/sources/overview",
               "api-reference/sources/upload",
               "api-reference/sources/process",
               "api-reference/sources/list",
