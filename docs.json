@@ -39,16 +39,16 @@
         ]
       },
       {
-        "tab": "API",
+        "tab": "API Reference",
         "groups": [
           {
             "group": "Sources",
             "pages": [
               "sources-overview",
-              "api/sources/upload",
-              "api/sources/process",
-              "api/sources/list",
-              "api/sources/delete"
+              "api-reference/sources/upload",
+              "api-reference/sources/process",
+              "api-reference/sources/list",
+              "api-reference/sources/delete"
             ]
           }
         ]
