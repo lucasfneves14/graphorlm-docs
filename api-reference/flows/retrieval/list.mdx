@@ -1,0 +1,965 @@
+---
+title: 'List Retrieval Nodes'
+description: 'Retrieve retrieval nodes from flows via the GraphorLM REST API'
+---
+
+Retrieve all retrieval nodes from a specific flow in your GraphorLM project. Retrieval nodes are critical components that perform similarity search and document retrieval operations, forming the core of RAG (Retrieval-Augmented Generation) systems by finding relevant content based on user queries.
+
+## Overview
+
+The List Retrieval Nodes endpoint allows you to retrieve information about retrieval nodes within a flow. Retrieval nodes process queries by searching through chunked documents using vector similarity, applying filtering criteria, and returning the most relevant results for downstream processing.
+
+- **Method**: `GET`
+- **URL**: `https://{flow_name}.flows.graphorlm.com/retrieval`
+- **Authentication**: Required (API Token)
+
+## Authentication
+
+All requests must include a valid API token in the Authorization header:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+
+### Parameters
+
+No query parameters are required for this endpoint.
+
+### Example Request
+
+```bash
+GET https://my-rag-pipeline.flows.graphorlm.com/retrieval
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+## Response Format
+
+### Success Response (200 OK)
+
+The response contains an array of retrieval node objects:
+
+```json
+[
+  {
+    "id": "retrieval-1748287628686",
+    "type": "retrieval",
+    "position": {
+      "x": 500,
+      "y": 200
+    },
+    "style": {
+      "height": 160,
+      "width": 260
+    },
+    "data": {
+      "name": "Document Retrieval",
+      "config": {
+        "searchType": "similarity",
+        "topK": 10,
+        "scoreThreshold": 0.7,
+        "retrievalQuery": null
+      },
+      "result": {
+        "updated": true,
+        "processing": false,
+        "waiting": false,
+        "has_error": false,
+        "updatedMetrics": true,
+        "total_retrievals": 245
+      }
+    }
+  }
+]
+```
+
+### Response Structure
+
+Each retrieval node in the array contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique identifier for the retrieval node |
+| `type` | string | Node type (always "retrieval" for retrieval nodes) |
+| `position` | object | Position coordinates in the flow canvas |
+| `style` | object | Visual styling properties (height, width) |
+| `data` | object | Retrieval node configuration and results |
+
+### Position Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `x` | number | X coordinate position in the flow canvas |
+| `y` | number | Y coordinate position in the flow canvas |
+
+### Style Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `height` | integer | Height of the node in pixels |
+| `width` | integer | Width of the node in pixels |
+
+### Data Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Display name of the retrieval node |
+| `config` | object | Node configuration including search parameters |
+| `result` | object | Processing results and retrieval metrics (optional) |
+
+### Config Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `searchType` | string | Type of search: "similarity", "hybrid", "keyword", or "semantic" |
+| `topK` | integer | Maximum number of documents to retrieve (default: 10) |
+| `scoreThreshold` | float | Minimum similarity score threshold (0.0-1.0) |
+| `retrievalQuery` | string | Custom query template for retrieval (optional) |
+
+### Result Object (Optional)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `updated` | boolean | Whether the node has been processed with current configuration |
+| `processing` | boolean | Whether the node is currently being processed |
+| `waiting` | boolean | Whether the node is waiting for dependencies |
+| `has_error` | boolean | Whether the node encountered an error during processing |
+| `updatedMetrics` | boolean | Whether retrieval metrics have been calculated |
+| `total_retrievals` | integer | Number of retrieval operations performed (if available) |
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+async function listRetrievalNodes(flowName, apiToken) {
+  const response = await fetch(`https://${flowName}.flows.graphorlm.com/retrieval`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+// Usage
+listRetrievalNodes('my-rag-pipeline', 'YOUR_API_TOKEN')
+  .then(retrievalNodes => {
+    console.log(`Found ${retrievalNodes.length} retrieval node(s)`);
+    
+    retrievalNodes.forEach(node => {
+      console.log(`\nNode: ${node.data.name} (${node.id})`);
+      console.log(`Search Type: ${node.data.config.searchType}`);
+      console.log(`Top K: ${node.data.config.topK}`);
+      console.log(`Score Threshold: ${node.data.config.scoreThreshold}`);
+      
+      if (node.data.config.retrievalQuery) {
+        console.log(`Custom Query: ${node.data.config.retrievalQuery}`);
+      }
+      
+      if (node.data.result) {
+        const status = node.data.result.processing ? 'Processing' : 
+                      node.data.result.waiting ? 'Waiting' :
+                      node.data.result.has_error ? 'Error' :
+                      node.data.result.updated ? 'Ready' : 'Needs Update';
+        console.log(`Status: ${status}`);
+        
+        if (node.data.result.updatedMetrics) {
+          console.log(`Metrics: Updated`);
+        }
+        
+        if (node.data.result.total_retrievals) {
+          console.log(`Total retrievals performed: ${node.data.result.total_retrievals}`);
+        }
+      }
+    });
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+### Python
+
+```python
+import requests
+import json
+
+def list_retrieval_nodes(flow_name, api_token):
+    url = f"https://{flow_name}.flows.graphorlm.com/retrieval"
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}"
+    }
+    
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    
+    return response.json()
+
+def analyze_retrieval_nodes(retrieval_nodes):
+    """Analyze retrieval nodes and provide detailed summary"""
+    print(f"🔍 Retrieval Nodes Analysis")
+    print(f"Total retrieval nodes: {len(retrieval_nodes)}")
+    print("-" * 50)
+    
+    search_types = {}
+    status_counts = {"ready": 0, "processing": 0, "waiting": 0, "error": 0, "needs_update": 0}
+    total_retrievals = 0
+    topk_distribution = {}
+    threshold_distribution = {}
+    
+    for node in retrieval_nodes:
+        node_data = node.get('data', {})
+        config = node_data.get('config', {})
+        result = node_data.get('result', {})
+        
+        # Track search types
+        search_type = config.get('searchType', 'Unknown')
+        search_types[search_type] = search_types.get(search_type, 0) + 1
+        
+        # Track Top K distribution
+        top_k = config.get('topK', 0)
+        topk_key = f"{top_k} results"
+        topk_distribution[topk_key] = topk_distribution.get(topk_key, 0) + 1
+        
+        # Track threshold distribution
+        threshold = config.get('scoreThreshold', 0.0)
+        if threshold > 0:
+            threshold_key = f"{threshold:.1f}"
+            threshold_distribution[threshold_key] = threshold_distribution.get(threshold_key, 0) + 1
+        
+        print(f"\n🎯 Node: {node_data.get('name', 'Unnamed')} ({node['id']})")
+        print(f"   Search Type: {search_type}")
+        print(f"   Top K: {top_k}")
+        print(f"   Score Threshold: {config.get('scoreThreshold', 0.0)}")
+        
+        if config.get('retrievalQuery'):
+            print(f"   Custom Query: {config['retrievalQuery'][:50]}...")
+        
+        if result:
+            if result.get('processing'):
+                status_counts["processing"] += 1
+                print("   🔄 Status: Processing")
+            elif result.get('waiting'):
+                status_counts["waiting"] += 1
+                print("   ⏳ Status: Waiting")
+            elif result.get('has_error'):
+                status_counts["error"] += 1
+                print("   ❌ Status: Error")
+            elif result.get('updated'):
+                status_counts["ready"] += 1
+                print("   ✅ Status: Ready")
+            else:
+                status_counts["needs_update"] += 1
+                print("   ⚠️  Status: Needs Update")
+                
+            if result.get('updatedMetrics'):
+                print("   📊 Metrics: Updated")
+            
+            if result.get('total_retrievals'):
+                retrievals = result['total_retrievals']
+                total_retrievals += retrievals
+                print(f"   📄 Total retrievals: {retrievals}")
+    
+    print(f"\n📊 Summary:")
+    print(f"   Total retrievals across all nodes: {total_retrievals}")
+    
+    print(f"\n🔍 Search Types:")
+    for search_type, count in search_types.items():
+        print(f"   {search_type}: {count} node(s)")
+    
+    print(f"\n📈 Top K Distribution:")
+    for topk, count in sorted(topk_distribution.items()):
+        print(f"   {topk}: {count} node(s)")
+    
+    if threshold_distribution:
+        print(f"\n🎚️ Score Thresholds:")
+        for threshold, count in sorted(threshold_distribution.items()):
+            print(f"   {threshold}: {count} node(s)")
+    
+    print(f"\n📋 Node Status:")
+    for status, count in status_counts.items():
+        if count > 0:
+            print(f"   {status.replace('_', ' ').title()}: {count}")
+
+# Usage
+try:
+    retrieval_nodes = list_retrieval_nodes("my-rag-pipeline", "YOUR_API_TOKEN")
+    analyze_retrieval_nodes(retrieval_nodes)
+    
+except requests.exceptions.HTTPError as e:
+    print(f"Error: {e}")
+    if e.response.status_code == 404:
+        print("Flow not found or no retrieval nodes in this flow")
+    elif e.response.status_code == 401:
+        print("Invalid API token or insufficient permissions")
+```
+
+### cURL
+
+```bash
+# Basic request
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/retrieval \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+
+# With jq for formatted output
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/retrieval \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | jq '.'
+
+# Extract retrieval configuration summary
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/retrieval \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq -r '.[] | "\(.data.name): \(.data.config.searchType) (Top \(.data.config.topK), Threshold: \(.data.config.scoreThreshold))"'
+
+# Count total retrievals across all nodes
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/retrieval \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq '[.[] | .data.result.total_retrievals // 0] | add'
+
+# Filter nodes by search type
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/retrieval \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq '.[] | select(.data.config.searchType == "similarity")'
+```
+
+### PHP
+
+```php
+<?php
+function listRetrievalNodes($flowName, $apiToken) {
+    $url = "https://{$flowName}.flows.graphorlm.com/retrieval";
+    
+    $options = [
+        'http' => [
+            'header' => "Authorization: Bearer {$apiToken}",
+            'method' => 'GET'
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    
+    if ($result === FALSE) {
+        throw new Exception('Failed to retrieve retrieval nodes');
+    }
+    
+    return json_decode($result, true);
+}
+
+function analyzeRetrievalNodes($retrievalNodes) {
+    $searchTypes = [];
+    $statusCounts = [
+        'ready' => 0,
+        'processing' => 0, 
+        'waiting' => 0,
+        'error' => 0,
+        'needs_update' => 0
+    ];
+    $totalRetrievals = 0;
+    $topkStats = [];
+    
+    echo "🔍 Retrieval Nodes Analysis\n";
+    echo "Total retrieval nodes: " . count($retrievalNodes) . "\n";
+    echo str_repeat("-", 50) . "\n";
+    
+    foreach ($retrievalNodes as $node) {
+        $data = $node['data'] ?? [];
+        $config = $data['config'] ?? [];
+        $result = $data['result'] ?? [];
+        
+        $searchType = $config['searchType'] ?? 'Unknown';
+        $searchTypes[$searchType] = ($searchTypes[$searchType] ?? 0) + 1;
+        
+        $topK = $config['topK'] ?? 0;
+        $topkStats[$topK] = ($topkStats[$topK] ?? 0) + 1;
+        
+        echo "\n🎯 Node: " . ($data['name'] ?? 'Unnamed') . " ({$node['id']})\n";
+        echo "   Search Type: {$searchType}\n";
+        echo "   Top K: {$topK}\n";
+        echo "   Score Threshold: " . ($config['scoreThreshold'] ?? 0.0) . "\n";
+        
+        if (!empty($config['retrievalQuery'])) {
+            $query = substr($config['retrievalQuery'], 0, 50);
+            echo "   Custom Query: {$query}...\n";
+        }
+        
+        if (!empty($result)) {
+            if ($result['processing'] ?? false) {
+                $statusCounts['processing']++;
+                echo "   🔄 Status: Processing\n";
+            } elseif ($result['waiting'] ?? false) {
+                $statusCounts['waiting']++;
+                echo "   ⏳ Status: Waiting\n";
+            } elseif ($result['has_error'] ?? false) {
+                $statusCounts['error']++;
+                echo "   ❌ Status: Error\n";
+            } elseif ($result['updated'] ?? false) {
+                $statusCounts['ready']++;
+                echo "   ✅ Status: Ready\n";
+            } else {
+                $statusCounts['needs_update']++;
+                echo "   ⚠️  Status: Needs Update\n";
+            }
+            
+            if ($result['updatedMetrics'] ?? false) {
+                echo "   📊 Metrics: Updated\n";
+            }
+            
+            if (isset($result['total_retrievals'])) {
+                $retrievals = $result['total_retrievals'];
+                $totalRetrievals += $retrievals;
+                echo "   📄 Total retrievals: {$retrievals}\n";
+            }
+        }
+    }
+    
+    echo "\n📊 Summary:\n";
+    echo "   Total retrievals across all nodes: {$totalRetrievals}\n";
+    
+    echo "\n🔍 Search Types:\n";
+    foreach ($searchTypes as $type => $count) {
+        echo "   {$type}: {$count} node(s)\n";
+    }
+    
+    echo "\n📈 Top K Distribution:\n";
+    ksort($topkStats);
+    foreach ($topkStats as $topk => $count) {
+        echo "   {$topk} results: {$count} node(s)\n";
+    }
+    
+    echo "\n📋 Node Status:\n";
+    foreach ($statusCounts as $status => $count) {
+        if ($count > 0) {
+            $statusLabel = ucwords(str_replace('_', ' ', $status));
+            echo "   {$statusLabel}: {$count}\n";
+        }
+    }
+}
+
+// Usage
+try {
+    $retrievalNodes = listRetrievalNodes('my-rag-pipeline', 'YOUR_API_TOKEN');
+    analyzeRetrievalNodes($retrievalNodes);
+    
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+}
+?>
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Description | Example Response |
+|-------------|-------------|------------------|
+| 401 | Unauthorized - Invalid or missing API token | `{"detail": "Invalid authentication credentials"}` |
+| 404 | Not Found - Flow not found | `{"detail": "Flow not found"}` |
+| 500 | Internal Server Error - Server error | `{"detail": "Failed to retrieve retrieval nodes"}` |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+### Example Error Responses
+
+#### Invalid API Token
+```json
+{
+  "detail": "Invalid authentication credentials"
+}
+```
+
+#### Flow Not Found
+```json
+{
+  "detail": "Flow not found"
+}
+```
+
+#### Server Error
+```json
+{
+  "detail": "Failed to retrieve retrieval nodes"
+}
+```
+
+## Use Cases
+
+### Retrieval Node Management
+
+Use this endpoint to:
+
+- **Configuration Monitoring**: Review search parameters and retrieval strategies
+- **Performance Analysis**: Check retrieval metrics and success rates
+- **Flow Optimization**: Analyze retrieval configurations for optimal performance
+- **Quality Assurance**: Monitor retrieval accuracy and relevance scores
+- **Debugging**: Identify issues with search configurations or processing
+
+### Integration Examples
+
+#### Retrieval Performance Monitor
+
+```javascript
+class RetrievalPerformanceMonitor {
+  constructor(flowName, apiToken) {
+    this.flowName = flowName;
+    this.apiToken = apiToken;
+  }
+
+  async getPerformanceReport() {
+    try {
+      const nodes = await this.listRetrievalNodes();
+      const report = {
+        totalNodes: nodes.length,
+        activeNodes: 0,
+        processingNodes: 0,
+        errorNodes: 0,
+        totalRetrievals: 0,
+        searchTypes: {},
+        topkDistribution: {},
+        thresholdAnalysis: {
+          min: Infinity,
+          max: -Infinity,
+          average: 0
+        },
+        performance: []
+      };
+
+      let thresholdSum = 0;
+      let thresholdCount = 0;
+
+      for (const node of nodes) {
+        const config = node.data.config || {};
+        const result = node.data.result || {};
+        
+        // Track search types
+        const searchType = config.searchType || 'unknown';
+        report.searchTypes[searchType] = (report.searchTypes[searchType] || 0) + 1;
+        
+        // Track Top K distribution
+        const topK = config.topK || 0;
+        report.topkDistribution[topK] = (report.topkDistribution[topK] || 0) + 1;
+        
+        // Analyze thresholds
+        const threshold = config.scoreThreshold || 0;
+        if (threshold > 0) {
+          report.thresholdAnalysis.min = Math.min(report.thresholdAnalysis.min, threshold);
+          report.thresholdAnalysis.max = Math.max(report.thresholdAnalysis.max, threshold);
+          thresholdSum += threshold;
+          thresholdCount++;
+        }
+        
+        if (result.total_retrievals) {
+          report.totalRetrievals += result.total_retrievals;
+        }
+        
+        // Track node status
+        if (result.processing) {
+          report.processingNodes++;
+        } else if (result.has_error) {
+          report.errorNodes++;
+        } else if (result.updated) {
+          report.activeNodes++;
+        }
+        
+        // Individual node performance
+        report.performance.push({
+          nodeId: node.id,
+          nodeName: node.data.name,
+          searchType: config.searchType,
+          topK: config.topK,
+          scoreThreshold: config.scoreThreshold,
+          totalRetrievals: result.total_retrievals || 0,
+          metricsUpdated: result.updatedMetrics || false,
+          status: result.processing ? 'Processing' :
+                 result.has_error ? 'Error' :
+                 result.updated ? 'Active' : 'Inactive'
+        });
+      }
+
+      if (thresholdCount > 0) {
+        report.thresholdAnalysis.average = thresholdSum / thresholdCount;
+      } else {
+        report.thresholdAnalysis.min = 0;
+      }
+
+      return report;
+    } catch (error) {
+      throw new Error(`Performance report failed: ${error.message}`);
+    }
+  }
+
+  async listRetrievalNodes() {
+    const response = await fetch(`https://${this.flowName}.flows.graphorlm.com/retrieval`, {
+      headers: { 'Authorization': `Bearer ${this.apiToken}` }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  async generateReport() {
+    const report = await this.getPerformanceReport();
+    
+    console.log('🔍 Retrieval Performance Report');
+    console.log('===============================');
+    console.log(`Total Nodes: ${report.totalNodes}`);
+    console.log(`Active Nodes: ${report.activeNodes}`);
+    console.log(`Processing Nodes: ${report.processingNodes}`);
+    console.log(`Error Nodes: ${report.errorNodes}`);
+    console.log(`Total Retrievals: ${report.totalRetrievals}`);
+    
+    console.log('\n🎯 Search Types:');
+    for (const [type, count] of Object.entries(report.searchTypes)) {
+      console.log(`  ${type}: ${count} node(s)`);
+    }
+    
+    console.log('\n📊 Top K Distribution:');
+    for (const [topk, count] of Object.entries(report.topkDistribution)) {
+      console.log(`  ${topk} results: ${count} node(s)`);
+    }
+    
+    console.log('\n🎚️ Score Threshold Analysis:');
+    console.log(`  Min: ${report.thresholdAnalysis.min.toFixed(2)}`);
+    console.log(`  Max: ${report.thresholdAnalysis.max.toFixed(2)}`);
+    console.log(`  Average: ${report.thresholdAnalysis.average.toFixed(2)}`);
+    
+    console.log('\n📈 Node Performance:');
+    report.performance.forEach(node => {
+      console.log(`  ${node.nodeName} (${node.nodeId}):`);
+      console.log(`    Search: ${node.searchType}, Top K: ${node.topK}`);
+      console.log(`    Threshold: ${node.scoreThreshold}, Retrievals: ${node.totalRetrievals}`);
+      console.log(`    Metrics: ${node.metricsUpdated ? 'Updated' : 'Pending'}, Status: ${node.status}`);
+    });
+
+    return report;
+  }
+}
+
+// Usage
+const monitor = new RetrievalPerformanceMonitor('my-rag-pipeline', 'YOUR_API_TOKEN');
+monitor.generateReport().catch(console.error);
+```
+
+#### Retrieval Quality Analyzer
+
+```python
+import requests
+from typing import List, Dict, Any
+
+class RetrievalQualityAnalyzer:
+    def __init__(self, flow_name: str, api_token: str):
+        self.flow_name = flow_name
+        self.api_token = api_token
+        self.base_url = f"https://{flow_name}.flows.graphorlm.com"
+    
+    def get_retrieval_nodes(self) -> List[Dict[str, Any]]:
+        """Retrieve all retrieval nodes from the flow"""
+        response = requests.get(
+            f"{self.base_url}/retrieval",
+            headers={"Authorization": f"Bearer {self.api_token}"}
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def analyze_retrieval_quality(self) -> Dict[str, Any]:
+        """Analyze retrieval node configurations for quality and performance"""
+        nodes = self.get_retrieval_nodes()
+        
+        quality_report = {
+            "summary": {
+                "total_nodes": len(nodes),
+                "optimal_configs": 0,
+                "suboptimal_configs": 0,
+                "missing_configs": 0
+            },
+            "nodes": [],
+            "recommendations": [],
+            "quality_metrics": {
+                "avg_topk": 0,
+                "avg_threshold": 0,
+                "search_type_distribution": {},
+                "threshold_variance": 0
+            }
+        }
+        
+        topk_values = []
+        threshold_values = []
+        
+        for node in nodes:
+            node_info = {
+                "id": node["id"],
+                "name": node["data"]["name"],
+                "config": node["data"]["config"],
+                "result": node["data"]["result"],
+                "quality_score": 0,
+                "issues": [],
+                "recommendations": []
+            }
+            
+            config = node["data"]["config"]
+            
+            # Analyze Top K configuration
+            top_k = config.get("topK", 0)
+            if top_k == 0:
+                node_info["issues"].append("Top K not configured")
+                node_info["recommendations"].append("Set Top K between 5-20 for optimal results")
+            elif top_k < 3:
+                node_info["issues"].append("Top K too low")
+                node_info["recommendations"].append("Consider increasing Top K for better recall")
+                node_info["quality_score"] += 0.5
+            elif top_k > 50:
+                node_info["issues"].append("Top K too high")
+                node_info["recommendations"].append("Consider reducing Top K for better precision")
+                node_info["quality_score"] += 0.7
+            else:
+                node_info["quality_score"] += 1.0
+            
+            if top_k > 0:
+                topk_values.append(top_k)
+            
+            # Analyze score threshold
+            threshold = config.get("scoreThreshold", 0.0)
+            if threshold == 0.0:
+                node_info["issues"].append("No score threshold set")
+                node_info["recommendations"].append("Set threshold between 0.7-0.9 to filter low-quality results")
+            elif threshold < 0.5:
+                node_info["issues"].append("Score threshold too low")
+                node_info["recommendations"].append("Increase threshold to improve result quality")
+                node_info["quality_score"] += 0.6
+            elif threshold > 0.95:
+                node_info["issues"].append("Score threshold too high")
+                node_info["recommendations"].append("Lower threshold to avoid missing relevant results")
+                node_info["quality_score"] += 0.7
+            else:
+                node_info["quality_score"] += 1.0
+            
+            if threshold > 0:
+                threshold_values.append(threshold)
+            
+            # Analyze search type
+            search_type = config.get("searchType")
+            if not search_type:
+                node_info["issues"].append("Search type not specified")
+                node_info["recommendations"].append("Specify search type (similarity, hybrid, etc.)")
+            else:
+                node_info["quality_score"] += 1.0
+                quality_report["quality_metrics"]["search_type_distribution"][search_type] = \
+                    quality_report["quality_metrics"].get("search_type_distribution", {}).get(search_type, 0) + 1
+            
+            # Check for custom retrieval query
+            if config.get("retrievalQuery"):
+                node_info["quality_score"] += 0.5  # Bonus for customization
+            
+            # Normalize quality score
+            node_info["quality_score"] = min(node_info["quality_score"] / 3.0, 1.0)
+            
+            # Categorize configuration quality
+            if node_info["quality_score"] >= 0.8:
+                quality_report["summary"]["optimal_configs"] += 1
+            elif node_info["quality_score"] >= 0.5:
+                quality_report["summary"]["suboptimal_configs"] += 1
+            else:
+                quality_report["summary"]["missing_configs"] += 1
+            
+            # Add global recommendations
+            for rec in node_info["recommendations"]:
+                quality_report["recommendations"].append({
+                    "node_id": node["id"],
+                    "node_name": node_info["name"],
+                    "recommendation": rec
+                })
+            
+            quality_report["nodes"].append(node_info)
+        
+        # Calculate quality metrics
+        if topk_values:
+            quality_report["quality_metrics"]["avg_topk"] = sum(topk_values) / len(topk_values)
+        
+        if threshold_values:
+            avg_threshold = sum(threshold_values) / len(threshold_values)
+            quality_report["quality_metrics"]["avg_threshold"] = avg_threshold
+            
+            # Calculate threshold variance
+            variance = sum((t - avg_threshold) ** 2 for t in threshold_values) / len(threshold_values)
+            quality_report["quality_metrics"]["threshold_variance"] = variance
+        
+        return quality_report
+    
+    def print_quality_report(self, report: Dict[str, Any]):
+        """Print a formatted quality analysis report"""
+        summary = report["summary"]
+        metrics = report["quality_metrics"]
+        
+        print("🔍 Retrieval Quality Analysis Report")
+        print("=" * 50)
+        print(f"Flow: {self.flow_name}")
+        print(f"Total Nodes: {summary['total_nodes']}")
+        print(f"Optimal Configurations: {summary['optimal_configs']}")
+        print(f"Suboptimal Configurations: {summary['suboptimal_configs']}")
+        print(f"Missing Configurations: {summary['missing_configs']}")
+        
+        print(f"\n📊 Quality Metrics:")
+        print(f"Average Top K: {metrics.get('avg_topk', 0):.1f}")
+        print(f"Average Threshold: {metrics.get('avg_threshold', 0):.2f}")
+        print(f"Threshold Variance: {metrics.get('threshold_variance', 0):.3f}")
+        
+        if metrics.get('search_type_distribution'):
+            print(f"\n🎯 Search Type Distribution:")
+            for search_type, count in metrics['search_type_distribution'].items():
+                print(f"   {search_type}: {count} node(s)")
+        
+        print(f"\n📋 Node Analysis:")
+        print("-" * 30)
+        for node in report["nodes"]:
+            quality_icon = "🟢" if node["quality_score"] >= 0.8 else "🟡" if node["quality_score"] >= 0.5 else "🔴"
+            print(f"\n{quality_icon} {node['name']} ({node['id']})")
+            print(f"   Quality Score: {node['quality_score']:.2f}")
+            
+            config = node["config"]
+            print(f"   Top K: {config.get('topK', 'Not set')}")
+            print(f"   Threshold: {config.get('scoreThreshold', 'Not set')}")
+            print(f"   Search Type: {config.get('searchType', 'Not set')}")
+            
+            if node["issues"]:
+                print(f"   Issues: {', '.join(node['issues'])}")
+        
+        if report["recommendations"]:
+            print(f"\n💡 Recommendations ({len(report['recommendations'])}):")
+            print("-" * 40)
+            for rec in report["recommendations"][:10]:  # Show first 10
+                print(f"• {rec['node_name']}: {rec['recommendation']}")
+
+# Usage
+analyzer = RetrievalQualityAnalyzer("my-rag-pipeline", "YOUR_API_TOKEN")
+try:
+    report = analyzer.analyze_retrieval_quality()
+    analyzer.print_quality_report(report)
+except Exception as e:
+    print(f"Quality analysis failed: {e}")
+```
+
+## Best Practices
+
+### Configuration Management
+
+- **Optimal Top K**: Use 5-20 results for most applications; adjust based on content volume
+- **Score Thresholds**: Set thresholds between 0.7-0.9 to balance quality and recall
+- **Search Type Selection**: Choose search types based on content characteristics and query patterns
+- **Custom Queries**: Use retrieval queries for domain-specific search optimization
+
+### Performance Optimization
+
+- **Monitor Metrics**: Regularly check retrieval metrics and success rates
+- **Threshold Tuning**: Adjust score thresholds based on result quality analysis
+- **Search Strategy**: Experiment with different search types for optimal performance
+- **Result Analysis**: Analyze retrieved content relevance and adjust parameters accordingly
+
+### Quality Assurance
+
+- **Regular Auditing**: Monitor retrieval node configurations for consistency
+- **Performance Tracking**: Track retrieval accuracy and response times
+- **A/B Testing**: Test different configurations to optimize retrieval quality
+- **Feedback Integration**: Use retrieval feedback to improve configuration parameters
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="exclamation-triangle" title="Flow Not Found Error">
+    **Solution**: Verify that:
+    - The flow name in the URL is correct and matches exactly
+    - The flow exists in your project
+    - Your API token has access to the correct project
+    - The flow has been created and saved properly
+  </Accordion>
+  
+  <Accordion icon="list" title="Empty Retrieval Nodes Array">
+    **Solution**: If no retrieval nodes are returned:
+    - Verify the flow contains retrieval components
+    - Check that retrieval nodes have been added to the flow
+    - Ensure the flow has been saved after adding retrieval nodes
+    - Confirm you're checking the correct flow
+  </Accordion>
+  
+  <Accordion icon="cog" title="Poor Retrieval Quality">
+    **Solution**: If retrieval results are not relevant:
+    - Adjust score threshold to filter low-quality results
+    - Increase Top K to get more diverse results
+    - Check chunking node configuration for optimal chunk sizes
+    - Verify that source documents contain relevant content
+  </Accordion>
+  
+  <Accordion icon="clock" title="Processing Performance Issues">
+    **Solution**: If retrieval is slow or timing out:
+    - Reduce Top K to decrease processing time
+    - Optimize score thresholds to reduce candidate set
+    - Check chunking configuration for appropriate chunk sizes
+    - Monitor system resources and scaling requirements
+  </Accordion>
+  
+  <Accordion icon="wifi" title="Connection Issues">
+    **Solution**: For connectivity problems:
+    - Check your internet connection
+    - Verify the flow URL is accessible
+    - Ensure your firewall allows HTTPS traffic to *.flows.graphorlm.com
+    - Try accessing the endpoint from a different network
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After retrieving retrieval node information, you might want to:
+
+<CardGroup cols={2}>
+  <Card
+    title="Update Retrieval Configuration"
+    icon="sliders"
+    href="/api-reference/flows/retrieval/update"
+  >
+    Modify retrieval node settings like search types, Top K, and thresholds
+  </Card>
+  <Card
+    title="List Chunking Nodes"
+    icon="scissors"
+    href="/api-reference/flows/chunking/list"
+  >
+    View chunking nodes that provide input to retrieval nodes
+  </Card>
+  <Card
+    title="Run Flow"
+    icon="play"
+    href="/api-reference/flows/run"
+  >
+    Execute your flow with the configured retrieval nodes
+  </Card>
+  <Card
+    title="Flow Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
+  >
+    Learn about all available flow management endpoints
+  </Card>
+</CardGroup>

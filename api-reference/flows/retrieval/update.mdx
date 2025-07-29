@@ -1,0 +1,999 @@
+---
+title: 'Update Retrieval Configuration'
+description: 'Modify retrieval node configurations in flows via the GraphorLM REST API'
+---
+
+Update the configuration of a specific retrieval node within a flow in your GraphorLM project. This endpoint allows you to modify search parameters, threshold settings, and retrieval strategies to optimize the performance and accuracy of your RAG system.
+
+## Overview
+
+The Update Retrieval Configuration endpoint allows you to modify the configuration of retrieval nodes within your flows. Retrieval nodes are critical components that perform similarity search and document retrieval operations, and updating them is essential for optimizing search quality, performance, and relevance in your RAG pipelines.
+
+- **Method**: `PATCH`
+- **URL**: `https://{flow_name}.flows.graphorlm.com/retrieval/{node_id}`
+- **Authentication**: Required (API Token)
+
+## Authentication
+
+All requests must include a valid API token in the Authorization header:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+| `Content-Type` | `application/json` | Yes |
+
+### URL Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `flow_name` | string | Yes | The name of the flow containing the retrieval node |
+| `node_id` | string | Yes | The unique identifier of the retrieval node to update |
+
+### Request Body
+
+The request body should be a JSON object with the following structure:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `config` | object | Yes | The new configuration for the retrieval node |
+
+#### Config Object Structure
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `searchType` | string | Yes | Type of search: "similarity", "hybrid", "keyword", or "semantic" |
+| `topK` | integer | No | Maximum number of documents to retrieve (default: 10) |
+| `scoreThreshold` | float | No | Minimum similarity score threshold (0.0-1.0, default: 0.0) |
+| `retrievalQuery` | string | No | Custom query template for specialized retrieval patterns |
+
+### Example Request
+
+```bash
+PATCH https://my-rag-pipeline.flows.graphorlm.com/retrieval/retrieval-1748287628686
+Authorization: Bearer YOUR_API_TOKEN
+Content-Type: application/json
+
+{
+  "config": {
+    "searchType": "hybrid",
+    "topK": 15,
+    "scoreThreshold": 0.75,
+    "retrievalQuery": "Find documents related to: {query}"
+  }
+}
+```
+
+## Response Format
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Retrieval node 'retrieval-1748287628686' updated successfully",
+  "node_id": "retrieval-1748287628686"
+}
+```
+
+### Response Structure
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Whether the update was successful |
+| `message` | string | Descriptive message about the update result |
+| `node_id` | string | The ID of the updated retrieval node |
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+async function updateRetrievalNode(flowName, nodeId, config, apiToken) {
+  const response = await fetch(`https://${flowName}.flows.graphorlm.com/retrieval/${nodeId}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      config: config
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+// Usage examples
+
+// 1. Update search type and Top K for better recall
+const highRecallConfig = {
+  searchType: "hybrid",
+  topK: 20,
+  scoreThreshold: 0.6
+};
+
+updateRetrievalNode('my-rag-pipeline', 'retrieval-node-123', highRecallConfig, 'YOUR_API_TOKEN')
+  .then(result => {
+    console.log('✅ Retrieval configuration updated for high recall');
+    console.log(`Message: ${result.message}`);
+  })
+  .catch(error => console.error('❌ Update failed:', error));
+
+// 2. Configure for high precision with strict threshold
+const highPrecisionConfig = {
+  searchType: "similarity",
+  topK: 5,
+  scoreThreshold: 0.85
+};
+
+updateRetrievalNode('my-rag-pipeline', 'retrieval-node-123', highPrecisionConfig, 'YOUR_API_TOKEN')
+  .then(result => {
+    console.log('✅ Retrieval configured for high precision');
+    console.log(`Updated node: ${result.node_id}`);
+  })
+  .catch(error => console.error('❌ Update failed:', error));
+
+// 3. Set custom retrieval query for domain-specific search
+const customQueryConfig = {
+  searchType: "semantic",
+  topK: 12,
+  scoreThreshold: 0.7,
+  retrievalQuery: "Search for technical documentation about: {query}"
+};
+
+updateRetrievalNode('my-rag-pipeline', 'retrieval-node-123', customQueryConfig, 'YOUR_API_TOKEN')
+  .then(result => {
+    console.log('✅ Custom retrieval query configured');
+    console.log(`Success: ${result.success}`);
+  })
+  .catch(error => console.error('❌ Update failed:', error));
+```
+
+### Python
+
+```python
+import requests
+import json
+
+def update_retrieval_node(flow_name, node_id, config, api_token):
+    url = f"https://{flow_name}.flows.graphorlm.com/retrieval/{node_id}"
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "config": config
+    }
+    
+    response = requests.patch(url, headers=headers, json=payload)
+    response.raise_for_status()
+    
+    return response.json()
+
+def optimize_retrieval_performance(flow_name, node_id, api_token, optimization_type="balanced"):
+    """
+    Apply different retrieval optimization strategies
+    """
+    
+    optimization_configs = {
+        "high_recall": {
+            "searchType": "hybrid",
+            "topK": 25,
+            "scoreThreshold": 0.5,
+            "retrievalQuery": None
+        },
+        "high_precision": {
+            "searchType": "similarity", 
+            "topK": 8,
+            "scoreThreshold": 0.85,
+            "retrievalQuery": None
+        },
+        "balanced": {
+            "searchType": "semantic",
+            "topK": 15,
+            "scoreThreshold": 0.7,
+            "retrievalQuery": None
+        },
+        "fast_search": {
+            "searchType": "keyword",
+            "topK": 10,
+            "scoreThreshold": 0.6,
+            "retrievalQuery": None
+        },
+        "domain_specific": {
+            "searchType": "semantic",
+            "topK": 12,
+            "scoreThreshold": 0.75,
+            "retrievalQuery": "Find relevant information about: {query}"
+        }
+    }
+    
+    if optimization_type not in optimization_configs:
+        raise ValueError(f"Unknown optimization type: {optimization_type}")
+    
+    config = optimization_configs[optimization_type]
+    
+    try {
+        result = update_retrieval_node(flow_name, node_id, config, api_token)
+        
+        print(f"🎯 Applied {optimization_type} optimization")
+        print(f"   Search Type: {config['searchType']}")
+        print(f"   Top K: {config['topK']}")
+        print(f"   Score Threshold: {config['scoreThreshold']}")
+        if config['retrievalQuery']:
+            print(f"   Custom Query: {config['retrievalQuery']}")
+        print(f"   Result: {result['message']}")
+        
+        return result
+        
+    except requests.exceptions.HTTPError as e:
+        print(f"❌ Optimization failed: {e}")
+        if e.response.status_code == 404:
+            print("   Node or flow not found")
+        elif e.response.status_code == 400:
+            print("   Invalid configuration parameters")
+        raise
+
+def batch_update_retrieval_configs(flow_name, node_configs, api_token):
+    """
+    Update multiple retrieval nodes with different configurations
+    """
+    results = []
+    
+    print(f"🔄 Updating {len(node_configs)} retrieval nodes...")
+    
+    for i, (node_id, config) in enumerate(node_configs.items(), 1):
+        try:
+            print(f"\n[{i}/{len(node_configs)}] Updating {node_id}...")
+            
+            result = update_retrieval_node(flow_name, node_id, config, api_token)
+            
+            print(f"   ✅ Success: {result['message']}")
+            results.append({
+                "node_id": node_id,
+                "success": True,
+                "result": result
+            })
+            
+        except Exception as e:
+            print(f"   ❌ Failed: {str(e)}")
+            results.append({
+                "node_id": node_id, 
+                "success": False,
+                "error": str(e)
+            })
+    
+    # Summary
+    successful = sum(1 for r in results if r["success"])
+    failed = len(results) - successful
+    
+    print(f"\n📊 Batch Update Summary:")
+    print(f"   ✅ Successful: {successful}")
+    print(f"   ❌ Failed: {failed}")
+    
+    return results
+
+# Usage examples
+
+try:
+    # 1. Simple configuration update
+    simple_config = {
+        "searchType": "similarity",
+        "topK": 10,
+        "scoreThreshold": 0.8
+    }
+    
+    result = update_retrieval_node(
+        "my-rag-pipeline", 
+        "retrieval-node-123", 
+        simple_config, 
+        "YOUR_API_TOKEN"
+    )
+    print(f"Update result: {result}")
+    
+    # 2. Apply optimization strategy
+    optimize_retrieval_performance(
+        "my-rag-pipeline",
+        "retrieval-node-123", 
+        "YOUR_API_TOKEN",
+        optimization_type="high_precision"
+    )
+    
+    # 3. Batch update multiple nodes
+    batch_configs = {
+        "retrieval-primary": {
+            "searchType": "hybrid",
+            "topK": 15,
+            "scoreThreshold": 0.75
+        },
+        "retrieval-fallback": {
+            "searchType": "keyword", 
+            "topK": 20,
+            "scoreThreshold": 0.6
+        },
+        "retrieval-specialized": {
+            "searchType": "semantic",
+            "topK": 8,
+            "scoreThreshold": 0.85,
+            "retrievalQuery": "Technical documentation search: {query}"
+        }
+    }
+    
+    batch_results = batch_update_retrieval_configs(
+        "my-rag-pipeline",
+        batch_configs,
+        "YOUR_API_TOKEN"
+    )
+
+except Exception as e:
+    print(f"Error: {e}")
+```
+
+### cURL
+
+```bash
+# Basic retrieval configuration update
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/retrieval/retrieval-node-123 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "searchType": "similarity",
+      "topK": 10,
+      "scoreThreshold": 0.8
+    }
+  }'
+
+# High recall configuration for comprehensive search
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/retrieval/retrieval-node-123 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "searchType": "hybrid",
+      "topK": 25,
+      "scoreThreshold": 0.5
+    }
+  }'
+
+# High precision configuration with custom query
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/retrieval/retrieval-node-123 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "searchType": "semantic",
+      "topK": 8,
+      "scoreThreshold": 0.9,
+      "retrievalQuery": "Find expert-level content about: {query}"
+    }
+  }'
+
+# Fast keyword-based search for quick responses
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/retrieval/retrieval-node-123 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "searchType": "keyword",
+      "topK": 12,
+      "scoreThreshold": 0.6
+    }
+  }'
+
+# Domain-specific retrieval with custom template
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/retrieval/retrieval-node-123 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "searchType": "semantic",
+      "topK": 15,
+      "scoreThreshold": 0.75,
+      "retrievalQuery": "Search technical documentation for: {query}"
+    }
+  }'
+```
+
+### PHP
+
+```php
+<?php
+function updateRetrievalNode($flowName, $nodeId, $config, $apiToken) {
+    $url = "https://{$flowName}.flows.graphorlm.com/retrieval/{$nodeId}";
+    
+    $payload = json_encode([
+        'config' => $config
+    ]);
+    
+    $options = [
+        'http' => [
+            'header' => [
+                "Authorization: Bearer {$apiToken}",
+                "Content-Type: application/json"
+            ],
+            'method' => 'PATCH',
+            'content' => $payload
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    
+    if ($result === FALSE) {
+        throw new Exception('Failed to update retrieval node');
+    }
+    
+    return json_decode($result, true);
+}
+
+function applyRetrievalOptimization($flowName, $nodeId, $apiToken, $strategy = 'balanced') {
+    $strategies = [
+        'high_recall' => [
+            'searchType' => 'hybrid',
+            'topK' => 25,
+            'scoreThreshold' => 0.5
+        ],
+        'high_precision' => [
+            'searchType' => 'similarity',
+            'topK' => 8, 
+            'scoreThreshold' => 0.85
+        ],
+        'balanced' => [
+            'searchType' => 'semantic',
+            'topK' => 15,
+            'scoreThreshold' => 0.7
+        ],
+        'fast_search' => [
+            'searchType' => 'keyword',
+            'topK' => 10,
+            'scoreThreshold' => 0.6
+        ]
+    ];
+    
+    if (!isset($strategies[$strategy])) {
+        throw new Exception("Unknown strategy: {$strategy}");
+    }
+    
+    $config = $strategies[$strategy];
+    
+    try {
+        $result = updateRetrievalNode($flowName, $nodeId, $config, $apiToken);
+        
+        echo "🎯 Applied {$strategy} optimization\n";
+        echo "   Search Type: {$config['searchType']}\n";
+        echo "   Top K: {$config['topK']}\n";
+        echo "   Score Threshold: {$config['scoreThreshold']}\n";
+        echo "   Result: {$result['message']}\n";
+        
+        return $result;
+        
+    } catch (Exception $e) {
+        echo "❌ Optimization failed: " . $e->getMessage() . "\n";
+        throw $e;
+    }
+}
+
+function validateRetrievalConfig($config) {
+    $errors = [];
+    
+    // Validate search type
+    $validSearchTypes = ['similarity', 'hybrid', 'keyword', 'semantic'];
+    if (!isset($config['searchType']) || !in_array($config['searchType'], $validSearchTypes)) {
+        $errors[] = 'searchType must be one of: ' . implode(', ', $validSearchTypes);
+    }
+    
+    // Validate Top K
+    if (isset($config['topK'])) {
+        if (!is_int($config['topK']) || $config['topK'] < 1 || $config['topK'] > 100) {
+            $errors[] = 'topK must be an integer between 1 and 100';
+        }
+    }
+    
+    // Validate score threshold
+    if (isset($config['scoreThreshold'])) {
+        if (!is_numeric($config['scoreThreshold']) || $config['scoreThreshold'] < 0 || $config['scoreThreshold'] > 1) {
+            $errors[] = 'scoreThreshold must be a number between 0.0 and 1.0';
+        }
+    }
+    
+    // Validate custom query
+    if (isset($config['retrievalQuery']) && !is_string($config['retrievalQuery'])) {
+        $errors[] = 'retrievalQuery must be a string';
+    }
+    
+    return $errors;
+}
+
+// Usage examples
+try {
+    // 1. Simple update with validation
+    $config = [
+        'searchType' => 'similarity',
+        'topK' => 15,
+        'scoreThreshold' => 0.8
+    ];
+    
+    $errors = validateRetrievalConfig($config);
+    if (!empty($errors)) {
+        echo "❌ Configuration errors:\n";
+        foreach ($errors as $error) {
+            echo "   - {$error}\n";
+        }
+        exit(1);
+    }
+    
+    $result = updateRetrievalNode('my-rag-pipeline', 'retrieval-node-123', $config, 'YOUR_API_TOKEN');
+    echo "✅ Configuration updated: " . $result['message'] . "\n";
+    
+    // 2. Apply optimization strategy
+    applyRetrievalOptimization('my-rag-pipeline', 'retrieval-node-123', 'YOUR_API_TOKEN', 'high_precision');
+    
+    // 3. Custom domain-specific configuration
+    $domainConfig = [
+        'searchType' => 'semantic',
+        'topK' => 12,
+        'scoreThreshold' => 0.75,
+        'retrievalQuery' => 'Find technical documentation about: {query}'
+    ];
+    
+    $result = updateRetrievalNode('my-rag-pipeline', 'retrieval-node-123', $domainConfig, 'YOUR_API_TOKEN');
+    echo "✅ Domain-specific configuration applied: " . $result['message'] . "\n";
+    
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+}
+?>
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Description | Example Response |
+|-------------|-------------|------------------|
+| 400 | Bad Request - Invalid configuration parameters | `{"detail": "Invalid scoreThreshold value. Must be between 0.0 and 1.0"}` |
+| 401 | Unauthorized - Invalid or missing API token | `{"detail": "Invalid authentication credentials"}` |
+| 404 | Not Found - Flow or node not found | `{"detail": "Retrieval node not found"}` |
+| 422 | Unprocessable Entity - Validation error | `{"detail": "searchType is required"}` |
+| 500 | Internal Server Error - Server error | `{"detail": "Failed to update retrieval node"}` |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+### Example Error Responses
+
+#### Invalid Configuration
+```json
+{
+  "detail": "Invalid scoreThreshold value. Must be between 0.0 and 1.0"
+}
+```
+
+#### Missing Required Field
+```json
+{
+  "detail": "searchType is required"
+}
+```
+
+#### Node Not Found
+```json
+{
+  "detail": "Retrieval node not found"
+}
+```
+
+#### Invalid Search Type
+```json
+{
+  "detail": "Invalid searchType. Must be one of: similarity, hybrid, keyword, semantic"
+}
+```
+
+## Configuration Guidelines
+
+### Search Type Selection
+
+#### Similarity Search
+- **Best for**: General purpose document retrieval
+- **Characteristics**: Vector-based similarity matching
+- **Recommended threshold**: 0.7-0.9
+- **Typical Top K**: 10-20
+
+```json
+{
+  "searchType": "similarity",
+  "topK": 15,
+  "scoreThreshold": 0.8
+}
+```
+
+#### Hybrid Search
+- **Best for**: Combining semantic and keyword matching
+- **Characteristics**: Balanced precision and recall
+- **Recommended threshold**: 0.6-0.8
+- **Typical Top K**: 15-25
+
+```json
+{
+  "searchType": "hybrid",
+  "topK": 20,
+  "scoreThreshold": 0.7
+}
+```
+
+#### Keyword Search
+- **Best for**: Fast exact term matching
+- **Characteristics**: Traditional keyword-based search
+- **Recommended threshold**: 0.5-0.7
+- **Typical Top K**: 10-15
+
+```json
+{
+  "searchType": "keyword",
+  "topK": 12,
+  "scoreThreshold": 0.6
+}
+```
+
+#### Semantic Search
+- **Best for**: Conceptual and contextual matching
+- **Characteristics**: Deep understanding of query intent
+- **Recommended threshold**: 0.7-0.9
+- **Typical Top K**: 8-15
+
+```json
+{
+  "searchType": "semantic",
+  "topK": 10,
+  "scoreThreshold": 0.8
+}
+```
+
+### Parameter Optimization
+
+#### Top K Guidelines
+- **Low volume (1-5)**: High precision, narrow results
+- **Medium volume (10-20)**: Balanced approach for most use cases
+- **High volume (25+)**: High recall, comprehensive results
+
+#### Score Threshold Guidelines
+- **Low threshold (0.5-0.6)**: More results, lower precision
+- **Medium threshold (0.7-0.8)**: Balanced quality and quantity
+- **High threshold (0.9+)**: Fewer but highly relevant results
+
+### Custom Query Templates
+
+Use `retrievalQuery` for domain-specific optimization:
+
+```json
+{
+  "retrievalQuery": "Find technical documentation about: {query}"
+}
+```
+
+Common templates:
+- `"Search for {query} in user manuals"`
+- `"Find FAQ entries related to: {query}"`
+- `"Locate product information about {query}"`
+- `"Technical support content for: {query}"`
+
+## Update Behavior
+
+### Immediate Effects
+- Configuration changes are applied instantly
+- Node status changes to `updated: false` indicating reprocessing needed
+- Previous results remain available until reprocessing
+
+### Reprocessing Requirements
+After configuration updates, you should:
+1. **Re-run the flow** to apply new retrieval settings
+2. **Monitor performance** to validate configuration changes
+3. **Adjust parameters** based on result quality
+
+### Best Practices for Updates
+- **Test changes incrementally** rather than making large adjustments
+- **Monitor metrics** before and after configuration changes
+- **Document configuration rationale** for future reference
+- **Use A/B testing** to compare retrieval strategies
+
+## Integration Examples
+
+### Automated Performance Tuning
+
+```javascript
+class RetrievalAutoTuner {
+  constructor(flowName, apiToken) {
+    this.flowName = flowName;
+    this.apiToken = apiToken;
+    this.performanceHistory = [];
+  }
+
+  async optimizeRetrieval(nodeId, targetMetric = 'balanced') {
+    const strategies = {
+      'precision': { searchType: 'similarity', topK: 8, scoreThreshold: 0.85 },
+      'recall': { searchType: 'hybrid', topK: 25, scoreThreshold: 0.5 },
+      'balanced': { searchType: 'semantic', topK: 15, scoreThreshold: 0.7 },
+      'speed': { searchType: 'keyword', topK: 10, scoreThreshold: 0.6 }
+    };
+
+    const config = strategies[targetMetric] || strategies['balanced'];
+    
+    try {
+      const result = await this.updateConfiguration(nodeId, config);
+      console.log(`🎯 Applied ${targetMetric} optimization strategy`);
+      
+      // Log performance for tracking
+      this.performanceHistory.push({
+        timestamp: new Date(),
+        nodeId,
+        strategy: targetMetric,
+        config,
+        result
+      });
+      
+      return result;
+    } catch (error) {
+      console.error(`❌ Optimization failed: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async updateConfiguration(nodeId, config) {
+    const response = await fetch(`https://${this.flowName}.flows.graphorlm.com/retrieval/${nodeId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${this.apiToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ config })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  getPerformanceHistory() {
+    return this.performanceHistory;
+  }
+}
+
+// Usage
+const tuner = new RetrievalAutoTuner('my-rag-pipeline', 'YOUR_API_TOKEN');
+tuner.optimizeRetrieval('retrieval-node-123', 'precision').catch(console.error);
+```
+
+### Configuration Validation Service
+
+```python
+class RetrievalConfigValidator:
+    def __init__(self, flow_name: str, api_token: str):
+        self.flow_name = flow_name
+        self.api_token = api_token
+    
+    def validate_config(self, config: dict) -> dict:
+        """Validate retrieval configuration and provide recommendations"""
+        validation_result = {
+            "is_valid": True,
+            "errors": [],
+            "warnings": [],
+            "recommendations": []
+        }
+        
+        # Validate search type
+        valid_search_types = ['similarity', 'hybrid', 'keyword', 'semantic']
+        search_type = config.get('searchType')
+        
+        if not search_type:
+            validation_result["errors"].append("searchType is required")
+            validation_result["is_valid"] = False
+        elif search_type not in valid_search_types:
+            validation_result["errors"].append(f"Invalid searchType. Must be one of: {', '.join(valid_search_types)}")
+            validation_result["is_valid"] = False
+        
+        # Validate Top K
+        top_k = config.get('topK')
+        if top_k is not None:
+            if not isinstance(top_k, int) or top_k < 1:
+                validation_result["errors"].append("topK must be a positive integer")
+                validation_result["is_valid"] = False
+            elif top_k > 50:
+                validation_result["warnings"].append("topK > 50 may impact performance")
+            elif top_k < 5:
+                validation_result["warnings"].append("topK < 5 may limit result diversity")
+        
+        # Validate score threshold
+        threshold = config.get('scoreThreshold')
+        if threshold is not None:
+            if not isinstance(threshold, (int, float)) or threshold < 0 or threshold > 1:
+                validation_result["errors"].append("scoreThreshold must be between 0.0 and 1.0")
+                validation_result["is_valid"] = False
+            elif threshold > 0.95:
+                validation_result["warnings"].append("scoreThreshold > 0.95 may be too restrictive")
+            elif threshold < 0.3:
+                validation_result["warnings"].append("scoreThreshold < 0.3 may include low-quality results")
+        
+        # Configuration-specific recommendations
+        if search_type == 'similarity' and top_k and top_k > 20:
+            validation_result["recommendations"].append("For similarity search, consider topK <= 20 for better precision")
+        
+        if search_type == 'hybrid' and threshold and threshold > 0.8:
+            validation_result["recommendations"].append("Hybrid search works well with moderate thresholds (0.6-0.8)")
+        
+        if search_type == 'keyword' and threshold and threshold > 0.7:
+            validation_result["recommendations"].append("Keyword search typically uses lower thresholds (0.5-0.7)")
+        
+        return validation_result
+    
+    async def update_with_validation(self, node_id: str, config: dict) -> dict:
+        """Update retrieval configuration after validation"""
+        
+        # Validate configuration first
+        validation = self.validate_config(config)
+        
+        if not validation["is_valid"]:
+            raise ValueError(f"Invalid configuration: {'; '.join(validation['errors'])}")
+        
+        # Show warnings
+        for warning in validation["warnings"]:
+            print(f"⚠️  Warning: {warning}")
+        
+        # Show recommendations
+        for rec in validation["recommendations"]:
+            print(f"💡 Recommendation: {rec}")
+        
+        # Proceed with update
+        try:
+            result = await self.update_retrieval_node(node_id, config)
+            print(f"✅ Configuration updated successfully")
+            return result
+        except Exception as e:
+            print(f"❌ Update failed: {e}")
+            raise
+
+# Usage
+validator = RetrievalConfigValidator("my-rag-pipeline", "YOUR_API_TOKEN")
+
+config = {
+    "searchType": "semantic",
+    "topK": 15,
+    "scoreThreshold": 0.75
+}
+
+validation = validator.validate_config(config)
+if validation["is_valid"]:
+    print("✅ Configuration is valid")
+else:
+    print("❌ Configuration errors:", validation["errors"])
+```
+
+## Best Practices
+
+### Configuration Management
+- **Start Conservative**: Begin with moderate settings and adjust based on performance
+- **Test Incrementally**: Make small changes and measure impact
+- **Document Changes**: Keep track of configuration rationale and performance impact
+- **Use Validation**: Always validate configurations before applying
+
+### Performance Optimization
+- **Monitor Quality**: Track retrieval relevance and adjust thresholds accordingly
+- **Balance Speed vs Accuracy**: Choose search types based on response time requirements
+- **Consider Content Volume**: Adjust Top K based on available content and user needs
+- **Regular Tuning**: Periodically review and optimize configurations
+
+### Search Strategy Selection
+- **Similarity**: General purpose, good balance of speed and accuracy
+- **Hybrid**: Best overall performance for most applications
+- **Keyword**: Fast responses for exact term matching
+- **Semantic**: Best understanding of user intent and context
+
+### Threshold Management
+- **Quality vs Quantity**: Higher thresholds for quality, lower for comprehensiveness
+- **Content Dependent**: Adjust based on content quality and embedding model performance
+- **User Feedback**: Use retrieval feedback to optimize threshold settings
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="exclamation-triangle" title="Invalid Configuration Parameters">
+    **Solution**: Verify that:
+    - `searchType` is one of: similarity, hybrid, keyword, semantic
+    - `topK` is a positive integer (recommended 5-50)
+    - `scoreThreshold` is between 0.0 and 1.0
+    - `retrievalQuery` contains proper query template syntax
+  </Accordion>
+  
+  <Accordion icon="ban" title="Poor Retrieval Quality">
+    **Solution**: If results are not relevant:
+    - Increase `scoreThreshold` to filter low-quality results
+    - Experiment with different `searchType` values
+    - Adjust `topK` to get more diverse results
+    - Check chunking configuration for optimal chunk sizes
+  </Accordion>
+  
+  <Accordion icon="clock" title="Slow Retrieval Performance">
+    **Solution**: If retrieval is too slow:
+    - Reduce `topK` to retrieve fewer results
+    - Use "keyword" searchType for faster responses
+    - Optimize `scoreThreshold` to reduce candidate set
+    - Consider system scaling for large document volumes
+  </Accordion>
+  
+  <Accordion icon="chart-line" title="Configuration Not Taking Effect">
+    **Solution**: After updating configuration:
+    - Re-run the flow to apply new settings
+    - Check that the node status shows `updated: false`
+    - Verify configuration was saved correctly
+    - Allow time for reprocessing to complete
+  </Accordion>
+  
+  <Accordion icon="search" title="Custom Query Not Working">
+    **Solution**: For `retrievalQuery` issues:
+    - Ensure query template includes `{query}` placeholder
+    - Test query template with sample queries
+    - Verify template syntax is valid
+    - Check that custom queries are supported for the search type
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After updating retrieval node configuration, you might want to:
+
+<CardGroup cols={2}>
+  <Card
+    title="List Retrieval Nodes"
+    icon="list"
+    href="/api-reference/flows/retrieval/list"
+  >
+    View updated retrieval node configurations and status
+  </Card>
+  <Card
+    title="Run Flow"
+    icon="play"
+    href="/api-reference/flows/run"
+  >
+    Execute your flow with the new retrieval configuration
+  </Card>
+  <Card
+    title="Update Chunking Nodes"
+    icon="scissors"
+    href="/api-reference/flows/chunking/update"
+  >
+    Optimize chunking settings to improve retrieval quality
+  </Card>
+  <Card
+    title="Flow Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
+  >
+    Learn about all available flow management endpoints
+  </Card>
+</CardGroup>

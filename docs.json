@@ -79,6 +79,14 @@
                   "api-reference/flows/chunking/list",
                   "api-reference/flows/chunking/update"
                 ]
+              },
+              {
+                "group": "Retrieval",
+                "pages": [
+                  "api-reference/flows/retrieval/overview",
+                  "api-reference/flows/retrieval/list",
+                  "api-reference/flows/retrieval/update"
+                ]
               }
             ]
           }
