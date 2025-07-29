@@ -95,6 +95,14 @@
                   "api-reference/flows/reranking/list",
                   "api-reference/flows/reranking/update"
                 ]
+              },
+              {
+                "group": "Smart RAG",
+                "pages": [
+                  "api-reference/flows/smart-rag/overview",
+                  "api-reference/flows/smart-rag/list",
+                  "api-reference/flows/smart-rag/update"
+                ]
               }
             ]
           }
