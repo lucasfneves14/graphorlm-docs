@@ -245,7 +245,7 @@ The Sources API supports a wide range of document formats:
     **Quality Monitoring**:
     - Review processing results in GraphorLM dashboard
     - Test different methods for optimal results
-    - Monitor processing times and costs
+    - Monitor processing times and resource usage
   </Accordion>
   
   <Accordion icon="list" title="Management & Monitoring">
@@ -477,7 +477,7 @@ class DocumentQualityPipeline {
           bestResult = { method, result, score };
         }
         
-        // If score is good enough, don't try more expensive methods
+        // If score is good enough, don't try more resource-intensive methods
         if (score >= 0.8 && method !== 'advanced') {
           break;
         }

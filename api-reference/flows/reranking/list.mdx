@@ -1,0 +1,873 @@
+---
+title: 'List Reranking Nodes'
+description: 'Retrieve reranking nodes from flows via the GraphorLM REST API'
+---
+
+Retrieve all reranking nodes from a specific flow in your GraphorLM project. Reranking nodes are advanced components that use Large Language Models (LLMs) to intelligently reorder retrieved documents based on their relevance to user queries, significantly improving the quality and precision of RAG (Retrieval-Augmented Generation) systems.
+
+## Overview
+
+The List Reranking Nodes endpoint allows you to retrieve information about reranking nodes within a flow. Reranking nodes process documents retrieved by previous stages, using sophisticated LLM-based scoring to reorder results by relevance, ensuring that the most appropriate content appears first in your RAG pipeline.
+
+- **Method**: `GET`
+- **URL**: `https://{flow_name}.flows.graphorlm.com/reranking`
+- **Authentication**: Required (API Token)
+
+## Authentication
+
+All requests must include a valid API token in the Authorization header:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+
+### Parameters
+
+No query parameters are required for this endpoint.
+
+### Example Request
+
+```bash
+GET https://my-rag-pipeline.flows.graphorlm.com/reranking
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+## Response Format
+
+### Success Response (200 OK)
+
+The response contains an array of reranking node objects:
+
+```json
+[
+  {
+    "id": "reranking-1748287628687",
+    "type": "reranking",
+    "position": {
+      "x": 700,
+      "y": 200
+    },
+    "style": {
+      "height": 140,
+      "width": 240
+    },
+    "data": {
+      "name": "Document Reranking",
+      "config": {
+        "topK": 10
+      },
+      "result": {
+        "updated": true,
+        "processing": false,
+        "waiting": false,
+        "has_error": false,
+        "updatedMetrics": true,
+        "total_reranked": 856
+      }
+    }
+  }
+]
+```
+
+### Response Structure
+
+Each reranking node in the array contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique identifier for the reranking node |
+| `type` | string | Node type (always "reranking" for reranking nodes) |
+| `position` | object | Position coordinates in the flow canvas |
+| `style` | object | Visual styling properties (height, width) |
+| `data` | object | Reranking node configuration and results |
+
+### Position Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `x` | number | X coordinate position in the flow canvas |
+| `y` | number | Y coordinate position in the flow canvas |
+
+### Style Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `height` | integer | Height of the node in pixels |
+| `width` | integer | Width of the node in pixels |
+
+### Data Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Display name of the reranking node |
+| `config` | object | Node configuration including reranking parameters |
+| `result` | object | Processing results and reranking metrics (optional) |
+
+### Config Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `topK` | integer | Maximum number of documents to return after reranking (optional) |
+
+### Result Object (Optional)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `updated` | boolean | Whether the node has been processed with current configuration |
+| `processing` | boolean | Whether the node is currently being processed |
+| `waiting` | boolean | Whether the node is waiting for dependencies |
+| `has_error` | boolean | Whether the node encountered an error during processing |
+| `updatedMetrics` | boolean | Whether reranking metrics have been calculated |
+| `total_reranked` | integer | Number of documents processed through reranking (if available) |
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+async function listRerankingNodes(flowName, apiToken) {
+  const response = await fetch(`https://${flowName}.flows.graphorlm.com/reranking`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+// Usage
+listRerankingNodes('my-rag-pipeline', 'YOUR_API_TOKEN')
+  .then(rerankingNodes => {
+    console.log(`Found ${rerankingNodes.length} reranking node(s)`);
+    
+    rerankingNodes.forEach(node => {
+      console.log(`\nNode: ${node.data.name} (${node.id})`);
+      console.log(`Top K: ${node.data.config.topK || 'All documents'}`);
+      
+      if (node.data.result) {
+        const status = node.data.result.processing ? 'Processing' : 
+                      node.data.result.waiting ? 'Waiting' :
+                      node.data.result.has_error ? 'Error' :
+                      node.data.result.updated ? 'Ready' : 'Needs Update';
+        console.log(`Status: ${status}`);
+        
+        if (node.data.result.updatedMetrics) {
+          console.log(`Metrics: Updated`);
+        }
+        
+        if (node.data.result.total_reranked) {
+          console.log(`Total documents reranked: ${node.data.result.total_reranked}`);
+        }
+      }
+    });
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+### Python
+
+```python
+import requests
+import json
+
+def list_reranking_nodes(flow_name, api_token):
+    url = f"https://{flow_name}.flows.graphorlm.com/reranking"
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}"
+    }
+    
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    
+    return response.json()
+
+def analyze_reranking_nodes(reranking_nodes):
+    """Analyze reranking nodes and provide detailed summary"""
+    print(f"🔄 Reranking Nodes Analysis")
+    print(f"Total reranking nodes: {len(reranking_nodes)}")
+    print("-" * 50)
+    
+    status_counts = {"ready": 0, "processing": 0, "waiting": 0, "error": 0, "needs_update": 0}
+    total_reranked = 0
+    topk_distribution = {}
+    
+    for node in reranking_nodes:
+        node_data = node.get('data', {})
+        config = node_data.get('config', {})
+        result = node_data.get('result', {})
+        
+        # Track Top K distribution
+        top_k = config.get('topK')
+        if top_k is not None:
+            topk_key = f"{top_k} results"
+            topk_distribution[topk_key] = topk_distribution.get(topk_key, 0) + 1
+        else:
+            topk_distribution["All documents"] = topk_distribution.get("All documents", 0) + 1
+        
+        print(f"\n⚡ Node: {node_data.get('name', 'Unnamed')} ({node['id']})")
+        print(f"   Top K: {top_k if top_k is not None else 'All documents'}")
+        
+        if result:
+            if result.get('processing'):
+                status_counts["processing"] += 1
+                print("   🔄 Status: Processing")
+            elif result.get('waiting'):
+                status_counts["waiting"] += 1
+                print("   ⏳ Status: Waiting")
+            elif result.get('has_error'):
+                status_counts["error"] += 1
+                print("   ❌ Status: Error")
+            elif result.get('updated'):
+                status_counts["ready"] += 1
+                print("   ✅ Status: Ready")
+            else:
+                status_counts["needs_update"] += 1
+                print("   ⚠️  Status: Needs Update")
+                
+            if result.get('updatedMetrics'):
+                print("   📊 Metrics: Updated")
+            
+            if result.get('total_reranked'):
+                reranked = result['total_reranked']
+                total_reranked += reranked
+                print(f"   📄 Total reranked: {reranked}")
+    
+    print(f"\n📊 Summary:")
+    print(f"   Total documents reranked across all nodes: {total_reranked}")
+    
+    print(f"\n📈 Top K Distribution:")
+    for topk, count in sorted(topk_distribution.items()):
+        print(f"   {topk}: {count} node(s)")
+    
+    print(f"\n📋 Node Status:")
+    for status, count in status_counts.items():
+        if count > 0:
+            print(f"   {status.replace('_', ' ').title()}: {count}")
+
+# Usage
+try:
+    reranking_nodes = list_reranking_nodes("my-rag-pipeline", "YOUR_API_TOKEN")
+    analyze_reranking_nodes(reranking_nodes)
+    
+except requests.exceptions.HTTPError as e:
+    print(f"Error: {e}")
+    if e.response.status_code == 404:
+        print("Flow not found or no reranking nodes in this flow")
+    elif e.response.status_code == 401:
+        print("Invalid API token or insufficient permissions")
+```
+
+### cURL
+
+```bash
+# Basic request
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/reranking \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+
+# With jq for formatted output
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/reranking \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | jq '.'
+
+# Extract reranking configuration summary
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/reranking \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq -r '.[] | "\(.data.name): Top K \(.data.config.topK // "All")"'
+
+# Count total reranked documents across all nodes
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/reranking \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq '[.[] | .data.result.total_reranked // 0] | add'
+
+# Filter nodes by status
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/reranking \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq '.[] | select(.data.result.updated == true)'
+```
+
+### PHP
+
+```php
+<?php
+function listRerankingNodes($flowName, $apiToken) {
+    $url = "https://{$flowName}.flows.graphorlm.com/reranking";
+    
+    $options = [
+        'http' => [
+            'header' => "Authorization: Bearer {$apiToken}",
+            'method' => 'GET'
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    
+    if ($result === FALSE) {
+        throw new Exception('Failed to retrieve reranking nodes');
+    }
+    
+    return json_decode($result, true);
+}
+
+function analyzeRerankingNodes($rerankingNodes) {
+    $statusCounts = [
+        'ready' => 0,
+        'processing' => 0, 
+        'waiting' => 0,
+        'error' => 0,
+        'needs_update' => 0
+    ];
+    $totalReranked = 0;
+    $topkStats = [];
+    
+    echo "🔄 Reranking Nodes Analysis\n";
+    echo "Total reranking nodes: " . count($rerankingNodes) . "\n";
+    echo str_repeat("-", 50) . "\n";
+    
+    foreach ($rerankingNodes as $node) {
+        $data = $node['data'] ?? [];
+        $config = $data['config'] ?? [];
+        $result = $data['result'] ?? [];
+        
+        $topK = $config['topK'] ?? null;
+        $topkKey = $topK ? "{$topK} results" : "All documents";
+        $topkStats[$topkKey] = ($topkStats[$topkKey] ?? 0) + 1;
+        
+        echo "\n⚡ Node: " . ($data['name'] ?? 'Unnamed') . " ({$node['id']})\n";
+        echo "   Top K: " . ($topK ?? 'All documents') . "\n";
+        
+        if (!empty($result)) {
+            if ($result['processing'] ?? false) {
+                $statusCounts['processing']++;
+                echo "   🔄 Status: Processing\n";
+            } elseif ($result['waiting'] ?? false) {
+                $statusCounts['waiting']++;
+                echo "   ⏳ Status: Waiting\n";
+            } elseif ($result['has_error'] ?? false) {
+                $statusCounts['error']++;
+                echo "   ❌ Status: Error\n";
+            } elseif ($result['updated'] ?? false) {
+                $statusCounts['ready']++;
+                echo "   ✅ Status: Ready\n";
+            } else {
+                $statusCounts['needs_update']++;
+                echo "   ⚠️  Status: Needs Update\n";
+            }
+            
+            if ($result['updatedMetrics'] ?? false) {
+                echo "   📊 Metrics: Updated\n";
+            }
+            
+            if (isset($result['total_reranked'])) {
+                $reranked = $result['total_reranked'];
+                $totalReranked += $reranked;
+                echo "   📄 Total reranked: {$reranked}\n";
+            }
+        }
+    }
+    
+    echo "\n📊 Summary:\n";
+    echo "   Total documents reranked across all nodes: {$totalReranked}\n";
+    
+    echo "\n📈 Top K Distribution:\n";
+    ksort($topkStats);
+    foreach ($topkStats as $topk => $count) {
+        echo "   {$topk}: {$count} node(s)\n";
+    }
+    
+    echo "\n📋 Node Status:\n";
+    foreach ($statusCounts as $status => $count) {
+        if ($count > 0) {
+            $statusLabel = ucwords(str_replace('_', ' ', $status));
+            echo "   {$statusLabel}: {$count}\n";
+        }
+    }
+}
+
+// Usage
+try {
+    $rerankingNodes = listRerankingNodes('my-rag-pipeline', 'YOUR_API_TOKEN');
+    analyzeRerankingNodes($rerankingNodes);
+    
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+}
+?>
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Description | Example Response |
+|-------------|-------------|------------------|
+| 401 | Unauthorized - Invalid or missing API token | `{"detail": "Invalid authentication credentials"}` |
+| 404 | Not Found - Flow not found | `{"detail": "Flow not found"}` |
+| 500 | Internal Server Error - Server error | `{"detail": "Failed to retrieve reranking nodes"}` |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+### Example Error Responses
+
+#### Invalid API Token
+```json
+{
+  "detail": "Invalid authentication credentials"
+}
+```
+
+#### Flow Not Found
+```json
+{
+  "detail": "Flow not found"
+}
+```
+
+#### Server Error
+```json
+{
+  "detail": "Failed to retrieve reranking nodes"
+}
+```
+
+## Use Cases
+
+### Reranking Node Management
+
+Use this endpoint to:
+
+- **Performance Monitoring**: Review reranking effectiveness and processing metrics
+- **Configuration Analysis**: Examine Top K settings and optimization opportunities
+- **Quality Assurance**: Monitor reranking accuracy and relevance improvements
+- **Flow Optimization**: Analyze reranking impact on overall pipeline performance
+- **Debugging**: Identify issues with reranking processing or LLM integration
+
+### Integration Examples
+
+#### Reranking Quality Monitor
+
+```javascript
+class RerankingQualityMonitor {
+  constructor(flowName, apiToken) {
+    this.flowName = flowName;
+    this.apiToken = apiToken;
+  }
+
+  async getQualityReport() {
+    try {
+      const nodes = await this.listRerankingNodes();
+      const report = {
+        totalNodes: nodes.length,
+        activeNodes: 0,
+        processingNodes: 0,
+        errorNodes: 0,
+        totalReranked: 0,
+        topkDistribution: {},
+        averageTopK: 0,
+        performance: []
+      };
+
+      let topkSum = 0;
+      let topkCount = 0;
+
+      for (const node of nodes) {
+        const config = node.data.config || {};
+        const result = node.data.result || {};
+        
+        // Track Top K distribution
+        const topK = config.topK;
+        if (topK !== null && topK !== undefined) {
+          report.topkDistribution[topK] = (report.topkDistribution[topK] || 0) + 1;
+          topkSum += topK;
+          topkCount++;
+        } else {
+          report.topkDistribution['unlimited'] = (report.topkDistribution['unlimited'] || 0) + 1;
+        }
+        
+        if (result.total_reranked) {
+          report.totalReranked += result.total_reranked;
+        }
+        
+        // Track node status
+        if (result.processing) {
+          report.processingNodes++;
+        } else if (result.has_error) {
+          report.errorNodes++;
+        } else if (result.updated) {
+          report.activeNodes++;
+        }
+        
+        // Individual node performance
+        report.performance.push({
+          nodeId: node.id,
+          nodeName: node.data.name,
+          topK: config.topK,
+          totalReranked: result.total_reranked || 0,
+          metricsUpdated: result.updatedMetrics || false,
+          status: result.processing ? 'Processing' :
+                 result.has_error ? 'Error' :
+                 result.updated ? 'Active' : 'Inactive'
+        });
+      }
+
+      if (topkCount > 0) {
+        report.averageTopK = Math.round(topkSum / topkCount);
+      }
+
+      return report;
+    } catch (error) {
+      throw new Error(`Quality report failed: ${error.message}`);
+    }
+  }
+
+  async listRerankingNodes() {
+    const response = await fetch(`https://${this.flowName}.flows.graphorlm.com/reranking`, {
+      headers: { 'Authorization': `Bearer ${this.apiToken}` }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  async generateReport() {
+    const report = await this.getQualityReport();
+    
+    console.log('🔄 Reranking Quality Report');
+    console.log('===========================');
+    console.log(`Total Nodes: ${report.totalNodes}`);
+    console.log(`Active Nodes: ${report.activeNodes}`);
+    console.log(`Processing Nodes: ${report.processingNodes}`);
+    console.log(`Error Nodes: ${report.errorNodes}`);
+    console.log(`Total Reranked: ${report.totalReranked}`);
+    console.log(`Average Top K: ${report.averageTopK || 'N/A'}`);
+    
+    console.log('\n📊 Top K Distribution:');
+    for (const [topk, count] of Object.entries(report.topkDistribution)) {
+      console.log(`  ${topk}: ${count} node(s)`);
+    }
+    
+    console.log('\n📈 Node Performance:');
+    report.performance.forEach(node => {
+      console.log(`  ${node.nodeName} (${node.nodeId}):`);
+      console.log(`    Top K: ${node.topK || 'Unlimited'}`);
+      console.log(`    Reranked: ${node.totalReranked}, Status: ${node.status}`);
+      console.log(`    Metrics: ${node.metricsUpdated ? 'Updated' : 'Pending'}`);
+    });
+
+    return report;
+  }
+}
+
+// Usage
+const monitor = new RerankingQualityMonitor('my-rag-pipeline', 'YOUR_API_TOKEN');
+monitor.generateReport().catch(console.error);
+```
+
+#### Reranking Performance Analyzer
+
+```python
+import requests
+from typing import List, Dict, Any
+
+class RerankingPerformanceAnalyzer:
+    def __init__(self, flow_name: str, api_token: str):
+        self.flow_name = flow_name
+        self.api_token = api_token
+        self.base_url = f"https://{flow_name}.flows.graphorlm.com"
+    
+    def get_reranking_nodes(self) -> List[Dict[str, Any]]:
+        """Retrieve all reranking nodes from the flow"""
+        response = requests.get(
+            f"{self.base_url}/reranking",
+            headers={"Authorization": f"Bearer {self.api_token}"}
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def analyze_performance(self) -> Dict[str, Any]:
+        """Analyze reranking node performance and configurations"""
+        nodes = self.get_reranking_nodes()
+        
+        performance_report = {
+            "summary": {
+                "total_nodes": len(nodes),
+                "active_nodes": 0,
+                "processing_nodes": 0,
+                "error_nodes": 0,
+                "total_reranked": 0
+            },
+            "configuration_analysis": {
+                "topk_distribution": {},
+                "average_topk": 0,
+                "unlimited_nodes": 0
+            },
+            "nodes": [],
+            "recommendations": []
+        }
+        
+        topk_values = []
+        
+        for node in nodes:
+            node_info = {
+                "id": node["id"],
+                "name": node["data"]["name"],
+                "config": node["data"]["config"],
+                "result": node["data"]["result"],
+                "performance_score": 0,
+                "issues": []
+            }
+            
+            config = node["data"]["config"]
+            result = node["data"]["result"]
+            
+            # Analyze Top K configuration
+            top_k = config.get("topK")
+            if top_k is not None:
+                topk_values.append(top_k)
+                topk_key = f"Top {top_k}"
+                performance_report["configuration_analysis"]["topk_distribution"][topk_key] = \
+                    performance_report["configuration_analysis"]["topk_distribution"].get(topk_key, 0) + 1
+                
+                if top_k <= 0:
+                    node_info["issues"].append("Invalid Top K value (must be positive)")
+                elif top_k > 50:
+                    node_info["issues"].append("Very high Top K may impact performance")
+                    node_info["performance_score"] += 0.7
+                else:
+                    node_info["performance_score"] += 1.0
+            else:
+                performance_report["configuration_analysis"]["unlimited_nodes"] += 1
+                node_info["performance_score"] += 0.5  # Neutral score for unlimited
+            
+            # Analyze node status
+            if result:
+                if result.get("has_error"):
+                    performance_report["summary"]["error_nodes"] += 1
+                    node_info["issues"].append("Node has processing errors")
+                elif result.get("processing"):
+                    performance_report["summary"]["processing_nodes"] += 1
+                elif result.get("updated"):
+                    performance_report["summary"]["active_nodes"] += 1
+                    node_info["performance_score"] += 1.0
+                
+                if result.get("updatedMetrics"):
+                    node_info["performance_score"] += 1.0
+                
+                if result.get("total_reranked"):
+                    performance_report["summary"]["total_reranked"] += result["total_reranked"]
+                    node_info["performance_score"] += 1.0
+                else:
+                    node_info["issues"].append("No reranking activity recorded")
+            
+            # Normalize performance score
+            node_info["performance_score"] = min(node_info["performance_score"] / 4.0, 1.0)
+            
+            # Generate recommendations
+            if top_k and top_k > 20:
+                performance_report["recommendations"].append({
+                    "node_id": node["id"],
+                    "node_name": node_info["name"],
+                    "type": "optimization",
+                    "message": f"Consider reducing Top K from {top_k} to 10-20 for better performance"
+                })
+            
+            if not result or not result.get("updatedMetrics"):
+                performance_report["recommendations"].append({
+                    "node_id": node["id"],
+                    "node_name": node_info["name"],
+                    "type": "maintenance",
+                    "message": "Metrics need to be updated - run flow to refresh"
+                })
+            
+            performance_report["nodes"].append(node_info)
+        
+        # Calculate average Top K
+        if topk_values:
+            performance_report["configuration_analysis"]["average_topk"] = sum(topk_values) / len(topk_values)
+        
+        return performance_report
+    
+    def print_performance_report(self, report: Dict[str, Any]):
+        """Print a formatted performance analysis report"""
+        summary = report["summary"]
+        config_analysis = report["configuration_analysis"]
+        
+        print("🔄 Reranking Performance Analysis Report")
+        print("=" * 50)
+        print(f"Flow: {self.flow_name}")
+        print(f"Total Nodes: {summary['total_nodes']}")
+        print(f"Active Nodes: {summary['active_nodes']}")
+        print(f"Processing Nodes: {summary['processing_nodes']}")
+        print(f"Error Nodes: {summary['error_nodes']}")
+        print(f"Total Documents Reranked: {summary['total_reranked']}")
+        
+        print(f"\n📊 Configuration Analysis:")
+        if config_analysis['average_topk'] > 0:
+            print(f"Average Top K: {config_analysis['average_topk']:.1f}")
+        print(f"Unlimited Nodes: {config_analysis['unlimited_nodes']}")
+        
+        if config_analysis['topk_distribution']:
+            print(f"\n📈 Top K Distribution:")
+            for topk, count in config_analysis['topk_distribution'].items():
+                print(f"   {topk}: {count} node(s)")
+        
+        print(f"\n📋 Node Analysis:")
+        print("-" * 30)
+        for node in report["nodes"]:
+            score_icon = "🟢" if node["performance_score"] >= 0.8 else "🟡" if node["performance_score"] >= 0.5 else "🔴"
+            print(f"\n{score_icon} {node['name']} ({node['id']})")
+            print(f"   Performance Score: {node['performance_score']:.2f}")
+            
+            config = node["config"]
+            result = node["result"]
+            print(f"   Top K: {config.get('topK', 'Unlimited')}")
+            
+            if result and result.get('total_reranked'):
+                print(f"   Total Reranked: {result['total_reranked']}")
+            
+            if node["issues"]:
+                print(f"   Issues: {', '.join(node['issues'])}")
+        
+        if report["recommendations"]:
+            print(f"\n💡 Recommendations ({len(report['recommendations'])}):")
+            print("-" * 40)
+            for rec in report["recommendations"]:
+                icon = {"optimization": "⚡", "maintenance": "🔧"}.get(rec["type"], "ℹ️")
+                print(f"{icon} {rec['node_name']}: {rec['message']}")
+
+# Usage  
+analyzer = RerankingPerformanceAnalyzer("my-rag-pipeline", "YOUR_API_TOKEN")
+try:
+    report = analyzer.analyze_performance()
+    analyzer.print_performance_report(report)
+except Exception as e:
+    print(f"Performance analysis failed: {e}")
+```
+
+## Best Practices
+
+### Configuration Management
+
+- **Optimal Top K**: Set Top K between 5-20 for most applications; use unlimited only when necessary
+- **Performance Monitoring**: Regularly check reranking metrics and processing times
+- **Quality Assessment**: Monitor improvement in result relevance after reranking
+- **Resource Planning**: Consider LLM resource usage and processing time for reranking operations
+
+### Performance Optimization
+
+- **Batch Processing**: Leverage built-in parallel processing for efficiency
+- **Top K Tuning**: Balance quality improvement with processing time and resource usage
+- **Error Handling**: Monitor retry mechanisms and processing errors
+- **Metrics Tracking**: Keep reranking metrics updated for performance analysis
+
+### Quality Assurance
+
+- **Regular Auditing**: Monitor reranking node configurations for consistency
+- **Result Validation**: Compare pre and post-reranking result quality
+- **A/B Testing**: Test different Top K values to optimize for your use case
+- **Feedback Integration**: Use user feedback to validate reranking effectiveness
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="exclamation-triangle" title="Flow Not Found Error">
+    **Solution**: Verify that:
+    - The flow name in the URL is correct and matches exactly
+    - The flow exists in your project
+    - Your API token has access to the correct project
+    - The flow has been created and saved properly
+  </Accordion>
+  
+  <Accordion icon="list" title="Empty Reranking Nodes Array">
+    **Solution**: If no reranking nodes are returned:
+    - Verify the flow contains reranking components
+    - Check that reranking nodes have been added to the flow
+    - Ensure the flow has been saved after adding reranking nodes
+    - Confirm you're checking the correct flow
+  </Accordion>
+  
+  <Accordion icon="cog" title="Poor Reranking Performance">
+    **Solution**: If reranking is not improving results:
+    - Check that retrieval nodes are providing quality input
+    - Verify LLM integration is working properly
+    - Monitor reranking scores and positions
+    - Consider adjusting Top K based on content quality
+  </Accordion>
+  
+  <Accordion icon="clock" title="Slow Processing Times">
+    **Solution**: If reranking is taking too long:
+    - Reduce Top K to process fewer documents
+    - Check LLM service response times
+    - Monitor batch processing efficiency
+    - Consider system resource allocation
+  </Accordion>
+  
+  <Accordion icon="wifi" title="Connection Issues">
+    **Solution**: For connectivity problems:
+    - Check your internet connection
+    - Verify the flow URL is accessible
+    - Ensure your firewall allows HTTPS traffic to *.flows.graphorlm.com
+    - Try accessing the endpoint from a different network
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After retrieving reranking node information, you might want to:
+
+<CardGroup cols={2}>
+  <Card
+    title="Update Reranking Configuration"
+    icon="sliders"
+    href="/api-reference/flows/reranking/update"
+  >
+    Modify reranking node settings like Top K values
+  </Card>
+  <Card
+    title="List Retrieval Nodes"
+    icon="search"
+    href="/api-reference/flows/retrieval/list"
+  >
+    View retrieval nodes that provide input to reranking nodes
+  </Card>
+  <Card
+    title="Run Flow"
+    icon="play"
+    href="/api-reference/flows/run"
+  >
+    Execute your flow with the configured reranking nodes
+  </Card>
+  <Card
+    title="Flow Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
+  >
+    Learn about all available flow management endpoints
+  </Card>
+</CardGroup>

@@ -87,6 +87,14 @@
                   "api-reference/flows/retrieval/list",
                   "api-reference/flows/retrieval/update"
                 ]
+              },
+              {
+                "group": "Reranking",
+                "pages": [
+                  "api-reference/flows/reranking/overview",
+                  "api-reference/flows/reranking/list",
+                  "api-reference/flows/reranking/update"
+                ]
               }
             ]
           }
