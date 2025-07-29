@@ -1,0 +1,1223 @@
+---
+title: 'Update LLM Configuration'
+description: 'Modify LLM node settings including model selection and prompt templates via the GraphorLM REST API'
+---
+
+Update the configuration of an LLM node in your GraphorLM flow. LLM nodes are sophisticated response generation components that transform retrieved context into natural language answers, serving as the final stage in RAG pipelines for delivering high-quality, contextually-aware responses.
+
+## Overview
+
+The Update LLM Configuration endpoint allows you to modify LLM node settings within a flow. LLM nodes handle the critical task of response generation, taking retrieved context and transforming it into coherent, accurate answers using advanced language models with configurable parameters for optimal performance.
+
+- **Method**: `PATCH`
+- **URL**: `https://{flow_name}.flows.graphorlm.com/llm/{node_id}`
+- **Authentication**: Required (API Token)
+
+## Authentication
+
+All requests must include a valid API token in the Authorization header:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+| `Content-Type` | `application/json` | Yes |
+
+### URL Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `flow_name` | string | Name of the flow containing the LLM node |
+| `node_id` | string | Unique identifier of the LLM node to update |
+
+### Request Body
+
+```json
+{
+  "config": {
+    "model": "gpt-4o",
+    "promptId": "default_retrieval_prompt",
+    "temperature": 0.0
+  }
+}
+```
+
+### Configuration Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `model` | string | No | - | LLM model to use for response generation |
+| `promptId` | string | No | - | ID of the prompt template for instruction guidance |
+| `temperature` | float | No | 0.0 | Temperature control for response creativity (0.0-2.0) |
+
+### Available Models
+
+#### OpenAI Models
+| Model | Context Window | Best For | Performance Tier |
+|-------|----------------|----------|------------------|
+| `gpt-4o` | 128,000 tokens | Complex reasoning, high-quality responses | Premium |
+| `gpt-4o-mini` | 128,000 tokens | Fast responses with good quality | Balanced |
+| `gpt-4.1` | 128,000 tokens | Latest capabilities, enhanced reasoning | Premium |
+| `gpt-4.1-mini` | 128,000 tokens | Efficient processing with modern features | Balanced |
+| `gpt-4.1-nano` | 128,000 tokens | Ultra-fast responses, lightweight processing | Efficient |
+| `gpt-3.5-turbo-0125` | 16,385 tokens | Quick responses, resource-efficient | Efficient |
+
+#### Groq Models (High-Speed Processing)
+| Model | Context Window | Best For | Performance Tier |
+|-------|----------------|----------|------------------|
+| `mixtral-8x7b-32768` | 32,768 tokens | High-throughput processing | High-Speed |
+| `llama-3.1-8b-instant` | 8,192 tokens | Ultra-fast responses | High-Speed |
+
+### Temperature Control
+
+| Range | Behavior | Use Cases |
+|-------|----------|-----------|
+| `0.0` | Deterministic, consistent responses | Technical documentation, factual Q&A |
+| `0.1-0.3` | Slightly varied, mostly consistent | Customer support, structured responses |
+| `0.4-0.7` | Balanced creativity and consistency | General conversation, explanations |
+| `0.8-1.2` | Creative, diverse responses | Content generation, brainstorming |
+| `1.3-2.0` | Highly creative, unpredictable | Creative writing, experimental responses |
+
+### Example Request
+
+```bash
+PATCH https://my-rag-pipeline.flows.graphorlm.com/llm/llm-1748287628685
+Authorization: Bearer YOUR_API_TOKEN
+Content-Type: application/json
+
+{
+  "config": {
+    "model": "gpt-4o",
+    "promptId": "default_retrieval_prompt",
+    "temperature": 0.2
+  }
+}
+```
+
+## Response Format
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "LLM node 'llm-1748287628685' updated successfully",
+  "node_id": "llm-1748287628685"
+}
+```
+
+### Response Structure
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Whether the update was successful |
+| `message` | string | Descriptive message about the update result |
+| `node_id` | string | ID of the updated LLM node |
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+async function updateLLMNode(flowName, nodeId, config, apiToken) {
+  const response = await fetch(`https://${flowName}.flows.graphorlm.com/llm/${nodeId}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ config })
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+// Usage examples for different optimization strategies
+
+// High-Performance Configuration
+updateLLMNode('my-rag-pipeline', 'llm-1748287628685', {
+  model: 'gpt-4o',
+  promptId: 'default_retrieval_prompt',
+  temperature: 0.0
+}, 'YOUR_API_TOKEN')
+  .then(result => {
+    console.log('✅ High-Performance LLM Configuration Applied');
+    console.log(`Updated node: ${result.node_id}`);
+    console.log('Features: Maximum accuracy, consistent responses, premium quality');
+  })
+  .catch(error => console.error('Error:', error));
+
+// Balanced Configuration
+updateLLMNode('my-rag-pipeline', 'llm-1748287628685', {
+  model: 'gpt-4o-mini',
+  promptId: 'technical_documentation_assistant',
+  temperature: 0.2
+}, 'YOUR_API_TOKEN')
+  .then(result => {
+    console.log('⚖️ Balanced LLM Configuration Applied');
+    console.log(`Updated node: ${result.node_id}`);
+    console.log('Features: Good quality, moderate creativity, efficient processing');
+  })
+  .catch(error => console.error('Error:', error));
+
+// High-Speed Configuration
+updateLLMNode('my-rag-pipeline', 'llm-1748287628685', {
+  model: 'mixtral-8x7b-32768',
+  promptId: 'customer_support_agent',
+  temperature: 0.3
+}, 'YOUR_API_TOKEN')
+  .then(result => {
+    console.log('🚀 High-Speed LLM Configuration Applied');
+    console.log(`Updated node: ${result.node_id}`);
+    console.log('Features: Ultra-fast responses, real-time processing, good quality');
+  })
+  .catch(error => console.error('Error:', error));
+
+// Creative Configuration
+updateLLMNode('my-rag-pipeline', 'llm-1748287628685', {
+  model: 'gpt-4.1',
+  promptId: 'creative_content_generator',
+  temperature: 0.8
+}, 'YOUR_API_TOKEN')
+  .then(result => {
+    console.log('🎨 Creative LLM Configuration Applied');
+    console.log(`Updated node: ${result.node_id}`);
+    console.log('Features: Enhanced creativity, diverse responses, latest capabilities');
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+### Python
+
+```python
+import requests
+import json
+from typing import Dict, Any, Optional
+from dataclasses import dataclass
+from enum import Enum
+
+class LLMModel(Enum):
+    """Available LLM models with their characteristics."""
+    GPT_4O = "gpt-4o"
+    GPT_4O_MINI = "gpt-4o-mini"
+    GPT_4_1 = "gpt-4.1"
+    GPT_4_1_MINI = "gpt-4.1-mini"
+    GPT_4_1_NANO = "gpt-4.1-nano"
+    GPT_3_5_TURBO = "gpt-3.5-turbo-0125"
+    MIXTRAL_8X7B = "mixtral-8x7b-32768"
+    LLAMA_3_1_8B = "llama-3.1-8b-instant"
+
+class PerformanceTier(Enum):
+    """Performance tiers for different use cases."""
+    PREMIUM = "premium"
+    BALANCED = "balanced"
+    EFFICIENT = "efficient"
+    HIGH_SPEED = "high_speed"
+
+@dataclass
+class LLMConfiguration:
+    """LLM node configuration with optimization metadata."""
+    model: str
+    prompt_id: str
+    temperature: float
+    performance_tier: PerformanceTier
+    context_window: int
+    use_cases: list[str]
+    expected_latency: str
+
+class LLMConfigurationManager:
+    def __init__(self, flow_name: str, api_token: str):
+        self.flow_name = flow_name
+        self.api_token = api_token
+        self.base_url = f"https://{flow_name}.flows.graphorlm.com"
+        
+        # Predefined optimization configurations
+        self.optimization_configs = {
+            "maximum_accuracy": LLMConfiguration(
+                model=LLMModel.GPT_4O.value,
+                prompt_id="default_retrieval_prompt",
+                temperature=0.0,
+                performance_tier=PerformanceTier.PREMIUM,
+                context_window=128000,
+                use_cases=["Technical Q&A", "Factual responses", "Documentation"],
+                expected_latency="2-4 seconds"
+            ),
+            "balanced_performance": LLMConfiguration(
+                model=LLMModel.GPT_4O_MINI.value,
+                prompt_id="default_retrieval_prompt",
+                temperature=0.2,
+                performance_tier=PerformanceTier.BALANCED,
+                context_window=128000,
+                use_cases=["General Q&A", "Customer support", "Mixed content"],
+                expected_latency="1-2 seconds"
+            ),
+            "high_throughput": LLMConfiguration(
+                model=LLMModel.MIXTRAL_8X7B.value,
+                prompt_id="default_retrieval_prompt",
+                temperature=0.1,
+                performance_tier=PerformanceTier.HIGH_SPEED,
+                context_window=32768,
+                use_cases=["Real-time chat", "High-volume processing", "Quick responses"],
+                expected_latency="0.5-1 second"
+            ),
+            "creative_generation": LLMConfiguration(
+                model=LLMModel.GPT_4_1.value,
+                prompt_id="creative_content_generator",
+                temperature=0.8,
+                performance_tier=PerformanceTier.PREMIUM,
+                context_window=128000,
+                use_cases=["Content creation", "Brainstorming", "Varied responses"],
+                expected_latency="2-5 seconds"
+            ),
+            "resource_efficient": LLMConfiguration(
+                model=LLMModel.GPT_4_1_NANO.value,
+                prompt_id="default_retrieval_prompt",
+                temperature=0.1,
+                performance_tier=PerformanceTier.EFFICIENT,
+                context_window=128000,
+                use_cases=["Budget-conscious", "Simple Q&A", "Basic responses"],
+                expected_latency="0.8-1.5 seconds"
+            )
+        }
+    
+    def update_llm_node(
+        self, 
+        node_id: str, 
+        config: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Update LLM node configuration."""
+        url = f"{self.base_url}/llm/{node_id}"
+        
+        headers = {
+            "Authorization": f"Bearer {self.api_token}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {"config": config}
+        
+        response = requests.patch(url, headers=headers, json=payload)
+        response.raise_for_status()
+        
+        return response.json()
+    
+    def apply_optimization_strategy(
+        self, 
+        node_id: str, 
+        strategy: str
+    ) -> Dict[str, Any]:
+        """Apply a predefined optimization strategy."""
+        if strategy not in self.optimization_configs:
+            available = ", ".join(self.optimization_configs.keys())
+            raise ValueError(f"Unknown strategy: {strategy}. Available: {available}")
+        
+        config = self.optimization_configs[strategy]
+        
+        update_config = {
+            "model": config.model,
+            "promptId": config.prompt_id,
+            "temperature": config.temperature
+        }
+        
+        result = self.update_llm_node(node_id, update_config)
+        
+        # Add optimization metadata to result
+        result["optimization_applied"] = {
+            "strategy": strategy,
+            "performance_tier": config.performance_tier.value,
+            "context_window": config.context_window,
+            "use_cases": config.use_cases,
+            "expected_latency": config.expected_latency
+        }
+        
+        return result
+    
+    def analyze_current_configuration(self, node_id: str) -> Dict[str, Any]:
+        """Analyze current configuration and suggest improvements."""
+        # This would typically get current config first
+        # For demo purposes, we'll provide analysis framework
+        
+        analysis = {
+            "current_assessment": {
+                "performance_tier": "unknown",
+                "estimated_processing_time": "unknown",
+                "context_capacity": "unknown",
+                "creativity_level": "unknown"
+            },
+            "recommendations": [],
+            "alternative_configs": []
+        }
+        
+        # Add recommendations based on common patterns
+        analysis["recommendations"] = [
+            "Consider temperature 0.0-0.1 for factual Q&A",
+            "Use temperature 0.2-0.4 for conversational responses",
+            "Choose temperature 0.5+ for creative content",
+            "Select high-context models for long documents",
+            "Use fast models for real-time applications"
+        ]
+        
+        analysis["alternative_configs"] = [
+            {
+                "name": "Accuracy Focused",
+                "config": self.optimization_configs["maximum_accuracy"],
+                "trade_offs": "Higher latency, maximum precision"
+            },
+            {
+                "name": "Speed Optimized", 
+                "config": self.optimization_configs["high_throughput"],
+                "trade_offs": "Lower latency, good quality"
+            },
+            {
+                "name": "Balanced Approach",
+                "config": self.optimization_configs["balanced_performance"],
+                "trade_offs": "Moderate latency, versatile quality"
+            }
+        ]
+        
+        return analysis
+    
+    def batch_update_multiple_nodes(
+        self, 
+        updates: Dict[str, Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """Update multiple LLM nodes with different configurations."""
+        results = {"successful_updates": [], "failed_updates": []}
+        
+        for node_id, config in updates.items():
+            try:
+                result = self.update_llm_node(node_id, config)
+                results["successful_updates"].append({
+                    "node_id": node_id,
+                    "result": result,
+                    "config_applied": config
+                })
+            except Exception as e:
+                results["failed_updates"].append({
+                    "node_id": node_id,
+                    "error": str(e),
+                    "attempted_config": config
+                })
+        
+        return results
+    
+    def generate_performance_report(self, strategy: str) -> Dict[str, Any]:
+        """Generate a detailed performance report for a configuration strategy."""
+        if strategy not in self.optimization_configs:
+            raise ValueError(f"Unknown strategy: {strategy}")
+        
+        config = self.optimization_configs[strategy]
+        
+        return {
+            "strategy_name": strategy,
+            "configuration": {
+                "model": config.model,
+                "prompt_id": config.prompt_id,
+                "temperature": config.temperature
+            },
+            "performance_characteristics": {
+                "tier": config.performance_tier.value,
+                "context_window": f"{config.context_window:,} tokens",
+                "expected_latency": config.expected_latency,
+                "use_cases": config.use_cases
+            },
+            "resource_utilization": {
+                "computational_intensity": self._get_computational_intensity(config.model),
+                "memory_requirements": self._get_memory_requirements(config.model),
+                "throughput_capacity": self._get_throughput_capacity(config.model)
+            },
+            "optimization_recommendations": self._get_optimization_recommendations(config)
+        }
+    
+    def _get_computational_intensity(self, model: str) -> str:
+        """Get computational intensity for a model."""
+        intensity_map = {
+            LLMModel.GPT_4O.value: "High",
+            LLMModel.GPT_4_1.value: "High", 
+            LLMModel.GPT_4O_MINI.value: "Medium",
+            LLMModel.GPT_4_1_MINI.value: "Medium",
+            LLMModel.GPT_4_1_NANO.value: "Low",
+            LLMModel.GPT_3_5_TURBO.value: "Low",
+            LLMModel.MIXTRAL_8X7B.value: "Medium-High",
+            LLMModel.LLAMA_3_1_8B.value: "Medium"
+        }
+        return intensity_map.get(model, "Unknown")
+    
+    def _get_memory_requirements(self, model: str) -> str:
+        """Get memory requirements for a model."""
+        memory_map = {
+            LLMModel.GPT_4O.value: "High (128K context)",
+            LLMModel.GPT_4_1.value: "High (128K context)",
+            LLMModel.GPT_4O_MINI.value: "High (128K context)",
+            LLMModel.GPT_4_1_MINI.value: "High (128K context)",
+            LLMModel.GPT_4_1_NANO.value: "High (128K context)",
+            LLMModel.GPT_3_5_TURBO.value: "Medium (16K context)",
+            LLMModel.MIXTRAL_8X7B.value: "Medium (32K context)",
+            LLMModel.LLAMA_3_1_8B.value: "Low (8K context)"
+        }
+        return memory_map.get(model, "Unknown")
+    
+    def _get_throughput_capacity(self, model: str) -> str:
+        """Get throughput capacity for a model."""
+        throughput_map = {
+            LLMModel.GPT_4O.value: "Medium",
+            LLMModel.GPT_4_1.value: "Medium",
+            LLMModel.GPT_4O_MINI.value: "High",
+            LLMModel.GPT_4_1_MINI.value: "High",
+            LLMModel.GPT_4_1_NANO.value: "Very High",
+            LLMModel.GPT_3_5_TURBO.value: "Very High",
+            LLMModel.MIXTRAL_8X7B.value: "Very High",
+            LLMModel.LLAMA_3_1_8B.value: "Ultra High"
+        }
+        return throughput_map.get(model, "Unknown")
+    
+    def _get_optimization_recommendations(self, config: LLMConfiguration) -> list[str]:
+        """Get optimization recommendations for a configuration."""
+        recommendations = []
+        
+        if config.temperature == 0.0:
+            recommendations.append("Perfect for factual Q&A and consistent responses")
+        elif config.temperature <= 0.3:
+            recommendations.append("Good balance of consistency and slight variation")
+        elif config.temperature <= 0.7:
+            recommendations.append("Suitable for conversational and explanatory responses")
+        else:
+            recommendations.append("Ideal for creative content and diverse outputs")
+        
+        if config.context_window >= 100000:
+            recommendations.append("Excellent for processing long documents")
+        elif config.context_window >= 30000:
+            recommendations.append("Good for medium-length content processing")
+        else:
+            recommendations.append("Best for short to medium content processing")
+        
+        return recommendations
+
+# Usage examples
+def demonstrate_llm_configuration():
+    manager = LLMConfigurationManager("my-rag-pipeline", "YOUR_API_TOKEN")
+    
+    print("🤖 LLM Configuration Management Demo")
+    print("=" * 50)
+    
+    # Apply different optimization strategies
+    strategies = [
+        ("maximum_accuracy", "llm-node-1"),
+        ("balanced_performance", "llm-node-2"),
+        ("high_throughput", "llm-node-3"),
+        ("creative_generation", "llm-node-4")
+    ]
+    
+    for strategy, node_id in strategies:
+        try:
+            print(f"\n📋 Applying {strategy} to {node_id}")
+            result = manager.apply_optimization_strategy(node_id, strategy)
+            
+            optimization = result["optimization_applied"]
+            print(f"   ✅ Success: {result['message']}")
+            print(f"   📊 Performance Tier: {optimization['performance_tier']}")
+            print(f"   ⏱️  Expected Latency: {optimization['expected_latency']}")
+            print(f"   🎯 Use Cases: {', '.join(optimization['use_cases'][:2])}")
+            
+            # Generate performance report
+            report = manager.generate_performance_report(strategy)
+            print(f"   🔧 Resource Intensity: {report['resource_utilization']['computational_intensity']}")
+            print(f"   💾 Memory Requirements: {report['resource_utilization']['memory_requirements']}")
+            print(f"   🚀 Throughput: {report['resource_utilization']['throughput_capacity']}")
+            
+        except Exception as e:
+            print(f"   ❌ Error applying {strategy}: {str(e)}")
+    
+    # Demonstrate batch updates
+    print(f"\n🔄 Batch Configuration Updates")
+    batch_updates = {
+        "llm-support-1": {
+            "model": "gpt-4o-mini",
+            "promptId": "customer_support_agent",
+            "temperature": 0.3
+        },
+        "llm-technical-1": {
+            "model": "gpt-4o",
+            "promptId": "technical_documentation_assistant",
+            "temperature": 0.1
+        },
+        "llm-creative-1": {
+            "model": "gpt-4.1",
+            "promptId": "creative_content_generator",
+            "temperature": 0.9
+        }
+    }
+    
+    batch_results = manager.batch_update_multiple_nodes(batch_updates)
+    print(f"   ✅ Successful updates: {len(batch_results['successful_updates'])}")
+    print(f"   ❌ Failed updates: {len(batch_results['failed_updates'])}")
+    
+    for update in batch_results["successful_updates"]:
+        config = update["config_applied"]
+        print(f"     📝 {update['node_id']}: {config['model']} (T={config['temperature']})")
+
+# Run demonstration
+try:
+    demonstrate_llm_configuration() 
+except Exception as e:
+    print(f"Demo failed: {e}")
+```
+
+### cURL
+
+```bash
+# Basic configuration update
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/llm/llm-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "model": "gpt-4o",
+      "promptId": "default_retrieval_prompt",
+      "temperature": 0.0
+    }
+  }'
+
+# High-performance configuration
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/llm/llm-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "model": "gpt-4.1",
+      "promptId": "technical_documentation_assistant",
+      "temperature": 0.1
+    }
+  }'
+
+# Speed-optimized configuration  
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/llm/llm-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "model": "mixtral-8x7b-32768",
+      "promptId": "customer_support_agent", 
+      "temperature": 0.2
+    }
+  }'
+
+# Creative configuration
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/llm/llm-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "model": "gpt-4o",
+      "promptId": "creative_content_generator",
+      "temperature": 0.8
+    }
+  }'
+
+# Efficient processing configuration
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/llm/llm-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "model": "gpt-4.1-nano",
+      "promptId": "default_retrieval_prompt",
+      "temperature": 0.1
+    }
+  }'
+
+# Test configuration update with verbose output
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/llm/llm-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "model": "gpt-4o-mini",
+      "promptId": "default_retrieval_prompt",
+      "temperature": 0.3
+    }
+  }' \
+  --verbose
+```
+
+### PHP
+
+```php
+<?php
+class LLMConfigurationManager {
+    private $flowName;
+    private $apiToken;
+    private $baseUrl;
+    
+    // Predefined optimization strategies
+    private $strategies = [
+        'maximum_accuracy' => [
+            'model' => 'gpt-4o',
+            'promptId' => 'default_retrieval_prompt',
+            'temperature' => 0.0,
+            'description' => 'Highest accuracy, consistent responses'
+        ],
+        'balanced_performance' => [
+            'model' => 'gpt-4o-mini',
+            'promptId' => 'default_retrieval_prompt', 
+            'temperature' => 0.2,
+            'description' => 'Good balance of speed and quality'
+        ],
+        'high_throughput' => [
+            'model' => 'mixtral-8x7b-32768',
+            'promptId' => 'customer_support_agent',
+            'temperature' => 0.1,
+            'description' => 'Ultra-fast processing, real-time responses'
+        ],
+        'creative_generation' => [
+            'model' => 'gpt-4.1',
+            'promptId' => 'creative_content_generator',
+            'temperature' => 0.8,
+            'description' => 'Enhanced creativity, diverse outputs'
+        ],
+        'resource_efficient' => [
+            'model' => 'gpt-4.1-nano',
+            'promptId' => 'default_retrieval_prompt',
+            'temperature' => 0.1,
+            'description' => 'Optimized resource usage, good quality'
+        ]
+    ];
+    
+    public function __construct($flowName, $apiToken) {
+        $this->flowName = $flowName;
+        $this->apiToken = $apiToken;
+        $this->baseUrl = "https://{$flowName}.flows.graphorlm.com";
+    }
+    
+    public function updateLLMNode($nodeId, $config) {
+        $url = "{$this->baseUrl}/llm/{$nodeId}";
+        
+        $payload = json_encode(['config' => $config]);
+        
+        $options = [
+            'http' => [
+                'header' => implode("\r\n", [
+                    "Authorization: Bearer {$this->apiToken}",
+                    "Content-Type: application/json",
+                    "Content-Length: " . strlen($payload)
+                ]),
+                'method' => 'PATCH',
+                'content' => $payload
+            ]
+        ];
+        
+        $context = stream_context_create($options);
+        $result = file_get_contents($url, false, $context);
+        
+        if ($result === FALSE) {
+            throw new Exception('Failed to update LLM node');
+        }
+        
+        return json_decode($result, true);
+    }
+    
+    public function applyOptimizationStrategy($nodeId, $strategy) {
+        if (!isset($this->strategies[$strategy])) {
+            $available = implode(', ', array_keys($this->strategies));
+            throw new Exception("Unknown strategy: {$strategy}. Available: {$available}");
+        }
+        
+        $config = $this->strategies[$strategy];
+        $updateConfig = [
+            'model' => $config['model'],
+            'promptId' => $config['promptId'],
+            'temperature' => $config['temperature']
+        ];
+        
+        $result = $this->updateLLMNode($nodeId, $updateConfig);
+        
+        // Add strategy metadata
+        $result['strategy_applied'] = [
+            'name' => $strategy,
+            'description' => $config['description'],
+            'configuration' => $updateConfig
+        ];
+        
+        return $result;
+    }
+    
+    public function analyzeModelPerformance($model) {
+        $performanceData = [
+            'gpt-4o' => [
+                'tier' => 'Premium',
+                'context_window' => 128000,
+                'expected_latency' => '2-4 seconds',
+                'computational_intensity' => 'High',
+                'best_for' => ['Complex reasoning', 'High-quality responses', 'Technical Q&A']
+            ],
+            'gpt-4o-mini' => [
+                'tier' => 'Balanced',
+                'context_window' => 128000,
+                'expected_latency' => '1-2 seconds',
+                'computational_intensity' => 'Medium',
+                'best_for' => ['General Q&A', 'Customer support', 'Balanced processing']
+            ],
+            'gpt-4.1' => [
+                'tier' => 'Premium',
+                'context_window' => 128000,
+                'expected_latency' => '2-5 seconds',
+                'computational_intensity' => 'High',
+                'best_for' => ['Latest capabilities', 'Enhanced reasoning', 'Complex tasks']
+            ],
+            'gpt-4.1-mini' => [
+                'tier' => 'Balanced',
+                'context_window' => 128000,
+                'expected_latency' => '1-2 seconds',
+                'computational_intensity' => 'Medium',
+                'best_for' => ['Modern features', 'Efficient processing', 'Good quality']
+            ],
+            'gpt-4.1-nano' => [
+                'tier' => 'Efficient',
+                'context_window' => 128000,
+                'expected_latency' => '0.8-1.5 seconds',
+                'computational_intensity' => 'Low',
+                'best_for' => ['Fast responses', 'Resource efficiency', 'High throughput']
+            ],
+            'gpt-3.5-turbo-0125' => [
+                'tier' => 'Efficient',
+                'context_window' => 16385,
+                'expected_latency' => '0.5-1 second',
+                'computational_intensity' => 'Low',
+                'best_for' => ['Quick responses', 'Simple Q&A', 'High volume']
+            ],
+            'mixtral-8x7b-32768' => [
+                'tier' => 'High-Speed',
+                'context_window' => 32768,
+                'expected_latency' => '0.5-1 second',
+                'computational_intensity' => 'Medium-High',
+                'best_for' => ['Real-time processing', 'High throughput', 'Fast responses']
+            ],
+            'llama-3.1-8b-instant' => [
+                'tier' => 'High-Speed',
+                'context_window' => 8192,
+                'expected_latency' => '0.3-0.8 seconds',
+                'computational_intensity' => 'Medium',
+                'best_for' => ['Ultra-fast responses', 'Real-time chat', 'Instant processing']
+            ]
+        ];
+        
+        return $performanceData[$model] ?? [
+            'tier' => 'Unknown',
+            'context_window' => 'Unknown',
+            'expected_latency' => 'Unknown',
+            'computational_intensity' => 'Unknown',
+            'best_for' => ['General use']
+        ];
+    }
+    
+    public function generateTemperatureRecommendations($useCase) {
+        $recommendations = [
+            'technical_qa' => [
+                'temperature' => 0.0,
+                'reasoning' => 'Deterministic responses for accurate technical information'
+            ],
+            'customer_support' => [
+                'temperature' => 0.2,
+                'reasoning' => 'Slight variation while maintaining consistency'
+            ],
+            'general_conversation' => [
+                'temperature' => 0.4,
+                'reasoning' => 'Balanced creativity and coherence'
+            ],
+            'content_creation' => [
+                'temperature' => 0.7,
+                'reasoning' => 'Enhanced creativity for diverse content'
+            ],
+            'brainstorming' => [
+                'temperature' => 1.0,
+                'reasoning' => 'High creativity for innovative ideas'
+            ],
+            'creative_writing' => [
+                'temperature' => 1.2,
+                'reasoning' => 'Maximum creativity for unique content'
+            ]
+        ];
+        
+        return $recommendations[$useCase] ?? [
+            'temperature' => 0.3,
+            'reasoning' => 'Default balanced setting for general use'
+        ];
+    }
+    
+    public function demonstrateConfigurations() {
+        echo "🤖 LLM Configuration Management Demo\n";
+        echo str_repeat("=", 50) . "\n";
+        
+        // Demonstrate different strategies
+        $nodeIds = ['llm-accuracy', 'llm-balanced', 'llm-speed', 'llm-creative'];
+        $strategies = ['maximum_accuracy', 'balanced_performance', 'high_throughput', 'creative_generation'];
+        
+        foreach (array_combine($strategies, $nodeIds) as $strategy => $nodeId) {
+            echo "\n📋 Applying {$strategy} to {$nodeId}\n";
+            
+            try {
+                $result = $this->applyOptimizationStrategy($nodeId, $strategy);
+                $applied = $result['strategy_applied'];
+                $config = $applied['configuration'];
+                
+                echo "   ✅ Success: {$result['message']}\n";
+                echo "   📊 Strategy: {$applied['description']}\n";
+                echo "   🔧 Model: {$config['model']}\n";
+                echo "   🌡️  Temperature: {$config['temperature']}\n";
+                echo "   💬 Prompt: {$config['promptId']}\n";
+                
+                // Add performance analysis
+                $performance = $this->analyzeModelPerformance($config['model']);
+                echo "   ⚡ Performance Tier: {$performance['tier']}\n";
+                echo "   ⏱️  Expected Latency: {$performance['expected_latency']}\n";
+                echo "   💾 Context Window: " . number_format($performance['context_window']) . " tokens\n";
+                echo "   🎯 Best For: " . implode(', ', array_slice($performance['best_for'], 0, 2)) . "\n";
+                
+            } catch (Exception $e) {
+                echo "   ❌ Error: {$e->getMessage()}\n";
+            }
+        }
+        
+        // Demonstrate temperature recommendations
+        echo "\n🌡️  Temperature Recommendations by Use Case\n";
+        echo str_repeat("-", 40) . "\n";
+        
+        $useCases = ['technical_qa', 'customer_support', 'general_conversation', 'content_creation'];
+        foreach ($useCases as $useCase) {
+            $rec = $this->generateTemperatureRecommendations($useCase);
+            echo "📝 " . ucwords(str_replace('_', ' ', $useCase)) . "\n";
+            echo "   Temperature: {$rec['temperature']}\n";
+            echo "   Reasoning: {$rec['reasoning']}\n\n";
+        }
+    }
+}
+
+// Usage
+try {
+    $manager = new LLMConfigurationManager('my-rag-pipeline', 'YOUR_API_TOKEN');
+    $manager->demonstrateConfigurations();
+    
+    // Individual update example
+    echo "🔄 Individual Configuration Update\n";
+    $result = $manager->updateLLMNode('llm-1748287628685', [
+        'model' => 'gpt-4o',
+        'promptId' => 'default_retrieval_prompt',
+        'temperature' => 0.2
+    ]);
+    
+    echo "✅ Update Result: {$result['message']}\n";
+    echo "📋 Node ID: {$result['node_id']}\n";
+    
+} catch (Exception $e) {
+    echo "❌ Error: " . $e->getMessage() . "\n";
+}
+?>
+```
+
+## Configuration Strategies
+
+### Maximum Accuracy Strategy
+
+**Optimal for**: Technical documentation, factual Q&A, compliance requirements
+
+```json
+{
+  "config": {
+    "model": "gpt-4o",
+    "promptId": "default_retrieval_prompt",
+    "temperature": 0.0
+  }
+}
+```
+
+**Characteristics**:
+- **Deterministic responses** for consistent results
+- **Premium model quality** with advanced reasoning
+- **Zero creativity** for maximum factual accuracy
+- **Expected latency**: 2-4 seconds
+- **Context capacity**: 128,000 tokens
+
+### Balanced Performance Strategy  
+
+**Optimal for**: General Q&A, customer support, mixed content types
+
+```json
+{
+  "config": {
+    "model": "gpt-4o-mini",
+    "promptId": "default_retrieval_prompt",
+    "temperature": 0.2
+  }
+}
+```
+
+**Characteristics**:
+- **Good quality with efficiency** balance
+- **Slight response variation** while maintaining consistency
+- **Versatile processing** for diverse use cases
+- **Expected latency**: 1-2 seconds
+- **Context capacity**: 128,000 tokens
+
+### High-Throughput Strategy
+
+**Optimal for**: Real-time chat, high-volume processing, instant responses
+
+```json
+{
+  "config": {
+    "model": "mixtral-8x7b-32768",
+    "promptId": "customer_support_agent",
+    "temperature": 0.1
+  }
+}
+```
+
+**Characteristics**:
+- **Ultra-fast processing** with Groq acceleration
+- **High throughput capacity** for concurrent requests
+- **Real-time response generation** for interactive applications
+- **Expected latency**: 0.5-1 second
+- **Context capacity**: 32,768 tokens
+
+### Creative Generation Strategy
+
+**Optimal for**: Content creation, brainstorming, diverse outputs
+
+```json
+{
+  "config": {
+    "model": "gpt-4.1",
+    "promptId": "creative_content_generator",
+    "temperature": 0.8
+  }
+}
+```
+
+**Characteristics**:
+- **Enhanced creativity** with latest model capabilities
+- **Diverse response generation** for varied outputs
+- **Advanced reasoning** with creative flexibility
+- **Expected latency**: 2-5 seconds
+- **Context capacity**: 128,000 tokens
+
+### Resource-Efficient Strategy
+
+**Optimal for**: Budget-conscious applications, simple Q&A, high-scale deployment
+
+```json
+{
+  "config": {
+    "model": "gpt-4.1-nano",
+    "promptId": "default_retrieval_prompt",
+    "temperature": 0.1
+  }
+}
+```
+
+**Characteristics**:
+- **Optimized resource usage** with minimal processing overhead
+- **Fast response times** with good quality retention
+- **High scalability** for large-scale deployments
+- **Expected latency**: 0.8-1.5 seconds
+- **Context capacity**: 128,000 tokens
+
+## Strategy Selection Matrix
+
+| Use Case | Accuracy Priority | Speed Priority | Resource Efficiency | Recommended Strategy |
+|----------|------------------|----------------|-------------------|---------------------|
+| Technical Documentation | High | Medium | Medium | Maximum Accuracy |
+| Customer Support | Medium | High | Medium | High-Throughput |
+| General Q&A | Medium | Medium | High | Balanced Performance |
+| Content Creation | Medium | Low | Low | Creative Generation |
+| Real-time Chat | Low | Very High | High | High-Throughput |
+| Budget Applications | Medium | Medium | Very High | Resource-Efficient |
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Description | Example Response |
+|-------------|-------------|------------------|
+| 400 | Bad Request - Invalid configuration | `{"detail": "Invalid temperature value"}` |
+| 401 | Unauthorized - Invalid or missing API token | `{"detail": "Invalid authentication credentials"}` |
+| 404 | Not Found - Flow or node not found | `{"detail": "LLM node with id 'invalid-id' not found"}` |
+| 422 | Unprocessable Entity - Validation error | `{"detail": "Unknown model: invalid-model"}` |
+| 500 | Internal Server Error - Server error | `{"detail": "Failed to update LLM node"}` |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+### Example Error Responses
+
+#### Invalid Model
+```json
+{
+  "detail": "Unknown model: invalid-model-name"
+}
+```
+
+#### Invalid Temperature  
+```json
+{
+  "detail": "Temperature must be between 0.0 and 2.0"
+}
+```
+
+#### Node Not Found
+```json
+{
+  "detail": "LLM node with id 'invalid-node-id' not found in flow 'my-flow'"
+}
+```
+
+#### Invalid Prompt ID
+```json
+{
+  "detail": "Prompt with id 'invalid-prompt-id' not found"
+}
+```
+
+## Best Practices
+
+### Model Selection Guidelines
+
+- **Premium Quality**: Use `gpt-4o` or `gpt-4.1` for complex reasoning and highest accuracy
+- **Balanced Approach**: Choose `gpt-4o-mini` or `gpt-4.1-mini` for versatile applications
+- **Speed Optimization**: Select `mixtral-8x7b-32768` or `llama-3.1-8b-instant` for real-time processing
+- **Resource Efficiency**: Opt for `gpt-4.1-nano` or `gpt-3.5-turbo-0125` for high-volume deployment
+
+### Temperature Configuration
+
+- **Factual Content** (0.0-0.1): Technical documentation, compliance, precise answers
+- **Professional Responses** (0.1-0.3): Customer support, structured explanations
+- **Conversational** (0.3-0.5): General Q&A, interactive applications
+- **Creative Content** (0.5-1.0): Content generation, brainstorming, diverse outputs
+- **Experimental** (1.0-2.0): Research, creative writing, novel approaches
+
+### Prompt Template Selection
+
+- **Default RAG**: Use `default_retrieval_prompt` for general-purpose applications
+- **Technical Focus**: Select `technical_documentation_assistant` for specialized content
+- **Customer Support**: Choose `customer_support_agent` for service applications
+- **Creative Content**: Opt for `creative_content_generator` for diverse outputs
+
+### Performance Optimization
+
+- **Context Management**: Choose models with appropriate context windows for your content
+- **Latency Requirements**: Balance model quality with response time needs
+- **Throughput Planning**: Consider concurrent request patterns when selecting models
+- **Resource Monitoring**: Track processing patterns and adjust configurations accordingly
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="exclamation-triangle" title="Node Not Found Error">
+    **Solution**: Verify that:
+    - The node ID is correct and exists in the specified flow
+    - The node is indeed an LLM type node
+    - You have access to the flow and node
+    - The flow name in the URL matches exactly
+  </Accordion>
+  
+  <Accordion icon="cog" title="Invalid Model Configuration">
+    **Solution**: If model configuration fails:
+    - Check that the model name is exactly as specified in available models
+    - Verify that Groq models require `GROQ_API_KEY` environment variable
+    - Ensure the model is supported in your deployment region
+    - Confirm model availability hasn't changed
+  </Accordion>
+  
+  <Accordion icon="thermometer" title="Temperature Parameter Issues">
+    **Solution**: For temperature configuration problems:
+    - Ensure temperature is between 0.0 and 2.0
+    - Use appropriate precision (e.g., 0.2, not 0.2000001)
+    - Consider that higher temperatures increase response variation
+    - Test temperature effects with your specific use case
+  </Accordion>
+  
+  <Accordion icon="file-text" title="Prompt Template Errors">
+    **Solution**: If prompt template assignment fails:
+    - Verify the prompt ID exists in your flow's available prompts
+    - Check that the prompt template is properly formatted
+    - Ensure the prompt includes necessary placeholders (e.g., `{context}`)
+    - Confirm prompt template compatibility with your use case
+  </Accordion>
+  
+  <Accordion icon="clock" title="Processing Performance Issues">
+    **Solution**: For slow or inconsistent processing:
+    - Consider switching to faster models for better latency
+    - Adjust temperature to reduce processing complexity
+    - Monitor context window usage and optimize input size
+    - Check for concurrent request limits and throttling
+  </Accordion>
+  
+  <Accordion icon="shield" title="Response Quality Problems">
+    **Solution**: If response quality is poor:
+    - Lower temperature for more consistent, factual responses
+    - Switch to higher-quality models (gpt-4o, gpt-4.1)
+    - Review and optimize prompt template instructions
+    - Ensure context provided to LLM is relevant and well-formatted
+  </Accordion>
+  
+  <Accordion icon="wifi" title="Connection Issues">
+    **Solution**: For connectivity problems:
+    - Check your internet connection
+    - Verify the flow URL is accessible
+    - Ensure your firewall allows HTTPS traffic to *.flows.graphorlm.com
+    - Try accessing the endpoint from a different network
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After updating your LLM configuration, you might want to:
+
+<CardGroup cols={2}>
+  <Card
+    title="List LLM Nodes"
+    icon="robot"
+    href="/api-reference/flows/llm/list"
+  >
+    View your updated LLM nodes and verify configuration changes
+  </Card>
+  <Card
+    title="List Prompts"
+    icon="file-text"
+    href="/api-reference/flows/llm/list-prompts"
+  >
+    Explore available prompt templates for further optimization
+  </Card>
+  <Card
+    title="Run Flow"
+    icon="play"
+    href="/api-reference/flows/run"
+  >
+    Execute your flow with the updated LLM configuration
+  </Card>
+  <Card
+    title="Flow Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
+  >
+    Learn about all available flow management endpoints
+  </Card>
+</CardGroup>

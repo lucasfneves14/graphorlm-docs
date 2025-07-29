@@ -1,0 +1,1037 @@
+---
+title: 'List LLM Nodes'
+description: 'Retrieve LLM response generation nodes from flows via the GraphorLM REST API'
+---
+
+Retrieve all LLM (Large Language Model) nodes from a specific flow in your GraphorLM project. LLM nodes are sophisticated response generation components that transform retrieved context into natural language answers using advanced language models, with comprehensive quality evaluation and multimodal processing capabilities.
+
+## Overview
+
+The List LLM Nodes endpoint allows you to retrieve information about LLM nodes within a flow. LLM nodes serve as the final response generation layer in RAG pipelines, converting retrieved documents and context into coherent, contextually-aware answers while providing detailed quality metrics and evaluation capabilities.
+
+- **Method**: `GET`
+- **URL**: `https://{flow_name}.flows.graphorlm.com/llm`
+- **Authentication**: Required (API Token)
+
+## Authentication
+
+All requests must include a valid API token in the Authorization header:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+
+### Parameters
+
+No query parameters are required for this endpoint.
+
+### Example Request
+
+```bash
+GET https://my-rag-pipeline.flows.graphorlm.com/llm
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+## Response Format
+
+### Success Response (200 OK)
+
+The response contains an array of LLM node objects:
+
+```json
+[
+  {
+    "id": "llm-1748287628685",
+    "type": "llm",
+    "position": {
+      "x": 800,
+      "y": 400
+    },
+    "style": {
+      "height": 200,
+      "width": 320
+    },
+    "data": {
+      "name": "Response Generator",
+      "config": {
+        "model": "gpt-4o",
+        "promptId": "default_retrieval_prompt",
+        "temperature": 0.7
+      },
+      "result": {
+        "updated": true,
+        "processing": false,
+        "waiting": false,
+        "has_error": false,
+        "updatedMetrics": true,
+        "total_responses": 156,
+        "avg_response_length": 245,
+        "avg_processing_time": 2.3,
+        "streaming_enabled": false,
+        "multimodal_support": true
+      }
+    }
+  }
+]
+```
+
+### Response Structure
+
+Each LLM node in the array contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique identifier for the LLM node |
+| `type` | string | Node type (always "llm" for LLM nodes) |
+| `position` | object | Position coordinates in the flow canvas |
+| `style` | object | Visual styling properties (height, width) |
+| `data` | object | LLM node configuration and results |
+
+### Position Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `x` | number | X coordinate position in the flow canvas |
+| `y` | number | Y coordinate position in the flow canvas |
+
+### Style Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `height` | integer | Height of the node in pixels |
+| `width` | integer | Width of the node in pixels |
+
+### Data Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Display name of the LLM node |
+| `config` | object | Node configuration including model settings |
+| `result` | object | Processing results and performance metrics (optional) |
+
+### Config Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `model` | string | LLM model identifier (e.g., "gpt-4o", "claude-3-sonnet", "llama-3-70b") |
+| `promptId` | string | ID of the prompt template used for response generation |
+| `temperature` | number | Creativity control parameter (0.0-2.0) for response randomness |
+
+### Result Object (Optional)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `updated` | boolean | Whether the node has been processed with current configuration |
+| `processing` | boolean | Whether the node is currently generating responses |
+| `waiting` | boolean | Whether the node is waiting for input dependencies |
+| `has_error` | boolean | Whether the node encountered errors during processing |
+| `updatedMetrics` | boolean | Whether quality evaluation metrics have been calculated |
+| `total_responses` | integer | Total number of responses generated (if available) |
+| `avg_response_length` | number | Average character length of generated responses |
+| `avg_processing_time` | number | Average response generation time in seconds |
+| `streaming_enabled` | boolean | Whether real-time streaming responses are supported |
+| `multimodal_support` | boolean | Whether the node supports image and multimedia processing |
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+async function listLLMNodes(flowName, apiToken) {
+  const response = await fetch(`https://${flowName}.flows.graphorlm.com/llm`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+// Usage
+listLLMNodes('my-rag-pipeline', 'YOUR_API_TOKEN')
+  .then(llmNodes => {
+    console.log(`Found ${llmNodes.length} LLM node(s)`);
+    
+    llmNodes.forEach(node => {
+      console.log(`\nNode: ${node.data.name} (${node.id})`);
+      console.log(`Model: ${node.data.config.model}`);
+      console.log(`Prompt Template: ${node.data.config.promptId}`);
+      console.log(`Temperature: ${node.data.config.temperature || 'Default'}`);
+      
+      if (node.data.result) {
+        const result = node.data.result;
+        const status = result.processing ? 'Processing' : 
+                      result.waiting ? 'Waiting' :
+                      result.has_error ? 'Error' :
+                      result.updated ? 'Updated' : 'Needs Update';
+        console.log(`Status: ${status}`);
+        
+        if (result.total_responses) {
+          console.log(`Total Responses: ${result.total_responses}`);
+          console.log(`Avg Response Length: ${result.avg_response_length} chars`);
+          console.log(`Avg Processing Time: ${result.avg_processing_time}s`);
+        }
+        
+        const capabilities = [];
+        if (result.streaming_enabled) capabilities.push('Streaming');
+        if (result.multimodal_support) capabilities.push('Multimodal');
+        if (capabilities.length > 0) {
+          console.log(`Capabilities: ${capabilities.join(', ')}`);
+        }
+        
+        if (result.updatedMetrics) {
+          console.log('✅ Quality metrics available');
+        }
+      }
+    });
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+### Python
+
+```python
+import requests
+import json
+
+def list_llm_nodes(flow_name, api_token):
+    url = f"https://{flow_name}.flows.graphorlm.com/llm"
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}"
+    }
+    
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    
+    return response.json()
+
+def analyze_llm_nodes(llm_nodes):
+    """Analyze LLM nodes and provide detailed performance insights"""
+    print(f"🤖 LLM Nodes Analysis")
+    print(f"Total LLM nodes: {len(llm_nodes)}")
+    print("-" * 50)
+    
+    model_distribution = {}
+    status_counts = {"updated": 0, "processing": 0, "waiting": 0, "error": 0, "needs_update": 0}
+    capabilities = {"streaming": 0, "multimodal": 0, "metrics": 0}
+    performance_stats = {"total_responses": 0, "avg_length": [], "avg_time": []}
+    
+    for node in llm_nodes:
+        node_data = node.get('data', {})
+        config = node_data.get('config', {})
+        result = node_data.get('result', {})
+        
+        # Track model distribution
+        model = config.get('model', 'Unknown')
+        model_distribution[model] = model_distribution.get(model, 0) + 1
+        
+        print(f"\n🧠 Node: {node_data.get('name', 'Unnamed')} ({node['id']})")
+        print(f"   Model: {model}")
+        print(f"   Prompt Template: {config.get('promptId', 'Not set')}")
+        print(f"   Temperature: {config.get('temperature', 'Default')}")
+        
+        if result:
+            # Track status
+            if result.get('processing'):
+                status_counts["processing"] += 1
+                print("   🔄 Status: Processing")
+            elif result.get('waiting'):
+                status_counts["waiting"] += 1
+                print("   ⏳ Status: Waiting")
+            elif result.get('has_error'):
+                status_counts["error"] += 1
+                print("   ❌ Status: Error")
+            elif result.get('updated'):
+                status_counts["updated"] += 1
+                print("   ✅ Status: Updated")
+            else:
+                status_counts["needs_update"] += 1
+                print("   ⚠️  Status: Needs Update")
+            
+            # Track capabilities
+            if result.get('streaming_enabled'):
+                capabilities["streaming"] += 1
+                print("   🚀 Streaming: Enabled")
+            
+            if result.get('multimodal_support'):
+                capabilities["multimodal"] += 1
+                print("   🖼️  Multimodal: Supported")
+            
+            if result.get('updatedMetrics'):
+                capabilities["metrics"] += 1
+                print("   📊 Quality Metrics: Available")
+            
+            # Track performance stats
+            if result.get('total_responses'):
+                responses = result['total_responses']
+                performance_stats["total_responses"] += responses
+                print(f"   📝 Total Responses: {responses}")
+                
+                if result.get('avg_response_length'):
+                    avg_length = result['avg_response_length']
+                    performance_stats["avg_length"].append(avg_length)
+                    print(f"   📏 Avg Response Length: {avg_length} characters")
+                
+                if result.get('avg_processing_time'):
+                    avg_time = result['avg_processing_time']
+                    performance_stats["avg_time"].append(avg_time)
+                    print(f"   ⏱️  Avg Processing Time: {avg_time}s")
+    
+    print(f"\n📈 Summary:")
+    print(f"   Total responses generated: {performance_stats['total_responses']}")
+    
+    if performance_stats['avg_length']:
+        global_avg_length = sum(performance_stats['avg_length']) / len(performance_stats['avg_length'])
+        print(f"   Global avg response length: {global_avg_length:.1f} characters")
+    
+    if performance_stats['avg_time']:
+        global_avg_time = sum(performance_stats['avg_time']) / len(performance_stats['avg_time'])
+        print(f"   Global avg processing time: {global_avg_time:.2f}s")
+    
+    print(f"\n🤖 Model Distribution:")
+    for model, count in model_distribution.items():
+        print(f"   {model}: {count} node(s)")
+    
+    print(f"\n⚡ Capabilities:")
+    print(f"   Streaming Support: {capabilities['streaming']} node(s)")
+    print(f"   Multimodal Support: {capabilities['multimodal']} node(s)")
+    print(f"   Quality Metrics: {capabilities['metrics']} node(s)")
+    
+    print(f"\n📊 Node Status:")
+    for status, count in status_counts.items():
+        if count > 0:
+            print(f"   {status.replace('_', ' ').title()}: {count}")
+
+# Usage
+try:
+    llm_nodes = list_llm_nodes("my-rag-pipeline", "YOUR_API_TOKEN")
+    analyze_llm_nodes(llm_nodes)
+    
+except requests.exceptions.HTTPError as e:
+    print(f"Error: {e}")
+    if e.response.status_code == 404:
+        print("Flow not found or no LLM nodes in this flow")
+    elif e.response.status_code == 401:
+        print("Invalid API token or insufficient permissions")
+```
+
+### cURL
+
+```bash
+# Basic request
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/llm \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+
+# With jq for formatted output
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/llm \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | jq '.'
+
+# Extract LLM configuration summary
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/llm \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq -r '.[] | "\(.data.name): \(.data.config.model) (temp: \(.data.config.temperature // "default"))"'
+
+# Count total responses across all nodes
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/llm \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq '[.[] | .data.result.total_responses // 0] | add'
+
+# Check nodes with quality metrics
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/llm \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq '.[] | select(.data.result.updatedMetrics == true) | {id, name: .data.name, model: .data.config.model}'
+```
+
+### PHP
+
+```php
+<?php
+function listLLMNodes($flowName, $apiToken) {
+    $url = "https://{$flowName}.flows.graphorlm.com/llm";
+    
+    $options = [
+        'http' => [
+            'header' => "Authorization: Bearer {$apiToken}",
+            'method' => 'GET'
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    
+    if ($result === FALSE) {
+        throw new Exception('Failed to retrieve LLM nodes');
+    }
+    
+    return json_decode($result, true);
+}
+
+function analyzeLLMNodes($llmNodes) {
+    $modelDistribution = [];
+    $statusCounts = [
+        'updated' => 0,
+        'processing' => 0, 
+        'waiting' => 0,
+        'error' => 0,
+        'needs_update' => 0
+    ];
+    $capabilities = ['streaming' => 0, 'multimodal' => 0, 'metrics' => 0];
+    $totalResponses = 0;
+    $processingTimes = [];
+    $responseLengths = [];
+    
+    echo "🤖 LLM Nodes Analysis\n";
+    echo "Total LLM nodes: " . count($llmNodes) . "\n";
+    echo str_repeat("-", 50) . "\n";
+    
+    foreach ($llmNodes as $node) {
+        $data = $node['data'] ?? [];
+        $config = $data['config'] ?? [];
+        $result = $data['result'] ?? [];
+        
+        $model = $config['model'] ?? 'Unknown';
+        $modelDistribution[$model] = ($modelDistribution[$model] ?? 0) + 1;
+        
+        echo "\n🧠 Node: " . ($data['name'] ?? 'Unnamed') . " ({$node['id']})\n";
+        echo "   Model: {$model}\n";
+        echo "   Prompt Template: " . ($config['promptId'] ?? 'Not set') . "\n";
+        echo "   Temperature: " . ($config['temperature'] ?? 'Default') . "\n";
+        
+        if (!empty($result)) {
+            if ($result['processing'] ?? false) {
+                $statusCounts['processing']++;
+                echo "   🔄 Status: Processing\n";
+            } elseif ($result['waiting'] ?? false) {
+                $statusCounts['waiting']++;
+                echo "   ⏳ Status: Waiting\n";
+            } elseif ($result['has_error'] ?? false) {
+                $statusCounts['error']++;
+                echo "   ❌ Status: Error\n";
+            } elseif ($result['updated'] ?? false) {
+                $statusCounts['updated']++;
+                echo "   ✅ Status: Updated\n";
+            } else {
+                $statusCounts['needs_update']++;
+                echo "   ⚠️  Status: Needs Update\n";
+            }
+            
+            if ($result['streaming_enabled'] ?? false) {
+                $capabilities['streaming']++;
+                echo "   🚀 Streaming: Enabled\n";
+            }
+            
+            if ($result['multimodal_support'] ?? false) {
+                $capabilities['multimodal']++;
+                echo "   🖼️  Multimodal: Supported\n";
+            }
+            
+            if ($result['updatedMetrics'] ?? false) {
+                $capabilities['metrics']++;
+                echo "   📊 Quality Metrics: Available\n";
+            }
+            
+            if (isset($result['total_responses'])) {
+                $responses = $result['total_responses'];
+                $totalResponses += $responses;
+                echo "   📝 Total Responses: {$responses}\n";
+                
+                if (isset($result['avg_response_length'])) {
+                    $avgLength = $result['avg_response_length'];
+                    $responseLengths[] = $avgLength;
+                    echo "   📏 Avg Response Length: {$avgLength} characters\n";
+                }
+                
+                if (isset($result['avg_processing_time'])) {
+                    $avgTime = $result['avg_processing_time'];
+                    $processingTimes[] = $avgTime;
+                    echo "   ⏱️  Avg Processing Time: {$avgTime}s\n";
+                }
+            }
+        }
+    }
+    
+    echo "\n📈 Summary:\n";
+    echo "   Total responses generated: {$totalResponses}\n";
+    
+    if (!empty($responseLengths)) {
+        $globalAvgLength = array_sum($responseLengths) / count($responseLengths);
+        echo "   Global avg response length: " . round($globalAvgLength, 1) . " characters\n";
+    }
+    
+    if (!empty($processingTimes)) {
+        $globalAvgTime = array_sum($processingTimes) / count($processingTimes);
+        echo "   Global avg processing time: " . round($globalAvgTime, 2) . "s\n";
+    }
+    
+    echo "\n🤖 Model Distribution:\n";
+    foreach ($modelDistribution as $model => $count) {
+        echo "   {$model}: {$count} node(s)\n";
+    }
+    
+    echo "\n⚡ Capabilities:\n";
+    echo "   Streaming Support: {$capabilities['streaming']} node(s)\n";
+    echo "   Multimodal Support: {$capabilities['multimodal']} node(s)\n";
+    echo "   Quality Metrics: {$capabilities['metrics']} node(s)\n";
+    
+    echo "\n📊 Node Status:\n";
+    foreach ($statusCounts as $status => $count) {
+        if ($count > 0) {
+            $statusLabel = ucwords(str_replace('_', ' ', $status));
+            echo "   {$statusLabel}: {$count}\n";
+        }
+    }
+}
+
+// Usage
+try {
+    $llmNodes = listLLMNodes('my-rag-pipeline', 'YOUR_API_TOKEN');
+    analyzeLLMNodes($llmNodes);
+    
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+}
+?>
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Description | Example Response |
+|-------------|-------------|------------------|
+| 401 | Unauthorized - Invalid or missing API token | `{"detail": "Invalid authentication credentials"}` |
+| 404 | Not Found - Flow not found | `{"detail": "Flow not found"}` |
+| 500 | Internal Server Error - Server error | `{"detail": "Failed to retrieve LLM nodes"}` |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+### Example Error Responses
+
+#### Invalid API Token
+```json
+{
+  "detail": "Invalid authentication credentials"
+}
+```
+
+#### Flow Not Found
+```json
+{
+  "detail": "Flow not found"
+}
+```
+
+#### Server Error
+```json
+{
+  "detail": "Failed to retrieve LLM nodes"
+}
+```
+
+## Use Cases
+
+### LLM Node Management
+
+Use this endpoint to:
+
+- **Response Quality Monitoring**: Track LLM performance metrics and response generation quality
+- **Model Configuration Analysis**: Review configured models, prompt templates, and temperature settings
+- **Performance Optimization**: Analyze response times, lengths, and processing efficiency
+- **Capability Assessment**: Identify nodes with streaming, multimodal, or advanced evaluation features
+
+### Integration Examples
+
+#### LLM Performance Monitor
+
+```javascript
+class LLMPerformanceMonitor {
+  constructor(flowName, apiToken) {
+    this.flowName = flowName;
+    this.apiToken = apiToken;
+  }
+
+  async getPerformanceReport() {
+    try {
+      const nodes = await this.listLLMNodes();
+      const report = {
+        totalNodes: nodes.length,
+        activeNodes: 0,
+        processingNodes: 0,
+        errorNodes: 0,
+        totalResponses: 0,
+        averageResponseTime: 0,
+        averageResponseLength: 0,
+        modelDistribution: {},
+        capabilities: {
+          streaming: 0,
+          multimodal: 0,
+          withMetrics: 0
+        },
+        performance: []
+      };
+
+      let totalProcessingTime = 0;
+      let totalResponseLength = 0;
+      let nodesWithMetrics = 0;
+
+      for (const node of nodes) {
+        const config = node.data.config || {};
+        const result = node.data.result || {};
+        
+        // Track model distribution
+        const model = config.model || 'Unknown';
+        report.modelDistribution[model] = (report.modelDistribution[model] || 0) + 1;
+        
+        // Track capabilities
+        if (result.streaming_enabled) report.capabilities.streaming++;
+        if (result.multimodal_support) report.capabilities.multimodal++;
+        if (result.updatedMetrics) report.capabilities.withMetrics++;
+        
+        // Calculate performance metrics
+        if (result.total_responses) {
+          report.totalResponses += result.total_responses;
+        }
+        
+        if (result.avg_processing_time) {
+          totalProcessingTime += result.avg_processing_time;
+          nodesWithMetrics++;
+        }
+        
+        if (result.avg_response_length) {
+          totalResponseLength += result.avg_response_length;
+        }
+        
+        // Track node status
+        if (result.processing) {
+          report.processingNodes++;
+        } else if (result.has_error) {
+          report.errorNodes++;
+        } else if (result.updated) {
+          report.activeNodes++;
+        }
+        
+        // Individual node performance
+        report.performance.push({
+          nodeId: node.id,
+          nodeName: node.data.name,
+          model: config.model,
+          promptId: config.promptId,
+          temperature: config.temperature,
+          totalResponses: result.total_responses || 0,
+          avgProcessingTime: result.avg_processing_time,
+          avgResponseLength: result.avg_response_length,
+          streamingEnabled: result.streaming_enabled || false,
+          multimodalSupport: result.multimodal_support || false,
+          hasMetrics: result.updatedMetrics || false,
+          status: result.processing ? 'Processing' :
+                 result.has_error ? 'Error' :
+                 result.updated ? 'Active' : 'Inactive'
+        });
+      }
+
+      if (nodesWithMetrics > 0) {
+        report.averageResponseTime = totalProcessingTime / nodesWithMetrics;
+        report.averageResponseLength = totalResponseLength / nodesWithMetrics;
+      }
+
+      return report;
+    } catch (error) {
+      throw new Error(`Performance report failed: ${error.message}`);
+    }
+  }
+
+  async listLLMNodes() {
+    const response = await fetch(`https://${this.flowName}.flows.graphorlm.com/llm`, {
+      headers: { 'Authorization': `Bearer ${this.apiToken}` }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  async generateReport() {
+    const report = await this.getPerformanceReport();
+    
+    console.log('🤖 LLM Performance Report');
+    console.log('==========================');
+    console.log(`Total Nodes: ${report.totalNodes}`);
+    console.log(`Active Nodes: ${report.activeNodes}`);
+    console.log(`Processing Nodes: ${report.processingNodes}`);
+    console.log(`Error Nodes: ${report.errorNodes}`);
+    console.log(`Total Responses Generated: ${report.totalResponses}`);
+    console.log(`Average Response Time: ${report.averageResponseTime.toFixed(2)}s`);
+    console.log(`Average Response Length: ${Math.round(report.averageResponseLength)} characters`);
+    
+    console.log('\n🤖 Model Distribution:');
+    for (const [model, count] of Object.entries(report.modelDistribution)) {
+      console.log(`  ${model}: ${count} node(s)`);
+    }
+    
+    console.log('\n⚡ Advanced Capabilities:');
+    console.log(`  Streaming Support: ${report.capabilities.streaming} node(s)`);
+    console.log(`  Multimodal Support: ${report.capabilities.multimodal} node(s)`);
+    console.log(`  Quality Metrics: ${report.capabilities.withMetrics} node(s)`);
+    
+    console.log('\n📊 Node Performance Details:');
+    report.performance.forEach(node => {
+      console.log(`  ${node.nodeName} (${node.nodeId}):`);
+      console.log(`    Model: ${node.model}, Temperature: ${node.temperature || 'default'}`);
+      console.log(`    Total Responses: ${node.totalResponses}, Status: ${node.status}`);
+      if (node.avgProcessingTime) {
+        console.log(`    Avg Processing Time: ${node.avgProcessingTime.toFixed(2)}s`);
+      }
+      if (node.avgResponseLength) {
+        console.log(`    Avg Response Length: ${Math.round(node.avgResponseLength)} chars`);
+      }
+      const capabilities = [];
+      if (node.streamingEnabled) capabilities.push('Streaming');
+      if (node.multimodalSupport) capabilities.push('Multimodal');
+      if (node.hasMetrics) capabilities.push('Quality Metrics');
+      if (capabilities.length > 0) {
+        console.log(`    Capabilities: ${capabilities.join(', ')}`);
+      }
+    });
+
+    return report;
+  }
+}
+
+// Usage
+const monitor = new LLMPerformanceMonitor('my-rag-pipeline', 'YOUR_API_TOKEN');
+monitor.generateReport().catch(console.error);
+```
+
+#### Quality Metrics Validator
+
+```python
+import requests
+from typing import List, Dict, Any
+from dataclasses import dataclass
+
+@dataclass
+class LLMQualityMetrics:
+    node_id: str
+    node_name: str
+    model: str
+    has_metrics: bool
+    total_responses: int
+    avg_processing_time: float
+    performance_score: float
+    recommendations: List[str]
+
+class LLMQualityValidator:
+    def __init__(self, flow_name: str, api_token: str):
+        self.flow_name = flow_name
+        self.api_token = api_token
+        self.base_url = f"https://{flow_name}.flows.graphorlm.com"
+    
+    def get_llm_nodes(self) -> List[Dict[str, Any]]:
+        """Retrieve all LLM nodes from the flow"""
+        response = requests.get(
+            f"{self.base_url}/llm",
+            headers={"Authorization": f"Bearer {self.api_token}"}
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def validate_quality_metrics(self) -> Dict[str, Any]:
+        """Validate LLM node quality and performance metrics"""
+        nodes = self.get_llm_nodes()
+        
+        validation_report = {
+            "summary": {
+                "total_nodes": len(nodes),
+                "nodes_with_metrics": 0,
+                "high_performance_nodes": 0,
+                "nodes_needing_attention": 0,
+                "avg_response_time": 0
+            },
+            "node_metrics": [],
+            "recommendations": []
+        }
+        
+        total_processing_time = 0
+        nodes_with_time_data = 0
+        
+        for node in nodes:
+            node_data = node["data"]
+            config = node_data.get("config", {})
+            result = node_data.get("result", {})
+            
+            node_metrics = LLMQualityMetrics(
+                node_id=node["id"],
+                node_name=node_data.get("name", "Unnamed"),
+                model=config.get("model", "Unknown"),
+                has_metrics=result.get("updatedMetrics", False),
+                total_responses=result.get("total_responses", 0),
+                avg_processing_time=result.get("avg_processing_time", 0),
+                performance_score=0.0,
+                recommendations=[]
+            )
+            
+            # Calculate performance score
+            score_factors = []
+            
+            # Response time factor (lower is better)
+            if node_metrics.avg_processing_time > 0:
+                if node_metrics.avg_processing_time < 1.0:
+                    score_factors.append(1.0)  # Excellent
+                elif node_metrics.avg_processing_time < 3.0:
+                    score_factors.append(0.8)  # Good
+                elif node_metrics.avg_processing_time < 5.0:
+                    score_factors.append(0.6)  # Fair
+                else:
+                    score_factors.append(0.3)  # Needs improvement
+                
+                total_processing_time += node_metrics.avg_processing_time
+                nodes_with_time_data += 1
+            
+            # Metrics availability factor
+            if node_metrics.has_metrics:
+                score_factors.append(1.0)
+                validation_report["summary"]["nodes_with_metrics"] += 1
+            else:
+                score_factors.append(0.5)
+                node_metrics.recommendations.append("Enable quality metrics evaluation")
+            
+            # Response volume factor
+            if node_metrics.total_responses > 100:
+                score_factors.append(1.0)
+            elif node_metrics.total_responses > 10:
+                score_factors.append(0.7)
+            elif node_metrics.total_responses > 0:
+                score_factors.append(0.5)
+            else:
+                score_factors.append(0.2)
+                node_metrics.recommendations.append("Generate more test responses")
+            
+            # Calculate overall performance score
+            if score_factors:
+                node_metrics.performance_score = sum(score_factors) / len(score_factors)
+            
+            # Add specific recommendations
+            if node_metrics.avg_processing_time > 5.0:
+                node_metrics.recommendations.append("Consider optimizing model or reducing temperature")
+            
+            if not result.get("streaming_enabled") and config.get("model", "").startswith("gpt"):
+                node_metrics.recommendations.append("Consider enabling streaming for better user experience")
+            
+            if not result.get("multimodal_support") and node_metrics.total_responses > 50:
+                node_metrics.recommendations.append("Consider enabling multimodal support for richer interactions")
+            
+            # Categorize performance
+            if node_metrics.performance_score >= 0.8:
+                validation_report["summary"]["high_performance_nodes"] += 1
+            elif node_metrics.performance_score < 0.6:
+                validation_report["summary"]["nodes_needing_attention"] += 1
+            
+            validation_report["node_metrics"].append(node_metrics)
+        
+        # Calculate summary statistics
+        if nodes_with_time_data > 0:
+            validation_report["summary"]["avg_response_time"] = total_processing_time / nodes_with_time_data
+        
+        # Generate global recommendations
+        if validation_report["summary"]["nodes_with_metrics"] == 0:
+            validation_report["recommendations"].append("Enable quality metrics on all LLM nodes for better monitoring")
+        
+        if validation_report["summary"]["nodes_needing_attention"] > validation_report["summary"]["total_nodes"] * 0.3:
+            validation_report["recommendations"].append("Consider reviewing and optimizing underperforming nodes")
+        
+        return validation_report
+    
+    def print_validation_report(self, report: Dict[str, Any]):
+        """Print a formatted validation report"""
+        summary = report["summary"]
+        
+        print("📊 LLM Quality Validation Report")
+        print("=" * 50)
+        print(f"Flow: {self.flow_name}")
+        print(f"Total LLM Nodes: {summary['total_nodes']}")
+        print(f"Nodes with Quality Metrics: {summary['nodes_with_metrics']}")
+        print(f"High Performance Nodes: {summary['high_performance_nodes']}")
+        print(f"Nodes Needing Attention: {summary['nodes_needing_attention']}")
+        
+        if summary['avg_response_time'] > 0:
+            print(f"Average Response Time: {summary['avg_response_time']:.2f}s")
+        
+        print(f"\n🤖 Node Performance Details:")
+        print("-" * 40)
+        for node_metrics in report["node_metrics"]:
+            score_icon = "🟢" if node_metrics.performance_score >= 0.8 else \
+                        "🟡" if node_metrics.performance_score >= 0.6 else "🔴"
+            
+            print(f"\n{score_icon} {node_metrics.node_name} ({node_metrics.node_id})")
+            print(f"   Model: {node_metrics.model}")
+            print(f"   Performance Score: {node_metrics.performance_score:.2f}/1.0")
+            print(f"   Total Responses: {node_metrics.total_responses}")
+            
+            if node_metrics.avg_processing_time > 0:
+                print(f"   Avg Processing Time: {node_metrics.avg_processing_time:.2f}s")
+            
+            print(f"   Quality Metrics: {'✅ Available' if node_metrics.has_metrics else '❌ Not Available'}")
+            
+            if node_metrics.recommendations:
+                print(f"   💡 Recommendations:")
+                for rec in node_metrics.recommendations:
+                    print(f"      - {rec}")
+        
+        if report["recommendations"]:
+            print(f"\n🎯 Global Recommendations:")
+            for rec in report["recommendations"]:
+                print(f"   - {rec}")
+
+# Usage
+validator = LLMQualityValidator("my-rag-pipeline", "YOUR_API_TOKEN")
+try:
+    report = validator.validate_quality_metrics()
+    validator.print_validation_report(report)
+except Exception as e:
+    print(f"Validation failed: {e}")
+```
+
+## Best Practices
+
+### Response Quality Management
+
+- **Model Selection**: Choose appropriate models based on use case complexity and response quality requirements
+- **Temperature Tuning**: Optimize temperature settings to balance creativity and consistency in responses
+- **Prompt Engineering**: Use well-designed prompt templates for consistent, high-quality response generation
+- **Quality Metrics**: Enable and regularly review evaluation metrics to ensure response quality standards
+
+### Performance Optimization
+
+- **Response Time Monitoring**: Track processing times and optimize model configurations for efficiency
+- **Streaming Implementation**: Use streaming responses for real-time user experiences with supported models
+- **Batch Processing**: Implement efficient batching strategies for high-volume response generation
+- **Resource Management**: Monitor memory usage and processing capacity for sustainable operation
+
+### Advanced Capabilities
+
+- **Multimodal Integration**: Leverage multimodal support for rich content processing including images and multimedia
+- **Quality Evaluation**: Implement comprehensive evaluation using contextual precision, recall, relevancy, and faithfulness metrics
+- **Error Handling**: Implement robust retry mechanisms and fallback strategies for reliable operation
+- **Context Management**: Optimize context window usage for maximum information utilization
+
+### Monitoring and Maintenance
+
+- **Performance Analytics**: Regularly analyze response generation patterns and optimization opportunities
+- **Quality Assessment**: Monitor evaluation metrics to identify areas for improvement
+- **Configuration Auditing**: Regularly review and validate LLM node configurations
+- **Capability Tracking**: Monitor the utilization of advanced features like streaming and multimodal processing
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="exclamation-triangle" title="Flow Not Found Error">
+    **Solution**: Verify that:
+    - The flow name in the URL is correct and matches exactly
+    - The flow exists in your project  
+    - Your API token has access to the correct project
+    - The flow has been created and saved properly
+  </Accordion>
+  
+  <Accordion icon="list" title="Empty LLM Nodes Array">
+    **Solution**: If no LLM nodes are returned:
+    - Verify the flow contains LLM response generation components
+    - Check that LLM nodes have been added to the flow
+    - Ensure the flow has been saved after adding LLM nodes
+    - Confirm you're checking the correct flow
+  </Accordion>
+  
+  <Accordion icon="robot" title="Model Configuration Issues">
+    **Solution**: If LLM nodes have invalid model configurations:
+    - Verify the specified model is available and supported
+    - Check that prompt template IDs reference existing templates
+    - Ensure temperature values are within valid range (0.0-2.0)
+    - Validate model compatibility with streaming and multimodal features
+  </Accordion>
+  
+  <Accordion icon="clock" title="Slow Response Generation">
+    **Solution**: If LLM nodes show slow processing times:
+    - Check model configuration - some models are inherently slower
+    - Optimize prompt templates to reduce unnecessary complexity
+    - Consider lowering temperature for faster, more deterministic responses
+    - Monitor context window usage and optimize for efficiency
+    - Implement streaming for better perceived performance
+  </Accordion>
+  
+  <Accordion icon="chart-line" title="Missing Quality Metrics">
+    **Solution**: If evaluation metrics are not available:
+    - Ensure nodes have been processed with sufficient test queries
+    - Verify that updatedMetrics is enabled in node configuration
+    - Check that input nodes provide necessary context for evaluation
+    - Run evaluation explicitly if metrics haven't been calculated
+    - Ensure proper input from retrieval/RAG nodes for context evaluation
+  </Accordion>
+  
+  <Accordion icon="wifi" title="Connection Issues">
+    **Solution**: For connectivity problems:
+    - Check your internet connection
+    - Verify the flow URL is accessible
+    - Ensure your firewall allows HTTPS traffic to *.flows.graphorlm.com
+    - Try accessing the endpoint from a different network
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After retrieving LLM node information, you might want to:
+
+<CardGroup cols={2}>
+  <Card
+    title="Update LLM Configuration"
+    icon="sliders"
+    href="/api-reference/flows/llm/update"
+  >
+    Modify LLM node settings like model selection, prompt templates, and temperature parameters
+  </Card>
+  <Card
+    title="List Retrieval Nodes"
+    icon="search"
+    href="/api-reference/flows/retrieval/list"
+  >
+    View retrieval nodes that provide context input to LLM nodes
+  </Card>
+  <Card
+    title="Run Flow"
+    icon="play"
+    href="/api-reference/flows/run"
+  >
+    Execute your flow with the configured LLM nodes for response generation
+  </Card>
+  <Card
+    title="Flow Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
+  >
+    Learn about all available flow management endpoints
+  </Card>
+</CardGroup>

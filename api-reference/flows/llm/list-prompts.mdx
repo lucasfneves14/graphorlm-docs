@@ -1,0 +1,1039 @@
+---
+title: 'List Prompts'
+description: 'Retrieve available prompt templates for LLM nodes via the GraphorLM REST API'
+---
+
+Retrieve all available prompt templates from a specific flow in your GraphorLM project. Prompts are sophisticated instruction templates that guide LLM behavior and response generation, serving as the foundation for consistent, high-quality AI interactions in RAG pipelines.
+
+## Overview
+
+The List Prompts endpoint allows you to retrieve information about prompt templates available within a flow context. Prompts define how LLM nodes interpret context, structure responses, and maintain conversational coherence, making them critical components for response quality and consistency.
+
+- **Method**: `GET`
+- **URL**: `https://{flow_name}.flows.graphorlm.com/prompts`
+- **Authentication**: Required (API Token)
+
+## Authentication
+
+All requests must include a valid API token in the Authorization header:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+
+### Parameters
+
+No query parameters are required for this endpoint.
+
+### Example Request
+
+```bash
+GET https://my-rag-pipeline.flows.graphorlm.com/prompts
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+## Response Format
+
+### Success Response (200 OK)
+
+The response contains an array of prompt template objects:
+
+```json
+[
+  {
+    "id": "default_retrieval_prompt",
+    "name": "Default Retrieval Prompt",
+    "text": "You are an AI-powered question-answering agent. Your task is to provide accurate and comprehensive responses to user queries based on the given context, chat history, and available resources.\n\n### Response Guidelines:\n1. **Direct Answers**: Provide clear and thorough answers to the user's queries without headers unless requested. Avoid speculative responses.\n2. **Utilize History and Context**: Leverage relevant information from previous interactions, the current user input, and the context provided below.\n3. **No Greetings in Follow-ups**: Start with a greeting in initial interactions. Avoid greetings in subsequent responses unless there's a significant break or the chat restarts.\n4. **Admit Unknowns**: Clearly state if an answer is unknown. Avoid making unsupported statements.\n5. **Avoid Hallucination**: Only provide information based on the context provided. Do not invent information.\n\n**IMPORTANT** : DO NOT ANSWER FROM YOUR KNOWLEDGE BASE USE THE BELOW CONTEXT\n\n### Context:\n<context>\n{context}\n</context>"
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440001",
+    "name": "Technical Documentation Assistant",
+    "text": "You are a specialized technical documentation assistant. Focus on providing precise, well-structured answers for technical queries.\n\n### Instructions:\n1. Prioritize accuracy and technical precision\n2. Include code examples when relevant\n3. Structure responses with clear sections\n4. Reference specific documentation sections\n\n### Context:\n<context>\n{context}\n</context>"
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440002",
+    "name": "Customer Support Agent",
+    "text": "You are a helpful customer support agent. Provide friendly, solution-oriented responses to customer inquiries.\n\n### Guidelines:\n1. Maintain a helpful and empathetic tone\n2. Offer step-by-step solutions\n3. Escalate complex issues appropriately\n4. Follow up with additional assistance offers\n\n### Available Information:\n<context>\n{context}\n</context>"
+  }
+]
+```
+
+### Response Structure
+
+Each prompt template in the array contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique identifier for the prompt template (UUID or system ID) |
+| `name` | string | Human-readable name of the prompt template |
+| `text` | string | Complete prompt template text with instructions and placeholders |
+
+### Prompt Template Structure
+
+#### System Prompt Fields
+
+| Component | Description | Purpose |
+|-----------|-------------|---------|
+| **Instructions** | Core behavioral guidelines for the LLM | Defines response style, tone, and approach |
+| **Context Placeholder** | `{context}` variable for retrieved information | Insertion point for RAG context |
+| **Response Guidelines** | Specific rules for answer generation | Ensures consistency and quality |
+| **Formatting Rules** | Structure and presentation requirements | Controls output format and organization |
+| **Error Handling** | Instructions for unknown or ambiguous queries | Manages edge cases and limitations |
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+async function listPrompts(flowName, apiToken) {
+  const response = await fetch(`https://${flowName}.flows.graphorlm.com/prompts`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+// Usage
+listPrompts('my-rag-pipeline', 'YOUR_API_TOKEN')
+  .then(prompts => {
+    console.log(`Found ${prompts.length} prompt template(s)`);
+    
+    prompts.forEach(prompt => {
+      console.log(`\nPrompt: ${prompt.name} (${prompt.id})`);
+      console.log(`Template Length: ${prompt.text.length} characters`);
+      
+      // Analyze prompt structure
+      const hasContextPlaceholder = prompt.text.includes('{context}');
+      const hasGuidelines = prompt.text.includes('Guidelines') || prompt.text.includes('Instructions');
+      const isSystemPrompt = prompt.id === 'default_retrieval_prompt';
+      
+      console.log(`Features:`);
+      console.log(`  - Context Integration: ${hasContextPlaceholder ? '✅' : '❌'}`);
+      console.log(`  - Structured Guidelines: ${hasGuidelines ? '✅' : '❌'}`);
+      console.log(`  - System Template: ${isSystemPrompt ? '✅' : '❌'}`);
+      
+      // Preview template structure
+      const lines = prompt.text.split('\n');
+      const preview = lines.slice(0, 3).join('\n');
+      if (lines.length > 3) {
+        console.log(`Preview:\n${preview}...`);
+      } else {
+        console.log(`Preview:\n${preview}`);
+      }
+    });
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+### Python
+
+```python
+import requests
+import json
+import re
+from typing import List, Dict, Any
+
+def list_prompts(flow_name, api_token):
+    url = f"https://{flow_name}.flows.graphorlm.com/prompts"
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}"
+    }
+    
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    
+    return response.json()
+
+def analyze_prompt_templates(prompts):
+    """Analyze prompt templates and provide detailed insights"""
+    print(f"📝 Prompt Templates Analysis")
+    print(f"Total templates: {len(prompts)}")
+    print("-" * 50)
+    
+    template_stats = {
+        "total_prompts": len(prompts),
+        "system_prompts": 0,
+        "custom_prompts": 0,
+        "with_context": 0,
+        "with_guidelines": 0,
+        "avg_length": 0,
+        "template_types": {}
+    }
+    
+    total_length = 0
+    
+    for prompt in prompts:
+        prompt_id = prompt.get('id', '')
+        name = prompt.get('name', 'Unnamed')
+        text = prompt.get('text', '')
+        
+        total_length += len(text)
+        
+        # Categorize prompt type
+        is_system = prompt_id == 'default_retrieval_prompt'
+        if is_system:
+            template_stats["system_prompts"] += 1
+            prompt_type = "System Default"
+        else:
+            template_stats["custom_prompts"] += 1
+            prompt_type = "Custom Template"
+        
+        # Analyze features
+        has_context = '{context}' in text
+        has_guidelines = any(keyword in text.lower() for keyword in 
+                           ['guidelines', 'instructions', 'rules', 'criteria'])
+        
+        if has_context:
+            template_stats["with_context"] += 1
+        if has_guidelines:
+            template_stats["with_guidelines"] += 1
+        
+        # Categorize by apparent use case
+        if 'technical' in name.lower() or 'documentation' in name.lower():
+            category = "Technical Documentation" 
+        elif 'support' in name.lower() or 'customer' in name.lower():
+            category = "Customer Support"
+        elif 'default' in name.lower() or 'retrieval' in name.lower():
+            category = "General RAG"
+        else:
+            category = "Specialized"
+        
+        template_stats["template_types"][category] = template_stats["template_types"].get(category, 0) + 1
+        
+        print(f"\n📋 Template: {name}")
+        print(f"   ID: {prompt_id}")
+        print(f"   Type: {prompt_type}")
+        print(f"   Category: {category}")
+        print(f"   Length: {len(text)} characters")
+        print(f"   Context Integration: {'✅' if has_context else '❌'}")
+        print(f"   Structured Guidelines: {'✅' if has_guidelines else '❌'}")
+        
+        # Extract and show key features
+        features = []
+        if 'avoid hallucination' in text.lower():
+            features.append("Anti-hallucination")
+        if 'tone' in text.lower():
+            features.append("Tone control")
+        if 'example' in text.lower():
+            features.append("Examples included")
+        if 'error handling' in text.lower():
+            features.append("Error handling")
+        
+        if features:
+            print(f"   Key Features: {', '.join(features)}")
+        
+        # Show template preview
+        lines = text.split('\n')
+        non_empty_lines = [line for line in lines if line.strip()]
+        preview_lines = non_empty_lines[:3]
+        
+        print(f"   Preview:")
+        for i, line in enumerate(preview_lines):
+            truncated = line[:80] + "..." if len(line) > 80 else line
+            print(f"     {i+1}. {truncated}")
+        
+        if len(non_empty_lines) > 3:
+            print(f"     ... (+{len(non_empty_lines) - 3} more lines)")
+    
+    # Calculate averages
+    if template_stats["total_prompts"] > 0:
+        template_stats["avg_length"] = total_length / template_stats["total_prompts"]
+    
+    print(f"\n📊 Summary Statistics:")
+    print(f"   Average template length: {template_stats['avg_length']:.0f} characters")
+    print(f"   System templates: {template_stats['system_prompts']}")
+    print(f"   Custom templates: {template_stats['custom_prompts']}")
+    print(f"   Templates with context integration: {template_stats['with_context']}")
+    print(f"   Templates with structured guidelines: {template_stats['with_guidelines']}")
+    
+    print(f"\n🏷️  Template Categories:")
+    for category, count in template_stats["template_types"].items():
+        print(f"   {category}: {count} template(s)")
+    
+    # Quality assessment
+    quality_score = 0
+    max_score = 5
+    
+    if template_stats["with_context"] > 0:
+        quality_score += 1
+    if template_stats["with_guidelines"] > 0:
+        quality_score += 1
+    if template_stats["system_prompts"] > 0:
+        quality_score += 1
+    if template_stats["custom_prompts"] > 0:
+        quality_score += 1
+    if template_stats["avg_length"] > 200:  # Reasonable template length
+        quality_score += 1
+    
+    print(f"\n⭐ Template Quality Score: {quality_score}/{max_score}")
+    
+    if quality_score >= 4:
+        print("   🟢 Excellent - Well-structured prompt ecosystem")
+    elif quality_score >= 3:
+        print("   🟡 Good - Solid prompt management")
+    elif quality_score >= 2:
+        print("   🟠 Fair - Room for improvement")
+    else:
+        print("   🔴 Needs Attention - Consider enhancing templates")
+
+# Usage
+try:
+    prompts = list_prompts("my-rag-pipeline", "YOUR_API_TOKEN")
+    analyze_prompt_templates(prompts)
+    
+except requests.exceptions.HTTPError as e:
+    print(f"Error: {e}")
+    if e.response.status_code == 404:
+        print("Flow not found or no prompts available")
+    elif e.response.status_code == 401:
+        print("Invalid API token or insufficient permissions")
+```
+
+### cURL
+
+```bash
+# Basic request
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/prompts \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+
+# With jq for formatted output
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/prompts \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | jq '.'
+
+# Extract prompt names and IDs
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/prompts \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq -r '.[] | "\(.name): \(.id)"'
+
+# Count total templates
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/prompts \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq 'length'
+
+# Check for default system prompt
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/prompts \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq '.[] | select(.id == "default_retrieval_prompt") | {name, id}'
+
+# Analyze template lengths
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/prompts \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq '[.[] | {name: .name, length: (.text | length)}] | sort_by(.length)'
+```
+
+### PHP
+
+```php
+<?php
+function listPrompts($flowName, $apiToken) {
+    $url = "https://{$flowName}.flows.graphorlm.com/prompts";
+    
+    $options = [
+        'http' => [
+            'header' => "Authorization: Bearer {$apiToken}",
+            'method' => 'GET'
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    
+    if ($result === FALSE) {
+        throw new Exception('Failed to retrieve prompts');
+    }
+    
+    return json_decode($result, true);
+}
+
+function analyzePromptTemplates($prompts) {
+    $templateStats = [
+        'total_prompts' => count($prompts),
+        'system_prompts' => 0,
+        'custom_prompts' => 0,
+        'with_context' => 0,
+        'with_guidelines' => 0,
+        'avg_length' => 0,
+        'categories' => []
+    ];
+    
+    $totalLength = 0;
+    
+    echo "📝 Prompt Templates Analysis\n";
+    echo "Total templates: " . count($prompts) . "\n";
+    echo str_repeat("-", 50) . "\n";
+    
+    foreach ($prompts as $prompt) {
+        $id = $prompt['id'] ?? '';
+        $name = $prompt['name'] ?? 'Unnamed';
+        $text = $prompt['text'] ?? '';
+        
+        $totalLength += strlen($text);
+        
+        $isSystem = $id === 'default_retrieval_prompt';
+        if ($isSystem) {
+            $templateStats['system_prompts']++;
+            $promptType = "System Default";
+        } else {
+            $templateStats['custom_prompts']++;
+            $promptType = "Custom Template";
+        }
+        
+        $hasContext = strpos($text, '{context}') !== false;
+        $hasGuidelines = stripos($text, 'guidelines') !== false || 
+                        stripos($text, 'instructions') !== false ||
+                        stripos($text, 'rules') !== false;
+        
+        if ($hasContext) $templateStats['with_context']++;
+        if ($hasGuidelines) $templateStats['with_guidelines']++;
+        
+        // Categorize template
+        $nameLower = strtolower($name);
+        if (strpos($nameLower, 'technical') !== false || strpos($nameLower, 'documentation') !== false) {
+            $category = "Technical Documentation";
+        } elseif (strpos($nameLower, 'support') !== false || strpos($nameLower, 'customer') !== false) {
+            $category = "Customer Support";  
+        } elseif (strpos($nameLower, 'default') !== false || strpos($nameLower, 'retrieval') !== false) {
+            $category = "General RAG";
+        } else {
+            $category = "Specialized";
+        }
+        
+        $templateStats['categories'][$category] = ($templateStats['categories'][$category] ?? 0) + 1;
+        
+        echo "\n📋 Template: {$name}\n";
+        echo "   ID: {$id}\n";
+        echo "   Type: {$promptType}\n";
+        echo "   Category: {$category}\n";
+        echo "   Length: " . strlen($text) . " characters\n";
+        echo "   Context Integration: " . ($hasContext ? '✅' : '❌') . "\n";
+        echo "   Structured Guidelines: " . ($hasGuidelines ? '✅' : '❌') . "\n";
+        
+        // Extract features
+        $features = [];
+        if (stripos($text, 'avoid hallucination') !== false) $features[] = "Anti-hallucination";
+        if (stripos($text, 'tone') !== false) $features[] = "Tone control";
+        if (stripos($text, 'example') !== false) $features[] = "Examples included";
+        if (stripos($text, 'error handling') !== false) $features[] = "Error handling";
+        
+        if (!empty($features)) {
+            echo "   Key Features: " . implode(', ', $features) . "\n";
+        }
+        
+        // Preview
+        $lines = explode("\n", $text);
+        $nonEmptyLines = array_filter($lines, function($line) { return trim($line) !== ''; });
+        $previewLines = array_slice($nonEmptyLines, 0, 3);
+        
+        echo "   Preview:\n";
+        foreach ($previewLines as $i => $line) {
+            $truncated = strlen($line) > 80 ? substr($line, 0, 80) . "..." : $line;
+            echo "     " . ($i + 1) . ". {$truncated}\n";
+        }
+        
+        if (count($nonEmptyLines) > 3) {
+            $remaining = count($nonEmptyLines) - 3;
+            echo "     ... (+{$remaining} more lines)\n";
+        }
+    }
+    
+    // Calculate statistics
+    if ($templateStats['total_prompts'] > 0) {
+        $templateStats['avg_length'] = $totalLength / $templateStats['total_prompts'];
+    }
+    
+    echo "\n📊 Summary Statistics:\n";
+    echo "   Average template length: " . round($templateStats['avg_length']) . " characters\n";
+    echo "   System templates: {$templateStats['system_prompts']}\n";
+    echo "   Custom templates: {$templateStats['custom_prompts']}\n";
+    echo "   Templates with context integration: {$templateStats['with_context']}\n";
+    echo "   Templates with structured guidelines: {$templateStats['with_guidelines']}\n";
+    
+    echo "\n🏷️  Template Categories:\n";
+    foreach ($templateStats['categories'] as $category => $count) {
+        echo "   {$category}: {$count} template(s)\n";
+    }
+    
+    // Quality assessment
+    $qualityScore = 0;
+    if ($templateStats['with_context'] > 0) $qualityScore++;
+    if ($templateStats['with_guidelines'] > 0) $qualityScore++;
+    if ($templateStats['system_prompts'] > 0) $qualityScore++;
+    if ($templateStats['custom_prompts'] > 0) $qualityScore++;
+    if ($templateStats['avg_length'] > 200) $qualityScore++;
+    
+    echo "\n⭐ Template Quality Score: {$qualityScore}/5\n";
+    
+    if ($qualityScore >= 4) {
+        echo "   🟢 Excellent - Well-structured prompt ecosystem\n";
+    } elseif ($qualityScore >= 3) {
+        echo "   🟡 Good - Solid prompt management\n";
+    } elseif ($qualityScore >= 2) {
+        echo "   🟠 Fair - Room for improvement\n";
+    } else {
+        echo "   🔴 Needs Attention - Consider enhancing templates\n";
+    }
+}
+
+// Usage
+try {
+    $prompts = listPrompts('my-rag-pipeline', 'YOUR_API_TOKEN');
+    analyzePromptTemplates($prompts);
+    
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+}
+?>
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Description | Example Response |
+|-------------|-------------|------------------|
+| 401 | Unauthorized - Invalid or missing API token | `{"detail": "Invalid authentication credentials"}` |
+| 404 | Not Found - Flow not found | `{"detail": "Flow not found"}` |
+| 500 | Internal Server Error - Server error | `{"detail": "Failed to retrieve prompts"}` |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+### Example Error Responses
+
+#### Invalid API Token
+```json
+{
+  "detail": "Invalid authentication credentials"
+}
+```
+
+#### Flow Not Found
+```json
+{
+  "detail": "Flow not found"
+}
+```
+
+#### Server Error
+```json
+{
+  "detail": "Failed to retrieve prompts"
+}
+```
+
+## Use Cases
+
+### Prompt Template Management
+
+Use this endpoint to:
+
+- **Template Discovery**: Explore available prompt templates for LLM configuration
+- **Prompt Engineering**: Analyze existing templates for optimization opportunities
+- **Consistency Auditing**: Review prompt structures across different use cases
+- **Template Selection**: Choose appropriate templates for specific LLM node configurations
+
+### Integration Examples
+
+#### Prompt Template Optimizer
+
+```javascript
+class PromptTemplateOptimizer {
+  constructor(flowName, apiToken) {
+    this.flowName = flowName;
+    this.apiToken = apiToken;
+  }
+
+  async analyzeTemplateQuality() {
+    try {
+      const prompts = await this.listPrompts();
+      const analysis = {
+        totalTemplates: prompts.length,
+        qualityMetrics: {
+          hasContextIntegration: 0,
+          hasStructuredGuidelines: 0,
+          hasErrorHandling: 0,
+          hasExamples: 0,
+          hasAntiHallucination: 0
+        },
+        templateTypes: {},
+        recommendations: [],
+        optimizationOpportunities: []
+      };
+
+      for (const prompt of prompts) {
+        const text = prompt.text.toLowerCase();
+        
+        // Quality metrics
+        if (prompt.text.includes('{context}')) {
+          analysis.qualityMetrics.hasContextIntegration++;
+        } else {
+          analysis.optimizationOpportunities.push({
+            templateId: prompt.id,
+            templateName: prompt.name,
+            issue: 'Missing context integration placeholder',
+            suggestion: 'Add {context} placeholder for RAG functionality'
+          });
+        }
+        
+        if (text.includes('guidelines') || text.includes('instructions')) {
+          analysis.qualityMetrics.hasStructuredGuidelines++;
+        }
+        
+        if (text.includes('error') || text.includes('unknown') || text.includes('clarification')) {
+          analysis.qualityMetrics.hasErrorHandling++;
+        }
+        
+        if (text.includes('example')) {
+          analysis.qualityMetrics.hasExamples++;
+        }
+        
+        if (text.includes('hallucination') || text.includes('context provided')) {
+          analysis.qualityMetrics.hasAntiHallucination++;
+        }
+        
+        // Categorize templates
+        const category = this.categorizeTemplate(prompt);
+        analysis.templateTypes[category] = (analysis.templateTypes[category] || 0) + 1;
+        
+        // Length analysis
+        if (prompt.text.length < 100) {
+          analysis.optimizationOpportunities.push({
+            templateId: prompt.id,
+            templateName: prompt.name,
+            issue: 'Template too short',
+            suggestion: 'Consider adding more detailed instructions for better LLM guidance'
+          });
+        } else if (prompt.text.length > 2000) {
+          analysis.optimizationOpportunities.push({
+            templateId: prompt.id,
+            templateName: prompt.name,
+            issue: 'Template very long',
+            suggestion: 'Consider breaking down into more focused, concise instructions'
+          });
+        }
+      }
+
+      // Generate recommendations
+      if (analysis.qualityMetrics.hasContextIntegration === 0) {
+        analysis.recommendations.push('No templates have context integration - essential for RAG functionality');
+      }
+      
+      if (analysis.qualityMetrics.hasAntiHallucination === 0) {
+        analysis.recommendations.push('Consider adding anti-hallucination instructions to prevent LLM knowledge base usage');
+      }
+      
+      if (analysis.qualityMetrics.hasErrorHandling < analysis.totalTemplates * 0.5) {
+        analysis.recommendations.push('Many templates lack error handling instructions');
+      }
+
+      return analysis;
+    } catch (error) {
+      throw new Error(`Template analysis failed: ${error.message}`);
+    }
+  }
+
+  categorizeTemplate(prompt) {
+    const name = prompt.name.toLowerCase();
+    const text = prompt.text.toLowerCase();
+    
+    if (prompt.id === 'default_retrieval_prompt') return 'System Default';
+    if (name.includes('technical') || name.includes('documentation')) return 'Technical Documentation';
+    if (name.includes('support') || name.includes('customer')) return 'Customer Support';
+    if (text.includes('code') || text.includes('programming')) return 'Development';
+    if (text.includes('creative') || text.includes('writing')) return 'Creative Writing';
+    return 'General Purpose';
+  }
+
+  async listPrompts() {
+    const response = await fetch(`https://${this.flowName}.flows.graphorlm.com/prompts`, {
+      headers: { 'Authorization': `Bearer ${this.apiToken}` }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  async generateOptimizationReport() {
+    const analysis = await this.analyzeTemplateQuality();
+    
+    console.log('📝 Prompt Template Optimization Report');
+    console.log('=====================================');
+    console.log(`Total Templates: ${analysis.totalTemplates}`);
+    
+    console.log('\n📊 Quality Metrics:');
+    console.log(`  Context Integration: ${analysis.qualityMetrics.hasContextIntegration}/${analysis.totalTemplates}`);
+    console.log(`  Structured Guidelines: ${analysis.qualityMetrics.hasStructuredGuidelines}/${analysis.totalTemplates}`);
+    console.log(`  Error Handling: ${analysis.qualityMetrics.hasErrorHandling}/${analysis.totalTemplates}`);
+    console.log(`  Examples Included: ${analysis.qualityMetrics.hasExamples}/${analysis.totalTemplates}`);
+    console.log(`  Anti-Hallucination: ${analysis.qualityMetrics.hasAntiHallucination}/${analysis.totalTemplates}`);
+    
+    console.log('\n🏷️  Template Distribution:');
+    for (const [type, count] of Object.entries(analysis.templateTypes)) {
+      console.log(`  ${type}: ${count} template(s)`);
+    }
+    
+    if (analysis.recommendations.length > 0) {
+      console.log('\n💡 Strategic Recommendations:');
+      analysis.recommendations.forEach(rec => console.log(`  - ${rec}`));
+    }
+    
+    if (analysis.optimizationOpportunities.length > 0) {
+      console.log('\n🔧 Template-Specific Optimizations:');
+      analysis.optimizationOpportunities.forEach(opp => {
+        console.log(`  ${opp.templateName} (${opp.templateId}):`);
+        console.log(`    Issue: ${opp.issue}`);
+        console.log(`    Suggestion: ${opp.suggestion}`);
+      });
+    }
+
+    return analysis;
+  }
+}
+
+// Usage
+const optimizer = new PromptTemplateOptimizer('my-rag-pipeline', 'YOUR_API_TOKEN');
+optimizer.generateOptimizationReport().catch(console.error);
+```
+
+#### Template Compliance Validator
+
+```python
+import requests
+from typing import List, Dict, Any
+import re
+from dataclasses import dataclass
+
+@dataclass 
+class PromptComplianceResult:
+    template_id: str
+    template_name: str
+    compliance_score: float
+    passed_checks: List[str]
+    failed_checks: List[str]
+    recommendations: List[str]
+
+class PromptComplianceValidator:
+    def __init__(self, flow_name: str, api_token: str):
+        self.flow_name = flow_name
+        self.api_token = api_token
+        self.base_url = f"https://{flow_name}.flows.graphorlm.com"
+        
+        # Define compliance criteria
+        self.compliance_criteria = {
+            "context_integration": {
+                "check": lambda text: "{context}" in text,
+                "weight": 0.25,
+                "description": "Template includes context placeholder for RAG functionality"
+            },
+            "structured_instructions": {
+                "check": lambda text: any(keyword in text.lower() for keyword in 
+                                        ["guidelines", "instructions", "rules", "criteria"]),
+                "weight": 0.20,
+                "description": "Template provides structured behavioral guidelines"
+            },
+            "anti_hallucination": {
+                "check": lambda text: any(phrase in text.lower() for phrase in 
+                                        ["do not answer from your knowledge", "use the context", 
+                                         "based on the context", "avoid hallucination"]),
+                "weight": 0.20,
+                "description": "Template includes anti-hallucination instructions"
+            },
+            "error_handling": {
+                "check": lambda text: any(phrase in text.lower() for phrase in 
+                                        ["unknown", "don't know", "clarification", "not available"]),
+                "weight": 0.15,
+                "description": "Template handles unknown or unclear queries"
+            },
+            "response_structure": {
+                "check": lambda text: any(keyword in text.lower() for keyword in 
+                                        ["format", "structure", "organize", "sections"]),
+                "weight": 0.10,
+                "description": "Template provides response formatting guidance"
+            },
+            "appropriate_length": {
+                "check": lambda text: 100 <= len(text) <= 2000,
+                "weight": 0.10,
+                "description": "Template length is appropriate (100-2000 characters)"  
+            }
+        }
+    
+    def get_prompts(self) -> List[Dict[str, Any]]:
+        """Retrieve all prompts from the flow"""
+        response = requests.get(
+            f"{self.base_url}/prompts",
+            headers={"Authorization": f"Bearer {self.api_token}"}
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def validate_prompt_compliance(self, prompt: Dict[str, Any]) -> PromptComplianceResult:
+        """Validate a single prompt against compliance criteria"""
+        template_id = prompt.get("id", "")
+        template_name = prompt.get("name", "Unnamed")
+        template_text = prompt.get("text", "")
+        
+        passed_checks = []
+        failed_checks = []
+        compliance_score = 0.0
+        recommendations = []
+        
+        for criterion_name, criterion in self.compliance_criteria.items():
+            if criterion["check"](template_text):
+                passed_checks.append(criterion_name)
+                compliance_score += criterion["weight"]
+            else:
+                failed_checks.append(criterion_name)
+                recommendations.append(f"Add {criterion['description'].lower()}")
+        
+        # Additional specific recommendations
+        if "context_integration" in failed_checks:
+            recommendations.append("Include '{context}' placeholder in your template")
+        
+        if "anti_hallucination" in failed_checks:
+            recommendations.append("Add instruction to use only provided context, not LLM knowledge")
+        
+        if len(template_text) < 100:
+            recommendations.append("Expand template with more detailed instructions")
+        elif len(template_text) > 2000:
+            recommendations.append("Consider simplifying template for better clarity")
+        
+        return PromptComplianceResult(
+            template_id=template_id,
+            template_name=template_name,
+            compliance_score=compliance_score,
+            passed_checks=passed_checks,
+            failed_checks=failed_checks,
+            recommendations=recommendations
+        )
+    
+    def validate_all_prompts(self) -> Dict[str, Any]:
+        """Validate all prompts and generate compliance report"""
+        prompts = self.get_prompts()
+        
+        validation_results = []
+        total_score = 0.0
+        
+        for prompt in prompts:
+            result = self.validate_prompt_compliance(prompt)
+            validation_results.append(result)
+            total_score += result.compliance_score
+        
+        avg_compliance = total_score / len(prompts) if prompts else 0
+        
+        # Categorize results
+        excellent = [r for r in validation_results if r.compliance_score >= 0.8]
+        good = [r for r in validation_results if 0.6 <= r.compliance_score < 0.8]
+        needs_improvement = [r for r in validation_results if r.compliance_score < 0.6]
+        
+        return {
+            "summary": {
+                "total_prompts": len(prompts),
+                "average_compliance": avg_compliance,
+                "excellent_count": len(excellent),
+                "good_count": len(good),
+                "needs_improvement_count": len(needs_improvement)
+            },
+            "results": validation_results,
+            "excellent": excellent,
+            "good": good,
+            "needs_improvement": needs_improvement
+        }
+    
+    def print_compliance_report(self, report: Dict[str, Any]):
+        """Print formatted compliance report"""
+        summary = report["summary"]
+        
+        print("🔍 Prompt Template Compliance Report")
+        print("=" * 50)
+        print(f"Flow: {self.flow_name}")
+        print(f"Total Templates: {summary['total_prompts']}")
+        print(f"Average Compliance Score: {summary['average_compliance']:.2f}/1.0")
+        
+        print(f"\n📊 Compliance Distribution:")
+        print(f"   🟢 Excellent (≥0.8): {summary['excellent_count']} templates")
+        print(f"   🟡 Good (0.6-0.79): {summary['good_count']} templates")
+        print(f"   🔴 Needs Improvement (<0.6): {summary['needs_improvement_count']} templates")
+        
+        # Detail each template
+        print(f"\n📋 Template Details:")
+        print("-" * 40)
+        
+        for result in report["results"]:
+            score_icon = "🟢" if result.compliance_score >= 0.8 else \
+                        "🟡" if result.compliance_score >= 0.6 else "🔴"
+            
+            print(f"\n{score_icon} {result.template_name}")
+            print(f"   ID: {result.template_id}")
+            print(f"   Compliance Score: {result.compliance_score:.2f}/1.0")
+            
+            if result.passed_checks:
+                print(f"   ✅ Passed: {', '.join(result.passed_checks)}")
+            
+            if result.failed_checks:
+                print(f"   ❌ Failed: {', '.join(result.failed_checks)}")
+            
+            if result.recommendations:
+                print(f"   💡 Recommendations:")
+                for rec in result.recommendations:
+                    print(f"      - {rec}")
+        
+        # Global recommendations
+        if summary['needs_improvement_count'] > 0:
+            print(f"\n🎯 Priority Actions:")
+            print(f"   - Focus on templates with compliance score < 0.6")
+            print(f"   - Ensure all templates include context integration")
+            print(f"   - Add anti-hallucination instructions to maintain accuracy")
+
+# Usage
+validator = PromptComplianceValidator("my-rag-pipeline", "YOUR_API_TOKEN")
+try:
+    report = validator.validate_all_prompts()
+    validator.print_compliance_report(report)
+except Exception as e:
+    print(f"Compliance validation failed: {e}")
+```
+
+## Best Practices
+
+### Prompt Engineering Excellence
+
+- **Context Integration**: Always include `{context}` placeholder for RAG functionality
+- **Clear Instructions**: Provide specific, actionable guidelines for LLM behavior
+- **Anti-Hallucination**: Include explicit instructions to use only provided context
+- **Error Handling**: Define behavior for unknown or ambiguous queries
+
+### Template Organization
+
+- **Naming Conventions**: Use descriptive names that indicate template purpose and scope
+- **Categorization**: Organize templates by use case (technical, support, general, etc.)
+- **Version Control**: Maintain template versions for iterative improvements
+- **Documentation**: Document template purposes and optimization rationales
+
+### Performance Optimization
+
+- **Length Balance**: Optimize template length for clarity without overwhelming the LLM
+- **Instruction Clarity**: Use precise language to minimize ambiguous interpretations
+- **Response Structure**: Provide formatting guidelines for consistent output
+- **Testing**: Regularly test templates with representative queries
+
+### Quality Assurance
+
+- **Compliance Validation**: Regularly audit templates against quality criteria
+- **Performance Monitoring**: Track response quality metrics for template effectiveness
+- **User Feedback**: Incorporate user feedback for continuous template improvement
+- **A/B Testing**: Compare template variants to optimize performance
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="exclamation-triangle" title="Flow Not Found Error">
+    **Solution**: Verify that:
+    - The flow name in the URL is correct and matches exactly
+    - The flow exists in your project
+    - Your API token has access to the correct project
+    - The flow has been created and saved properly
+  </Accordion>
+  
+  <Accordion icon="list" title="Empty Prompts Array">
+    **Solution**: If no prompts are returned:
+    - Verify that the system default prompt should always be present
+    - Check for API configuration issues affecting prompt service
+    - Ensure the dataset has proper access to prompt templates
+    - Contact support if default prompt is missing
+  </Accordion>
+  
+  <Accordion icon="file-text" title="Template Content Issues">
+    **Solution**: If templates have formatting or content problems:
+    - Verify template text encoding and special characters
+    - Check for proper placeholder syntax (`{context}`)
+    - Ensure template structure follows expected formats
+    - Validate that custom templates were created correctly
+  </Accordion>
+  
+  <Accordion icon="cog" title="Missing Context Integration">
+    **Solution**: If templates lack RAG context capability:
+    - Ensure templates include `{context}` placeholder
+    - Verify that context integration instructions are present
+    - Check that templates are designed for RAG workflows
+    - Update templates to include proper context handling
+  </Accordion>
+  
+  <Accordion icon="shield" title="LLM Hallucination Issues">
+    **Solution**: If LLM generates responses without using context:
+    - Add explicit anti-hallucination instructions to templates
+    - Include phrases like "use only the provided context"
+    - Emphasize that LLM should not use internal knowledge
+    - Test templates with queries that require context-only responses
+  </Accordion>
+  
+  <Accordion icon="wifi" title="Connection Issues">
+    **Solution**: For connectivity problems:
+    - Check your internet connection
+    - Verify the flow URL is accessible
+    - Ensure your firewall allows HTTPS traffic to *.flows.graphorlm.com
+    - Try accessing the endpoint from a different network
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After retrieving prompt templates, you might want to:
+
+<CardGroup cols={2}>
+  <Card
+    title="Update LLM Configuration"
+    icon="sliders"
+    href="/api-reference/flows/llm/update"
+  >
+    Configure LLM nodes to use specific prompt templates for response generation
+  </Card>
+  <Card
+    title="List LLM Nodes"
+    icon="robot"
+    href="/api-reference/flows/llm/list"
+  >
+    View LLM nodes and their current prompt template configurations
+  </Card>
+  <Card
+    title="Create Custom Prompts"
+    icon="plus"
+    href="/api-reference/prompts/create"
+  >
+    Design and create custom prompt templates for specialized use cases
+  </Card>
+  <Card
+    title="Flow Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
+  >
+    Learn about all available flow management endpoints
+  </Card>
+</CardGroup>

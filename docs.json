@@ -119,6 +119,15 @@
                   "api-reference/flows/raptor-rag/list",
                   "api-reference/flows/raptor-rag/update"
                 ]
+              },
+              {
+                "group": "LLM",
+                "pages": [
+                  "api-reference/flows/llm/overview",
+                  "api-reference/flows/llm/list",
+                  "api-reference/flows/llm/update",
+                  "api-reference/flows/llm/list-prompts"
+                ]
               }
             ]
           }
