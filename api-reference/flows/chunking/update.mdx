@@ -1,0 +1,1093 @@
+---
+title: 'Update Chunking Configuration'
+description: 'Modify chunking node configurations in flows via the GraphorLM REST API'
+---
+
+Update the configuration of a specific chunking node within a flow in your GraphorLM project. This endpoint allows you to modify chunking parameters like embedding models, splitter types, chunk sizes, and overlap settings, automatically marking the node for reprocessing.
+
+## Overview
+
+The Update Chunking Configuration endpoint allows you to modify the configuration of chunking nodes within your flows. Chunking nodes are responsible for splitting documents into smaller pieces and generating embeddings, making this endpoint crucial for optimizing your RAG pipeline performance.
+
+- **Method**: `PATCH`
+- **URL**: `https://{flow_name}.flows.graphorlm.com/chunking/{node_id}`
+- **Authentication**: Required (API Token)
+
+## Authentication
+
+All requests must include a valid API token in the Authorization header:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+| `Content-Type` | `application/json` | Yes |
+
+### URL Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `flow_name` | string | Yes | The name of the flow containing the chunking node |
+| `node_id` | string | Yes | The unique identifier of the chunking node to update |
+
+### Request Body
+
+The request body should be a JSON object with the following structure:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `config` | object | Yes | The new configuration for the chunking node |
+| `config.embeddingModel` | string | No | Embedding model to use (e.g., "text-embedding-3-small", "colqwen") |
+| `config.chunkingSplitter` | string | Yes | Type of splitter: "character", "token", "semantic", "title", or "element" |
+| `config.chunkSize` | integer | No | Size of each chunk in characters or tokens |
+| `config.chunkOverlap` | integer | No | Number of characters/tokens that overlap between chunks (default: 0) |
+| `config.chunkSeparator` | string | No | Text separator used for splitting (default: "\n\n") |
+| `config.splitLevel` | integer | No | Split level for hierarchical splitters (default: 0) |
+| `config.elementsToRemove` | array | No | List of document elements to remove during processing |
+
+### Example Request
+
+```bash
+PATCH https://my-rag-pipeline.flows.graphorlm.com/chunking/chunking-1748287628685
+Authorization: Bearer YOUR_API_TOKEN
+Content-Type: application/json
+```
+
+```json
+{
+  "config": {
+    "embeddingModel": "text-embedding-3-small",
+    "chunkingSplitter": "character",
+    "chunkSize": 1000,
+    "chunkOverlap": 200,
+    "chunkSeparator": "\n\n",
+    "splitLevel": 0,
+    "elementsToRemove": ["Header", "Footer"]
+  }
+}
+```
+
+## Response Format
+
+### Success Response (200 OK)
+
+The response contains confirmation of the successful update:
+
+```json
+{
+  "success": true,
+  "message": "Chunking node 'chunking-1748287628685' updated successfully",
+  "node_id": "chunking-1748287628685"
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Whether the update operation was successful |
+| `message` | string | Descriptive message about the operation result |
+| `node_id` | string | The ID of the updated chunking node |
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+async function updateChunkingNode(flowName, nodeId, config, apiToken) {
+  const response = await fetch(`https://${flowName}.flows.graphorlm.com/chunking/${nodeId}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      config: config
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+// Usage examples
+const chunkingConfigs = {
+  // High-performance chunking for large documents
+  largeDocuments: {
+    embeddingModel: "text-embedding-3-large",
+    chunkingSplitter: "semantic",
+    chunkSize: 1500,
+    chunkOverlap: 300,
+    chunkSeparator: "\n\n",
+    elementsToRemove: ["Header", "Footer", "PageNumber"]
+  },
+
+  // Fast processing for smaller documents
+  quickProcessing: {
+    embeddingModel: "text-embedding-3-small",
+    chunkingSplitter: "character",
+    chunkSize: 800,
+    chunkOverlap: 100,
+    chunkSeparator: "\n",
+    elementsToRemove: ["Header", "Footer"]
+  },
+
+  // Specialized configuration for code documentation
+  codeDocumentation: {
+    embeddingModel: "text-embedding-3-small",
+    chunkingSplitter: "element",
+    chunkSize: 2000,
+    chunkOverlap: 0,
+    splitLevel: 1,
+    elementsToRemove: ["NarrativeText"]
+  }
+};
+
+// Update chunking node with optimized configuration
+updateChunkingNode(
+  'my-rag-pipeline',
+  'chunking-1748287628685',
+  chunkingConfigs.largeDocuments,
+  'YOUR_API_TOKEN'
+)
+  .then(result => {
+    console.log('Chunking configuration updated:', result);
+    console.log(`Node ${result.node_id} updated successfully`);
+    console.log(`Message: ${result.message}`);
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+### Python
+
+```python
+import requests
+import json
+
+def update_chunking_node(flow_name, node_id, config, api_token):
+    url = f"https://{flow_name}.flows.graphorlm.com/chunking/{node_id}"
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "config": config
+    }
+    
+    response = requests.patch(url, headers=headers, json=payload)
+    response.raise_for_status()
+    
+    return response.json()
+
+def optimize_chunking_configuration(flow_name, node_id, api_token, optimization_type="balanced"):
+    """
+    Apply optimized chunking configurations based on use case
+    """
+    
+    # Predefined optimization configurations
+    optimizations = {
+        "balanced": {
+            "embeddingModel": "text-embedding-3-small",
+            "chunkingSplitter": "character",
+            "chunkSize": 1000,
+            "chunkOverlap": 150,
+            "chunkSeparator": "\n\n",
+            "elementsToRemove": ["Header", "Footer"]
+        },
+        "high_quality": {
+            "embeddingModel": "text-embedding-3-large",
+            "chunkingSplitter": "semantic", 
+            "chunkSize": 1200,
+            "chunkOverlap": 200,
+            "chunkSeparator": "\n\n",
+            "elementsToRemove": ["Header", "Footer", "PageNumber"]
+        },
+        "fast_processing": {
+            "embeddingModel": "text-embedding-3-small",
+            "chunkingSplitter": "character",
+            "chunkSize": 800,
+            "chunkOverlap": 80,
+            "chunkSeparator": "\n",
+            "elementsToRemove": ["Header", "Footer"]
+        },
+        "academic_papers": {
+            "embeddingModel": "text-embedding-3-large",
+            "chunkingSplitter": "semantic",
+            "chunkSize": 1500,
+            "chunkOverlap": 300,
+            "chunkSeparator": "\n\n",
+            "splitLevel": 1,
+            "elementsToRemove": ["Header", "Footer", "PageNumber", "Reference"]
+        },
+        "code_docs": {
+            "embeddingModel": "text-embedding-3-small",
+            "chunkingSplitter": "element",
+            "chunkSize": 2000,
+            "chunkOverlap": 0,
+            "splitLevel": 2,
+            "elementsToRemove": ["NarrativeText"]
+        }
+    }
+    
+    if optimization_type not in optimizations:
+        raise ValueError(f"Unknown optimization type: {optimization_type}")
+    
+    config = optimizations[optimization_type]
+    
+    print(f"🔧 Applying {optimization_type} optimization to chunking node {node_id}")
+    print(f"Configuration: {json.dumps(config, indent=2)}")
+    
+    try:
+        result = update_chunking_node(flow_name, node_id, config, api_token)
+        
+        print("✅ Chunking configuration updated successfully!")
+        print(f"Success: {result['success']}")
+        print(f"Message: {result['message']}")
+        print(f"Updated Node ID: {result['node_id']}")
+        
+        # Display applied configuration
+        print(f"\n📊 Applied Configuration:")
+        print(f"   Embedding Model: {config['embeddingModel']}")
+        print(f"   Splitter Type: {config['chunkingSplitter']}")
+        print(f"   Chunk Size: {config['chunkSize']}")
+        print(f"   Chunk Overlap: {config['chunkOverlap']}")
+        print(f"   Elements to Remove: {', '.join(config.get('elementsToRemove', []))}")
+        
+        return result
+        
+    except requests.exceptions.HTTPError as e:
+        print(f"❌ Update failed: {e}")
+        if e.response.status_code == 404:
+            print("Flow or chunking node not found")
+        elif e.response.status_code == 400:
+            print("Invalid configuration parameters")
+        raise
+
+def batch_update_chunking_configurations(flow_name, api_token, node_configs):
+    """
+    Update multiple chunking nodes with different configurations
+    """
+    results = {
+        "successful_updates": [],
+        "failed_updates": [],
+        "total_nodes": len(node_configs)
+    }
+    
+    for node_id, config in node_configs.items():
+        try:
+            print(f"\n🔄 Updating node {node_id}...")
+            result = update_chunking_node(flow_name, node_id, config, api_token)
+            results["successful_updates"].append({
+                "node_id": node_id,
+                "config": config,
+                "result": result
+            })
+            print(f"✅ Success: {result['message']}")
+            
+        except Exception as e:
+            error_info = {
+                "node_id": node_id,
+                "config": config,
+                "error": str(e)
+            }
+            results["failed_updates"].append(error_info)
+            print(f"❌ Failed: {e}")
+    
+    return results
+
+# Usage examples
+try:
+    # Single node optimization
+    result = optimize_chunking_configuration(
+        flow_name="my-rag-pipeline",
+        node_id="chunking-1748287628685",
+        api_token="YOUR_API_TOKEN",
+        optimization_type="high_quality"
+    )
+    
+    # Batch configuration update
+    node_configs = {
+        "chunking-node-1": {
+            "embeddingModel": "text-embedding-3-small",
+            "chunkingSplitter": "character",
+            "chunkSize": 1000,
+            "chunkOverlap": 150
+        },
+        "chunking-node-2": {
+            "embeddingModel": "text-embedding-3-large",
+            "chunkingSplitter": "semantic",
+            "chunkSize": 1200,
+            "chunkOverlap": 200
+        }
+    }
+    
+    batch_results = batch_update_chunking_configurations(
+        "my-rag-pipeline",
+        "YOUR_API_TOKEN", 
+        node_configs
+    )
+    
+    print(f"\n📈 Batch Update Summary:")
+    print(f"Successful: {len(batch_results['successful_updates'])}")
+    print(f"Failed: {len(batch_results['failed_updates'])}")
+    
+except Exception as e:
+    print(f"Error: {e}")
+```
+
+### cURL
+
+```bash
+# Basic chunking configuration update
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/chunking/chunking-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "embeddingModel": "text-embedding-3-small",
+      "chunkingSplitter": "character",
+      "chunkSize": 1000,
+      "chunkOverlap": 200,
+      "chunkSeparator": "\n\n",
+      "elementsToRemove": ["Header", "Footer"]
+    }
+  }'
+
+# High-performance configuration for large documents
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/chunking/chunking-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "embeddingModel": "text-embedding-3-large",
+      "chunkingSplitter": "semantic",
+      "chunkSize": 1500,
+      "chunkOverlap": 300,
+      "splitLevel": 1,
+      "elementsToRemove": ["Header", "Footer", "PageNumber"]
+    }
+  }'
+
+# Fast processing configuration
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/chunking/chunking-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "embeddingModel": "text-embedding-3-small",
+      "chunkingSplitter": "character",
+      "chunkSize": 800,
+      "chunkOverlap": 80,
+      "chunkSeparator": "\n"
+    }
+  }'
+
+# Specialized configuration for code documentation
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/chunking/chunking-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "embeddingModel": "text-embedding-3-small",
+      "chunkingSplitter": "element",
+      "chunkSize": 2000,
+      "chunkOverlap": 0,
+      "splitLevel": 2,
+      "elementsToRemove": ["NarrativeText"]
+    }
+  }'
+```
+
+### PHP
+
+```php
+<?php
+function updateChunkingNode($flowName, $nodeId, $config, $apiToken) {
+    $url = "https://{$flowName}.flows.graphorlm.com/chunking/{$nodeId}";
+    
+    $data = [
+        'config' => $config
+    ];
+    
+    $options = [
+        'http' => [
+            'header' => [
+                "Authorization: Bearer {$apiToken}",
+                "Content-Type: application/json"
+            ],
+            'method' => 'PATCH',
+            'content' => json_encode($data)
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    
+    if ($result === FALSE) {
+        throw new Exception('Failed to update chunking node');
+    }
+    
+    return json_decode($result, true);
+}
+
+function getOptimizedChunkingConfig($optimizationType) {
+    $optimizations = [
+        'balanced' => [
+            'embeddingModel' => 'text-embedding-3-small',
+            'chunkingSplitter' => 'character',
+            'chunkSize' => 1000,
+            'chunkOverlap' => 150,
+            'chunkSeparator' => "\n\n",
+            'elementsToRemove' => ['Header', 'Footer']
+        ],
+        'high_quality' => [
+            'embeddingModel' => 'text-embedding-3-large',
+            'chunkingSplitter' => 'semantic',
+            'chunkSize' => 1200,
+            'chunkOverlap' => 200,
+            'chunkSeparator' => "\n\n",
+            'elementsToRemove' => ['Header', 'Footer', 'PageNumber']
+        ],
+        'fast_processing' => [
+            'embeddingModel' => 'text-embedding-3-small',
+            'chunkingSplitter' => 'character',
+            'chunkSize' => 800,
+            'chunkOverlap' => 80,
+            'chunkSeparator' => "\n",
+            'elementsToRemove' => ['Header', 'Footer']
+        ],
+        'academic_papers' => [
+            'embeddingModel' => 'text-embedding-3-large',
+            'chunkingSplitter' => 'semantic',
+            'chunkSize' => 1500,
+            'chunkOverlap' => 300,
+            'splitLevel' => 1,
+            'elementsToRemove' => ['Header', 'Footer', 'PageNumber', 'Reference']
+        ]
+    ];
+    
+    if (!isset($optimizations[$optimizationType])) {
+        throw new Exception("Unknown optimization type: {$optimizationType}");
+    }
+    
+    return $optimizations[$optimizationType];
+}
+
+function optimizeChunkingConfiguration($flowName, $nodeId, $optimizationType, $apiToken) {
+    echo "🔧 Applying {$optimizationType} optimization to chunking node {$nodeId}\n";
+    
+    $config = getOptimizedChunkingConfig($optimizationType);
+    
+    echo "Configuration:\n";
+    echo "  Embedding Model: {$config['embeddingModel']}\n";
+    echo "  Splitter Type: {$config['chunkingSplitter']}\n"; 
+    echo "  Chunk Size: {$config['chunkSize']}\n";
+    echo "  Chunk Overlap: {$config['chunkOverlap']}\n";
+    
+    if (isset($config['elementsToRemove'])) {
+        echo "  Elements to Remove: " . implode(', ', $config['elementsToRemove']) . "\n";
+    }
+    
+    try {
+        $result = updateChunkingNode($flowName, $nodeId, $config, $apiToken);
+        
+        echo "✅ Chunking configuration updated successfully!\n";
+        echo "Success: " . ($result['success'] ? 'true' : 'false') . "\n";
+        echo "Message: {$result['message']}\n";
+        echo "Updated Node ID: {$result['node_id']}\n";
+        
+        return $result;
+        
+    } catch (Exception $e) {
+        echo "❌ Failed: " . $e->getMessage() . "\n";
+        throw $e;
+    }
+}
+
+function batchUpdateChunkingNodes($flowName, $nodeConfigs, $apiToken) {
+    $results = [
+        'successful_updates' => [],
+        'failed_updates' => [],
+        'total_nodes' => count($nodeConfigs)
+    ];
+    
+    foreach ($nodeConfigs as $nodeId => $config) {
+        echo "\n🔄 Updating node {$nodeId}...\n";
+        
+        try {
+            $result = updateChunkingNode($flowName, $nodeId, $config, $apiToken);
+            $results['successful_updates'][] = [
+                'node_id' => $nodeId,
+                'config' => $config,
+                'result' => $result
+            ];
+            echo "✅ Success: {$result['message']}\n";
+            
+        } catch (Exception $e) {
+            $results['failed_updates'][] = [
+                'node_id' => $nodeId,
+                'config' => $config,
+                'error' => $e->getMessage()
+            ];
+            echo "❌ Failed: " . $e->getMessage() . "\n";
+        }
+        
+        // Small delay between updates
+        sleep(1);
+    }
+    
+    return $results;
+}
+
+// Usage examples
+try {
+    // Single node optimization
+    $result = optimizeChunkingConfiguration(
+        'my-rag-pipeline',
+        'chunking-1748287628685',
+        'high_quality',
+        'YOUR_API_TOKEN'
+    );
+    
+    // Batch update example
+    $nodeConfigs = [
+        'chunking-node-1' => [
+            'embeddingModel' => 'text-embedding-3-small',
+            'chunkingSplitter' => 'character',
+            'chunkSize' => 1000,
+            'chunkOverlap' => 150
+        ],
+        'chunking-node-2' => [
+            'embeddingModel' => 'text-embedding-3-large',
+            'chunkingSplitter' => 'semantic',
+            'chunkSize' => 1200,
+            'chunkOverlap' => 200
+        ]
+    ];
+    
+    $batchResults = batchUpdateChunkingNodes(
+        'my-rag-pipeline',
+        $nodeConfigs,
+        'YOUR_API_TOKEN'
+    );
+    
+    echo "\n📈 Batch Update Summary:\n";
+    echo "Successful: " . count($batchResults['successful_updates']) . "\n";
+    echo "Failed: " . count($batchResults['failed_updates']) . "\n";
+    
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+}
+?>
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Description | Example Response |
+|-------------|-------------|------------------|
+| 400 | Bad Request - Invalid configuration parameters | `{"detail": "Chunk size must be greater than zero for character splitter"}` |
+| 401 | Unauthorized - Invalid or missing API token | `{"detail": "Invalid authentication credentials"}` |
+| 404 | Not Found - Flow or chunking node not found | `{"detail": "Chunking node with id 'invalid-node' not found in flow 'my-flow'"}` |
+| 500 | Internal Server Error - Server error | `{"detail": "Failed to update chunking node"}` |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+### Example Error Responses
+
+#### Invalid Chunk Size
+```json
+{
+  "detail": "Chunk size must be greater than zero for character splitter"
+}
+```
+
+#### Invalid Splitter Type
+```json
+{
+  "detail": "Invalid splitter type: invalid_splitter"
+}
+```
+
+#### Chunking Node Not Found
+```json
+{
+  "detail": "Chunking node with id 'chunking-invalid' not found in flow 'my-rag-pipeline'"
+}
+```
+
+#### Flow Not Found
+```json
+{
+  "detail": "Flow with name 'nonexistent-flow' not found"
+}
+```
+
+#### Invalid Configuration
+```json
+{
+  "detail": "Chunk overlap cannot be greater than or equal to chunk size"
+}
+```
+
+## Update Behavior
+
+### Node Status Changes
+
+When you update a chunking node:
+
+1. **Configuration Updated**: The node's chunking parameters are replaced with the new configuration
+2. **Status Reset**: The node is marked as `"updated": false` to indicate it needs reprocessing
+3. **Successor Nodes**: All downstream nodes in the flow are also marked as needing updates
+4. **Flow State**: The flow maintains its deployed status but requires redeployment to apply changes
+
+### Configuration Validation
+
+The endpoint validates that:
+- Chunk size is appropriate for the selected splitter type
+- Chunk overlap is less than chunk size
+- Splitter type is one of: "character", "token", "semantic", "title", "element"
+- Split level is non-negative when specified
+- Embedding model is supported
+
+## Integration Examples
+
+### Chunking Configuration Manager
+
+```javascript
+class ChunkingConfigManager {
+  constructor(flowName, apiToken) {
+    this.flowName = flowName;
+    this.apiToken = apiToken;
+    this.baseUrl = `https://${flowName}.flows.graphorlm.com`;
+  }
+
+  async getCurrentNodes() {
+    const response = await fetch(`${this.baseUrl}/chunking`, {
+      headers: { 'Authorization': `Bearer ${this.apiToken}` }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get chunking nodes: ${response.status}`);
+    }
+
+    return await response.json();
+  }
+
+  async updateNode(nodeId, config) {
+    const response = await fetch(`${this.baseUrl}/chunking/${nodeId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${this.apiToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ config })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`Update failed: ${error.detail}`);
+    }
+
+    return await response.json();
+  }
+
+  async optimizeForDocumentType(nodeId, documentType) {
+    const optimizations = {
+      'academic_papers': {
+        embeddingModel: 'text-embedding-3-large',
+        chunkingSplitter: 'semantic',
+        chunkSize: 1500,
+        chunkOverlap: 300,
+        chunkSeparator: '\n\n',
+        elementsToRemove: ['Header', 'Footer', 'PageNumber', 'Reference']
+      },
+      'technical_docs': {
+        embeddingModel: 'text-embedding-3-small',
+        chunkingSplitter: 'element',
+        chunkSize: 2000,
+        chunkOverlap: 100,
+        splitLevel: 1,
+        elementsToRemove: ['Header', 'Footer']
+      },
+      'general_content': {
+        embeddingModel: 'text-embedding-3-small',
+        chunkingSplitter: 'character',
+        chunkSize: 1000,
+        chunkOverlap: 150,
+        chunkSeparator: '\n\n',
+        elementsToRemove: ['Header', 'Footer']
+      },
+      'code_documentation': {
+        embeddingModel: 'text-embedding-3-small',
+        chunkingSplitter: 'element',
+        chunkSize: 2000,
+        chunkOverlap: 0,
+        splitLevel: 2,
+        elementsToRemove: ['NarrativeText']
+      }
+    };
+
+    if (!optimizations[documentType]) {
+      throw new Error(`Unknown document type: ${documentType}`);
+    }
+
+    console.log(`Optimizing node ${nodeId} for ${documentType}`);
+    return await this.updateNode(nodeId, optimizations[documentType]);
+  }
+
+  async adjustChunkSize(nodeId, sizeAdjustment) {
+    const nodes = await this.getCurrentNodes();
+    const targetNode = nodes.find(node => node.id === nodeId);
+    
+    if (!targetNode) {
+      throw new Error(`Chunking node ${nodeId} not found`);
+    }
+
+    const currentConfig = targetNode.data.config;
+    const currentSize = currentConfig.chunkSize || 1000;
+    const newSize = Math.max(100, currentSize + sizeAdjustment); // Minimum 100
+
+    console.log(`Adjusting chunk size from ${currentSize} to ${newSize}`);
+
+    const updatedConfig = {
+      ...currentConfig,
+      chunkSize: newSize,
+      chunkOverlap: Math.min(currentConfig.chunkOverlap || 0, Math.floor(newSize * 0.3))
+    };
+
+    return await this.updateNode(nodeId, updatedConfig);
+  }
+
+  async benchmarkConfigurations(nodeId, configurations) {
+    const results = [];
+    
+    for (const [name, config] of Object.entries(configurations)) {
+      console.log(`Testing configuration: ${name}`);
+      
+      try {
+        const startTime = Date.now();
+        const result = await this.updateNode(nodeId, config);
+        const updateTime = Date.now() - startTime;
+        
+        results.push({
+          name,
+          config,
+          success: true,
+          updateTime,
+          result
+        });
+        
+        console.log(`✅ ${name} - Updated in ${updateTime}ms`);
+        
+        // Wait between tests
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+      } catch (error) {
+        results.push({
+          name,
+          config,
+          success: false,
+          error: error.message
+        });
+        
+        console.log(`❌ ${name} - Failed: ${error.message}`);
+      }
+    }
+    
+    return results;
+  }
+}
+
+// Usage
+const manager = new ChunkingConfigManager('my-rag-pipeline', 'YOUR_API_TOKEN');
+
+// Optimize for different document types
+manager.optimizeForDocumentType('chunking-node-1', 'academic_papers')
+  .then(result => console.log('Optimized for academic papers:', result))
+  .catch(console.error);
+
+// Adjust chunk size
+manager.adjustChunkSize('chunking-node-1', 200) // Increase by 200
+  .then(result => console.log('Chunk size adjusted:', result))
+  .catch(console.error);
+```
+
+### Performance Testing Tool
+
+```python
+import requests
+import time
+from typing import Dict, List, Any
+import asyncio
+
+class ChunkingPerformanceTester:
+    def __init__(self, flow_name: str, api_token: str):
+        self.flow_name = flow_name
+        self.api_token = api_token
+        self.base_url = f"https://{flow_name}.flows.graphorlm.com"
+        
+    def update_chunking_node(self, node_id: str, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Update a single chunking node configuration"""
+        response = requests.patch(
+            f"{self.base_url}/chunking/{node_id}",
+            headers={
+                "Authorization": f"Bearer {self.api_token}",
+                "Content-Type": "application/json"
+            },
+            json={"config": config}
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def test_configuration_performance(self, node_id: str, configurations: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Test different chunking configurations for performance
+        """
+        results = {
+            "node_id": node_id,
+            "tests": [],
+            "best_config": None,
+            "fastest_update": None
+        }
+        
+        fastest_time = float('inf')
+        
+        for config_name, config in configurations.items():
+            print(f"🔄 Testing configuration: {config_name}")
+            
+            try:
+                start_time = time.time()
+                result = self.update_chunking_node(node_id, config)
+                update_time = time.time() - start_time
+                
+                test_result = {
+                    "config_name": config_name,
+                    "config": config,
+                    "success": True,
+                    "update_time": update_time,
+                    "result": result
+                }
+                
+                results["tests"].append(test_result)
+                
+                if update_time < fastest_time:
+                    fastest_time = update_time
+                    results["fastest_update"] = test_result
+                
+                print(f"✅ {config_name} - Updated in {update_time:.2f}s")
+                
+                # Wait between tests to avoid rate limiting
+                time.sleep(1)
+                
+            except Exception as e:
+                test_result = {
+                    "config_name": config_name,
+                    "config": config,
+                    "success": False,
+                    "error": str(e)
+                }
+                
+                results["tests"].append(test_result)
+                print(f"❌ {config_name} - Failed: {e}")
+        
+        return results
+    
+    def generate_performance_report(self, test_results: Dict[str, Any]) -> str:
+        """Generate a comprehensive performance report"""
+        report = []
+        report.append("📊 Chunking Configuration Performance Report")
+        report.append("=" * 50)
+        report.append(f"Node ID: {test_results['node_id']}")
+        report.append(f"Total Tests: {len(test_results['tests'])}")
+        
+        successful_tests = [t for t in test_results['tests'] if t['success']]
+        failed_tests = [t for t in test_results['tests'] if not t['success']]
+        
+        report.append(f"Successful: {len(successful_tests)}")
+        report.append(f"Failed: {len(failed_tests)}")
+        
+        if test_results['fastest_update']:
+            fastest = test_results['fastest_update']
+            report.append(f"\n⚡ Fastest Configuration: {fastest['config_name']}")
+            report.append(f"Update Time: {fastest['update_time']:.2f}s")
+        
+        report.append(f"\n📋 Test Details:")
+        report.append("-" * 30)
+        
+        for test in test_results['tests']:
+            if test['success']:
+                report.append(f"✅ {test['config_name']}: {test['update_time']:.2f}s")
+                config = test['config']
+                report.append(f"   Model: {config.get('embeddingModel', 'N/A')}")
+                report.append(f"   Splitter: {config.get('chunkingSplitter', 'N/A')}")
+                report.append(f"   Size: {config.get('chunkSize', 'N/A')}")
+                report.append(f"   Overlap: {config.get('chunkOverlap', 'N/A')}")
+            else:
+                report.append(f"❌ {test['config_name']}: {test['error']}")
+            report.append("")
+        
+        return "\n".join(report)
+
+# Usage
+tester = ChunkingPerformanceTester("my-rag-pipeline", "YOUR_API_TOKEN")
+
+# Define test configurations
+test_configurations = {
+    "small_fast": {
+        "embeddingModel": "text-embedding-3-small",
+        "chunkingSplitter": "character",
+        "chunkSize": 500,
+        "chunkOverlap": 50
+    },
+    "medium_balanced": {
+        "embeddingModel": "text-embedding-3-small",
+        "chunkingSplitter": "character",
+        "chunkSize": 1000,
+        "chunkOverlap": 150
+    },
+    "large_semantic": {
+        "embeddingModel": "text-embedding-3-large",
+        "chunkingSplitter": "semantic",
+        "chunkSize": 1500,
+        "chunkOverlap": 300
+    }
+}
+
+try:
+    results = tester.test_configuration_performance(
+        "chunking-1748287628685",
+        test_configurations
+    )
+    
+    report = tester.generate_performance_report(results)
+    print(report)
+    
+except Exception as e:
+    print(f"Performance testing failed: {e}")
+```
+
+## Best Practices
+
+### Configuration Optimization
+
+- **Chunk Size Selection**: Choose 500-2000 characters for most use cases; larger chunks for context-heavy tasks
+- **Overlap Strategy**: Use 10-20% overlap to maintain context; higher overlap for critical applications
+- **Embedding Model Choice**: Balance quality vs. speed; use larger models for better accuracy
+- **Splitter Selection**: Use "semantic" for better content preservation, "character" for speed
+
+### Performance Tuning
+
+- **Document Type Matching**: Tailor configurations to your specific document types
+- **Resource Monitoring**: Monitor processing time and adjust parameters accordingly
+- **Batch Processing**: Consider processing implications when setting chunk sizes
+- **Memory Usage**: Larger chunks and overlaps increase memory requirements
+
+### Configuration Management
+
+- **Version Control**: Track configuration changes for rollback capabilities
+- **A/B Testing**: Test different configurations to find optimal settings
+- **Monitoring**: Regularly check processing performance and adjust as needed
+- **Documentation**: Document configuration choices and their rationale
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="exclamation-triangle" title="Invalid Chunk Size Error">
+    **Solution**: Ensure chunk size is appropriate for the splitter type:
+    - Character and token splitters require chunk size > 0
+    - Semantic splitters can work with larger chunks (800-2000)
+    - Element splitters may not require specific chunk sizes
+    - Consider your content type when setting sizes
+  </Accordion>
+  
+  <Accordion icon="overlap" title="Chunk Overlap Issues">
+    **Solution**: Validate overlap settings:
+    - Overlap must be less than chunk size
+    - Recommended overlap is 10-20% of chunk size
+    - Higher overlap increases processing time and storage
+    - Set to 0 for element-based splitting
+  </Accordion>
+  
+  <Accordion icon="search" title="Chunking Node Not Found">
+    **Solution**: Verify the node ID and flow:
+    - Use the [List Chunking Nodes endpoint](/api-reference/flows/chunking/list) to get valid node IDs
+    - Ensure the node exists in the specified flow
+    - Check that the node type is actually "chunking"
+    - Verify you're using the correct flow name
+  </Accordion>
+  
+  <Accordion icon="cog" title="Unsupported Embedding Model">
+    **Solution**: Use supported embedding models:
+    - Check available models: text-embedding-3-small, text-embedding-3-large, colqwen
+    - Verify model names are spelled correctly
+    - Consider model capabilities vs. performance trade-offs
+    - Test with different models for your use case
+  </Accordion>
+  
+  <Accordion icon="clock" title="Configuration Not Applied">
+    **Solution**: After updating configuration:
+    - The node is marked as `"updated": false` and needs reprocessing
+    - Deploy the flow again to apply configuration changes
+    - Check the node status using the List Chunking Nodes endpoint
+    - Allow time for reprocessing to complete
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After updating chunking configurations, you might want to:
+
+<CardGroup cols={2}>
+  <Card
+    title="List Chunking Nodes"
+    icon="list"
+    href="/api-reference/flows/chunking/list"
+  >
+    View updated chunking node configurations and status
+  </Card>
+  <Card
+    title="Deploy Flow"
+    icon="rocket"
+    href="/api-reference/flows/deploy"
+  >
+    Deploy your flow to apply configuration changes
+  </Card>
+  <Card
+    title="Run Flow"
+    icon="play"
+    href="/api-reference/flows/run"
+  >
+    Execute your flow with updated chunking configurations
+  </Card>
+  <Card
+    title="Flow Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
+  >
+    Learn about all available flow management endpoints
+  </Card>
+</CardGroup>

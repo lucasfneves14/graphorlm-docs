@@ -71,6 +71,14 @@
                   "api-reference/flows/datasets/list",
                   "api-reference/flows/datasets/update"
                 ]
+              },
+              {
+                "group": "Chunking",
+                "pages": [
+                  "api-reference/flows/chunking/overview",
+                  "api-reference/flows/chunking/list",
+                  "api-reference/flows/chunking/update"
+                ]
               }
             ]
           }

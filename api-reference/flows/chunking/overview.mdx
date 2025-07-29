@@ -1,0 +1,896 @@
+---
+title: 'Chunking Endpoints Overview'
+description: 'Comprehensive guide to managing chunking nodes in flows via the GraphorLM REST API'
+---
+
+Chunking endpoints allow you to manage the text processing components of your flows in GraphorLM. Chunking nodes are critical components that split documents into smaller, searchable pieces and generate vector embeddings, forming the foundation of effective RAG (Retrieval-Augmented Generation) pipelines.
+
+## What are Chunking Nodes?
+
+Chunking nodes are essential processing components in GraphorLM flows that:
+
+- **Split Documents**: Break large documents into smaller, manageable text chunks
+- **Generate Embeddings**: Create vector representations of text for similarity search
+- **Enable Retrieval**: Make content searchable and retrievable for RAG applications
+- **Optimize Performance**: Balance chunk size and overlap for optimal retrieval quality
+- **Support Multiple Models**: Work with various embedding models and splitting strategies
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/chunking-component.png"
+  alt="Chunking component"
+  loading="lazy"
+/>
+
+## Available Endpoints
+
+GraphorLM provides comprehensive REST API endpoints for chunking management:
+
+<CardGroup cols={2}>
+  <Card
+    title="List Chunking Nodes"
+    icon="list"
+    href="/api-reference/flows/chunking/list"
+  >
+    Retrieve all chunking nodes from a specific flow with their configurations and processing status
+  </Card>
+  <Card
+    title="Update Chunking Configuration"
+    icon="sliders"
+    href="/api-reference/flows/chunking/update"
+  >
+    Modify chunking node parameters like embedding models, chunk sizes, and splitter types
+  </Card>
+</CardGroup>
+
+## Core Concepts
+
+### Chunking Node Structure
+
+Each chunking node contains:
+
+```json
+{
+  "id": "chunking-1748287628685",
+  "type": "chunking",
+  "position": { "x": 300, "y": 200 },
+  "data": {
+    "name": "Document Chunking",
+    "config": {
+      "embeddingModel": "text-embedding-3-small",
+      "chunkingSplitter": "character",
+      "chunkSize": 1000,
+      "chunkOverlap": 200,
+      "chunkSeparator": "\n\n",
+      "splitLevel": 0,
+      "elementsToRemove": ["Header", "Footer"]
+    },
+    "result": {
+      "updated": true,
+      "processing": false,
+      "waiting": false,
+      "has_error": false,
+      "total_chunks": 420
+    }
+  }
+}
+```
+
+### Key Components
+
+| Component | Description |
+|-----------|-------------|
+| **ID** | Unique identifier for the chunking node |
+| **Config** | Chunking parameters and embedding settings |
+| **Result** | Processing status and chunk generation metrics |
+| **Position** | Visual placement in the flow editor |
+
+### Chunking Configuration
+
+Chunking nodes support various configuration options:
+
+#### Embedding Models
+- **text-embedding-3-small**: Fast, cost-effective embedding generation
+- **text-embedding-3-large**: High-quality embeddings for better accuracy
+- **colqwen**: Specialized multimodal embedding model
+
+#### Splitter Types
+- **character**: Split by character count (fast, predictable)
+- **token**: Split by token count (language-aware)
+- **semantic**: Split by semantic boundaries (highest quality)
+- **title**: Split by document structure (headers, sections)
+- **element**: Split by document elements (paragraphs, lists)
+
+#### Size and Overlap Parameters
+- **chunkSize**: Number of characters or tokens per chunk (500-2000 recommended)
+- **chunkOverlap**: Overlap between consecutive chunks (10-20% of chunk size)
+- **chunkSeparator**: Text separator for splitting (default: "\n\n")
+- **splitLevel**: Hierarchical splitting level for structured splitters
+
+## Common Workflows
+
+### Setting Up Chunking Configuration
+
+1. **List Current Nodes**: Use the [List Chunking Nodes](/api-reference/flows/chunking/list) endpoint to see existing configurations
+2. **Update Parameters**: Use the [Update Chunking Configuration](/api-reference/flows/chunking/update) endpoint to modify settings
+3. **Deploy Flow**: Deploy the flow to apply changes and reprocess documents
+4. **Monitor Results**: Check processing status and chunk generation metrics
+
+### Optimizing Chunking Performance
+
+```javascript
+// Example: Optimizing chunking configuration for different document types
+const optimizeChunking = async (flowName, nodeId, documentType) => {
+  const configurations = {
+    'academic_papers': {
+      embeddingModel: 'text-embedding-3-large',
+      chunkingSplitter: 'semantic',
+      chunkSize: 1500,
+      chunkOverlap: 300,
+      elementsToRemove: ['Header', 'Footer', 'Reference']
+    },
+    'technical_docs': {
+      embeddingModel: 'text-embedding-3-small',
+      chunkingSplitter: 'element',
+      chunkSize: 2000,
+      chunkOverlap: 100,
+      splitLevel: 1
+    },
+    'general_content': {
+      embeddingModel: 'text-embedding-3-small',
+      chunkingSplitter: 'character',
+      chunkSize: 1000,
+      chunkOverlap: 150
+    }
+  };
+
+  const config = configurations[documentType];
+  
+  const response = await fetch(`https://${flowName}.flows.graphorlm.com/chunking/${nodeId}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': 'Bearer YOUR_API_TOKEN',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ config })
+  });
+  
+  return await response.json();
+};
+```
+
+### Monitoring Chunking Status
+
+```python
+# Example: Checking chunking processing status and performance
+def monitor_chunking_performance(flow_name, api_token):
+    url = f"https://{flow_name}.flows.graphorlm.com/chunking"
+    headers = {"Authorization": f"Bearer {api_token}"}
+    
+    response = requests.get(url, headers=headers)
+    chunking_nodes = response.json()
+    
+    performance_report = {
+        'total_nodes': len(chunking_nodes),
+        'processing_nodes': 0,
+        'completed_nodes': 0,
+        'error_nodes': 0,
+        'total_chunks': 0,
+        'embedding_models': {},
+        'splitter_types': {}
+    }
+    
+    for node in chunking_nodes:
+        result = node['data']['result']
+        config = node['data']['config']
+        
+        # Track processing status
+        if result.get('processing'):
+            performance_report['processing_nodes'] += 1
+        elif result.get('has_error'):
+            performance_report['error_nodes'] += 1
+        elif result.get('updated'):
+            performance_report['completed_nodes'] += 1
+        
+        # Aggregate metrics
+        if result.get('total_chunks'):
+            performance_report['total_chunks'] += result['total_chunks']
+        
+        # Track configuration usage
+        embedding_model = config.get('embeddingModel', 'unknown')
+        splitter_type = config.get('chunkingSplitter', 'unknown')
+        
+        performance_report['embedding_models'][embedding_model] = \
+            performance_report['embedding_models'].get(embedding_model, 0) + 1
+        performance_report['splitter_types'][splitter_type] = \
+            performance_report['splitter_types'].get(splitter_type, 0) + 1
+    
+    return performance_report
+```
+
+## Authentication
+
+All chunking endpoints require authentication via API tokens:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate and manage API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## URL Structure
+
+Chunking endpoints follow a consistent URL pattern:
+
+```
+https://{flow_name}.flows.graphorlm.com/chunking[/{node_id}]
+```
+
+Where:
+- `{flow_name}`: The name of your deployed flow
+- `{node_id}`: The specific chunking node identifier (for update operations)
+
+## Response Formats
+
+### Chunking Node Object
+
+All endpoints return chunking nodes with this structure:
+
+```json
+{
+  "id": "string",
+  "type": "chunking",
+  "position": {
+    "x": "number",
+    "y": "number"
+  },
+  "style": {
+    "width": "number",
+    "height": "number"
+  },
+  "data": {
+    "name": "string",
+    "config": {
+      "embeddingModel": "string",
+      "chunkingSplitter": "string",
+      "chunkSize": "number",
+      "chunkOverlap": "number",
+      "chunkSeparator": "string",
+      "splitLevel": "number",
+      "elementsToRemove": ["string"]
+    },
+    "result": {
+      "updated": "boolean",
+      "processing": "boolean",
+      "waiting": "boolean",
+      "has_error": "boolean",
+      "total_chunks": "number"
+    }
+  }
+}
+```
+
+### Success Responses
+
+Update operations return confirmation:
+
+```json
+{
+  "success": true,
+  "message": "Chunking node updated successfully",
+  "node_id": "chunking-1748287628685"
+}
+```
+
+## Error Handling
+
+Common error scenarios and responses:
+
+| Error Type | HTTP Status | Description |
+|------------|-------------|-------------|
+| **Authentication** | 401 | Invalid or missing API token |
+| **Flow Not Found** | 404 | Flow doesn't exist or isn't accessible |
+| **Node Not Found** | 404 | Chunking node doesn't exist in the flow |
+| **Invalid Config** | 400 | Configuration validation failed |
+| **Unsupported Model** | 400 | Embedding model not supported |
+| **Invalid Parameters** | 400 | Chunk size, overlap, or splitter invalid |
+| **Server Error** | 500 | Internal processing error |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Descriptive error message explaining the issue"
+}
+```
+
+## Integration Examples
+
+### Chunking Configuration Manager
+
+```javascript
+class ChunkingManager {
+  constructor(flowName, apiToken) {
+    this.flowName = flowName;
+    this.apiToken = apiToken;
+    this.baseUrl = `https://${flowName}.flows.graphorlm.com/chunking`;
+  }
+
+  async listNodes() {
+    const response = await fetch(this.baseUrl, {
+      headers: { 'Authorization': `Bearer ${this.apiToken}` }
+    });
+    return await response.json();
+  }
+
+  async updateNode(nodeId, config) {
+    const response = await fetch(`${this.baseUrl}/${nodeId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${this.apiToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ config })
+    });
+    return await response.json();
+  }
+
+  async optimizeForPerformance(nodeId, priority = 'balanced') {
+    const optimizations = {
+      'speed': {
+        embeddingModel: 'text-embedding-3-small',
+        chunkingSplitter: 'character',
+        chunkSize: 800,
+        chunkOverlap: 80
+      },
+      'balanced': {
+        embeddingModel: 'text-embedding-3-small',
+        chunkingSplitter: 'character',
+        chunkSize: 1000,
+        chunkOverlap: 150
+      },
+      'quality': {
+        embeddingModel: 'text-embedding-3-large',
+        chunkingSplitter: 'semantic',
+        chunkSize: 1200,
+        chunkOverlap: 200
+      }
+    };
+
+    return await this.updateNode(nodeId, optimizations[priority]);
+  }
+
+  async getNodeMetrics(nodeId) {
+    const nodes = await this.listNodes();
+    const node = nodes.find(n => n.id === nodeId);
+    
+    if (!node) {
+      throw new Error(`Node ${nodeId} not found`);
+    }
+
+    return {
+      id: node.id,
+      name: node.data.name,
+      embeddingModel: node.data.config.embeddingModel,
+      chunkSize: node.data.config.chunkSize,
+      totalChunks: node.data.result.total_chunks || 0,
+      status: this.getNodeStatus(node.data.result),
+      configuration: node.data.config
+    };
+  }
+
+  getNodeStatus(result) {
+    if (result.processing) return 'processing';
+    if (result.has_error) return 'error';
+    if (result.waiting) return 'waiting';
+    if (result.updated) return 'completed';
+    return 'pending';
+  }
+}
+```
+
+### Batch Configuration Operations
+
+```python
+class BatchChunkingOperations:
+    def __init__(self, flow_name, api_token):
+        self.flow_name = flow_name
+        self.api_token = api_token
+        self.base_url = f"https://{flow_name}.flows.graphorlm.com/chunking"
+    
+    def get_all_nodes(self):
+        """Get all chunking nodes in the flow"""
+        response = requests.get(
+            self.base_url,
+            headers={"Authorization": f"Bearer {self.api_token}"}
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def apply_configuration_template(self, template_name, node_ids=None):
+        """Apply predefined configuration templates to nodes"""
+        templates = {
+            "academic_research": {
+                "embeddingModel": "text-embedding-3-large",
+                "chunkingSplitter": "semantic",
+                "chunkSize": 1500,
+                "chunkOverlap": 300,
+                "elementsToRemove": ["Header", "Footer", "Reference"]
+            },
+            "code_documentation": {
+                "embeddingModel": "text-embedding-3-small",
+                "chunkingSplitter": "element",
+                "chunkSize": 2000,
+                "chunkOverlap": 0,
+                "splitLevel": 2,
+                "elementsToRemove": ["NarrativeText"]
+            },
+            "customer_support": {
+                "embeddingModel": "text-embedding-3-small",
+                "chunkingSplitter": "character",
+                "chunkSize": 800,
+                "chunkOverlap": 100,
+                "chunkSeparator": "\n"
+            }
+        }
+        
+        if template_name not in templates:
+            raise ValueError(f"Unknown template: {template_name}")
+        
+        config = templates[template_name]
+        nodes = self.get_all_nodes()
+        
+        # Apply to specified nodes or all nodes
+        target_nodes = node_ids or [node['id'] for node in nodes]
+        
+        results = []
+        for node_id in target_nodes:
+            try:
+                response = requests.patch(
+                    f"{self.base_url}/{node_id}",
+                    headers={
+                        "Authorization": f"Bearer {self.api_token}",
+                        "Content-Type": "application/json"
+                    },
+                    json={"config": config}
+                )
+                response.raise_for_status()
+                results.append({
+                    "node_id": node_id,
+                    "status": "success",
+                    "template": template_name,
+                    "result": response.json()
+                })
+            except Exception as e:
+                results.append({
+                    "node_id": node_id,
+                    "status": "error",
+                    "template": template_name,
+                    "error": str(e)
+                })
+        
+        return results
+    
+    def analyze_performance_patterns(self):
+        """Analyze chunking performance across all nodes"""
+        nodes = self.get_all_nodes()
+        
+        analysis = {
+            "total_nodes": len(nodes),
+            "model_performance": {},
+            "splitter_effectiveness": {},
+            "size_distribution": {},
+            "error_patterns": []
+        }
+        
+        for node in nodes:
+            config = node['data']['config']
+            result = node['data']['result']
+            
+            model = config.get('embeddingModel', 'unknown')
+            splitter = config.get('chunkingSplitter', 'unknown')
+            size = config.get('chunkSize', 0)
+            
+            # Track model performance
+            if model not in analysis['model_performance']:
+                analysis['model_performance'][model] = {
+                    'count': 0, 'total_chunks': 0, 'errors': 0
+                }
+            
+            analysis['model_performance'][model]['count'] += 1
+            
+            if result.get('total_chunks'):
+                analysis['model_performance'][model]['total_chunks'] += result['total_chunks']
+            
+            if result.get('has_error'):
+                analysis['model_performance'][model]['errors'] += 1
+                analysis['error_patterns'].append({
+                    'node_id': node['id'],
+                    'model': model,
+                    'splitter': splitter,
+                    'size': size
+                })
+            
+            # Track splitter effectiveness
+            if splitter not in analysis['splitter_effectiveness']:
+                analysis['splitter_effectiveness'][splitter] = {
+                    'count': 0, 'avg_chunks': 0
+                }
+            
+            analysis['splitter_effectiveness'][splitter]['count'] += 1
+            
+            # Size distribution
+            size_range = self._get_size_range(size)
+            analysis['size_distribution'][size_range] = \
+                analysis['size_distribution'].get(size_range, 0) + 1
+        
+        return analysis
+    
+    def _get_size_range(self, size):
+        """Categorize chunk sizes into ranges"""
+        if size < 500:
+            return "small (< 500)"
+        elif size < 1000:
+            return "medium (500-1000)"
+        elif size < 1500:
+            return "large (1000-1500)"
+        else:
+            return "xl (> 1500)"
+```
+
+## Best Practices
+
+### Configuration Optimization
+
+- **Chunk Size Selection**: Use 500-2000 characters for most content; larger for context-heavy documents
+- **Overlap Strategy**: Apply 10-20% overlap to maintain context between chunks
+- **Model Selection**: Balance embedding quality with processing speed based on use case
+- **Splitter Choice**: Use semantic splitters for better content preservation when possible
+
+### Performance Tuning
+
+- **Document Analysis**: Analyze document types to choose appropriate splitters and sizes
+- **Batch Processing**: Consider processing time implications when configuring chunk parameters
+- **Resource Management**: Monitor memory usage and processing capacity
+- **Load Balancing**: Distribute processing across multiple chunking nodes when needed
+
+### Configuration Management
+
+- **Version Control**: Track chunking configuration changes over time
+- **A/B Testing**: Test different configurations to optimize retrieval quality
+- **Monitoring**: Set up alerts for processing failures and performance degradation
+- **Documentation**: Document configuration rationale and performance benchmarks
+
+### Error Prevention
+
+- **Configuration Validation**: Validate parameters before applying updates
+- **Dependency Management**: Ensure upstream dataset nodes are properly configured
+- **Status Monitoring**: Check processing status before flow deployment
+- **Graceful Handling**: Implement retry logic for transient processing failures
+
+## Relationship with Other Endpoints
+
+Chunking endpoints work closely with other GraphorLM APIs:
+
+### Dataset Management
+- Use [Dataset endpoints](/api-reference/flows/datasets/overview) to configure input sources
+- Ensure dataset nodes are properly updated before chunking processing
+
+### Flow Management
+- Use [Flow endpoints](/api-reference/flows/overview) to deploy updated configurations
+- Monitor flow status after chunking parameter changes
+
+### Flow Execution
+- Use [Run Flow endpoint](/api-reference/flows/run) to execute flows with updated chunking
+- Verify that chunking changes improve retrieval quality
+
+### Source Management
+- Use [Sources endpoints](/api-reference/sources/overview) to understand input document characteristics
+- Tailor chunking strategies based on document types and sizes
+
+## Use Cases
+
+### Content-Specific Optimization
+
+```javascript
+// Scenario: Optimizing chunking for different content types
+const contentOptimizer = new ChunkingManager('content-hub', 'YOUR_API_TOKEN');
+
+const contentStrategies = {
+  'legal_documents': {
+    embeddingModel: 'text-embedding-3-large',
+    chunkingSplitter: 'semantic',
+    chunkSize: 1200,
+    chunkOverlap: 240,
+    elementsToRemove: ['Header', 'Footer', 'PageNumber']
+  },
+  'technical_manuals': {
+    embeddingModel: 'text-embedding-3-small',
+    chunkingSplitter: 'element',
+    chunkSize: 1800,
+    chunkOverlap: 100,
+    splitLevel: 1,
+    elementsToRemove: ['Header', 'Footer']
+  },
+  'marketing_content': {
+    embeddingModel: 'text-embedding-3-small',
+    chunkingSplitter: 'character',
+    chunkSize: 800,
+    chunkOverlap: 120,
+    chunkSeparator: '\n'
+  }
+};
+
+// Apply optimizations based on content type
+for (const [contentType, config] of Object.entries(contentStrategies)) {
+  const nodeId = await findChunkingNodeByContentType(contentType);
+  await contentOptimizer.updateNode(nodeId, config);
+}
+```
+
+### Multi-Language Processing
+
+```python
+# Scenario: Configuring chunking for multi-language content
+def configure_multilingual_chunking(flow_name, api_token, language_configs):
+    """Configure chunking nodes for different languages"""
+    manager = BatchChunkingOperations(flow_name, api_token)
+    
+    # Language-specific configurations
+    language_settings = {
+        'english': {
+            'embeddingModel': 'text-embedding-3-small',
+            'chunkingSplitter': 'character',
+            'chunkSize': 1000,
+            'chunkOverlap': 150,
+            'chunkSeparator': '\n\n'
+        },
+        'chinese': {
+            'embeddingModel': 'text-embedding-3-large',
+            'chunkingSplitter': 'character',
+            'chunkSize': 800,  # Shorter for Chinese characters
+            'chunkOverlap': 120,
+            'chunkSeparator': '。\n'  # Chinese period + newline
+        },
+        'code': {
+            'embeddingModel': 'text-embedding-3-small',
+            'chunkingSplitter': 'element',
+            'chunkSize': 2000,
+            'chunkOverlap': 0,
+            'splitLevel': 2
+        }
+    }
+    
+    results = []
+    for node_id, language in language_configs.items():
+        if language in language_settings:
+            config = language_settings[language]
+            try:
+                result = manager.update_single_node(node_id, config)
+                results.append({
+                    'node_id': node_id,
+                    'language': language,
+                    'status': 'success',
+                    'result': result
+                })
+            except Exception as e:
+                results.append({
+                    'node_id': node_id,
+                    'language': language,
+                    'status': 'error',
+                    'error': str(e)
+                })
+    
+    return results
+```
+
+### Performance Benchmarking
+
+```javascript
+// Scenario: Benchmarking different chunking configurations
+async function benchmarkChunkingConfigurations(flowName, nodeId, apiToken) {
+  const manager = new ChunkingManager(flowName, apiToken);
+  
+  const testConfigurations = {
+    'baseline': {
+      embeddingModel: 'text-embedding-3-small',
+      chunkingSplitter: 'character',
+      chunkSize: 1000,
+      chunkOverlap: 150
+    },
+    'high_overlap': {
+      embeddingModel: 'text-embedding-3-small',
+      chunkingSplitter: 'character',
+      chunkSize: 1000,
+      chunkOverlap: 300
+    },
+    'semantic_splitting': {
+      embeddingModel: 'text-embedding-3-small',
+      chunkingSplitter: 'semantic',
+      chunkSize: 1200,  
+      chunkOverlap: 200
+    },
+    'large_model': {
+      embeddingModel: 'text-embedding-3-large',
+      chunkingSplitter: 'semantic',
+      chunkSize: 1200,
+      chunkOverlap: 200
+    }
+  };
+  
+  const benchmarkResults = [];
+  
+  for (const [configName, config] of Object.entries(testConfigurations)) {
+    console.log(`Testing configuration: ${configName}`);
+    
+    try {
+      const startTime = Date.now();
+      
+      // Apply configuration
+      await manager.updateNode(nodeId, config);
+      
+      // Wait for processing (implement proper polling in production)
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      
+      // Get metrics
+      const metrics = await manager.getNodeMetrics(nodeId);
+      const processingTime = Date.now() - startTime;
+      
+      benchmarkResults.push({
+        configuration: configName,
+        config,
+        metrics,
+        processingTime,
+        chunksPerSecond: metrics.totalChunks / (processingTime / 1000)
+      });
+      
+      console.log(`✅ ${configName}: ${metrics.totalChunks} chunks in ${processingTime}ms`);
+      
+    } catch (error) {
+      console.log(`❌ ${configName}: Failed - ${error.message}`);
+      benchmarkResults.push({
+        configuration: configName,
+        config,
+        error: error.message
+      });
+    }
+  }
+  
+  // Analyze results
+  const successful = benchmarkResults.filter(r => !r.error);
+  if (successful.length > 0) {
+    const fastest = successful.reduce((prev, current) => 
+      (prev.chunksPerSecond > current.chunksPerSecond) ? prev : current
+    );
+    
+    console.log(`\n🏆 Best performing configuration: ${fastest.configuration}`);
+    console.log(`Performance: ${fastest.chunksPerSecond.toFixed(2)} chunks/second`);
+  }
+  
+  return benchmarkResults;
+}
+```
+
+## Migration and Maintenance
+
+### Upgrading Chunking Configurations
+
+When migrating or updating your chunking configurations:
+
+1. **Analyze Current Performance**: Assess existing chunking effectiveness
+2. **Plan Configuration Changes**: Design new chunking strategies based on content analysis
+3. **Test in Development**: Validate new configurations with representative data
+4. **Gradual Rollout**: Apply changes incrementally to minimize disruption
+5. **Monitor Impact**: Track retrieval quality and processing performance
+
+### Health Monitoring
+
+Set up monitoring for chunking node health:
+
+```python
+def monitor_chunking_health(flow_name, api_token):
+    """Monitor chunking node health and return detailed status"""
+    manager = BatchChunkingOperations(flow_name, api_token)
+    nodes = manager.get_all_nodes()
+    
+    health_report = {
+        'timestamp': datetime.now().isoformat(),
+        'total_nodes': len(nodes),
+        'healthy_nodes': 0,
+        'processing_nodes': 0,
+        'error_nodes': 0,
+        'alerts': [],
+        'recommendations': []
+    }
+    
+    for node in nodes:
+        node_id = node['id']
+        config = node['data']['config']
+        result = node['data']['result']
+        
+        # Check processing status
+        if result.get('has_error'):
+            health_report['error_nodes'] += 1
+            health_report['alerts'].append(f"Error in chunking node {node_id}")
+        elif result.get('processing'):
+            health_report['processing_nodes'] += 1
+        elif result.get('updated'):
+            health_report['healthy_nodes'] += 1
+        
+        # Configuration recommendations
+        chunk_size = config.get('chunkSize', 0)
+        chunk_overlap = config.get('chunkOverlap', 0)
+        
+        if chunk_size > 2000:
+            health_report['recommendations'].append(
+                f"Node {node_id}: Consider reducing chunk size from {chunk_size} for better performance"
+            )
+        
+        if chunk_overlap > chunk_size * 0.5:
+            health_report['recommendations'].append(
+                f"Node {node_id}: High overlap ratio ({chunk_overlap}/{chunk_size}) may cause redundancy"
+            )
+        
+        if not result.get('total_chunks'):
+            health_report['alerts'].append(
+                f"Node {node_id}: No chunks generated - check configuration"
+            )
+    
+    return health_report
+```
+
+## Next Steps
+
+Ready to start managing your chunking nodes? Here are the next steps:
+
+<CardGroup cols={2}>
+  <Card
+    title="List Chunking Nodes"
+    icon="list"
+    href="/api-reference/flows/chunking/list"
+  >
+    Start by exploring existing chunking nodes in your flows
+  </Card>
+  <Card
+    title="Update Chunking Configuration"
+    icon="sliders"
+    href="/api-reference/flows/chunking/update"
+  >
+    Learn how to optimize chunking parameters for your use case
+  </Card>
+  <Card
+    title="Dataset Overview"
+    icon="database"
+    href="/api-reference/flows/datasets/overview"
+  >
+    Manage the dataset nodes that feed into chunking processing
+  </Card>
+  <Card
+    title="Deploy Flow"
+    icon="rocket"
+    href="/api-reference/flows/deploy"
+  >
+    Deploy your updated flows to make chunking changes active
+  </Card>
+</CardGroup>
+
+For more advanced usage patterns and optimization strategies, explore our comprehensive guides:
+
+<CardGroup cols={2}>
+  <Card
+    title="Chunking Guide"
+    icon="scissors"
+    href="/guides/chunking"
+  >
+    Learn about advanced chunking strategies and best practices
+  </Card>
+  <Card
+    title="RAG Optimization"
+    icon="chart-line"
+    href="/guides/rag-optimization"
+  >
+    Optimize your RAG pipeline performance with better chunking
+  </Card>
+</CardGroup>
