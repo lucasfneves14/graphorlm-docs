@@ -1,0 +1,1191 @@
+---
+title: 'List RAPTOR RAG Nodes'
+description: 'Retrieve RAPTOR RAG nodes from flows via the GraphorLM REST API'
+---
+
+Retrieve all RAPTOR RAG nodes from a specific flow in your GraphorLM project. RAPTOR RAG nodes are advanced hierarchical RAG components that build multi-level tree structures from documents, using clustering and summarization to create recursive abstraction hierarchies for enhanced retrieval capabilities.
+
+## Overview
+
+The List RAPTOR RAG Nodes endpoint allows you to retrieve information about RAPTOR RAG nodes within a flow. RAPTOR RAG nodes process documents by constructing hierarchical tree structures with multiple abstraction levels, enabling sophisticated multi-level retrieval operations that capture both detailed and high-level semantic content.
+
+- **Method**: `GET`
+- **URL**: `https://{flow_name}.flows.graphorlm.com/raptor-rag`
+- **Authentication**: Required (API Token)
+
+## Authentication
+
+All requests must include a valid API token in the Authorization header:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+
+### Parameters
+
+No query parameters are required for this endpoint.
+
+### Example Request
+
+```bash
+GET https://my-rag-pipeline.flows.graphorlm.com/raptor-rag
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+## Response Format
+
+### Success Response (200 OK)
+
+The response contains an array of RAPTOR RAG node objects:
+
+```json
+[
+  {
+    "id": "raptor-rag-1748287628685",
+    "type": "raptor-rag",
+    "position": {
+      "x": 700,
+      "y": 350
+    },
+    "style": {
+      "height": 240,
+      "width": 380
+    },
+    "data": {
+      "name": "Hierarchical RAPTOR RAG",
+      "config": {
+        "topK": 20,
+        "max_level": 4
+      },
+      "result": {
+        "updated": true,
+        "processing": false,
+        "waiting": false,
+        "has_error": false,
+        "updatedMetrics": true,
+        "total_processed": 1850,
+        "total_chunks": 520,
+        "total_retrieved": 80,
+        "tree_levels": 4,
+        "total_clusters": 65,
+        "total_summaries": 45
+      }
+    }
+  }
+]
+```
+
+### Response Structure
+
+Each RAPTOR RAG node in the array contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique identifier for the RAPTOR RAG node |
+| `type` | string | Node type (always "raptor-rag" for RAPTOR RAG nodes) |
+| `position` | object | Position coordinates in the flow canvas |
+| `style` | object | Visual styling properties (height, width) |
+| `data` | object | RAPTOR RAG node configuration and results |
+
+### Position Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `x` | number | X coordinate position in the flow canvas |
+| `y` | number | Y coordinate position in the flow canvas |
+
+### Style Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `height` | integer | Height of the node in pixels |
+| `width` | integer | Width of the node in pixels |
+
+### Data Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Display name of the RAPTOR RAG node |
+| `config` | object | Node configuration including tree and retrieval settings |
+| `result` | object | Processing results and hierarchical tree metrics (optional) |
+
+### Config Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `topK` | integer \| null | Number of top results to retrieve from the RAPTOR tree. Set to `null` for unlimited retrieval |
+| `max_level` | integer | Maximum number of levels in the RAPTOR tree hierarchy (default: 3) |
+
+### Result Object (Optional)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `updated` | boolean | Whether the node has been processed with current configuration |
+| `processing` | boolean | Whether the node is currently building the RAPTOR tree |
+| `waiting` | boolean | Whether the node is waiting for dependencies |
+| `has_error` | boolean | Whether the node encountered an error during tree construction |
+| `updatedMetrics` | boolean | Whether evaluation metrics have been computed |
+| `total_processed` | integer | Number of documents processed through the RAPTOR pipeline |
+| `total_chunks` | integer | Number of base-level chunks generated from documents |
+| `total_retrieved` | integer | Number of documents retrieved in recent hierarchical queries |
+| `tree_levels` | integer | Number of levels built in the RAPTOR tree structure |
+| `total_clusters` | integer | Total number of clusters created across all tree levels |
+| `total_summaries` | integer | Number of summary nodes generated through hierarchical abstraction |
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+async function listRaptorRagNodes(flowName, apiToken) {
+  const response = await fetch(`https://${flowName}.flows.graphorlm.com/raptor-rag`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+// Usage
+listRaptorRagNodes('my-rag-pipeline', 'YOUR_API_TOKEN')
+  .then(raptorRagNodes => {
+    console.log(`Found ${raptorRagNodes.length} RAPTOR RAG node(s)`);
+    
+    raptorRagNodes.forEach(node => {
+      console.log(`\nNode: ${node.data.name} (${node.id})`);
+      console.log(`Top K Configuration: ${node.data.config.topK || 'unlimited'}`);
+      console.log(`Max Tree Levels: ${node.data.config.max_level}`);
+      
+      if (node.data.result) {
+        const status = node.data.result.processing ? 'Building Tree' : 
+                      node.data.result.waiting ? 'Waiting' :
+                      node.data.result.has_error ? 'Error' :
+                      node.data.result.updated ? 'Tree Ready' : 'Needs Update';
+        console.log(`Status: ${status}`);
+        
+        if (node.data.result.tree_levels) {
+          console.log(`Tree Levels Built: ${node.data.result.tree_levels}`);
+        }
+        if (node.data.result.total_clusters) {
+          console.log(`Total Clusters: ${node.data.result.total_clusters}`);
+        }
+        if (node.data.result.total_summaries) {
+          console.log(`Summary Nodes: ${node.data.result.total_summaries}`);
+        }
+        if (node.data.result.total_retrieved) {
+          console.log(`Documents Retrieved: ${node.data.result.total_retrieved}`);
+        }
+      }
+    });
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+### Python
+
+```python
+import requests
+import json
+
+def list_raptor_rag_nodes(flow_name, api_token):
+    url = f"https://{flow_name}.flows.graphorlm.com/raptor-rag"
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}"
+    }
+    
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    
+    return response.json()
+
+def analyze_raptor_rag_nodes(raptor_rag_nodes):
+    """Analyze RAPTOR RAG nodes and provide detailed hierarchical tree summary"""
+    print(f"🌳 RAPTOR RAG Nodes Analysis")
+    print(f"Total RAPTOR RAG nodes: {len(raptor_rag_nodes)}")
+    print("-" * 50)
+    
+    status_counts = {"updated": 0, "processing": 0, "waiting": 0, "error": 0, "needs_update": 0}
+    total_processed = 0
+    total_chunks = 0
+    total_retrieved = 0
+    total_tree_levels = 0
+    total_clusters = 0
+    total_summaries = 0
+    topk_configurations = {}
+    max_level_configurations = {}
+    
+    for node in raptor_rag_nodes:
+        node_data = node.get('data', {})
+        config = node_data.get('config', {})
+        result = node_data.get('result', {})
+        
+        # Track Top K configurations
+        top_k = config.get('topK')
+        top_k_key = 'unlimited' if top_k is None else str(top_k)
+        topk_configurations[top_k_key] = topk_configurations.get(top_k_key, 0) + 1
+        
+        # Track Max Level configurations
+        max_level = config.get('max_level', 3)
+        max_level_configurations[str(max_level)] = max_level_configurations.get(str(max_level), 0) + 1
+        
+        print(f"\n🏗️  Node: {node_data.get('name', 'Unnamed')} ({node['id']})")
+        print(f"   Top K Configuration: {top_k if top_k is not None else 'unlimited'}")
+        print(f"   Max Tree Levels: {max_level}")
+        
+        if result:
+            # Track node status
+            if result.get('processing'):
+                status_counts["processing"] += 1
+                print("   🔄 Status: Building RAPTOR Tree")
+            elif result.get('waiting'):
+                status_counts["waiting"] += 1
+                print("   ⏳ Status: Waiting")
+            elif result.get('has_error'):
+                status_counts["error"] += 1
+                print("   ❌ Status: Error")
+            elif result.get('updated'):
+                status_counts["updated"] += 1
+                print("   ✅ Status: Tree Ready")
+            else:
+                status_counts["needs_update"] += 1
+                print("   ⚠️  Status: Needs Update")
+            
+            # Aggregate metrics
+            processed = result.get('total_processed', 0)
+            chunks = result.get('total_chunks', 0)
+            retrieved = result.get('total_retrieved', 0)
+            tree_levels = result.get('tree_levels', 0)
+            clusters = result.get('total_clusters', 0)
+            summaries = result.get('total_summaries', 0)
+            
+            total_processed += processed
+            total_chunks += chunks
+            total_retrieved += retrieved
+            total_tree_levels = max(total_tree_levels, tree_levels)
+            total_clusters += clusters
+            total_summaries += summaries
+            
+            # Display node-specific metrics
+            if processed > 0:
+                print(f"   📄 Documents processed: {processed:,}")
+            if chunks > 0:
+                print(f"   🧩 Base chunks generated: {chunks:,}")
+            if tree_levels > 0:
+                print(f"   🌳 Tree levels built: {tree_levels}")
+            if clusters > 0:
+                print(f"   🔗 Clusters created: {clusters:,}")
+            if summaries > 0:
+                print(f"   📝 Summary nodes: {summaries:,}")
+            if retrieved > 0:
+                print(f"   📋 Documents retrieved: {retrieved:,}")
+            
+            # Calculate hierarchical efficiency ratios
+            if chunks > 0 and clusters > 0:
+                clustering_ratio = clusters / chunks
+                print(f"   📊 Clustering ratio: {clustering_ratio:.2f} clusters/chunk")
+            
+            if clusters > 0 and summaries > 0:
+                summarization_ratio = summaries / clusters
+                print(f"   🔄 Summarization ratio: {summarization_ratio:.2f} summaries/cluster")
+            
+            if tree_levels > 0 and summaries > 0:
+                tree_density = summaries / tree_levels
+                print(f"   🌲 Tree density: {tree_density:.1f} nodes/level")
+            
+            if result.get('updatedMetrics'):
+                print("   📈 Metrics: Available")
+            else:
+                print("   📈 Metrics: Not computed")
+
+    # Summary section
+    print(f"\n📊 RAPTOR Tree Summary:")
+    print(f"   Total documents processed: {total_processed:,}")
+    print(f"   Total base chunks generated: {total_chunks:,}")
+    print(f"   Total documents retrieved: {total_retrieved:,}")
+    print(f"   Maximum tree levels: {total_tree_levels}")
+    print(f"   Total clusters across all trees: {total_clusters:,}")
+    print(f"   Total summary nodes: {total_summaries:,}")
+    
+    # Calculate overall efficiency metrics
+    if total_chunks > 0:
+        if total_processed > 0:
+            chunking_efficiency = total_chunks / total_processed
+            print(f"   Chunking efficiency: {chunking_efficiency:.2f} chunks/document")
+        
+        if total_clusters > 0:
+            avg_clustering_ratio = total_clusters / total_chunks
+            print(f"   Average clustering ratio: {avg_clustering_ratio:.2f} clusters/chunk")
+    
+    if total_clusters > 0 and total_summaries > 0:
+        avg_summarization_ratio = total_summaries / total_clusters
+        print(f"   Average summarization ratio: {avg_summarization_ratio:.2f} summaries/cluster")
+    
+    if total_retrieved > 0 and total_chunks > 0:
+        retrieval_efficiency = (total_retrieved / total_chunks) * 100
+        print(f"   Hierarchical retrieval rate: {retrieval_efficiency:.1f}%")
+    
+    # Top K configuration distribution
+    print(f"\n🎯 Top K Configuration Distribution:")
+    for config, count in topk_configurations.items():
+        print(f"   {config}: {count} node(s)")
+    
+    # Max Level configuration distribution
+    print(f"\n🌳 Max Level Configuration Distribution:")
+    for level, count in max_level_configurations.items():
+        print(f"   {level} levels: {count} node(s)")
+    
+    # Node status distribution
+    print(f"\n📈 Node Status Distribution:")
+    for status, count in status_counts.items():
+        if count > 0:
+            print(f"   {status.replace('_', ' ').title()}: {count}")
+    
+    # RAPTOR tree quality indicators
+    print(f"\n🌲 RAPTOR Tree Quality Indicators:")
+    
+    if total_clusters > 0 and total_chunks > 0:
+        clustering_quality = total_clusters / total_chunks
+        if clustering_quality > 0.8:
+            print("   🟢 Excellent clustering: High granularity in tree structure")
+        elif clustering_quality > 0.5:
+            print("   🟡 Good clustering: Moderate tree granularity")
+        else:
+            print("   🔴 Limited clustering: Low tree structural complexity")
+    
+    if total_summaries > 0 and total_clusters > 0:
+        summarization_quality = total_summaries / total_clusters
+        if summarization_quality > 0.7:
+            print("   🟢 High abstraction: Rich hierarchical summarization")
+        elif summarization_quality > 0.4:
+            print("   🟡 Moderate abstraction: Balanced hierarchical structure")
+        else:
+            print("   🔴 Limited abstraction: Sparse summarization hierarchy")
+    
+    if total_tree_levels > 0:
+        if total_tree_levels >= 4:
+            print("   🟢 Deep hierarchies: Rich multi-level abstraction")
+        elif total_tree_levels >= 3:
+            print("   🟡 Standard hierarchies: Good multi-level structure")
+        else:
+            print("   🔴 Shallow hierarchies: Limited abstraction levels")
+
+# Usage
+try:
+    raptor_rag_nodes = list_raptor_rag_nodes("my-rag-pipeline", "YOUR_API_TOKEN")
+    analyze_raptor_rag_nodes(raptor_rag_nodes)
+    
+except requests.exceptions.HTTPError as e:
+    print(f"Error: {e}")
+    if e.response.status_code == 404:
+        print("Flow not found or no RAPTOR RAG nodes in this flow")
+    elif e.response.status_code == 401:
+        print("Invalid API token or insufficient permissions")
+```
+
+### cURL
+
+```bash
+# Basic request
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/raptor-rag \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+
+# With jq for formatted output
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/raptor-rag \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | jq '.'
+
+# Extract RAPTOR tree configuration summary
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/raptor-rag \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq -r '.[] | "\(.data.name): TopK=\(.data.config.topK // "unlimited") MaxLevels=\(.data.config.max_level)"'
+
+# Count total hierarchical summaries across all nodes
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/raptor-rag \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq '[.[] | .data.result.total_summaries // 0] | add'
+
+# Get tree quality metrics
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/raptor-rag \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq '.[] | {name: .data.name, tree_levels: .data.result.tree_levels, clusters: .data.result.total_clusters, summaries: .data.result.total_summaries}'
+```
+
+### PHP
+
+```php
+<?php
+function listRaptorRagNodes($flowName, $apiToken) {
+    $url = "https://{$flowName}.flows.graphorlm.com/raptor-rag";
+    
+    $options = [
+        'http' => [
+            'header' => "Authorization: Bearer {$apiToken}",
+            'method' => 'GET'
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    
+    if ($result === FALSE) {
+        throw new Exception('Failed to retrieve RAPTOR RAG nodes');
+    }
+    
+    return json_decode($result, true);
+}
+
+function analyzeRaptorRagNodes($raptorRagNodes) {
+    $statusCounts = [
+        'updated' => 0,
+        'processing' => 0, 
+        'waiting' => 0,
+        'error' => 0,
+        'needs_update' => 0
+    ];
+    $totalProcessed = 0;
+    $totalChunks = 0;
+    $totalRetrieved = 0;
+    $totalTreeLevels = 0;
+    $totalClusters = 0;
+    $totalSummaries = 0;
+    $topkConfigurations = [];
+    $maxLevelConfigurations = [];
+    
+    echo "🌳 RAPTOR RAG Nodes Analysis\n";
+    echo "Total RAPTOR RAG nodes: " . count($raptorRagNodes) . "\n";
+    echo str_repeat("-", 50) . "\n";
+    
+    foreach ($raptorRagNodes as $node) {
+        $data = $node['data'] ?? [];
+        $config = $data['config'] ?? [];
+        $result = $data['result'] ?? [];
+        
+        // Track configurations
+        $topK = $config['topK'] ?? null;
+        $topKKey = $topK === null ? 'unlimited' : (string)$topK;
+        $topkConfigurations[$topKKey] = ($topkConfigurations[$topKKey] ?? 0) + 1;
+        
+        $maxLevel = $config['max_level'] ?? 3;
+        $maxLevelConfigurations[(string)$maxLevel] = ($maxLevelConfigurations[(string)$maxLevel] ?? 0) + 1;
+        
+        echo "\n🏗️  Node: " . ($data['name'] ?? 'Unnamed') . " ({$node['id']})\n";
+        echo "   Top K Configuration: " . ($topK !== null ? $topK : 'unlimited') . "\n";
+        echo "   Max Tree Levels: {$maxLevel}\n";
+        
+        if (!empty($result)) {
+            // Track status
+            if ($result['processing'] ?? false) {
+                $statusCounts['processing']++;
+                echo "   🔄 Status: Building RAPTOR Tree\n";
+            } elseif ($result['waiting'] ?? false) {
+                $statusCounts['waiting']++;
+                echo "   ⏳ Status: Waiting\n";
+            } elseif ($result['has_error'] ?? false) {
+                $statusCounts['error']++;
+                echo "   ❌ Status: Error\n";
+            } elseif ($result['updated'] ?? false) {
+                $statusCounts['updated']++;
+                echo "   ✅ Status: Tree Ready\n";
+            } else {
+                $statusCounts['needs_update']++;
+                echo "   ⚠️  Status: Needs Update\n";
+            }
+            
+            // Aggregate metrics
+            $processed = $result['total_processed'] ?? 0;
+            $chunks = $result['total_chunks'] ?? 0;
+            $retrieved = $result['total_retrieved'] ?? 0;
+            $treeLevels = $result['tree_levels'] ?? 0;
+            $clusters = $result['total_clusters'] ?? 0;
+            $summaries = $result['total_summaries'] ?? 0;
+            
+            $totalProcessed += $processed;
+            $totalChunks += $chunks;
+            $totalRetrieved += $retrieved;
+            $totalTreeLevels = max($totalTreeLevels, $treeLevels);
+            $totalClusters += $clusters;
+            $totalSummaries += $summaries;
+            
+            // Display metrics
+            if ($processed > 0) {
+                echo "   📄 Documents processed: " . number_format($processed) . "\n";
+            }
+            if ($chunks > 0) {
+                echo "   🧩 Base chunks generated: " . number_format($chunks) . "\n";
+            }
+            if ($treeLevels > 0) {
+                echo "   🌳 Tree levels built: {$treeLevels}\n";
+            }
+            if ($clusters > 0) {
+                echo "   🔗 Clusters created: " . number_format($clusters) . "\n";
+            }
+            if ($summaries > 0) {
+                echo "   📝 Summary nodes: " . number_format($summaries) . "\n";
+            }
+            if ($retrieved > 0) {
+                echo "   📋 Documents retrieved: " . number_format($retrieved) . "\n";
+            }
+            
+            // Calculate ratios
+            if ($chunks > 0 && $clusters > 0) {
+                $clusteringRatio = $clusters / $chunks;
+                echo "   📊 Clustering ratio: " . number_format($clusteringRatio, 2) . " clusters/chunk\n";
+            }
+            
+            if ($clusters > 0 && $summaries > 0) {
+                $summarizationRatio = $summaries / $clusters;
+                echo "   🔄 Summarization ratio: " . number_format($summarizationRatio, 2) . " summaries/cluster\n";
+            }
+            
+            if ($treeLevels > 0 && $summaries > 0) {
+                $treeDensity = $summaries / $treeLevels;
+                echo "   🌲 Tree density: " . number_format($treeDensity, 1) . " nodes/level\n";
+            }
+            
+            if ($result['updatedMetrics'] ?? false) {
+                echo "   📈 Metrics: Available\n";
+            } else {
+                echo "   📈 Metrics: Not computed\n";
+            }
+        }
+    }
+    
+    // Summary section
+    echo "\n📊 RAPTOR Tree Summary:\n";
+    echo "   Total documents processed: " . number_format($totalProcessed) . "\n";
+    echo "   Total base chunks generated: " . number_format($totalChunks) . "\n";
+    echo "   Total documents retrieved: " . number_format($totalRetrieved) . "\n";
+    echo "   Maximum tree levels: {$totalTreeLevels}\n";
+    echo "   Total clusters across all trees: " . number_format($totalClusters) . "\n";
+    echo "   Total summary nodes: " . number_format($totalSummaries) . "\n";
+    
+    // Efficiency calculations
+    if ($totalChunks > 0) {
+        if ($totalProcessed > 0) {
+            $chunkingEfficiency = $totalChunks / $totalProcessed;
+            echo "   Chunking efficiency: " . number_format($chunkingEfficiency, 2) . " chunks/document\n";
+        }
+        
+        if ($totalClusters > 0) {
+            $avgClusteringRatio = $totalClusters / $totalChunks;
+            echo "   Average clustering ratio: " . number_format($avgClusteringRatio, 2) . " clusters/chunk\n";
+        }
+    }
+    
+    if ($totalClusters > 0 && $totalSummaries > 0) {
+        $avgSummarizationRatio = $totalSummaries / $totalClusters;
+        echo "   Average summarization ratio: " . number_format($avgSummarizationRatio, 2) . " summaries/cluster\n";
+    }
+    
+    if ($totalRetrieved > 0 && $totalChunks > 0) {
+        $retrievalEfficiency = ($totalRetrieved / $totalChunks) * 100;
+        echo "   Hierarchical retrieval rate: " . number_format($retrievalEfficiency, 1) . "%\n";
+    }
+    
+    // Configuration distributions
+    echo "\n🎯 Top K Configuration Distribution:\n";
+    foreach ($topkConfigurations as $config => $count) {
+        echo "   {$config}: {$count} node(s)\n";
+    }
+    
+    echo "\n🌳 Max Level Configuration Distribution:\n";
+    foreach ($maxLevelConfigurations as $level => $count) {
+        echo "   {$level} levels: {$count} node(s)\n";
+    }
+    
+    echo "\n📈 Node Status Distribution:\n";
+    foreach ($statusCounts as $status => $count) {
+        if ($count > 0) {
+            $statusLabel = ucwords(str_replace('_', ' ', $status));
+            echo "   {$statusLabel}: {$count}\n";
+        }
+    }
+    
+    // Quality indicators
+    echo "\n🌲 RAPTOR Tree Quality Indicators:\n";
+    
+    if ($totalClusters > 0 && $totalChunks > 0) {
+        $clusteringQuality = $totalClusters / $totalChunks;
+        if ($clusteringQuality > 0.8) {
+            echo "   🟢 Excellent clustering: High granularity in tree structure\n";
+        } elseif ($clusteringQuality > 0.5) {
+            echo "   🟡 Good clustering: Moderate tree granularity\n";
+        } else {
+            echo "   🔴 Limited clustering: Low tree structural complexity\n";
+        }
+    }
+    
+    if ($totalSummaries > 0 && $totalClusters > 0) {
+        $summarizationQuality = $totalSummaries / $totalClusters;
+        if ($summarizationQuality > 0.7) {
+            echo "   🟢 High abstraction: Rich hierarchical summarization\n";
+        } elseif ($summarizationQuality > 0.4) {
+            echo "   🟡 Moderate abstraction: Balanced hierarchical structure\n";
+        } else {
+            echo "   🔴 Limited abstraction: Sparse summarization hierarchy\n";
+        }
+    }
+    
+    if ($totalTreeLevels > 0) {
+        if ($totalTreeLevels >= 4) {
+            echo "   🟢 Deep hierarchies: Rich multi-level abstraction\n";
+        } elseif ($totalTreeLevels >= 3) {
+            echo "   🟡 Standard hierarchies: Good multi-level structure\n";
+        } else {
+            echo "   🔴 Shallow hierarchies: Limited abstraction levels\n";
+        }
+    }
+}
+
+// Usage
+try {
+    $raptorRagNodes = listRaptorRagNodes('my-rag-pipeline', 'YOUR_API_TOKEN');
+    analyzeRaptorRagNodes($raptorRagNodes);
+    
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+}
+?>
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Description | Example Response |
+|-------------|-------------|------------------|
+| 401 | Unauthorized - Invalid or missing API token | `{"detail": "Invalid authentication credentials"}` |
+| 404 | Not Found - Flow not found | `{"detail": "Flow not found"}` |
+| 500 | Internal Server Error - Server error | `{"detail": "Failed to retrieve RAPTOR RAG nodes"}` |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+### Example Error Responses
+
+#### Invalid API Token
+```json
+{
+  "detail": "Invalid authentication credentials"
+}
+```
+
+#### Flow Not Found
+```json
+{
+  "detail": "Flow not found"
+}
+```
+
+#### Server Error
+```json
+{
+  "detail": "Failed to retrieve RAPTOR RAG nodes"
+}
+```
+
+## Use Cases
+
+### RAPTOR Tree Management
+
+Use this endpoint to:
+
+- **Hierarchical Analysis**: Examine tree structure configurations and multi-level abstraction settings
+- **Performance Monitoring**: Check tree construction progress and hierarchical processing status
+- **Tree Optimization**: Analyze clustering and summarization efficiency across tree levels
+- **Debugging**: Identify issues with hierarchical tree construction or multi-level retrieval
+
+### Integration Examples
+
+#### RAPTOR Tree Performance Analyzer
+
+```javascript
+class RaptorTreePerformanceAnalyzer {
+  constructor(flowName, apiToken) {
+    this.flowName = flowName;
+    this.apiToken = apiToken;
+  }
+
+  async getTreePerformanceReport() {
+    try {
+      const nodes = await this.listRaptorRagNodes();
+      const report = {
+        totalNodes: nodes.length,
+        activeNodes: 0,
+        processingNodes: 0,
+        errorNodes: 0,
+        totalProcessed: 0,
+        totalChunks: 0,
+        totalRetrieved: 0,
+        totalTreeLevels: 0,
+        totalClusters: 0,
+        totalSummaries: 0,
+        averageTreeDepth: 0,
+        clusteringEfficiency: 0,
+        summarizationEfficiency: 0,
+        topkConfigurations: {},
+        maxLevelConfigurations: {},
+        treeQuality: []
+      };
+
+      let totalTreeDepth = 0;
+      let nodesWithTrees = 0;
+
+      for (const node of nodes) {
+        const config = node.data.config || {};
+        const result = node.data.result || {};
+        
+        // Track configurations
+        const topK = config.topK;
+        const topKKey = topK === null ? 'unlimited' : String(topK);
+        report.topkConfigurations[topKKey] = (report.topkConfigurations[topKKey] || 0) + 1;
+        
+        const maxLevel = config.max_level || 3;
+        report.maxLevelConfigurations[String(maxLevel)] = (report.maxLevelConfigurations[String(maxLevel)] || 0) + 1;
+        
+        // Aggregate metrics
+        report.totalProcessed += result.total_processed || 0;
+        report.totalChunks += result.total_chunks || 0;
+        report.totalRetrieved += result.total_retrieved || 0;
+        report.totalClusters += result.total_clusters || 0;
+        report.totalSummaries += result.total_summaries || 0;
+        
+        const treeLevels = result.tree_levels || 0;
+        if (treeLevels > 0) {
+          totalTreeDepth += treeLevels;
+          nodesWithTrees++;
+          report.totalTreeLevels = Math.max(report.totalTreeLevels, treeLevels);
+        }
+        
+        // Track node status
+        if (result.processing) {
+          report.processingNodes++;
+        } else if (result.has_error) {
+          report.errorNodes++;
+        } else if (result.updated) {
+          report.activeNodes++;
+        }
+        
+        // Individual tree quality analysis
+        const nodeQuality = {
+          nodeId: node.id,
+          nodeName: node.data.name,
+          topK: config.topK,
+          maxLevel: config.max_level,
+          treeLevels: treeLevels,
+          clusters: result.total_clusters || 0,
+          summaries: result.total_summaries || 0,
+          clusteringRatio: result.total_chunks > 0 ? (result.total_clusters || 0) / result.total_chunks : 0,
+          summarizationRatio: result.total_clusters > 0 ? (result.total_summaries || 0) / result.total_clusters : 0,
+          treeDensity: treeLevels > 0 ? (result.total_summaries || 0) / treeLevels : 0,
+          status: result.processing ? 'Building' :
+                 result.has_error ? 'Error' :
+                 result.updated ? 'Ready' : 'Pending'
+        };
+        
+        report.treeQuality.push(nodeQuality);
+      }
+
+      // Calculate averages
+      if (nodesWithTrees > 0) {
+        report.averageTreeDepth = totalTreeDepth / nodesWithTrees;
+      }
+      
+      if (report.totalChunks > 0) {
+        report.clusteringEfficiency = report.totalClusters / report.totalChunks;
+      }
+      
+      if (report.totalClusters > 0) {
+        report.summarizationEfficiency = report.totalSummaries / report.totalClusters;
+      }
+
+      return report;
+    } catch (error) {
+      throw new Error(`Tree performance report failed: ${error.message}`);
+    }
+  }
+
+  async listRaptorRagNodes() {
+    const response = await fetch(`https://${this.flowName}.flows.graphorlm.com/raptor-rag`, {
+      headers: { 'Authorization': `Bearer ${this.apiToken}` }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  async generateTreeReport() {
+    const report = await this.getTreePerformanceReport();
+    
+    console.log('🌳 RAPTOR Tree Performance Report');
+    console.log('==================================');
+    console.log(`Total Nodes: ${report.totalNodes}`);
+    console.log(`Active Trees: ${report.activeNodes}`);
+    console.log(`Building Trees: ${report.processingNodes}`);
+    console.log(`Error Nodes: ${report.errorNodes}`);
+    console.log(`Total Documents Processed: ${report.totalProcessed}`);
+    console.log(`Total Base Chunks: ${report.totalChunks}`);
+    console.log(`Total Hierarchical Clusters: ${report.totalClusters}`);
+    console.log(`Total Summary Nodes: ${report.totalSummaries}`);
+    console.log(`Maximum Tree Depth: ${report.totalTreeLevels} levels`);
+    console.log(`Average Tree Depth: ${report.averageTreeDepth.toFixed(1)} levels`);
+    console.log(`Clustering Efficiency: ${report.clusteringEfficiency.toFixed(2)} clusters/chunk`);
+    console.log(`Summarization Efficiency: ${report.summarizationEfficiency.toFixed(2)} summaries/cluster`);
+    
+    console.log('\n🎯 Top K Distribution:');
+    for (const [topK, count] of Object.entries(report.topkConfigurations)) {
+      console.log(`  ${topK}: ${count} node(s)`);
+    }
+    
+    console.log('\n🏗️  Max Level Distribution:');
+    for (const [level, count] of Object.entries(report.maxLevelConfigurations)) {
+      console.log(`  ${level} levels: ${count} node(s)`);
+    }
+    
+    console.log('\n🌲 Individual Tree Analysis:');
+    report.treeQuality.forEach(tree => {
+      console.log(`  ${tree.nodeName} (${tree.nodeId}):`);
+      console.log(`    Status: ${tree.status}, Levels: ${tree.treeLevels}, TopK: ${tree.topK || 'unlimited'}`);
+      console.log(`    Clusters: ${tree.clusters}, Summaries: ${tree.summaries}`);
+      console.log(`    Clustering Ratio: ${tree.clusteringRatio.toFixed(2)}, Tree Density: ${tree.treeDensity.toFixed(1)}`);
+    });
+
+    return report;
+  }
+}
+
+// Usage
+const analyzer = new RaptorTreePerformanceAnalyzer('my-rag-pipeline', 'YOUR_API_TOKEN');
+analyzer.generateTreeReport().catch(console.error);
+```
+
+#### Hierarchical Configuration Validator
+
+```python
+import requests
+from typing import List, Dict, Any
+
+class RaptorConfigurationValidator:
+    def __init__(self, flow_name: str, api_token: str):
+        self.flow_name = flow_name
+        self.api_token = api_token
+        self.base_url = f"https://{flow_name}.flows.graphorlm.com"
+    
+    def get_raptor_rag_nodes(self) -> List[Dict[str, Any]]:
+        """Retrieve all RAPTOR RAG nodes from the flow"""
+        response = requests.get(
+            f"{self.base_url}/raptor-rag",
+            headers={"Authorization": f"Bearer {self.api_token}"}
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def validate_tree_configurations(self) -> Dict[str, Any]:
+        """Validate RAPTOR RAG node configurations for optimal tree performance"""
+        nodes = self.get_raptor_rag_nodes()
+        
+        validation_report = {
+            "summary": {
+                "total_nodes": len(nodes),
+                "valid_configs": 0,
+                "invalid_configs": 0,
+                "warnings": 0,
+                "optimization_suggestions": 0
+            },
+            "nodes": [],
+            "issues": [],
+            "recommendations": []
+        }
+        
+        for node in nodes:
+            node_info = {
+                "id": node["id"],
+                "name": node["data"]["name"],
+                "config": node["data"]["config"],
+                "result": node["data"].get("result", {}),
+                "is_valid": True,
+                "warnings": [],
+                "errors": [],
+                "optimizations": []
+            }
+            
+            config = node["data"]["config"]
+            result = node["data"].get("result", {})
+            
+            # Validate Top K configuration
+            top_k = config.get("topK")
+            if top_k is not None and top_k <= 0:
+                node_info["errors"].append("Top K must be greater than 0")
+                node_info["is_valid"] = False
+            elif top_k and top_k > 100:
+                node_info["warnings"].append("Very high Top K may affect hierarchical retrieval performance")
+            
+            # Validate Max Level configuration
+            max_level = config.get("max_level", 3)
+            if max_level < 2:
+                node_info["warnings"].append("Max level less than 2 may not provide hierarchical benefits")
+            elif max_level > 6:
+                node_info["warnings"].append("Very deep trees (>6 levels) may cause performance issues")
+            
+            # Tree performance analysis
+            tree_levels = result.get("tree_levels", 0)
+            total_clusters = result.get("total_clusters", 0)
+            total_summaries = result.get("total_summaries", 0)
+            total_chunks = result.get("total_chunks", 0)
+            
+            if tree_levels > 0:
+                # Analyze tree structure efficiency
+                if total_chunks > 0 and total_clusters > 0:
+                    clustering_ratio = total_clusters / total_chunks
+                    if clustering_ratio < 0.3:
+                        node_info["optimizations"].append("Low clustering ratio - consider reducing max_level or improving document diversity")
+                    elif clustering_ratio > 1.0:
+                        node_info["optimizations"].append("High clustering ratio - tree may be over-segmented")
+                
+                if total_clusters > 0 and total_summaries > 0:
+                    summarization_ratio = total_summaries / total_clusters
+                    if summarization_ratio < 0.4:
+                        node_info["optimizations"].append("Low summarization ratio - many clusters may not be getting summarized effectively")
+                
+                if tree_levels < max_level:
+                    node_info["optimizations"].append(f"Tree only reached {tree_levels}/{max_level} levels - consider adjusting clustering parameters")
+            
+            # Processing status validation
+            if result.get("has_error"):
+                node_info["errors"].append("Node has processing errors - check tree construction logs")
+                node_info["is_valid"] = False
+            elif result.get("processing"):
+                node_info["warnings"].append("Node is currently processing - results may be incomplete")
+            
+            # Count valid/invalid configs
+            if node_info["is_valid"]:
+                validation_report["summary"]["valid_configs"] += 1
+            else:
+                validation_report["summary"]["invalid_configs"] += 1
+            
+            validation_report["summary"]["warnings"] += len(node_info["warnings"])
+            validation_report["summary"]["optimization_suggestions"] += len(node_info["optimizations"])
+            
+            # Add issues to global lists
+            for error in node_info["errors"]:
+                validation_report["issues"].append({
+                    "type": "error",
+                    "node_id": node["id"],
+                    "node_name": node_info["name"],
+                    "message": error
+                })
+            
+            for warning in node_info["warnings"]:
+                validation_report["issues"].append({
+                    "type": "warning",
+                    "node_id": node["id"],
+                    "node_name": node_info["name"],
+                    "message": warning
+                })
+            
+            for optimization in node_info["optimizations"]:
+                validation_report["recommendations"].append({
+                    "type": "optimization",
+                    "node_id": node["id"],
+                    "node_name": node_info["name"],
+                    "message": optimization
+                })
+            
+            validation_report["nodes"].append(node_info)
+        
+        return validation_report
+    
+    def print_validation_report(self, report: Dict[str, Any]):
+        """Print a formatted validation report for RAPTOR tree configurations"""
+        summary = report["summary"]
+        
+        print("🔍 RAPTOR RAG Configuration Validation Report")
+        print("=" * 60)
+        print(f"Flow: {self.flow_name}")
+        print(f"Total Nodes: {summary['total_nodes']}")
+        print(f"Valid Configurations: {summary['valid_configs']}")
+        print(f"Invalid Configurations: {summary['invalid_configs']}")
+        print(f"Warnings: {summary['warnings']}")
+        print(f"Optimization Suggestions: {summary['optimization_suggestions']}")
+        
+        if summary['invalid_configs'] == 0 and summary['warnings'] == 0:
+            print("\n✅ All RAPTOR RAG configurations are valid!")
+        else:
+            print(f"\n📋 Node Details:")
+            print("-" * 40)
+            for node in report["nodes"]:
+                status_icon = "✅" if node["is_valid"] else "❌"
+                warning_icon = "⚠️" if node["warnings"] else ""
+                opt_icon = "💡" if node["optimizations"] else ""
+                
+                print(f"\n{status_icon} {warning_icon} {opt_icon} {node['name']} ({node['id']})")
+                
+                config = node["config"]
+                result = node["result"]
+                print(f"   Top K: {config.get('topK', 'Not set')}")
+                print(f"   Max Level: {config.get('max_level', 3)}")
+                
+                if result:
+                    print(f"   Tree Levels Built: {result.get('tree_levels', 0)}")
+                    print(f"   Clusters: {result.get('total_clusters', 0)}")
+                    print(f"   Summaries: {result.get('total_summaries', 0)}")
+                
+                for error in node["errors"]:
+                    print(f"   ❌ Error: {error}")
+                
+                for warning in node["warnings"]:
+                    print(f"   ⚠️  Warning: {warning}")
+                
+                for optimization in node["optimizations"]:
+                    print(f"   💡 Optimization: {optimization}")
+        
+        if report["recommendations"]:
+            print(f"\n💡 Tree Optimization Recommendations:")
+            print("-" * 50)
+            for rec in report["recommendations"]:
+                print(f"🌳 {rec['node_name']}: {rec['message']}")
+
+# Usage
+validator = RaptorConfigurationValidator("my-rag-pipeline", "YOUR_API_TOKEN")
+try:
+    report = validator.validate_tree_configurations()
+    validator.print_validation_report(report)
+except Exception as e:
+    print(f"Validation failed: {e}")
+```
+
+## Best Practices
+
+### Tree Configuration Management
+
+- **Optimal Tree Depth**: Configure max_level between 3-5 for most use cases to balance hierarchy and performance
+- **Appropriate Top K**: Use Top K values between 10-30 for balanced hierarchical retrieval coverage
+- **Clustering Balance**: Monitor clustering ratios to ensure effective tree granularity without over-segmentation
+- **Summarization Quality**: Verify that summary nodes provide meaningful abstractions at each level
+
+### Performance Optimization
+
+- **Tree Construction**: Monitor tree building progress and optimize for large document collections
+- **Memory Management**: RAPTOR trees can be memory-intensive - plan resource allocation accordingly
+- **Processing Efficiency**: Balance tree depth with construction time for optimal performance
+- **Hierarchical Retrieval**: Optimize traversal strategies based on query patterns and tree structure
+
+### Monitoring and Maintenance
+
+- **Tree Health Checks**: Regularly monitor tree construction status and hierarchical structure quality
+- **Configuration Validation**: Verify that tree settings produce effective multi-level abstractions
+- **Performance Tracking**: Monitor clustering efficiency and summarization quality metrics
+- **Update Coordination**: Coordinate RAPTOR tree updates with downstream processing requirements
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="exclamation-triangle" title="Flow Not Found Error">
+    **Solution**: Verify that:
+    - The flow name in the URL is correct and matches exactly
+    - The flow exists in your project
+    - Your API token has access to the correct project
+    - The flow has been created and saved properly
+  </Accordion>
+  
+  <Accordion icon="list" title="Empty RAPTOR RAG Nodes Array">
+    **Solution**: If no RAPTOR RAG nodes are returned:
+    - Verify the flow contains RAPTOR RAG components
+    - Check that RAPTOR RAG nodes have been added to the flow
+    - Ensure the flow has been saved after adding RAPTOR RAG nodes
+    - Confirm you're checking the correct flow
+  </Accordion>
+  
+  <Accordion icon="tree" title="Tree Construction Issues">
+    **Solution**: If RAPTOR trees are not building properly:
+    - Check that input documents have sufficient content for hierarchical clustering
+    - Verify max_level settings are appropriate for your document collection size
+    - Monitor memory usage during tree construction for large document sets
+    - Review clustering and summarization logs for specific construction errors
+  </Accordion>
+  
+  <Accordion icon="layer-group" title="Poor Tree Structure Quality">
+    **Solution**: If trees have poor hierarchical structure:
+    - Analyze clustering ratios and adjust max_level accordingly
+    - Verify document diversity is sufficient for meaningful clustering
+    - Check summarization quality at each tree level
+    - Consider adjusting chunk size in upstream processing for better tree granularity
+  </Accordion>
+  
+  <Accordion icon="clock" title="Slow Tree Construction">
+    **Solution**: If tree building is taking too long:
+    - Monitor system resources during RAPTOR tree construction
+    - Consider reducing max_level for faster processing
+    - Check document size and complexity - very large documents may need preprocessing
+    - Review clustering algorithm performance and consider optimization
+  </Accordion>
+  
+  <Accordion icon="wifi" title="Connection Issues">
+    **Solution**: For connectivity problems:
+    - Check your internet connection
+    - Verify the flow URL is accessible
+    - Ensure your firewall allows HTTPS traffic to *.flows.graphorlm.com
+    - Try accessing the endpoint from a different network
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After retrieving RAPTOR RAG node information, you might want to:
+
+<CardGroup cols={2}>
+  <Card
+    title="Update RAPTOR RAG Configuration"
+    icon="sliders"
+    href="/api-reference/flows/raptor-rag/update"
+  >
+    Modify RAPTOR RAG node settings like Top K values and tree depth levels
+  </Card>
+  <Card
+    title="List Dataset Nodes"
+    icon="database"
+    href="/api-reference/flows/datasets/list"
+  >
+    View dataset nodes that provide input to RAPTOR RAG hierarchical processing
+  </Card>
+  <Card
+    title="Run Flow"
+    icon="play"
+    href="/api-reference/flows/run"
+  >
+    Execute your flow with the configured RAPTOR RAG nodes
+  </Card>
+  <Card
+    title="Flow Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
+  >
+    Learn about all available flow management endpoints
+  </Card>
+</CardGroup>

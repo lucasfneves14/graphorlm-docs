@@ -1,0 +1,1276 @@
+---
+title: 'Update RAPTOR RAG Configuration'
+description: 'Update RAPTOR RAG node configuration via the GraphorLM REST API'
+---
+
+Update the configuration of a RAPTOR RAG node in your GraphorLM flow. RAPTOR RAG nodes are advanced hierarchical RAG components that build multi-level tree structures through clustering and summarization, requiring careful configuration of tree depth and retrieval parameters for optimal hierarchical performance.
+
+## Overview
+
+The Update RAPTOR RAG Configuration endpoint allows you to modify the hierarchical tree settings of a RAPTOR RAG node within a flow. This includes configuring the number of results to retrieve from the tree structure and the maximum depth levels for hierarchical abstraction.
+
+- **Method**: `PATCH`
+- **URL**: `https://{flow_name}.flows.graphorlm.com/raptor-rag/{node_id}`
+- **Authentication**: Required (API Token)
+
+## Authentication
+
+All requests must include a valid API token in the Authorization header:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+| `Content-Type` | `application/json` | Yes |
+
+### URL Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `flow_name` | string | The name of the flow containing the RAPTOR RAG node |
+| `node_id` | string | The unique identifier of the RAPTOR RAG node to update |
+
+### Request Body
+
+```json
+{
+  "config": {
+    "topK": 25,
+    "max_level": 4
+  }
+}
+```
+
+### Configuration Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `topK` | integer \| null | No | Number of top results to retrieve from the RAPTOR tree hierarchy. Set to `null` for unlimited retrieval. Range: 1-100 or `null` |
+| `max_level` | integer | No | Maximum number of levels in the RAPTOR tree hierarchy. Higher values create deeper abstractions. Range: 2-8, Default: 3 |
+
+### Example Requests
+
+#### Precision-Focused Configuration
+```bash
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/raptor-rag/raptor-rag-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "topK": 15,
+      "max_level": 3
+    }
+  }'
+```
+
+#### Deep Hierarchy Configuration
+```bash
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/raptor-rag/raptor-rag-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "topK": 40,
+      "max_level": 5
+    }
+  }'
+```
+
+#### Unlimited Retrieval Configuration
+```bash
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/raptor-rag/raptor-rag-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "topK": null,
+      "max_level": 4
+    }
+  }'
+```
+
+## Response Format
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "RAPTOR RAG node configuration updated successfully",
+  "node_id": "raptor-rag-1748287628685"
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Whether the configuration update was successful |
+| `message` | string | Descriptive message about the update operation |
+| `node_id` | string | The ID of the updated RAPTOR RAG node |
+
+## Configuration Strategies
+
+### 1. Precision-Focused Strategy
+**Best for**: High-accuracy requirements with focused hierarchical retrieval
+
+```json
+{
+  "config": {
+    "topK": 10,
+    "max_level": 3
+  }
+}
+```
+
+**Characteristics:**
+- **Low Top K (10)**: Highly selective results from tree traversal
+- **Standard Depth (3)**: Balanced hierarchy without over-abstraction
+- **Tree Efficiency**: Fast traversal with targeted precision
+- **Memory Usage**: Minimal resource consumption
+- **Use Cases**: Legal documents, medical research, technical specifications
+
+### 2. Balanced Hierarchy Strategy
+**Best for**: General-purpose applications with good coverage
+
+```json
+{
+  "config": {
+    "topK": 25,
+    "max_level": 4
+  }
+}
+```
+
+**Characteristics:**
+- **Moderate Top K (25)**: Good balance between precision and coverage
+- **Extended Depth (4)**: Rich hierarchical abstractions
+- **Tree Quality**: Comprehensive multi-level structure
+- **Processing Time**: Moderate tree construction and traversal time
+- **Use Cases**: Knowledge bases, research papers, documentation systems
+
+### 3. Comprehensive Coverage Strategy
+**Best for**: Exploratory analysis and broad topic coverage
+
+```json
+{
+  "config": {
+    "topK": 50,
+    "max_level": 5
+  }
+}
+```
+
+**Characteristics:**
+- **High Top K (50)**: Extensive hierarchical result coverage
+- **Deep Hierarchy (5)**: Maximum abstraction levels
+- **Tree Complexity**: Rich multi-level clustering and summarization
+- **Resource Intensive**: Higher memory and processing requirements
+- **Use Cases**: Literature reviews, comprehensive analysis, discovery research
+
+### 4. Unlimited Exploration Strategy
+**Best for**: Maximum retrieval capability and deep analysis
+
+```json
+{
+  "config": {
+    "topK": null,
+    "max_level": 6
+  }
+}
+```
+
+**Characteristics:**
+- **Unlimited Top K (null)**: No restrictions on hierarchical retrieval
+- **Maximum Depth (6)**: Deepest possible abstraction hierarchy
+- **Tree Performance**: Comprehensive but resource-intensive processing
+- **Complete Coverage**: All relevant hierarchical content retrieved
+- **Use Cases**: Academic research, exhaustive analysis, comprehensive surveys
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+async function updateRaptorRagNode(flowName, nodeId, config, apiToken) {
+  const response = await fetch(`https://${flowName}.flows.graphorlm.com/raptor-rag/${nodeId}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ config })
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+// Advanced configuration management with tree optimization
+class RaptorRagConfigManager {
+  constructor(flowName, apiToken) {
+    this.flowName = flowName;
+    this.apiToken = apiToken;
+  }
+
+  async optimizeTreeConfiguration(nodeId, documentCount, complexityLevel = 'medium') {
+    // Calculate optimal configuration based on document characteristics
+    const strategies = {
+      'low': { baseTopK: 10, baseMaxLevel: 3 },
+      'medium': { baseTopK: 25, baseMaxLevel: 4 },
+      'high': { baseTopK: 40, baseMaxLevel: 5 }
+    };
+
+    const strategy = strategies[complexityLevel];
+    
+    // Adjust based on document count
+    let optimizedTopK = strategy.baseTopK;
+    let optimizedMaxLevel = strategy.baseMaxLevel;
+
+    if (documentCount > 1000) {
+      optimizedTopK = Math.min(optimizedTopK * 1.5, 80);
+      optimizedMaxLevel = Math.min(optimizedMaxLevel + 1, 6);
+    } else if (documentCount < 100) {
+      optimizedTopK = Math.max(optimizedTopK * 0.7, 5);
+      optimizedMaxLevel = Math.max(optimizedMaxLevel - 1, 2);
+    }
+
+    const config = {
+      topK: Math.round(optimizedTopK),
+      max_level: optimizedMaxLevel
+    };
+
+    console.log(`🌳 Optimizing RAPTOR tree for ${documentCount} documents:`);
+    console.log(`   Complexity Level: ${complexityLevel}`);
+    console.log(`   Optimized Top K: ${config.topK}`);
+    console.log(`   Optimized Max Level: ${config.max_level}`);
+
+    return await this.updateConfiguration(nodeId, config);
+  }
+
+  async updateConfiguration(nodeId, config) {
+    try {
+      const result = await updateRaptorRagNode(this.flowName, nodeId, config, this.apiToken);
+      
+      console.log(`✅ RAPTOR RAG configuration updated successfully`);
+      console.log(`   Node ID: ${result.node_id}`);
+      console.log(`   Top K: ${config.topK || 'unlimited'}`);
+      console.log(`   Max Level: ${config.max_level}`);
+
+      return result;
+    } catch (error) {
+      console.error(`❌ Configuration update failed: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async analyzeTreePerformance(nodeId, config) {
+    // Simulate tree performance analysis
+    const { topK, max_level } = config;
+    
+    const analysis = {
+      treeComplexity: this.calculateTreeComplexity(max_level),
+      retrievalEfficiency: this.calculateRetrievalEfficiency(topK),
+      memoryEstimate: this.estimateMemoryUsage(max_level),
+      processingEstimate: this.estimateProcessingTime(max_level, topK),
+      recommendations: []
+    };
+
+    // Generate recommendations
+    if (max_level > 5) {
+      analysis.recommendations.push('Consider reducing max_level for better performance');
+    }
+    
+    if (topK && topK > 60) {
+      analysis.recommendations.push('High Top K may impact hierarchical traversal speed');
+    }
+    
+    if (max_level < 3) {
+      analysis.recommendations.push('Low max_level may not fully utilize hierarchical benefits');
+    }
+
+    console.log(`📊 Tree Performance Analysis:`);
+    console.log(`   Tree Complexity: ${analysis.treeComplexity}`);
+    console.log(`   Retrieval Efficiency: ${analysis.retrievalEfficiency}`);
+    console.log(`   Memory Estimate: ${analysis.memoryEstimate}`);
+    console.log(`   Processing Estimate: ${analysis.processingEstimate}`);
+    
+    if (analysis.recommendations.length > 0) {
+      console.log(`   💡 Recommendations:`);
+      analysis.recommendations.forEach(rec => console.log(`     - ${rec}`));
+    }
+
+    return analysis;
+  }
+
+  calculateTreeComplexity(maxLevel) {
+    const complexity = Math.pow(2, maxLevel - 1);
+    if (complexity < 8) return 'Low';
+    if (complexity < 32) return 'Medium';
+    return 'High';
+  }
+
+  calculateRetrievalEfficiency(topK) {
+    if (!topK) return 'Maximum Coverage';
+    if (topK <= 15) return 'High Precision';
+    if (topK <= 35) return 'Balanced';
+    return 'Broad Coverage';
+  }
+
+  estimateMemoryUsage(maxLevel) {
+    const baseMemory = 100; // MB base estimate
+    const levelMultiplier = Math.pow(1.5, maxLevel - 2);
+    const estimated = Math.round(baseMemory * levelMultiplier);
+    return `~${estimated}MB`;
+  }
+
+  estimateProcessingTime(maxLevel, topK) {
+    const baseTime = 30; // seconds base estimate
+    const levelFactor = Math.pow(1.3, maxLevel - 2);
+    const topKFactor = topK ? Math.log10(topK) : 2;
+    const estimated = Math.round(baseTime * levelFactor * topKFactor);
+    return `~${estimated}s`;
+  }
+}
+
+// Usage examples
+const configManager = new RaptorRagConfigManager('my-rag-pipeline', 'YOUR_API_TOKEN');
+
+// Basic configuration update
+updateRaptorRagNode('my-rag-pipeline', 'raptor-rag-1748287628685', {
+  topK: 30,
+  max_level: 4
+}, 'YOUR_API_TOKEN')
+  .then(result => console.log('Configuration updated:', result))
+  .catch(error => console.error('Update failed:', error));
+
+// Advanced optimization
+configManager.optimizeTreeConfiguration('raptor-rag-1748287628685', 500, 'high')
+  .then(result => {
+    console.log('Optimization complete:', result);
+    return configManager.analyzeTreePerformance('raptor-rag-1748287628685', {
+      topK: 40,
+      max_level: 5
+    });
+  })
+  .catch(error => console.error('Optimization failed:', error));
+```
+
+### Python
+
+```python
+import requests
+import json
+import math
+from typing import Dict, Any, Optional
+
+def update_raptor_rag_node(flow_name: str, node_id: str, config: Dict[str, Any], api_token: str) -> Dict[str, Any]:
+    url = f"https://{flow_name}.flows.graphorlm.com/raptor-rag/{node_id}"
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {"config": config}
+    
+    response = requests.patch(url, headers=headers, json=payload)
+    response.raise_for_status()
+    
+    return response.json()
+
+class RaptorRagHierarchicalOptimizer:
+    """Advanced RAPTOR RAG configuration optimizer with tree analysis capabilities"""
+    
+    def __init__(self, flow_name: str, api_token: str):
+        self.flow_name = flow_name
+        self.api_token = api_token
+        self.base_url = f"https://{flow_name}.flows.graphorlm.com"
+    
+    def calculate_optimal_configuration(
+        self, 
+        document_count: int, 
+        document_complexity: str = "medium",
+        priority: str = "balanced"
+    ) -> Dict[str, Any]:
+        """Calculate optimal RAPTOR tree configuration based on document characteristics"""
+        
+        # Base configurations for different priorities
+        priority_configs = {
+            "precision": {"base_topk": 15, "base_max_level": 3},
+            "balanced": {"base_topk": 25, "base_max_level": 4},
+            "coverage": {"base_topk": 40, "base_max_level": 5},
+            "exploration": {"base_topk": None, "base_max_level": 6}
+        }
+        
+        base_config = priority_configs.get(priority, priority_configs["balanced"])
+        
+        # Complexity multipliers
+        complexity_multipliers = {
+            "low": {"topk_mult": 0.8, "level_adj": -1},
+            "medium": {"topk_mult": 1.0, "level_adj": 0},
+            "high": {"topk_mult": 1.3, "level_adj": 1},
+            "very_high": {"topk_mult": 1.6, "level_adj": 2}
+        }
+        
+        complexity = complexity_multipliers.get(document_complexity, complexity_multipliers["medium"])
+        
+        # Calculate adjusted values
+        if base_config["base_topk"] is not None:
+            adjusted_topk = int(base_config["base_topk"] * complexity["topk_mult"])
+            
+            # Document count adjustments
+            if document_count > 2000:
+                adjusted_topk = min(adjusted_topk * 1.4, 80)
+            elif document_count > 1000:
+                adjusted_topk = min(adjusted_topk * 1.2, 60)
+            elif document_count < 200:
+                adjusted_topk = max(adjusted_topk * 0.8, 10)
+            
+            adjusted_topk = max(5, min(100, adjusted_topk))
+        else:
+            adjusted_topk = None
+        
+        adjusted_max_level = base_config["base_max_level"] + complexity["level_adj"]
+        
+        # Document count level adjustments
+        if document_count > 1500:
+            adjusted_max_level = min(adjusted_max_level + 1, 8)
+        elif document_count < 100:
+            adjusted_max_level = max(adjusted_max_level - 1, 2)
+        
+        adjusted_max_level = max(2, min(8, adjusted_max_level))
+        
+        return {
+            "topK": adjusted_topk,
+            "max_level": adjusted_max_level,
+            "optimization_context": {
+                "document_count": document_count,
+                "document_complexity": document_complexity,
+                "priority": priority,
+                "estimated_tree_nodes": self._estimate_tree_nodes(adjusted_max_level),
+                "estimated_clusters": self._estimate_clusters(document_count, adjusted_max_level)
+            }
+        }
+    
+    def _estimate_tree_nodes(self, max_level: int) -> int:
+        """Estimate total nodes in RAPTOR tree"""
+        return sum(math.pow(2, level) for level in range(max_level))
+    
+    def _estimate_clusters(self, document_count: int, max_level: int) -> int:
+        """Estimate number of clusters across all levels"""
+        base_chunks = document_count * 15  # Estimated chunks per document
+        total_clusters = 0
+        current_level_nodes = base_chunks
+        
+        for level in range(max_level - 1):
+            clusters_at_level = max(current_level_nodes // 3, 1)
+            total_clusters += clusters_at_level
+            current_level_nodes = clusters_at_level
+        
+        return total_clusters
+    
+    def analyze_tree_performance(self, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze expected performance for given configuration"""
+        topk = config.get("topK")
+        max_level = config.get("max_level", 3)
+        
+        analysis = {
+            "tree_complexity": self._analyze_tree_complexity(max_level),
+            "retrieval_scope": self._analyze_retrieval_scope(topk),
+            "memory_requirements": self._estimate_memory_requirements(max_level),
+            "processing_characteristics": self._analyze_processing_characteristics(max_level, topk),
+            "hierarchy_quality": self._assess_hierarchy_quality(max_level),
+            "performance_warnings": [],
+            "optimization_suggestions": []
+        }
+        
+        # Generate warnings and suggestions
+        if max_level > 6:
+            analysis["performance_warnings"].append("Very deep tree may cause performance issues")
+            analysis["optimization_suggestions"].append("Consider reducing max_level to 5-6 for better performance")
+        
+        if topk and topk > 70:
+            analysis["performance_warnings"].append("High Top K may impact traversal efficiency")
+            analysis["optimization_suggestions"].append("Consider reducing Top K for faster hierarchical retrieval")
+        
+        if max_level < 3:
+            analysis["optimization_suggestions"].append("Increasing max_level may improve hierarchical benefits")
+        
+        if topk and topk < 10:
+            analysis["optimization_suggestions"].append("Low Top K may miss relevant hierarchical content")
+        
+        return analysis
+    
+    def _analyze_tree_complexity(self, max_level: int) -> Dict[str, Any]:
+        """Analyze tree structural complexity"""
+        estimated_nodes = self._estimate_tree_nodes(max_level)
+        
+        if estimated_nodes < 15:
+            complexity_level = "Low"
+            description = "Simple hierarchical structure"
+        elif estimated_nodes < 63:
+            complexity_level = "Medium"
+            description = "Balanced multi-level hierarchy"
+        elif estimated_nodes < 255:
+            complexity_level = "High"
+            description = "Complex hierarchical abstraction"
+        else:
+            complexity_level = "Very High"
+            description = "Highly complex multi-level tree"
+        
+        return {
+            "level": complexity_level,
+            "description": description,
+            "estimated_nodes": estimated_nodes,
+            "max_levels": max_level
+        }
+    
+    def _analyze_retrieval_scope(self, topk: Optional[int]) -> Dict[str, Any]:
+        """Analyze retrieval coverage scope"""
+        if topk is None:
+            return {
+                "scope": "Unlimited",
+                "description": "Complete hierarchical coverage",
+                "coverage_type": "Exhaustive"
+            }
+        elif topk <= 15:
+            return {
+                "scope": "Focused",
+                "description": "High-precision hierarchical retrieval",
+                "coverage_type": "Selective"
+            }
+        elif topk <= 35:
+            return {
+                "scope": "Balanced",
+                "description": "Good balance of precision and coverage",
+                "coverage_type": "Moderate"
+            }
+        else:
+            return {
+                "scope": "Comprehensive",
+                "description": "Broad hierarchical content coverage",
+                "coverage_type": "Extensive"
+            }
+    
+    def _estimate_memory_requirements(self, max_level: int) -> Dict[str, Any]:
+        """Estimate memory requirements for tree processing"""
+        base_memory_mb = 150
+        level_multiplier = math.pow(1.6, max_level - 2)
+        estimated_mb = int(base_memory_mb * level_multiplier)
+        
+        if estimated_mb < 300:
+            requirement_level = "Low"
+        elif estimated_mb < 800:
+            requirement_level = "Medium"
+        elif estimated_mb < 2000:
+            requirement_level = "High"
+        else:
+            requirement_level = "Very High"
+        
+        return {
+            "estimated_mb": estimated_mb,
+            "requirement_level": requirement_level,
+            "scaling_factor": f"{level_multiplier:.2f}x base"
+        }
+    
+    def _analyze_processing_characteristics(self, max_level: int, topk: Optional[int]) -> Dict[str, Any]:
+        """Analyze processing time and resource characteristics"""
+        base_construction_time = 45  # seconds
+        level_factor = math.pow(1.4, max_level - 2)
+        
+        construction_time = int(base_construction_time * level_factor)
+        
+        base_retrieval_time = 2  # seconds
+        topk_factor = math.log10(topk) if topk else 3
+        retrieval_time = int(base_retrieval_time * topk_factor * (max_level / 3))
+        
+        return {
+            "tree_construction_time_estimate": f"~{construction_time}s",
+            "retrieval_time_estimate": f"~{retrieval_time}s",
+            "clustering_intensity": "High" if max_level > 4 else "Medium" if max_level > 2 else "Low",
+            "summarization_intensity": "High" if max_level > 5 else "Medium" if max_level > 3 else "Low"
+        }
+    
+    def _assess_hierarchy_quality(self, max_level: int) -> Dict[str, Any]:
+        """Assess expected hierarchy quality"""
+        if max_level >= 5:
+            quality = "Excellent"
+            description = "Rich multi-level abstractions with deep hierarchical insights"
+        elif max_level >= 4:
+            quality = "Good"
+            description = "Well-structured hierarchy with good abstraction levels"
+        elif max_level >= 3:
+            quality = "Standard"
+            description = "Basic hierarchical structure with moderate abstractions"
+        else:
+            quality = "Limited"
+            description = "Minimal hierarchical benefits with shallow abstractions"
+        
+        return {
+            "quality_level": quality,
+            "description": description,
+            "abstraction_depth": max_level,
+            "hierarchy_richness": f"{max_level} levels of abstraction"
+        }
+    
+    def update_with_optimization(
+        self, 
+        node_id: str, 
+        document_count: int, 
+        document_complexity: str = "medium",
+        priority: str = "balanced"
+    ) -> Dict[str, Any]:
+        """Update node configuration with optimization"""
+        
+        print(f"🌳 Optimizing RAPTOR RAG configuration...")
+        print(f"   Document Count: {document_count}")
+        print(f"   Document Complexity: {document_complexity}")
+        print(f"   Priority: {priority}")
+        
+        # Calculate optimal configuration
+        optimal_config = self.calculate_optimal_configuration(
+            document_count, document_complexity, priority
+        )
+        
+        config_to_update = {
+            "topK": optimal_config["topK"],
+            "max_level": optimal_config["max_level"]
+        }
+        
+        print(f"\n📊 Optimal Configuration:")
+        print(f"   Top K: {config_to_update['topK'] or 'unlimited'}")
+        print(f"   Max Level: {config_to_update['max_level']}")
+        print(f"   Estimated Tree Nodes: {optimal_config['optimization_context']['estimated_tree_nodes']}")
+        print(f"   Estimated Clusters: {optimal_config['optimization_context']['estimated_clusters']}")
+        
+        # Analyze performance
+        performance_analysis = self.analyze_tree_performance(config_to_update)
+        
+        print(f"\n⚡ Performance Analysis:")
+        print(f"   Tree Complexity: {performance_analysis['tree_complexity']['level']}")
+        print(f"   Retrieval Scope: {performance_analysis['retrieval_scope']['scope']}")
+        print(f"   Memory Requirements: {performance_analysis['memory_requirements']['requirement_level']} ({performance_analysis['memory_requirements']['estimated_mb']}MB)")
+        
+        if performance_analysis["performance_warnings"]:
+            print(f"\n⚠️  Performance Warnings:")
+            for warning in performance_analysis["performance_warnings"]:
+                print(f"   - {warning}")
+        
+        if performance_analysis["optimization_suggestions"]:
+            print(f"\n💡 Optimization Suggestions:")
+            for suggestion in performance_analysis["optimization_suggestions"]:
+                print(f"   - {suggestion}")
+        
+        # Update configuration
+        try:
+            result = update_raptor_rag_node(
+                self.flow_name, node_id, config_to_update, self.api_token
+            )
+            
+            print(f"\n✅ Configuration updated successfully!")
+            print(f"   Node ID: {result['node_id']}")
+            
+            return {
+                "update_result": result,
+                "applied_config": config_to_update,
+                "optimization_context": optimal_config["optimization_context"],
+                "performance_analysis": performance_analysis
+            }
+            
+        except Exception as e:
+            print(f"\n❌ Configuration update failed: {str(e)}")
+            raise
+
+# Advanced usage examples
+def demonstrate_raptor_optimization():
+    optimizer = RaptorRagHierarchicalOptimizer("my-rag-pipeline", "YOUR_API_TOKEN")
+    
+    # Example 1: Large document collection with high complexity
+    print("=== Large Document Collection Optimization ===")
+    result1 = optimizer.update_with_optimization(
+        node_id="raptor-rag-1748287628685",
+        document_count=2500,
+        document_complexity="high",
+        priority="coverage"
+    )
+    
+    # Example 2: Small specialized collection
+    print("\n=== Specialized Collection Optimization ===")
+    result2 = optimizer.update_with_optimization(
+        node_id="raptor-rag-1748287628686",
+        document_count=150,
+        document_complexity="medium",
+        priority="precision"
+    )
+    
+    # Example 3: Research exploration setup
+    print("\n=== Research Exploration Optimization ===")
+    result3 = optimizer.update_with_optimization(
+        node_id="raptor-rag-1748287628687",
+        document_count=800,
+        document_complexity="very_high",
+        priority="exploration"
+    )
+
+# Basic usage
+try:
+    # Simple configuration update
+    result = update_raptor_rag_node(
+        "my-rag-pipeline", 
+        "raptor-rag-1748287628685", 
+        {"topK": 30, "max_level": 4}, 
+        "YOUR_API_TOKEN"
+    )
+    print(f"✅ Configuration updated: {result}")
+    
+    # Advanced optimization
+    demonstrate_raptor_optimization()
+    
+except requests.exceptions.HTTPError as e:
+    print(f"❌ Error: {e}")
+    if e.response.status_code == 400:
+        error_detail = e.response.json().get("detail", "Invalid configuration")
+        print(f"Configuration error: {error_detail}")
+    elif e.response.status_code == 404:
+        print("RAPTOR RAG node not found")
+```
+
+### cURL
+
+```bash
+# Precision-focused configuration
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/raptor-rag/raptor-rag-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "topK": 15,
+      "max_level": 3
+    }
+  }'
+
+# Deep hierarchy configuration
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/raptor-rag/raptor-rag-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "topK": 40,
+      "max_level": 5
+    }
+  }'
+
+# Unlimited retrieval configuration
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/raptor-rag/raptor-rag-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "topK": null,
+      "max_level": 4
+    }
+  }'
+
+# Configuration with error handling
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/raptor-rag/raptor-rag-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config": {
+      "topK": 25,
+      "max_level": 4
+    }
+  }' \
+  -w "\nHTTP Status: %{http_code}\n" \
+  -s -S
+```
+
+### PHP
+
+```php
+<?php
+function updateRaptorRagNode($flowName, $nodeId, $config, $apiToken) {
+    $url = "https://{$flowName}.flows.graphorlm.com/raptor-rag/{$nodeId}";
+    
+    $payload = json_encode(['config' => $config]);
+    
+    $options = [
+        'http' => [
+            'header' => [
+                "Authorization: Bearer {$apiToken}",
+                "Content-Type: application/json"
+            ],
+            'method' => 'PATCH',
+            'content' => $payload
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    
+    if ($result === FALSE) {
+        throw new Exception('Failed to update RAPTOR RAG node configuration');
+    }
+    
+    return json_decode($result, true);
+}
+
+class RaptorRagTreeOptimizer {
+    private $flowName;
+    private $apiToken;
+    
+    public function __construct($flowName, $apiToken) {
+        $this->flowName = $flowName;
+        $this->apiToken = $apiToken;
+    }
+    
+    public function calculateOptimalConfiguration($documentCount, $complexity = 'medium', $priority = 'balanced') {
+        $baseConfigs = [
+            'precision' => ['topK' => 15, 'maxLevel' => 3],
+            'balanced' => ['topK' => 25, 'maxLevel' => 4],
+            'coverage' => ['topK' => 40, 'maxLevel' => 5],
+            'exploration' => ['topK' => null, 'maxLevel' => 6]
+        ];
+        
+        $complexityMultipliers = [
+            'low' => ['topKMult' => 0.8, 'levelAdj' => -1],
+            'medium' => ['topKMult' => 1.0, 'levelAdj' => 0],
+            'high' => ['topKMult' => 1.3, 'levelAdj' => 1],
+            'very_high' => ['topKMult' => 1.6, 'levelAdj' => 2]
+        ];
+        
+        $baseConfig = $baseConfigs[$priority] ?? $baseConfigs['balanced'];
+        $complexityConfig = $complexityMultipliers[$complexity] ?? $complexityMultipliers['medium'];
+        
+        // Calculate adjusted values
+        if ($baseConfig['topK'] !== null) {
+            $adjustedTopK = (int)($baseConfig['topK'] * $complexityConfig['topKMult']);
+            
+            // Document count adjustments
+            if ($documentCount > 2000) {
+                $adjustedTopK = min($adjustedTopK * 1.4, 80);
+            } elseif ($documentCount > 1000) {
+                $adjustedTopK = min($adjustedTopK * 1.2, 60);
+            } elseif ($documentCount < 200) {
+                $adjustedTopK = max($adjustedTopK * 0.8, 10);
+            }
+            
+            $adjustedTopK = max(5, min(100, $adjustedTopK));
+        } else {
+            $adjustedTopK = null;
+        }
+        
+        $adjustedMaxLevel = $baseConfig['maxLevel'] + $complexityConfig['levelAdj'];
+        
+        // Document count level adjustments
+        if ($documentCount > 1500) {
+            $adjustedMaxLevel = min($adjustedMaxLevel + 1, 8);
+        } elseif ($documentCount < 100) {
+            $adjustedMaxLevel = max($adjustedMaxLevel - 1, 2);
+        }
+        
+        $adjustedMaxLevel = max(2, min(8, $adjustedMaxLevel));
+        
+        return [
+            'topK' => $adjustedTopK,
+            'max_level' => $adjustedMaxLevel,
+            'optimization_context' => [
+                'document_count' => $documentCount,
+                'complexity' => $complexity,
+                'priority' => $priority,
+                'estimated_tree_nodes' => $this->estimateTreeNodes($adjustedMaxLevel),
+                'estimated_memory_mb' => $this->estimateMemoryUsage($adjustedMaxLevel)
+            ]
+        ];
+    }
+    
+    private function estimateTreeNodes($maxLevel) {
+        $totalNodes = 0;
+        for ($level = 0; $level < $maxLevel; $level++) {
+            $totalNodes += pow(2, $level);
+        }
+        return $totalNodes;
+    }
+    
+    private function estimateMemoryUsage($maxLevel) {
+        $baseMemory = 150; // MB
+        $levelMultiplier = pow(1.6, $maxLevel - 2);
+        return (int)($baseMemory * $levelMultiplier);
+    }
+    
+    public function analyzeTreeConfiguration($config) {
+        $topK = $config['topK'];
+        $maxLevel = $config['max_level'] ?? 3;
+        
+        $analysis = [
+            'tree_complexity' => $this->analyzeTreeComplexity($maxLevel),
+            'retrieval_scope' => $this->analyzeRetrievalScope($topK),
+            'memory_estimate' => $this->estimateMemoryUsage($maxLevel),
+            'performance_warnings' => [],
+            'optimization_suggestions' => []
+        ];
+        
+        // Generate warnings and suggestions
+        if ($maxLevel > 6) {
+            $analysis['performance_warnings'][] = 'Very deep tree may cause performance issues';
+            $analysis['optimization_suggestions'][] = 'Consider reducing max_level to 5-6';
+        }
+        
+        if ($topK && $topK > 70) {
+            $analysis['performance_warnings'][] = 'High Top K may impact traversal efficiency';
+            $analysis['optimization_suggestions'][] = 'Consider reducing Top K for faster retrieval';
+        }
+        
+        if ($maxLevel < 3) {
+            $analysis['optimization_suggestions'][] = 'Increasing max_level may improve hierarchical benefits';
+        }
+        
+        return $analysis;
+    }
+    
+    private function analyzeTreeComplexity($maxLevel) {
+        $estimatedNodes = $this->estimateTreeNodes($maxLevel);
+        
+        if ($estimatedNodes < 15) {
+            return ['level' => 'Low', 'description' => 'Simple hierarchical structure'];
+        } elseif ($estimatedNodes < 63) {
+            return ['level' => 'Medium', 'description' => 'Balanced multi-level hierarchy'];
+        } elseif ($estimatedNodes < 255) {
+            return ['level' => 'High', 'description' => 'Complex hierarchical abstraction'];
+        }
+        
+        return ['level' => 'Very High', 'description' => 'Highly complex multi-level tree'];
+    }
+    
+    private function analyzeRetrievalScope($topK) {
+        if ($topK === null) {
+            return ['scope' => 'Unlimited', 'description' => 'Complete hierarchical coverage'];
+        } elseif ($topK <= 15) {
+            return ['scope' => 'Focused', 'description' => 'High-precision hierarchical retrieval'];
+        } elseif ($topK <= 35) {
+            return ['scope' => 'Balanced', 'description' => 'Good balance of precision and coverage'];
+        }
+        
+        return ['scope' => 'Comprehensive', 'description' => 'Broad hierarchical content coverage'];
+    }
+    
+    public function updateWithOptimization($nodeId, $documentCount, $complexity = 'medium', $priority = 'balanced') {
+        echo "🌳 Optimizing RAPTOR RAG configuration...\n";
+        echo "   Document Count: {$documentCount}\n";
+        echo "   Document Complexity: {$complexity}\n";
+        echo "   Priority: {$priority}\n";
+        
+        // Calculate optimal configuration
+        $optimalConfig = $this->calculateOptimalConfiguration($documentCount, $complexity, $priority);
+        
+        $configToUpdate = [
+            'topK' => $optimalConfig['topK'],
+            'max_level' => $optimalConfig['max_level']
+        ];
+        
+        echo "\n📊 Optimal Configuration:\n";
+        echo "   Top K: " . ($configToUpdate['topK'] ?? 'unlimited') . "\n";
+        echo "   Max Level: {$configToUpdate['max_level']}\n";
+        echo "   Estimated Tree Nodes: {$optimalConfig['optimization_context']['estimated_tree_nodes']}\n";
+        echo "   Estimated Memory: {$optimalConfig['optimization_context']['estimated_memory_mb']}MB\n";
+        
+        // Analyze performance
+        $analysis = $this->analyzeTreeConfiguration($configToUpdate);
+        
+        echo "\n⚡ Performance Analysis:\n";
+        echo "   Tree Complexity: {$analysis['tree_complexity']['level']}\n";
+        echo "   Retrieval Scope: {$analysis['retrieval_scope']['scope']}\n";
+        echo "   Memory Estimate: {$analysis['memory_estimate']}MB\n";
+        
+        if (!empty($analysis['performance_warnings'])) {
+            echo "\n⚠️  Performance Warnings:\n";
+            foreach ($analysis['performance_warnings'] as $warning) {
+                echo "   - {$warning}\n";
+            }
+        }
+        
+        if (!empty($analysis['optimization_suggestions'])) {
+            echo "\n💡 Optimization Suggestions:\n";
+            foreach ($analysis['optimization_suggestions'] as $suggestion) {
+                echo "   - {$suggestion}\n";
+            }
+        }
+        
+        // Update configuration
+        try {
+            $result = updateRaptorRagNode($this->flowName, $nodeId, $configToUpdate, $this->apiToken);
+            
+            echo "\n✅ Configuration updated successfully!\n";
+            echo "   Node ID: {$result['node_id']}\n";
+            
+            return [
+                'update_result' => $result,
+                'applied_config' => $configToUpdate,
+                'optimization_context' => $optimalConfig['optimization_context'],
+                'performance_analysis' => $analysis
+            ];
+            
+        } catch (Exception $e) {
+            echo "\n❌ Configuration update failed: " . $e->getMessage() . "\n";
+            throw $e;
+        }
+    }
+}
+
+// Usage examples
+try {
+    // Basic configuration update
+    $result = updateRaptorRagNode('my-rag-pipeline', 'raptor-rag-1748287628685', [
+        'topK' => 30,
+        'max_level' => 4
+    ], 'YOUR_API_TOKEN');
+    
+    echo "✅ Basic configuration updated: " . json_encode($result) . "\n";
+    
+    // Advanced optimization
+    $optimizer = new RaptorRagTreeOptimizer('my-rag-pipeline', 'YOUR_API_TOKEN');
+    
+    // Large document collection optimization
+    echo "\n=== Large Document Collection Optimization ===\n";
+    $optimizer->updateWithOptimization('raptor-rag-1748287628685', 2500, 'high', 'coverage');
+    
+    // Specialized collection optimization
+    echo "\n=== Specialized Collection Optimization ===\n";
+    $optimizer->updateWithOptimization('raptor-rag-1748287628686', 150, 'medium', 'precision');
+    
+} catch (Exception $e) {
+    echo "❌ Error: " . $e->getMessage() . "\n";
+}
+?>
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Description | Example Response |
+|-------------|-------------|------------------|
+| 400 | Bad Request - Invalid configuration parameters | `{"detail": "topK must be between 1 and 100 or null"}` |
+| 401 | Unauthorized - Invalid or missing API token | `{"detail": "Invalid authentication credentials"}` |
+| 404 | Not Found - RAPTOR RAG node not found | `{"detail": "RAPTOR RAG node not found"}` |
+| 422 | Validation Error - Configuration validation failed | `{"detail": "max_level must be between 2 and 8"}` |
+| 500 | Internal Server Error - Server error | `{"detail": "Failed to update RAPTOR RAG configuration"}` |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+### Example Error Responses
+
+#### Invalid Top K Value
+```json
+{
+  "detail": "topK must be between 1 and 100 or null for unlimited retrieval"
+}
+```
+
+#### Invalid Max Level
+```json
+{
+  "detail": "max_level must be between 2 and 8 for optimal tree performance"
+}
+```
+
+#### Node Not Found
+```json
+{
+  "detail": "RAPTOR RAG node not found"
+}
+```
+
+#### Tree Configuration Conflict
+```json
+{
+  "detail": "Configuration conflicts with current tree structure - rebuild required"
+}
+```
+
+## Configuration Impact Analysis
+
+### Top K Impact on Hierarchical Retrieval
+
+| Top K Range | Retrieval Scope | Tree Traversal | Memory Usage | Use Case |
+|-------------|-----------------|----------------|--------------|----------|
+| 5-15 | Focused | Fast | Low | High-precision tasks |
+| 16-30 | Balanced | Moderate | Medium | General applications |
+| 31-50 | Comprehensive | Slower | High | Broad analysis |
+| 51-100 | Extensive | Slow | Very High | Exhaustive research |
+| null | Unlimited | Variable | Maximum | Complete coverage |
+
+### Max Level Impact on Tree Structure
+
+| Max Level | Tree Depth | Abstraction Quality | Processing Time | Complexity |
+|-----------|------------|---------------------|-----------------|------------|
+| 2 | Shallow | Basic | Fast | Simple |
+| 3 | Standard | Good | Moderate | Balanced |
+| 4 | Deep | Rich | Longer | Complex |
+| 5-6 | Very Deep | Excellent | Slow | Advanced |
+| 7-8 | Maximum | Superior | Very Slow | Expert |
+
+### Resource Usage Estimation
+
+```javascript
+// Memory estimation formula
+const estimateMemory = (maxLevel) => {
+  const baseMemoryMB = 150;
+  const levelMultiplier = Math.pow(1.6, maxLevel - 2);
+  return Math.round(baseMemoryMB * levelMultiplier);
+};
+
+// Processing time estimation
+const estimateProcessingTime = (maxLevel, topK) => {
+  const baseConstructionTime = 45; // seconds
+  const levelFactor = Math.pow(1.4, maxLevel - 2);
+  const constructionTime = Math.round(baseConstructionTime * levelFactor);
+  
+  const baseRetrievalTime = 2; // seconds
+  const topKFactor = topK ? Math.log10(topK) : 3;
+  const retrievalTime = Math.round(baseRetrievalTime * topKFactor * (maxLevel / 3));
+  
+  return {
+    construction: `${constructionTime}s`,
+    retrieval: `${retrievalTime}s`
+  };
+};
+```
+
+## Best Practices
+
+### Tree Configuration Optimization
+
+- **Document-Aware Configuration**: Adjust max_level based on document collection size and complexity
+- **Performance Balance**: Choose Top K values that balance retrieval comprehensiveness with processing speed
+- **Memory Planning**: Consider memory requirements for deep hierarchical trees in resource-constrained environments
+- **Iterative Optimization**: Start with moderate settings and adjust based on tree construction performance
+
+### Hierarchical Strategy Selection
+
+- **Precision-Focused**: Use for legal documents, medical research, or technical specifications requiring high accuracy
+- **Balanced Hierarchy**: Optimal for most general-purpose applications with diverse document types
+- **Comprehensive Coverage**: Best for literature reviews, research surveys, or exploratory analysis
+- **Unlimited Exploration**: Reserve for exhaustive research requiring complete hierarchical coverage
+
+### Performance Monitoring
+
+- **Tree Construction Time**: Monitor clustering and summarization phases for optimization opportunities
+- **Memory Usage**: Track memory consumption during tree building for large document collections
+- **Retrieval Efficiency**: Analyze hierarchical traversal performance with different Top K values
+- **Quality Assessment**: Evaluate abstraction quality across different tree levels
+
+### Configuration Validation
+
+- **Parameter Bounds**: Ensure Top K (1-100 or null) and max_level (2-8) are within optimal ranges
+- **Resource Constraints**: Validate configuration against available system resources
+- **Document Compatibility**: Verify that tree depth is appropriate for document collection characteristics
+- **Performance Testing**: Test configurations with representative document samples before production use
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="exclamation-triangle" title="Invalid Configuration Parameters">
+    **Solution**: Verify that:
+    - Top K is between 1-100 or set to `null` for unlimited retrieval
+    - max_level is between 2-8 for optimal tree performance
+    - Configuration parameters are correctly formatted in the request body
+    - JSON payload structure matches the expected schema
+  </Accordion>
+  
+  <Accordion icon="tree" title="Tree Construction Performance Issues">
+    **Solution**: If tree building is slow or failing:
+    - Reduce max_level for large document collections (>2000 documents)
+    - Monitor system memory during tree construction
+    - Check document preprocessing quality and chunk size
+    - Consider breaking large collections into smaller batches
+  </Accordion>
+  
+  <Accordion icon="memory" title="Memory Usage Problems">
+    **Solution**: For high memory consumption:
+    - Reduce max_level to decrease tree complexity
+    - Process documents in smaller batches
+    - Monitor clustering algorithm memory usage
+    - Consider using lower-complexity document preprocessing
+  </Accordion>
+  
+  <Accordion icon="clock" title="Slow Hierarchical Retrieval">
+    **Solution**: If retrieval is taking too long:
+    - Reduce Top K to focus on most relevant results
+    - Optimize tree traversal by reducing max_level
+    - Check for inefficient tree structure from poor clustering
+    - Consider parallel processing for multiple queries
+  </Accordion>
+  
+  <Accordion icon="layer-group" title="Poor Tree Structure Quality">
+    **Solution**: If hierarchical abstractions are poor:
+    - Increase max_level for richer abstractions (if resources allow)
+    - Verify document diversity is sufficient for meaningful clustering
+    - Check summarization quality at each tree level
+    - Adjust chunking parameters in upstream processing
+  </Accordion>
+  
+  <Accordion icon="search" title="Node Not Found Error">
+    **Solution**: If the RAPTOR RAG node cannot be found:
+    - Verify the node_id is correct using the list endpoint
+    - Ensure the flow_name matches exactly
+    - Check that the node exists in the specified flow
+    - Confirm API token has access to the flow
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After updating RAPTOR RAG node configuration, you might want to:
+
+<CardGroup cols={2}>
+  <Card
+    title="List RAPTOR RAG Nodes"
+    icon="list"
+    href="/api-reference/flows/raptor-rag/list"
+  >
+    View updated RAPTOR RAG node configurations and tree metrics
+  </Card>
+  <Card
+    title="Run Flow"
+    icon="play"
+    href="/api-reference/flows/run"
+  >
+    Execute your flow with the updated RAPTOR RAG hierarchical settings
+  </Card>
+  <Card
+    title="Monitor Tree Performance"
+    icon="chart-line"
+    href="/api-reference/flows/raptor-rag/overview"
+  >
+    Learn about RAPTOR RAG tree optimization and performance monitoring
+  </Card>
+  <Card
+    title="Flow Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
+  >
+    Explore other flow management and configuration endpoints
+  </Card>
+</CardGroup>

@@ -111,6 +111,14 @@
                   "api-reference/flows/graph-rag/list",
                   "api-reference/flows/graph-rag/update"
                 ]
+              },
+              {
+                "group": "Raptor RAG",
+                "pages": [
+                  "api-reference/flows/raptor-rag/overview",
+                  "api-reference/flows/raptor-rag/list",
+                  "api-reference/flows/raptor-rag/update"
+                ]
               }
             ]
           }

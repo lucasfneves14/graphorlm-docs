@@ -1,0 +1,1410 @@
+---
+title: 'RAPTOR RAG Endpoints Overview'
+description: 'Comprehensive guide to RAPTOR RAG nodes and hierarchical tree construction via the GraphorLM REST API'
+---
+
+RAPTOR RAG nodes are advanced hierarchical RAG components that construct multi-level tree structures from documents using sophisticated clustering algorithms and recursive abstraction. These nodes implement the RAPTOR (Recursive Abstractive Processing for Tree-Organized Retrieval) methodology, creating rich hierarchical representations that enable nuanced multi-level retrieval capabilities.
+
+## Benefits of RAPTOR RAG Nodes
+
+### Hierarchical Document Abstraction
+RAPTOR RAG nodes excel at creating **multi-level semantic hierarchies** from document collections, using Gaussian Mixture Model clustering to group semantically similar content and LLM-powered summarization to create abstract representations at each tree level.
+
+### Advanced Tree Construction
+Unlike traditional flat retrieval systems, RAPTOR nodes build **recursive tree structures** where each level represents a different granularity of abstraction, enabling queries to traverse from specific details to high-level concepts seamlessly.
+
+### Sophisticated Clustering Pipeline
+The nodes implement advanced **hierarchical clustering algorithms** that automatically determine optimal cluster numbers and boundaries, ensuring coherent semantic groupings across all tree levels.
+
+### Multi-Level Retrieval Strategy
+RAPTOR trees support **intelligent traversal strategies** that can retrieve relevant content from multiple abstraction levels simultaneously, providing both detailed information and contextual understanding.
+
+### Performance-Optimized Processing
+Built with **resource-efficient algorithms** that scale effectively for large document collections while maintaining hierarchical quality through optimized memory management and parallel processing.
+
+## Available Endpoints
+
+<CardGroup cols={2}>
+  <Card
+    title="List RAPTOR RAG Nodes"
+    icon="list"
+    href="/api-reference/flows/raptor-rag/list"
+  >
+    **GET** `/{flow_name}/raptor-rag`
+    
+    Retrieve all RAPTOR RAG nodes with hierarchical tree metrics, clustering statistics, and multi-level performance data.
+  </Card>
+  <Card
+    title="Update RAPTOR RAG Configuration"
+    icon="sliders"
+    href="/api-reference/flows/raptor-rag/update"
+  >
+    **PATCH** `/{flow_name}/raptor-rag/{node_id}`
+    
+    Configure hierarchical tree parameters including retrieval depth and maximum tree levels for optimal abstraction.
+  </Card>
+</CardGroup>
+
+## Core Concepts
+
+### RAPTOR RAG Node Structure
+
+```json
+{
+  "id": "raptor-rag-1748287628685",
+  "type": "raptor-rag",
+  "data": {
+    "name": "Hierarchical RAPTOR RAG",
+    "config": {
+      "topK": 25,
+      "max_level": 4
+    },
+    "result": {
+      "updated": true,
+      "tree_levels": 4,
+      "total_clusters": 65,
+      "total_summaries": 45,
+      "total_processed": 1850,
+      "total_chunks": 520,
+      "total_retrieved": 80
+    }
+  }
+}
+```
+
+### Configuration Parameters
+
+| Parameter | Type | Range | Description |
+|-----------|------|-------|-------------|
+| `topK` | integer \| null | 1-100 or null | Number of top results to retrieve from hierarchical tree traversal |
+| `max_level` | integer | 2-8 | Maximum depth of tree hierarchy for recursive abstraction |
+
+### Hierarchical Tree Metrics
+
+| Metric | Description | Optimization Impact |
+|--------|-------------|-------------------|
+| `tree_levels` | Actual levels built in the hierarchy | Higher levels = richer abstractions |
+| `total_clusters` | Clusters created across all tree levels | More clusters = finer granularity |
+| `total_summaries` | Summary nodes generated through abstraction | More summaries = better hierarchy quality |
+| `clustering_ratio` | clusters/chunks ratio | Optimal range: 0.5-0.8 for balanced structure |
+| `summarization_ratio` | summaries/clusters ratio | Higher ratios indicate effective abstraction |
+| `tree_density` | summaries per level | Balanced density ensures traversal efficiency |
+
+### Internal RAPTOR Configuration
+
+RAPTOR RAG nodes utilize predefined internal configurations optimized for hierarchical processing:
+
+```python
+# Internal Chunking Configuration
+RAPTOR_RAG_CHUNKING_CONFIG = ChunkingFlowNodeConfigSchema(
+    embeddingModel="text-embedding-3-small",  # Efficient embedding generation
+    chunkingSplitter=ChunkingSplitterType.TITLE,  # Semantic boundary preservation
+    chunkSize=5000,  # Optimal chunk size for clustering
+    elementsToRemove=[],  # Preserve all content for hierarchy
+)
+
+# Internal Retrieval Configuration  
+RAPTOR_RAG_RETRIEVAL_CONFIG = RetrievalFlowNodeConfigSchema(
+    searchType="similarity",  # Vector-based similarity search
+    topK=5,  # Base retrieval before tree traversal
+    scoreThreshold=0.0,  # Inclusive threshold for tree building
+)
+
+# Clustering Algorithm Configuration
+CLUSTERING_ALGORITHM = "gaussian_mixture_model"  # Advanced clustering
+SUMMARIZATION_MODEL = "gpt-4o-mini"  # LLM for abstract generation
+NLP_EXTRACTION_MODEL = "gpt-4.1"  # Entity/relationship extraction
+```
+
+## RAPTOR Tree Strategies
+
+### 1. Precision-Focused Strategy
+**Optimal for**: High-accuracy applications requiring focused hierarchical retrieval
+
+```json
+{
+  "config": {
+    "topK": 10,
+    "max_level": 3
+  }
+}
+```
+
+**Characteristics:**
+- **Tree Depth**: Standard 3-level hierarchy
+- **Retrieval Scope**: Highly selective with 10 top results
+- **Processing Speed**: Fast tree construction and traversal
+- **Memory Usage**: Low (~240MB estimated)
+- **Clustering Efficiency**: Focused on most relevant semantic groups
+- **Abstraction Quality**: Concentrated on essential conceptual levels
+
+**Best Use Cases:**
+- Legal document analysis with precise precedent matching
+- Medical research requiring accurate diagnostic information
+- Technical specification lookup with exact parameter matching
+- Academic citation analysis with focused topic exploration
+
+**Performance Characteristics:**
+- **Tree Construction**: ~45 seconds for medium collections
+- **Retrieval Latency**: <2 seconds for hierarchical traversal
+- **Clustering Ratio**: 0.6-0.7 (balanced granularity)
+- **Quality Score**: High precision with moderate coverage
+
+### 2. Balanced Hierarchy Strategy
+**Optimal for**: General-purpose applications requiring comprehensive coverage
+
+```json
+{
+  "config": {
+    "topK": 25,
+    "max_level": 4
+  }
+}
+```
+
+**Characteristics:**
+- **Tree Depth**: Extended 4-level hierarchy for richer abstractions
+- **Retrieval Scope**: Balanced coverage with 25 results
+- **Processing Speed**: Moderate construction time with good traversal efficiency
+- **Memory Usage**: Medium (~385MB estimated)
+- **Clustering Efficiency**: Comprehensive semantic grouping
+- **Abstraction Quality**: Rich multi-level conceptual representation
+
+**Best Use Cases:**
+- Knowledge management systems with diverse content types
+- Research paper analysis across multiple domains
+- Documentation systems requiring hierarchical navigation
+- Content recommendation with contextual understanding
+
+**Performance Characteristics:**
+- **Tree Construction**: ~65 seconds for medium collections
+- **Retrieval Latency**: 2-4 seconds for multi-level traversal
+- **Clustering Ratio**: 0.7-0.8 (rich granularity)
+- **Quality Score**: Optimal balance of precision and recall
+
+### 3. Comprehensive Coverage Strategy
+**Optimal for**: Exploratory analysis requiring extensive hierarchical insights
+
+```json
+{
+  "config": {
+    "topK": 50,
+    "max_level": 5
+  }
+}
+```
+
+**Characteristics:**
+- **Tree Depth**: Deep 5-level hierarchy with maximum abstraction layers
+- **Retrieval Scope**: Extensive coverage with 50 results
+- **Processing Speed**: Longer construction time with comprehensive traversal
+- **Memory Usage**: High (~620MB estimated)
+- **Clustering Efficiency**: Fine-grained semantic decomposition
+- **Abstraction Quality**: Superior hierarchical representation
+
+**Best Use Cases:**
+- Literature review systems requiring exhaustive topic coverage
+- Discovery research with broad conceptual exploration
+- Comprehensive content analysis across large corpora
+- Multi-domain knowledge synthesis applications
+
+**Performance Characteristics:**
+- **Tree Construction**: ~95 seconds for medium collections
+- **Retrieval Latency**: 4-7 seconds for deep traversal
+- **Clustering Ratio**: 0.8-0.9 (fine granularity)
+- **Quality Score**: Maximum coverage with good precision
+
+### 4. Unlimited Exploration Strategy
+**Optimal for**: Research applications requiring complete hierarchical coverage
+
+```json
+{
+  "config": {
+    "topK": null,
+    "max_level": 6
+  }
+}
+```
+
+**Characteristics:**
+- **Tree Depth**: Maximum 6-level hierarchy with deepest abstractions
+- **Retrieval Scope**: Unlimited results from complete tree traversal
+- **Processing Speed**: Resource-intensive with comprehensive coverage
+- **Memory Usage**: Very High (~1000MB+ estimated)
+- **Clustering Efficiency**: Maximum semantic decomposition
+- **Abstraction Quality**: Superior hierarchical insights at all levels
+
+**Best Use Cases:**
+- Academic research requiring exhaustive literature analysis
+- Comprehensive surveys across multiple research domains
+- Discovery applications with no retrieval limitations
+- Advanced knowledge exploration systems
+
+**Performance Characteristics:**
+- **Tree Construction**: ~140+ seconds for medium collections
+- **Retrieval Latency**: 7+ seconds for complete traversal
+- **Clustering Ratio**: 0.9+ (maximum granularity)
+- **Quality Score**: Complete coverage with hierarchical depth
+
+## Strategy Selection Matrix
+
+| Use Case Type | Document Count | Complexity | Recommended Strategy | Top K | Max Level |
+|---------------|----------------|------------|---------------------|-------|-----------|
+| Legal Analysis | 100-500 | High | Precision-Focused | 10 | 3 |
+| Medical Research | 200-800 | High | Precision-Focused | 15 | 3 |
+| Knowledge Base | 500-2000 | Medium | Balanced Hierarchy | 25 | 4 |
+| Research Papers | 800-3000 | Medium | Balanced Hierarchy | 30 | 4 |
+| Literature Review | 1000-5000 | High | Comprehensive Coverage | 50 | 5 |
+| Discovery Research | 2000+ | Very High | Comprehensive Coverage | 60 | 5 |
+| Academic Survey | 3000+ | Very High | Unlimited Exploration | null | 6 |
+| Multi-Domain Analysis | 5000+ | Very High | Unlimited Exploration | null | 6 |
+
+## Workflow Diagrams
+
+### Basic RAPTOR RAG Workflow
+
+<Mermaid>
+graph TD
+    A["📄 Document Input"] → B["🧩 Hierarchical Chunking"]
+    B → C["🎯 Vector Embedding Generation"]
+    C → D["🔗 Gaussian Mixture Clustering"]
+    D → E["📝 LLM-Powered Summarization"]
+    E → F["🌳 Tree Level Construction"]
+    F → G{"🔄 Max Level Reached?"}
+    G -->|No| H["📊 Next Level Clustering"]
+    H → E
+    G -->|Yes| I["🎯 Hierarchical Retrieval"]
+    I → J["📋 Multi-Level Result Combination"]
+    J → K["✅ RAPTOR RAG Output"]
+    
+    style A fill:#e1f5fe
+    style K fill:#e8f5e8
+    style F fill:#fff3e0
+    style I fill:#f3e5f5
+</Mermaid>
+
+### RAPTOR Tree Construction Process
+
+<Mermaid>
+graph TB
+    subgraph "Level 0 - Base Chunks"
+        A1["📄 Chunk 1"] 
+        A2["📄 Chunk 2"]
+        A3["📄 Chunk 3"]
+        A4["📄 Chunk 4"]
+        A5["📄 Chunk 5"]
+        A6["📄 Chunk 6"]
+    end
+    
+    subgraph "Level 1 - Primary Clusters"
+        B1["🔗 Cluster A<br/>Summary α"]
+        B2["🔗 Cluster B<br/>Summary β"] 
+        B3["🔗 Cluster C<br/>Summary γ"]
+    end
+    
+    subgraph "Level 2 - Secondary Abstractions"
+        C1["📊 Meta-Cluster 1<br/>Abstract Summary"]
+        C2["📊 Meta-Cluster 2<br/>Abstract Summary"]
+    end
+    
+    subgraph "Level 3 - Root Abstraction"
+        D1["🌳 Root Node<br/>Global Summary"]
+    end
+    
+    A1 & A2 --> B1
+    A3 & A4 --> B2  
+    A5 & A6 --> B3
+    B1 & B2 --> C1
+    B2 & B3 --> C2
+    C1 & C2 --> D1
+    
+    style A1 fill:#e3f2fd
+    style A2 fill:#e3f2fd
+    style A3 fill:#e3f2fd
+    style A4 fill:#e3f2fd
+    style A5 fill:#e3f2fd
+    style A6 fill:#e3f2fd
+    style B1 fill:#f1f8e9
+    style B2 fill:#f1f8e9
+    style B3 fill:#f1f8e9
+    style C1 fill:#fff8e1
+    style C2 fill:#fff8e1
+    style D1 fill:#fce4ec
+</Mermaid>
+
+### Multi-Strategy RAPTOR Deployment
+
+<Mermaid>
+graph LR
+    subgraph "Document Analysis"
+        A["📊 Document Collection<br/>Analysis"]
+        A → B["📈 Complexity Assessment"]
+        A → C["📏 Size Evaluation"]  
+        A → D["🎯 Use Case Classification"]
+    end
+    
+    subgraph "Strategy Selection"
+        B → E["🎯 Precision-Focused<br/>topK: 10, levels: 3"]
+        C → F["⚖️ Balanced Hierarchy<br/>topK: 25, levels: 4"]
+        D → G["📊 Comprehensive Coverage<br/>topK: 50, levels: 5"]
+        E → H["🔍 Unlimited Exploration<br/>topK: null, levels: 6"]
+    end
+    
+    subgraph "RAPTOR Deployment"
+        E → I["🌳 Tree Construction"]
+        F → I
+        G → I  
+        H → I
+        I → J["⚡ Performance Monitoring"]
+        J → K["🔧 Dynamic Optimization"]
+    end
+    
+    style A fill:#e8eaf6
+    style I fill:#e8f5e8
+    style J fill:#fff3e0
+    style K fill:#fce4ec
+</Mermaid>
+
+## Advanced Integration Examples
+
+### JavaScript RAPTOR RAG Manager
+
+```javascript
+class RaptorRagHierarchicalManager {
+  constructor(flowName, apiToken) {
+    this.flowName = flowName;
+    this.apiToken = apiToken;
+    this.baseUrl = `https://${flowName}.flows.graphorlm.com`;
+  }
+
+  async analyzeDocumentCollection(documents) {
+    /**
+     * Analyze document collection to determine optimal RAPTOR configuration
+     */
+    const analysis = {
+      documentCount: documents.length,
+      averageLength: documents.reduce((sum, doc) => sum + doc.length, 0) / documents.length,
+      complexityScore: this.calculateComplexityScore(documents),
+      domainDiversity: this.assessDomainDiversity(documents),
+      recommendedStrategy: null
+    };
+
+    // Determine complexity level
+    if (analysis.complexityScore > 0.8 && analysis.domainDiversity > 0.7) {
+      analysis.complexity = 'very_high';
+    } else if (analysis.complexityScore > 0.6 || analysis.domainDiversity > 0.5) {
+      analysis.complexity = 'high';
+    } else if (analysis.complexityScore > 0.4) {
+      analysis.complexity = 'medium';
+    } else {
+      analysis.complexity = 'low';
+    }
+
+    // Recommend strategy based on analysis
+    analysis.recommendedStrategy = this.recommendStrategy(analysis);
+    
+    return analysis;
+  }
+
+  calculateComplexityScore(documents) {
+    /**
+     * Calculate document complexity based on vocabulary diversity,
+     * sentence structure, and semantic density
+     */
+    let totalComplexity = 0;
+    
+    for (const doc of documents) {
+      // Vocabulary diversity (unique words / total words)
+      const words = doc.toLowerCase().match(/\b\w+\b/g) || [];
+      const uniqueWords = new Set(words);
+      const vocabularyDiversity = uniqueWords.size / words.length;
+      
+      // Sentence length variance
+      const sentences = doc.split(/[.!?]+/).filter(s => s.trim().length > 0);
+      const avgSentenceLength = sentences.reduce((sum, s) => sum + s.split(' ').length, 0) / sentences.length;
+      const sentenceComplexity = Math.min(avgSentenceLength / 20, 1); // Normalize to 0-1
+      
+      // Technical term density (words > 6 characters)
+      const technicalTerms = words.filter(word => word.length > 6);
+      const technicalDensity = technicalTerms.length / words.length;
+      
+      // Combined complexity score
+      const docComplexity = (vocabularyDiversity * 0.4) + (sentenceComplexity * 0.3) + (technicalDensity * 0.3);
+      totalComplexity += docComplexity;
+    }
+    
+    return totalComplexity / documents.length;
+  }
+
+  assessDomainDiversity(documents) {
+    /**
+     * Assess topic diversity across document collection
+     * using keyword extraction and clustering
+     */
+    const keywordSets = documents.map(doc => {
+      // Simple keyword extraction (in production, use more sophisticated NLP)
+      const words = doc.toLowerCase().match(/\b\w{4,}\b/g) || [];
+      const wordCounts = {};
+      words.forEach(word => wordCounts[word] = (wordCounts[word] || 0) + 1);
+      
+      // Return top keywords (simple approach)
+      return Object.entries(wordCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 20)
+        .map(([word]) => word);
+    });
+
+    // Calculate Jaccard similarity between keyword sets
+    let totalSimilarity = 0;
+    let comparisons = 0;
+    
+    for (let i = 0; i < keywordSets.length; i++) {
+      for (let j = i + 1; j < keywordSets.length; j++) {
+        const set1 = new Set(keywordSets[i]);
+        const set2 = new Set(keywordSets[j]);
+        const intersection = new Set([...set1].filter(x => set2.has(x)));
+        const union = new Set([...set1, ...set2]);
+        const similarity = intersection.size / union.size;
+        totalSimilarity += similarity;
+        comparisons++;
+      }
+    }
+    
+    const avgSimilarity = comparisons > 0 ? totalSimilarity / comparisons : 0;
+    return 1 - avgSimilarity; // Higher diversity = lower similarity
+  }
+
+  recommendStrategy(analysis) {
+    /**
+     * Recommend optimal RAPTOR strategy based on document analysis
+     */
+    const { documentCount, complexity, domainDiversity } = analysis;
+    
+    if (documentCount < 200 && complexity === 'low') {
+      return {
+        name: 'Precision-Focused',  
+        config: { topK: 10, max_level: 3 },
+        rationale: 'Small collection with low complexity - focus on precision'
+      };
+    }
+    
+    if (documentCount < 1000 && complexity === 'medium') {
+      return {
+        name: 'Balanced Hierarchy',
+        config: { topK: 25, max_level: 4 },
+        rationale: 'Medium collection - balanced approach for good coverage'
+      };
+    }
+    
+    if (documentCount > 2000 || complexity === 'very_high' || domainDiversity > 0.8) {
+      if (documentCount > 5000) {
+        return {
+          name: 'Unlimited Exploration',
+          config: { topK: null, max_level: 6 },
+          rationale: 'Large, complex collection - maximum hierarchical depth'
+        };
+      } else {
+        return {
+          name: 'Comprehensive Coverage',
+          config: { topK: 50, max_level: 5 },
+          rationale: 'Complex collection - comprehensive hierarchical coverage'
+        };
+      }
+    }
+    
+    // Default to balanced approach
+    return {
+      name: 'Balanced Hierarchy',
+      config: { topK: 25, max_level: 4 },
+      rationale: 'Default balanced approach for general use cases'
+    };
+  }
+
+  async deployOptimalRaptorConfiguration(nodeId, documents) {
+    /**
+     * Analyze documents and deploy optimal RAPTOR configuration
+     */
+    console.log('🔍 Analyzing document collection for optimal RAPTOR configuration...');
+    
+    const analysis = await this.analyzeDocumentCollection(documents);
+    
+    console.log('📊 Document Collection Analysis:');
+    console.log(`   Document Count: ${analysis.documentCount}`);
+    console.log(`   Average Length: ${Math.round(analysis.averageLength)} characters`);
+    console.log(`   Complexity Score: ${analysis.complexityScore.toFixed(2)}`);
+    console.log(`   Domain Diversity: ${analysis.domainDiversity.toFixed(2)}`);
+    console.log(`   Complexity Level: ${analysis.complexity}`);
+    
+    console.log(`\n🎯 Recommended Strategy: ${analysis.recommendedStrategy.name}`);
+    console.log(`   Configuration: topK=${analysis.recommendedStrategy.config.topK || 'unlimited'}, max_level=${analysis.recommendedStrategy.config.max_level}`);
+    console.log(`   Rationale: ${analysis.recommendedStrategy.rationale}`);
+    
+    // Deploy configuration
+    try {
+      const result = await this.updateRaptorConfiguration(nodeId, analysis.recommendedStrategy.config);
+      
+      console.log('\n✅ RAPTOR configuration deployed successfully!');
+      console.log(`   Node ID: ${result.node_id}`);
+      
+      // Estimate performance characteristics
+      const performance = this.estimatePerformanceCharacteristics(
+        analysis.recommendedStrategy.config,
+        analysis.documentCount
+      );
+      
+      console.log('\n⚡ Expected Performance Characteristics:');
+      console.log(`   Tree Construction Time: ${performance.constructionTime}`);
+      console.log(`   Memory Usage: ${performance.memoryUsage}`);
+      console.log(`   Retrieval Latency: ${performance.retrievalLatency}`);
+      console.log(`   Tree Complexity: ${performance.treeComplexity}`);
+      
+      return {
+        analysis,
+        deploymentResult: result,
+        performanceEstimate: performance
+      };
+      
+    } catch (error) {
+      console.error('❌ Failed to deploy RAPTOR configuration:', error.message);
+      throw error;
+    }
+  }
+
+  async updateRaptorConfiguration(nodeId, config) {
+    /**
+     * Update RAPTOR RAG node configuration
+     */
+    const response = await fetch(`${this.baseUrl}/raptor-rag/${nodeId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${this.apiToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ config })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  estimatePerformanceCharacteristics(config, documentCount) {
+    /**
+     * Estimate performance characteristics for given configuration
+     */
+    const { topK, max_level } = config;
+    
+    // Base time estimates (in seconds)
+    const baseConstructionTime = 30 + (documentCount * 0.02);
+    const levelMultiplier = Math.pow(1.4, max_level - 2);
+    const constructionTime = Math.round(baseConstructionTime * levelMultiplier);
+    
+    // Memory estimation (in MB)
+    const baseMemory = 100 + (documentCount * 0.1);
+    const memoryMultiplier = Math.pow(1.6, max_level - 2);
+    const memoryUsage = Math.round(baseMemory * memoryMultiplier);
+    
+    // Retrieval latency (in seconds)
+    const baseLatency = 1;
+    const topKFactor = topK ? Math.log10(topK) : 3;
+    const levelFactor = max_level / 3;
+    const retrievalLatency = (baseLatency * topKFactor * levelFactor).toFixed(1);
+    
+    // Tree complexity assessment
+    const estimatedNodes = this.calculateTreeNodes(max_level);
+    let treeComplexity;
+    if (estimatedNodes < 15) treeComplexity = 'Low';
+    else if (estimatedNodes < 63) treeComplexity = 'Medium';
+    else if (estimatedNodes < 255) treeComplexity = 'High';
+    else treeComplexity = 'Very High';
+    
+    return {
+      constructionTime: `~${constructionTime}s`,
+      memoryUsage: `~${memoryUsage}MB`,
+      retrievalLatency: `~${retrievalLatency}s`,
+      treeComplexity,
+      estimatedNodes
+    };
+  }
+
+  calculateTreeNodes(maxLevel) {
+    /**
+     * Calculate estimated total nodes in RAPTOR tree
+     */
+    return Array.from({ length: maxLevel }, (_, i) => Math.pow(2, i))
+      .reduce((sum, nodes) => sum + nodes, 0);
+  }
+
+  async monitorRaptorPerformance(nodeId) {
+    /**
+     * Monitor RAPTOR RAG node performance and provide optimization recommendations
+     */
+    try {
+      const nodes = await this.listRaptorNodes();
+      const targetNode = nodes.find(node => node.id === nodeId);
+      
+      if (!targetNode) {
+        throw new Error(`RAPTOR RAG node ${nodeId} not found`);
+      }
+      
+      const performance = this.analyzeNodePerformance(targetNode);
+      
+      console.log('📊 RAPTOR Performance Monitor');
+      console.log('============================');
+      console.log(`Node: ${targetNode.data.name} (${targetNode.id})`);
+      console.log(`Configuration: topK=${targetNode.data.config.topK || 'unlimited'}, max_level=${targetNode.data.config.max_level}`);
+      
+      if (targetNode.data.result) {
+        const result = targetNode.data.result;
+        console.log(`\n🌳 Tree Structure:`);
+        console.log(`   Levels Built: ${result.tree_levels || 0}`);
+        console.log(`   Total Clusters: ${result.total_clusters || 0}`);
+        console.log(`   Summary Nodes: ${result.total_summaries || 0}`);
+        console.log(`   Documents Processed: ${result.total_processed || 0}`);
+        
+        console.log(`\n📈 Performance Metrics:`);
+        console.log(`   Clustering Ratio: ${performance.clusteringRatio.toFixed(2)}`);
+        console.log(`   Summarization Ratio: ${performance.summarizationRatio.toFixed(2)}`);
+        console.log(`   Tree Density: ${performance.treeDensity.toFixed(1)} nodes/level`);
+      }
+      
+      console.log(`\n🎯 Performance Assessment: ${performance.overallRating}`);
+      
+      if (performance.recommendations.length > 0) {
+        console.log(`\n💡 Optimization Recommendations:`);
+        performance.recommendations.forEach(rec => {
+          console.log(`   - ${rec}`);
+        });
+      }
+      
+      return performance;
+      
+    } catch (error) {
+      console.error('❌ Performance monitoring failed:', error.message);
+      throw error;
+    }
+  }
+
+  async listRaptorNodes() {
+    /**
+     * List all RAPTOR RAG nodes in the flow
+     */
+    const response = await fetch(`${this.baseUrl}/raptor-rag`, {
+      headers: { 'Authorization': `Bearer ${this.apiToken}` }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  analyzeNodePerformance(node) {
+    /**
+     * Analyze individual node performance and generate recommendations
+     */
+    const config = node.data.config;
+    const result = node.data.result || {};
+    
+    const analysis = {
+      clusteringRatio: 0,
+      summarizationRatio: 0,
+      treeDensity: 0,
+      recommendations: [],
+      overallRating: 'Unknown'
+    };
+    
+    if (result.total_chunks && result.total_clusters) {
+      analysis.clusteringRatio = result.total_clusters / result.total_chunks;
+      
+      if (analysis.clusteringRatio < 0.3) {
+        analysis.recommendations.push('Low clustering ratio - consider reducing max_level for better structure');
+      } else if (analysis.clusteringRatio > 1.0) {
+        analysis.recommendations.push('High clustering ratio - tree may be over-segmented');
+      }
+    }
+    
+    if (result.total_clusters && result.total_summaries) {
+      analysis.summarizationRatio = result.total_summaries / result.total_clusters;
+      
+      if (analysis.summarizationRatio < 0.4) {
+        analysis.recommendations.push('Low summarization ratio - many clusters may not be effectively summarized');
+      }
+    }
+    
+    if (result.tree_levels && result.total_summaries) {
+      analysis.treeDensity = result.total_summaries / result.tree_levels;
+      
+      if (analysis.treeDensity < 2) {
+        analysis.recommendations.push('Low tree density - consider increasing document diversity');
+      }
+    }
+    
+    // Overall performance rating
+    const ratioScore = (analysis.clusteringRatio > 0.5 && analysis.clusteringRatio < 0.9) ? 1 : 0;
+    const summaryScore = analysis.summarizationRatio > 0.5 ? 1 : 0;
+    const densityScore = analysis.treeDensity > 3 ? 1 : 0;
+    
+    const totalScore = ratioScore + summaryScore + densityScore;
+    
+    if (totalScore >= 3) analysis.overallRating = 'Excellent';
+    else if (totalScore >= 2) analysis.overallRating = 'Good';
+    else if (totalScore >= 1) analysis.overallRating = 'Fair';
+    else analysis.overallRating = 'Needs Optimization';
+    
+    return analysis;
+  }
+}
+
+// Usage Examples
+const raptorManager = new RaptorRagHierarchicalManager('my-rag-pipeline', 'YOUR_API_TOKEN');
+
+// Example: Deploy optimal configuration for a document collection
+const documents = [
+  "Large research paper content...",
+  "Technical documentation...",
+  "Academic article text..."
+  // ... more documents
+];
+
+raptorManager.deployOptimalRaptorConfiguration('raptor-rag-1748287628685', documents)
+  .then(result => {
+    console.log('✅ Optimal RAPTOR configuration deployed successfully');
+    return raptorManager.monitorRaptorPerformance('raptor-rag-1748287628685');
+  })
+  .catch(error => console.error('❌ RAPTOR deployment failed:', error));
+```
+
+### Python RAPTOR RAG Orchestrator
+
+```python
+import requests
+import json
+import math
+import numpy as np
+from typing import Dict, List, Any, Optional, Tuple
+from dataclasses import dataclass
+from enum import Enum
+
+class RaptorStrategy(Enum):
+    PRECISION_FOCUSED = "precision_focused"
+    BALANCED_HIERARCHY = "balanced_hierarchy" 
+    COMPREHENSIVE_COVERAGE = "comprehensive_coverage"
+    UNLIMITED_EXPLORATION = "unlimited_exploration"
+
+@dataclass
+class DocumentAnalysis:
+    document_count: int
+    average_length: float
+    complexity_score: float
+    domain_diversity: float
+    recommended_strategy: RaptorStrategy
+    confidence_score: float
+
+@dataclass
+class RaptorPerformanceMetrics:
+    tree_levels: int
+    total_clusters: int
+    total_summaries: int
+    clustering_ratio: float
+    summarization_ratio: float
+    tree_density: float
+    performance_score: float
+    optimization_suggestions: List[str]
+
+class RaptorRagOrchestrator:
+    """
+    Advanced RAPTOR RAG orchestration system with intelligent
+    configuration management and performance optimization
+    """
+    
+    def __init__(self, flow_name: str, api_token: str):
+        self.flow_name = flow_name
+        self.api_token = api_token
+        self.base_url = f"https://{flow_name}.flows.graphorlm.com"
+        
+        # Strategy configurations
+        self.strategy_configs = {
+            RaptorStrategy.PRECISION_FOCUSED: {"topK": 10, "max_level": 3},
+            RaptorStrategy.BALANCED_HIERARCHY: {"topK": 25, "max_level": 4},
+            RaptorStrategy.COMPREHENSIVE_COVERAGE: {"topK": 50, "max_level": 5},
+            RaptorStrategy.UNLIMITED_EXPLORATION: {"topK": None, "max_level": 6}
+        }
+    
+    def analyze_document_collection(self, documents: List[str]) -> DocumentAnalysis:
+        """
+        Perform comprehensive analysis of document collection to determine
+        optimal RAPTOR configuration strategy
+        """
+        document_count = len(documents)
+        
+        # Calculate average document length
+        lengths = [len(doc) for doc in documents]
+        average_length = sum(lengths) / len(lengths) if lengths else 0
+        
+        # Calculate complexity score based on multiple factors
+        complexity_score = self._calculate_complexity_score(documents)
+        
+        # Assess domain diversity using semantic analysis
+        domain_diversity = self._assess_domain_diversity(documents)
+        
+        # Recommend strategy based on analysis
+        recommended_strategy, confidence = self._recommend_strategy(
+            document_count, complexity_score, domain_diversity
+        )
+        
+        return DocumentAnalysis(
+            document_count=document_count,
+            average_length=average_length,
+            complexity_score=complexity_score,
+            domain_diversity=domain_diversity,
+            recommended_strategy=recommended_strategy,
+            confidence_score=confidence
+        )
+    
+    def _calculate_complexity_score(self, documents: List[str]) -> float:
+        """
+        Calculate document complexity based on multiple linguistic features
+        """
+        if not documents:
+            return 0.0
+        
+        total_complexity = 0.0
+        
+        for doc in documents:
+            # Vocabulary diversity (unique words / total words)
+            words = doc.lower().split()
+            unique_words = set(words)
+            vocab_diversity = len(unique_words) / len(words) if words else 0
+            
+            # Sentence complexity (average sentence length)
+            sentences = [s.strip() for s in doc.split('.') if s.strip()]
+            avg_sentence_length = sum(len(s.split()) for s in sentences) / len(sentences) if sentences else 0
+            sentence_complexity = min(avg_sentence_length / 20, 1.0)  # Normalize to 0-1
+            
+            # Technical term density (words longer than 6 characters)
+            technical_terms = [w for w in words if len(w) > 6]
+            technical_density = len(technical_terms) / len(words) if words else 0
+            
+            # Semantic density (approximated by unique noun/verb patterns)
+            # Simplified approach - in production, use proper NLP libraries
+            important_words = [w for w in words if len(w) > 4 and w.isalpha()]
+            semantic_density = len(set(important_words)) / len(words) if words else 0
+            
+            # Combined complexity score with weighted factors
+            doc_complexity = (
+                vocab_diversity * 0.25 +
+                sentence_complexity * 0.25 +
+                technical_density * 0.25 +
+                semantic_density * 0.25
+            )
+            
+            total_complexity += doc_complexity
+        
+        return total_complexity / len(documents)
+    
+    def _assess_domain_diversity(self, documents: List[str]) -> float:
+        """
+        Assess topic/domain diversity across document collection using
+        keyword-based similarity analysis
+        """
+        if len(documents) < 2:
+            return 0.0
+        
+        # Extract keyword sets for each document
+        keyword_sets = []
+        for doc in documents:
+            words = [w.lower() for w in doc.split() if len(w) > 3 and w.isalpha()]
+            word_freq = {}
+            for word in words:
+                word_freq[word] = word_freq.get(word, 0) + 1
+            
+            # Get top 20 keywords by frequency
+            top_keywords = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:20]
+            keyword_sets.append(set(word for word, _ in top_keywords))
+        
+        # Calculate pairwise Jaccard similarities
+        similarities = []
+        for i in range(len(keyword_sets)):
+            for j in range(i + 1, len(keyword_sets)):
+                set1, set2 = keyword_sets[i], keyword_sets[j]
+                intersection = len(set1 & set2)
+                union = len(set1 | set2)
+                similarity = intersection / union if union > 0 else 0
+                similarities.append(similarity)
+        
+        # Domain diversity = 1 - average similarity
+        avg_similarity = sum(similarities) / len(similarities) if similarities else 0
+        return 1.0 - avg_similarity
+    
+    def _recommend_strategy(
+        self, 
+        document_count: int, 
+        complexity_score: float, 
+        domain_diversity: float
+    ) -> Tuple[RaptorStrategy, float]:
+        """
+        Recommend optimal RAPTOR strategy based on document characteristics
+        """
+        # Strategy scoring based on multiple factors
+        scores = {}
+        
+        # Precision-focused strategy scoring
+        precision_score = 0.0
+        if document_count < 500:
+            precision_score += 0.3
+        if complexity_score < 0.5:
+            precision_score += 0.3
+        if domain_diversity < 0.4:
+            precision_score += 0.4
+        scores[RaptorStrategy.PRECISION_FOCUSED] = precision_score
+        
+        # Balanced hierarchy strategy scoring
+        balanced_score = 0.5  # Base score for general applicability
+        if 200 <= document_count <= 2000:
+            balanced_score += 0.2
+        if 0.4 <= complexity_score <= 0.7:
+            balanced_score += 0.2
+        if 0.3 <= domain_diversity <= 0.7:
+            balanced_score += 0.1
+        scores[RaptorStrategy.BALANCED_HIERARCHY] = balanced_score
+        
+        # Comprehensive coverage strategy scoring
+        comprehensive_score = 0.0
+        if document_count > 1000:
+            comprehensive_score += 0.3
+        if complexity_score > 0.6:
+            comprehensive_score += 0.3
+        if domain_diversity > 0.5:
+            comprehensive_score += 0.4
+        scores[RaptorStrategy.COMPREHENSIVE_COVERAGE] = comprehensive_score
+        
+        # Unlimited exploration strategy scoring
+        unlimited_score = 0.0
+        if document_count > 3000:
+            unlimited_score += 0.4
+        if complexity_score > 0.8:
+            unlimited_score += 0.3
+        if domain_diversity > 0.7:
+            unlimited_score += 0.3
+        scores[RaptorStrategy.UNLIMITED_EXPLORATION] = unlimited_score
+        
+        # Select strategy with highest score
+        best_strategy = max(scores.items(), key=lambda x: x[1])
+        return best_strategy[0], best_strategy[1]
+    
+    def deploy_optimal_configuration(
+        self, 
+        node_id: str, 
+        documents: List[str]
+    ) -> Dict[str, Any]:
+        """
+        Analyze documents and deploy optimal RAPTOR configuration
+        """
+        print("🔍 Analyzing document collection for optimal RAPTOR configuration...")
+        
+        # Perform document analysis
+        analysis = self.analyze_document_collection(documents)
+        
+        print("📊 Document Collection Analysis:")
+        print(f"   Document Count: {analysis.document_count}")
+        print(f"   Average Length: {analysis.average_length:.0f} characters")
+        print(f"   Complexity Score: {analysis.complexity_score:.3f}")
+        print(f"   Domain Diversity: {analysis.domain_diversity:.3f}")
+        
+        # Get recommended configuration
+        config = self.strategy_configs[analysis.recommended_strategy]
+        strategy_name = analysis.recommended_strategy.value.replace('_', ' ').title()
+        
+        print(f"\n🎯 Recommended Strategy: {strategy_name}")
+        print(f"   Configuration: topK={config['topK'] or 'unlimited'}, max_level={config['max_level']}")
+        print(f"   Confidence Score: {analysis.confidence_score:.2f}")
+        
+        # Estimate performance characteristics
+        performance_estimate = self._estimate_performance_characteristics(
+            config, analysis.document_count
+        )
+        
+        print(f"\n⚡ Performance Estimates:")
+        print(f"   Tree Construction: {performance_estimate['construction_time']}")
+        print(f"   Memory Usage: {performance_estimate['memory_usage']}")
+        print(f"   Retrieval Latency: {performance_estimate['retrieval_latency']}")
+        print(f"   Tree Complexity: {performance_estimate['tree_complexity']}")
+        
+        # Deploy configuration
+        try:
+            result = self._update_raptor_configuration(node_id, config)
+            
+            print(f"\n✅ RAPTOR configuration deployed successfully!")
+            print(f"   Node ID: {result['node_id']}")
+            
+            return {
+                "analysis": analysis,
+                "deployment_result": result,
+                "performance_estimate": performance_estimate,
+                "success": True
+            }
+            
+        except Exception as e:
+            print(f"\n❌ Configuration deployment failed: {str(e)}")
+            return {
+                "analysis": analysis,
+                "error": str(e),
+                "success": False
+            }
+    
+    def _estimate_performance_characteristics(
+        self, 
+        config: Dict[str, Any], 
+        document_count: int
+    ) -> Dict[str, str]:
+        """
+        Estimate performance characteristics for given configuration
+        """
+        top_k = config.get("topK")
+        max_level = config.get("max_level", 3)
+        
+        # Construction time estimation
+        base_construction_time = 30 + (document_count * 0.015)
+        level_multiplier = math.pow(1.4, max_level - 2)
+        construction_time = int(base_construction_time * level_multiplier)
+        
+        # Memory usage estimation
+        base_memory = 120 + (document_count * 0.08)
+        memory_multiplier = math.pow(1.6, max_level - 2)
+        memory_usage = int(base_memory * memory_multiplier)
+        
+        # Retrieval latency estimation
+        base_latency = 1.5
+        top_k_factor = math.log10(top_k) if top_k else 3
+        level_factor = max_level / 3
+        retrieval_latency = base_latency * top_k_factor * level_factor
+        
+        # Tree complexity assessment
+        estimated_nodes = sum(math.pow(2, level) for level in range(max_level))
+        if estimated_nodes < 15:
+            tree_complexity = "Low"
+        elif estimated_nodes < 63:
+            tree_complexity = "Medium"
+        elif estimated_nodes < 255:
+            tree_complexity = "High"
+        else:
+            tree_complexity = "Very High"
+        
+        return {
+            "construction_time": f"~{construction_time}s",
+            "memory_usage": f"~{memory_usage}MB",
+            "retrieval_latency": f"~{retrieval_latency:.1f}s",
+            "tree_complexity": tree_complexity
+        }
+    
+    def _update_raptor_configuration(self, node_id: str, config: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Update RAPTOR RAG node configuration via API
+        """
+        url = f"{self.base_url}/raptor-rag/{node_id}"
+        headers = {
+            "Authorization": f"Bearer {self.api_token}",
+            "Content-Type": "application/json"
+        }
+        payload = {"config": config}
+        
+        response = requests.patch(url, headers=headers, json=payload)
+        response.raise_for_status()
+        
+        return response.json()
+    
+    def monitor_hierarchical_performance(self, node_id: str) -> RaptorPerformanceMetrics:
+        """
+        Monitor RAPTOR RAG node performance and provide optimization insights
+        """
+        # Get node information
+        nodes = self._list_raptor_nodes()
+        target_node = next((node for node in nodes if node["id"] == node_id), None)
+        
+        if not target_node:
+            raise ValueError(f"RAPTOR RAG node {node_id} not found")
+        
+        result = target_node["data"].get("result", {})
+        
+        # Extract metrics
+        tree_levels = result.get("tree_levels", 0)
+        total_clusters = result.get("total_clusters", 0)
+        total_summaries = result.get("total_summaries", 0)
+        total_chunks = result.get("total_chunks", 0)
+        
+        # Calculate performance ratios
+        clustering_ratio = total_clusters / total_chunks if total_chunks > 0 else 0
+        summarization_ratio = total_summaries / total_clusters if total_clusters > 0 else 0
+        tree_density = total_summaries / tree_levels if tree_levels > 0 else 0
+        
+        # Generate optimization suggestions
+        suggestions = []
+        
+        if clustering_ratio < 0.3:
+            suggestions.append("Low clustering ratio - consider reducing max_level or improving document diversity")
+        elif clustering_ratio > 1.0:
+            suggestions.append("High clustering ratio - tree may be over-segmented, consider increasing max_level")
+        
+        if summarization_ratio < 0.4:
+            suggestions.append("Low summarization efficiency - many clusters may not be effectively abstracted")
+        
+        if tree_density < 2:
+            suggestions.append("Low tree density - consider increasing document collection diversity")
+        elif tree_density > 10:
+            suggestions.append("High tree density - may indicate over-clustering at some levels")
+        
+        if tree_levels < 3:
+            suggestions.append("Shallow tree structure - consider increasing max_level for richer abstractions")
+        elif tree_levels > 6:
+            suggestions.append("Very deep tree - monitor memory usage and construction time")
+        
+        # Calculate overall performance score
+        ratio_score = 1 if 0.5 <= clustering_ratio <= 0.9 else 0
+        summary_score = 1 if summarization_ratio >= 0.5 else 0
+        density_score = 1 if 3 <= tree_density <= 8 else 0
+        depth_score = 1 if 3 <= tree_levels <= 5 else 0
+        
+        performance_score = (ratio_score + summary_score + density_score + depth_score) / 4
+        
+        return RaptorPerformanceMetrics(
+            tree_levels=tree_levels,
+            total_clusters=total_clusters,
+            total_summaries=total_summaries,
+            clustering_ratio=clustering_ratio,
+            summarization_ratio=summarization_ratio,
+            tree_density=tree_density,
+            performance_score=performance_score,
+            optimization_suggestions=suggestions
+        )
+    
+    def _list_raptor_nodes(self) -> List[Dict[str, Any]]:
+        """
+        List all RAPTOR RAG nodes in the flow
+        """
+        response = requests.get(
+            f"{self.base_url}/raptor-rag",
+            headers={"Authorization": f"Bearer {self.api_token}"}
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def generate_performance_report(self, node_id: str) -> None:
+        """
+        Generate comprehensive performance report for RAPTOR RAG node
+        """
+        try:
+            metrics = self.monitor_hierarchical_performance(node_id)
+            
+            print("📊 RAPTOR RAG Performance Report")
+            print("=" * 50)
+            print(f"Node ID: {node_id}")
+            print(f"Flow: {self.flow_name}")
+            
+            print(f"\n🌳 Tree Structure Metrics:")
+            print(f"   Tree Levels: {metrics.tree_levels}")
+            print(f"   Total Clusters: {metrics.total_clusters}")
+            print(f"   Summary Nodes: {metrics.total_summaries}")
+            
+            print(f"\n📈 Performance Ratios:")
+            print(f"   Clustering Ratio: {metrics.clustering_ratio:.3f}")
+            print(f"   Summarization Ratio: {metrics.summarization_ratio:.3f}")
+            print(f"   Tree Density: {metrics.tree_density:.2f} nodes/level")
+            
+            print(f"\n🎯 Overall Performance Score: {metrics.performance_score:.2f}/1.0")
+            
+            if metrics.performance_score >= 0.8:
+                print("   🟢 Excellent - Tree structure is highly optimized")
+            elif metrics.performance_score >= 0.6:
+                print("   🟡 Good - Tree structure is well-balanced")
+            elif metrics.performance_score >= 0.4:
+                print("   🟠 Fair - Some optimization opportunities exist")
+            else:
+                print("   🔴 Needs Improvement - Significant optimization required")
+            
+            if metrics.optimization_suggestions:
+                print(f"\n💡 Optimization Suggestions:")
+                for i, suggestion in enumerate(metrics.optimization_suggestions, 1):
+                    print(f"   {i}. {suggestion}")
+            else:
+                print(f"\n✅ No optimization suggestions - configuration appears optimal")
+                
+        except Exception as e:
+            print(f"❌ Performance report generation failed: {str(e)}")
+
+# Usage Examples
+def demonstrate_raptor_orchestration():
+    """
+    Demonstrate advanced RAPTOR RAG orchestration capabilities
+    """
+    orchestrator = RaptorRagOrchestrator("my-rag-pipeline", "YOUR_API_TOKEN")
+    
+    # Example document collection
+    documents = [
+        "Advanced machine learning techniques for natural language processing...",
+        "Deep neural networks and transformer architectures in modern AI...",
+        "Hierarchical document representation using recursive abstraction...",
+        "Large language models and their applications in information retrieval...",
+        # ... more documents
+    ]
+    
+    print("🚀 RAPTOR RAG Orchestration Demonstration")
+    print("=" * 60)
+    
+    # Deploy optimal configuration
+    result = orchestrator.deploy_optimal_configuration(
+        "raptor-rag-1748287628685", 
+        documents
+    )
+    
+    if result["success"]:
+        print(f"\n⏱️  Waiting for tree construction to complete...")
+        # In production, you might poll the node status
+        
+        print(f"\n📊 Generating performance report...")
+        orchestrator.generate_performance_report("raptor-rag-1748287628685")
+    
+    return result
+
+# Run demonstration
+if __name__ == "__main__":
+    demonstrate_raptor_orchestration()
+```
+
+## Best Practices
+
+### Hierarchical Tree Design
+
+- **Document Collection Analysis**: Always analyze document characteristics before selecting RAPTOR configuration
+- **Strategy Selection**: Choose strategies based on use case requirements, not arbitrary preferences
+- **Tree Depth Optimization**: Balance abstraction richness with processing performance for optimal results
+- **Clustering Quality**: Monitor clustering ratios to ensure effective semantic grouping across tree levels
+
+### Performance Optimization
+
+- **Memory Management**: Plan memory allocation for deep hierarchical trees, especially with large document collections
+- **Processing Efficiency**: Use document-aware configuration to optimize tree construction time
+- **Retrieval Strategy**: Balance Top K values with traversal efficiency for optimal query performance
+- **Resource Monitoring**: Continuously monitor tree construction and retrieval performance metrics
+
+### Configuration Management
+
+- **Dynamic Optimization**: Adjust configurations based on actual performance metrics and user feedback
+- **Strategy Evolution**: Evolve from precision-focused to comprehensive strategies as document collections grow
+- **Quality Assessment**: Regularly evaluate clustering and summarization quality across tree levels
+- **Performance Tracking**: Maintain historical performance data to identify optimization trends
+
+### Integration Architecture
+
+- **Modular Design**: Implement RAPTOR nodes as part of larger RAG pipelines with clear interfaces
+- **Error Handling**: Implement robust error handling for tree construction failures and memory issues
+- **Monitoring Systems**: Deploy comprehensive monitoring for hierarchical tree health and performance
+- **Scalability Planning**: Design systems to handle growing document collections and deeper tree requirements
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="tree" title="Tree Construction Failures">
+    **Problem**: RAPTOR tree construction fails or produces poor hierarchical structure
+    
+    **Solutions**:
+    - Verify document collection has sufficient semantic diversity for meaningful clustering
+    - Check memory allocation - deep trees require significant memory resources
+    - Reduce max_level for large document collections (>3000 documents)
+    - Ensure documents have adequate length for effective clustering (>200 words recommended)
+    - Monitor clustering algorithm convergence during Gaussian Mixture Model fitting
+  </Accordion>
+  
+  <Accordion icon="memory" title="High Memory Usage">
+    **Problem**: RAPTOR tree construction consumes excessive memory
+    
+    **Solutions**:
+    - Reduce max_level to decrease tree complexity (try max_level=3 or 4)
+    - Process large document collections in smaller batches
+    - Monitor base chunking size - smaller chunks reduce memory pressure
+    - Use precision-focused strategy for memory-constrained environments
+    - Implement memory monitoring during tree construction phases
+  </Accordion>
+  
+  <Accordion icon="clock" title="Slow Hierarchical Retrieval">
+    **Problem**: RAPTOR tree traversal and retrieval is slower than expected
+    
+    **Solutions**:
+    - Reduce Top K to focus retrieval on most relevant results
+    - Optimize tree structure by adjusting max_level based on document collection
+    - Check for inefficient tree structure from poor clustering quality
+    - Implement parallel processing for multiple simultaneous queries
+    - Monitor tree density - overly dense trees slow traversal
+  </Accordion>
+  
+  <Accordion icon="layer-group" title="Poor Abstraction Quality">
+    **Problem**: RAPTOR tree summaries lack coherence or miss important concepts
+    
+    **Solutions**:
+    - Verify document preprocessing preserves semantic content effectively
+    - Check clustering parameters - poor clusters lead to poor summaries
+    - Increase max_level if abstractions are too shallow for content complexity
+    - Monitor summarization model performance and consider model upgrades
+    - Ensure sufficient document diversity within clusters for meaningful summaries
+  </Accordion>
+  
+  <Accordion icon="search" title="Low Clustering Efficiency">
+    **Problem**: Clustering ratios are suboptimal, affecting tree quality
+    
+    **Solutions**:
+    - Analyze document collection diversity - homogeneous content clusters poorly
+    - Adjust chunk size in preprocessing to better capture semantic units
+    - Check embedding model appropriateness for document domain and language
+    - Consider dimensionality reduction if working with very high-dimensional embeddings
+    - Monitor Gaussian Mixture Model convergence and cluster stability
+  </Accordion>
+  
+  <Accordion icon="exclamation-triangle" title="Configuration Conflicts">
+    **Problem**: RAPTOR configuration updates fail or produce unexpected results
+    
+    **Solutions**:
+    - Verify Top K is within valid range (1-100 or null) for unlimited retrieval
+    - Ensure max_level is between 2-8 for optimal tree performance
+    - Check that configuration changes are compatible with existing tree structure
+    - Rebuild tree structure when making significant configuration changes
+    - Validate JSON payload structure matches expected RAPTOR schema
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Explore advanced RAPTOR RAG capabilities and integration patterns:
+
+<CardGroup cols={2}>
+  <Card
+    title="List RAPTOR RAG Nodes"
+    icon="list"
+    href="/api-reference/flows/raptor-rag/list"
+  >
+    Retrieve detailed hierarchical tree metrics and clustering statistics for performance analysis
+  </Card>
+  <Card
+    title="Update RAPTOR RAG Configuration"
+    icon="sliders"
+    href="/api-reference/flows/raptor-rag/update"
+  >
+    Configure hierarchical tree parameters with advanced optimization strategies
+  </Card>
+  <Card
+    title="Flow Management"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
+  >
+    Integrate RAPTOR RAG nodes into comprehensive RAG pipeline architectures  
+  </Card>
+  <Card
+    title="Dataset Integration"
+    icon="database"
+    href="/api-reference/flows/datasets/overview"
+  >
+    Connect document sources to RAPTOR RAG hierarchical processing pipelines
+  </Card>
+</CardGroup>
