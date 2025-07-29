@@ -1,0 +1,1110 @@
+---
+title: 'Update Graph RAG Configuration'
+description: 'Modify graph RAG node settings via the GraphorLM REST API'
+---
+
+Update the configuration settings of graph RAG nodes in your GraphorLM flows. Graph RAG nodes are advanced knowledge graph-powered RAG components that combine document processing, NLP entity extraction, relationship mapping, and intelligent retrieval operations with configurable Top K parameters for optimal knowledge graph utilization.
+
+## Overview
+
+The Update Graph RAG Configuration endpoint allows you to modify the settings of graph RAG nodes within a flow. Graph RAG nodes process documents by building knowledge graphs with extracted entities and relationships, then use these graphs to provide contextually enriched retrieval results with semantic understanding.
+
+- **Method**: `PATCH`
+- **URL**: `https://{flow_name}.flows.graphorlm.com/graph-rag/{node_id}`
+- **Authentication**: Required (API Token)
+
+## Authentication
+
+All requests must include a valid API token in the Authorization header:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+| `Content-Type` | `application/json` | Yes |
+
+### URL Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `flow_name` | string | Name of the flow containing the graph RAG node |
+| `node_id` | string | Unique identifier of the graph RAG node to update |
+
+### Request Body
+
+```json
+{
+  "config": {
+    "topK": 20
+  }
+}
+```
+
+### Configuration Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `topK` | integer \| null | 5 | Number of top results to retrieve after knowledge graph processing. Set to `null` for unlimited processing |
+
+## Response Format
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Graph RAG node configuration updated successfully",
+  "node_id": "graph-rag-1748287628685"
+}
+```
+
+### Response Structure
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Whether the update operation was successful |
+| `message` | string | Human-readable description of the operation result |
+| `node_id` | string | The ID of the updated graph RAG node |
+
+## Configuration Strategies
+
+Graph RAG nodes support different configuration strategies based on knowledge graph complexity and retrieval requirements:
+
+### Precision-Focused Strategy
+
+**Configuration**: `topK: 5-10`
+
+```json
+{
+  "config": {
+    "topK": 8
+  }
+}
+```
+
+**Characteristics**:
+- **Focus**: High-relevance entity-based retrieval
+- **Resource Usage**: Low system overhead
+- **Processing Speed**: Fastest knowledge graph traversal
+- **Quality Profile**: High precision with focused entity coverage
+
+**Best For**:
+- Expert knowledge systems requiring precise entity matching
+- Critical decision support with specific domain entities
+- Real-time applications with strict performance requirements
+- Scenarios where entity precision is more important than coverage
+
+### Balanced Strategy
+
+**Configuration**: `topK: 12-20`
+
+```json
+{
+  "config": {
+    "topK": 15
+  }
+}
+```
+
+**Characteristics**:
+- **Focus**: Optimal balance of entity coverage and performance
+- **Resource Usage**: Moderate system consumption
+- **Processing Speed**: Good knowledge graph traversal performance
+- **Quality Profile**: Balanced entity precision and relationship coverage
+
+**Best For**:
+- General-purpose knowledge management systems
+- Business intelligence with entity-relationship analysis
+- Educational platforms requiring comprehensive knowledge coverage
+- Multi-domain applications with diverse entity types
+
+### Comprehensive Strategy
+
+**Configuration**: `topK: 25-40`
+
+```json
+{
+  "config": {
+    "topK": 30
+  }
+}
+```
+
+**Characteristics**:
+- **Focus**: Thorough knowledge graph exploration
+- **Resource Usage**: Higher system consumption
+- **Processing Speed**: More intensive graph traversal
+- **Quality Profile**: High entity recall with comprehensive relationship mapping
+
+**Best For**:
+- Research platforms requiring extensive entity analysis
+- Complex domain knowledge systems
+- Investigation and discovery applications
+- Academic research with comprehensive knowledge requirements
+
+### Unlimited Strategy
+
+**Configuration**: `topK: null`
+
+```json
+{
+  "config": {
+    "topK": null
+  }
+}
+```
+
+**Characteristics**:
+- **Focus**: Complete knowledge graph analysis
+- **Resource Usage**: Maximum system consumption
+- **Processing Speed**: Most intensive processing
+- **Quality Profile**: Maximum entity and relationship coverage
+
+**Best For**:
+- Exhaustive knowledge discovery projects
+- Complete domain analysis and mapping
+- Research scenarios requiring full knowledge graph traversal
+- Resource-unlimited comprehensive analysis
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+async function updateGraphRagConfiguration(flowName, nodeId, config, apiToken) {
+  const response = await fetch(`https://${flowName}.flows.graphorlm.com/graph-rag/${nodeId}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ config })
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+// Usage examples
+const configurations = {
+  precision: { topK: 8 },
+  balanced: { topK: 15 },
+  comprehensive: { topK: 30 },
+  unlimited: { topK: null }
+};
+
+// Update to precision-focused strategy
+updateGraphRagConfiguration(
+  'my-rag-pipeline', 
+  'graph-rag-1748287628685', 
+  configurations.precision,
+  'YOUR_API_TOKEN'
+).then(result => {
+  console.log('✅ Graph RAG updated to precision strategy:', result.message);
+}).catch(error => {
+  console.error('❌ Update failed:', error.message);
+});
+
+// Advanced configuration with validation
+async function updateWithValidation(flowName, nodeId, strategy, apiToken) {
+  const strategies = {
+    'precision': { topK: 8, description: 'High-precision entity matching' },
+    'balanced': { topK: 15, description: 'Balanced entity coverage and performance' },
+    'comprehensive': { topK: 30, description: 'Thorough knowledge graph exploration' },
+    'unlimited': { topK: null, description: 'Complete knowledge graph analysis' }
+  };
+
+  const config = strategies[strategy];
+  if (!config) {
+    throw new Error(`Invalid strategy: ${strategy}. Available: ${Object.keys(strategies).join(', ')}`);
+  }
+
+  console.log(`🧠 Updating Graph RAG to ${strategy} strategy`);
+  console.log(`   Configuration: Top K = ${config.topK || 'unlimited'}`);
+  console.log(`   Description: ${config.description}`);
+
+  try {
+    const result = await updateGraphRagConfiguration(
+      flowName, 
+      nodeId, 
+      { topK: config.topK }, 
+      apiToken
+    );
+    
+    console.log(`✅ Success: ${result.message}`);
+    return result;
+  } catch (error) {
+    console.error(`❌ Failed to update Graph RAG: ${error.message}`);
+    throw error;
+  }
+}
+
+// Usage with validation
+updateWithValidation(
+  'my-rag-pipeline', 
+  'graph-rag-1748287628685', 
+  'comprehensive',
+  'YOUR_API_TOKEN'
+);
+```
+
+### Python
+
+```python
+import requests
+from typing import Dict, Any, Optional, Union
+
+def update_graph_rag_configuration(
+    flow_name: str,
+    node_id: str,
+    config: Dict[str, Any],
+    api_token: str
+) -> Dict[str, Any]:
+    """Update graph RAG node configuration"""
+    url = f"https://{flow_name}.flows.graphorlm.com/graph-rag/{node_id}"
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {"config": config}
+    
+    response = requests.patch(url, headers=headers, json=payload)
+    response.raise_for_status()
+    
+    return response.json()
+
+class GraphRagConfigurationManager:
+    """Advanced Graph RAG configuration management with knowledge graph optimization"""
+    
+    def __init__(self, flow_name: str, api_token: str):
+        self.flow_name = flow_name
+        self.api_token = api_token
+        self.strategies = {
+            'precision': {
+                'topK': 8,
+                'description': 'High-precision entity matching',
+                'use_cases': ['Expert systems', 'Critical decisions', 'Real-time applications'],
+                'resource_level': 'low',
+                'entity_coverage': 'focused'
+            },
+            'balanced': {
+                'topK': 15,
+                'description': 'Balanced entity coverage and performance',
+                'use_cases': ['General knowledge', 'Business intelligence', 'Education'],
+                'resource_level': 'medium',
+                'entity_coverage': 'moderate'
+            },
+            'comprehensive': {
+                'topK': 30,
+                'description': 'Thorough knowledge graph exploration',
+                'use_cases': ['Research', 'Complex analysis', 'Investigation'],
+                'resource_level': 'high',
+                'entity_coverage': 'extensive'
+            },
+            'unlimited': {
+                'topK': None,
+                'description': 'Complete knowledge graph analysis',
+                'use_cases': ['Exhaustive research', 'Complete analysis', 'Discovery'],
+                'resource_level': 'maximum',
+                'entity_coverage': 'complete'
+            }
+        }
+    
+    def update_strategy(self, node_id: str, strategy: str) -> Dict[str, Any]:
+        """Update Graph RAG node to a specific strategy"""
+        if strategy not in self.strategies:
+            available = ', '.join(self.strategies.keys())
+            raise ValueError(f"Invalid strategy '{strategy}'. Available: {available}")
+        
+        strategy_config = self.strategies[strategy]
+        config = {'topK': strategy_config['topK']}
+        
+        print(f"🧠 Updating Graph RAG node {node_id}")
+        print(f"   Strategy: {strategy}")
+        print(f"   Top K: {strategy_config['topK'] or 'unlimited'}")
+        print(f"   Description: {strategy_config['description']}")
+        print(f"   Resource Level: {strategy_config['resource_level']}")
+        print(f"   Entity Coverage: {strategy_config['entity_coverage']}")
+        
+        try:
+            result = update_graph_rag_configuration(
+                self.flow_name, node_id, config, self.api_token
+            )
+            print(f"✅ {result['message']}")
+            return result
+        except requests.exceptions.HTTPError as e:
+            print(f"❌ Update failed: {e}")
+            raise
+    
+    def analyze_strategy_impact(self, current_top_k: Optional[int], target_strategy: str) -> Dict[str, Any]:
+        """Analyze the impact of changing to a target strategy"""
+        target_config = self.strategies[target_strategy]
+        target_top_k = target_config['topK']
+        
+        # Determine current strategy
+        current_strategy = 'unknown'
+        for name, config in self.strategies.items():
+            if config['topK'] == current_top_k:
+                current_strategy = name
+                break
+        
+        # Calculate impact
+        impact_analysis = {
+            'current_strategy': current_strategy,
+            'current_top_k': current_top_k,
+            'target_strategy': target_strategy,
+            'target_top_k': target_top_k,
+            'changes': [],
+            'recommendations': []
+        }
+        
+        # Analyze changes
+        if current_top_k is None and target_top_k is not None:
+            impact_analysis['changes'].append("Switching from unlimited to limited processing")
+            impact_analysis['recommendations'].append("Monitor knowledge coverage after change")
+        elif current_top_k is not None and target_top_k is None:
+            impact_analysis['changes'].append("Switching to unlimited processing")
+            impact_analysis['recommendations'].append("Ensure adequate system resources")
+        elif current_top_k and target_top_k:
+            if target_top_k > current_top_k:
+                increase = target_top_k - current_top_k
+                impact_analysis['changes'].append(f"Increasing Top K by {increase} (+{(increase/current_top_k)*100:.1f}%)")
+                impact_analysis['recommendations'].append("Expect increased resource usage and processing time")
+            elif target_top_k < current_top_k:
+                decrease = current_top_k - target_top_k
+                impact_analysis['changes'].append(f"Decreasing Top K by {decrease} (-{(decrease/current_top_k)*100:.1f}%)")
+                impact_analysis['recommendations'].append("Monitor for potential knowledge coverage reduction")
+        
+        # Resource impact analysis
+        current_level = next((config['resource_level'] for config in self.strategies.values() 
+                            if config['topK'] == current_top_k), 'unknown')
+        target_level = target_config['resource_level']
+        
+        if current_level != target_level:
+            impact_analysis['changes'].append(f"Resource usage changing from {current_level} to {target_level}")
+        
+        return impact_analysis
+    
+    def print_strategy_comparison(self):
+        """Print a comparison table of all available strategies"""
+        print("🎯 Graph RAG Configuration Strategies Comparison")
+        print("=" * 80)
+        print(f"{'Strategy':<15} {'Top K':<10} {'Resource':<10} {'Coverage':<12} {'Best For'}")
+        print("-" * 80)
+        
+        for name, config in self.strategies.items():
+            top_k_str = str(config['topK']) if config['topK'] is not None else 'unlimited'
+            use_case = config['use_cases'][0] if config['use_cases'] else ''
+            
+            print(f"{name:<15} {top_k_str:<10} {config['resource_level']:<10} "
+                  f"{config['entity_coverage']:<12} {use_case}")
+    
+    def recommend_strategy(self, 
+                          entity_density: float = None, 
+                          relationship_ratio: float = None,
+                          processing_time_constraint: bool = False,
+                          resource_constraint: bool = False) -> str:
+        """Recommend a strategy based on knowledge graph metrics and constraints"""
+        
+        print("🔍 Analyzing Graph RAG requirements for strategy recommendation...")
+        
+        # Start with balanced as default
+        recommended = 'balanced'
+        reasoning = []
+        
+        # Analyze entity density if provided
+        if entity_density is not None:
+            if entity_density > 5.0:
+                recommended = 'precision'
+                reasoning.append("High entity density suggests precision strategy")
+            elif entity_density < 1.5:
+                recommended = 'comprehensive'
+                reasoning.append("Low entity density suggests comprehensive strategy")
+        
+        # Analyze relationship ratio if provided
+        if relationship_ratio is not None:
+            if relationship_ratio > 2.0:
+                # Rich relationships suggest comprehensive approach might be beneficial
+                if recommended != 'precision':  # Don't override precision if already set
+                    recommended = 'comprehensive'
+                reasoning.append("High relationship ratio suggests comprehensive exploration")
+        
+        # Apply constraints
+        if processing_time_constraint:
+            if recommended in ['comprehensive', 'unlimited']:
+                recommended = 'balanced'
+                reasoning.append("Processing time constraint limits strategy to balanced or precision")
+        
+        if resource_constraint:
+            if recommended in ['comprehensive', 'unlimited']:
+                recommended = 'precision'
+                reasoning.append("Resource constraint requires precision strategy")
+        
+        print(f"💡 Recommended strategy: {recommended}")
+        if reasoning:
+            print("   Reasoning:")
+            for reason in reasoning:
+                print(f"   • {reason}")
+        
+        strategy_info = self.strategies[recommended]
+        print(f"   Top K: {strategy_info['topK'] or 'unlimited'}")
+        print(f"   Description: {strategy_info['description']}")
+        
+        return recommended
+
+# Usage examples
+manager = GraphRagConfigurationManager("my-rag-pipeline", "YOUR_API_TOKEN")
+
+# Print strategy comparison
+manager.print_strategy_comparison()
+
+# Update to a specific strategy
+try:
+    result = manager.update_strategy("graph-rag-1748287628685", "comprehensive")
+    print(f"Configuration updated: {result}")
+except Exception as e:
+    print(f"Error updating configuration: {e}")
+
+# Analyze strategy impact
+impact = manager.analyze_strategy_impact(15, "comprehensive")
+print("\n📊 Strategy Impact Analysis:")
+for change in impact['changes']:
+    print(f"   • {change}")
+for rec in impact['recommendations']:
+    print(f"   💡 {rec}")
+
+# Get strategy recommendation
+recommended = manager.recommend_strategy(
+    entity_density=2.5,
+    relationship_ratio=1.8,
+    processing_time_constraint=False,
+    resource_constraint=False
+)
+```
+
+### cURL
+
+```bash
+# Basic configuration update
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/graph-rag/graph-rag-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"config": {"topK": 20}}'
+
+# Update to precision strategy
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/graph-rag/graph-rag-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"config": {"topK": 8}}' | jq '.'
+
+# Update to comprehensive strategy
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/graph-rag/graph-rag-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"config": {"topK": 30}}'
+
+# Update to unlimited processing
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/graph-rag/graph-rag-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"config": {"topK": null}}'
+
+# Advanced update with error handling
+curl -X PATCH https://my-rag-pipeline.flows.graphorlm.com/graph-rag/graph-rag-1748287628685 \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"config": {"topK": 25}}' \
+  -w "HTTP Status: %{http_code}\nResponse Time: %{time_total}s\n" \
+  --fail-with-body | jq '.'
+```
+
+### PHP
+
+```php
+<?php
+function updateGraphRagConfiguration($flowName, $nodeId, $config, $apiToken) {
+    $url = "https://{$flowName}.flows.graphorlm.com/graph-rag/{$nodeId}";
+    
+    $data = json_encode(['config' => $config]);
+    
+    $options = [
+        'http' => [
+            'header' => [
+                "Authorization: Bearer {$apiToken}",
+                "Content-Type: application/json"
+            ],
+            'method' => 'PATCH',
+            'content' => $data
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    
+    if ($result === FALSE) {
+        throw new Exception('Failed to update graph RAG configuration');
+    }
+    
+    return json_decode($result, true);
+}
+
+class GraphRagConfigurationManager {
+    private $flowName;
+    private $apiToken;
+    private $strategies;
+    
+    public function __construct($flowName, $apiToken) {
+        $this->flowName = $flowName;
+        $this->apiToken = $apiToken;
+        $this->strategies = [
+            'precision' => [
+                'topK' => 8,
+                'description' => 'High-precision entity matching',
+                'resourceLevel' => 'low',
+                'entityCoverage' => 'focused'
+            ],
+            'balanced' => [
+                'topK' => 15,
+                'description' => 'Balanced entity coverage and performance',
+                'resourceLevel' => 'medium',
+                'entityCoverage' => 'moderate'
+            ],
+            'comprehensive' => [
+                'topK' => 30,
+                'description' => 'Thorough knowledge graph exploration',
+                'resourceLevel' => 'high',
+                'entityCoverage' => 'extensive'
+            ],
+            'unlimited' => [
+                'topK' => null,
+                'description' => 'Complete knowledge graph analysis',
+                'resourceLevel' => 'maximum',
+                'entityCoverage' => 'complete'
+            ]
+        ];
+    }
+    
+    public function updateStrategy($nodeId, $strategy) {
+        if (!isset($this->strategies[$strategy])) {
+            $available = implode(', ', array_keys($this->strategies));
+            throw new InvalidArgumentException("Invalid strategy '{$strategy}'. Available: {$available}");
+        }
+        
+        $strategyConfig = $this->strategies[$strategy];
+        $config = ['topK' => $strategyConfig['topK']];
+        
+        echo "🧠 Updating Graph RAG node {$nodeId}\n";
+        echo "   Strategy: {$strategy}\n";
+        echo "   Top K: " . ($strategyConfig['topK'] !== null ? $strategyConfig['topK'] : 'unlimited') . "\n";
+        echo "   Description: {$strategyConfig['description']}\n";
+        echo "   Resource Level: {$strategyConfig['resourceLevel']}\n";
+        echo "   Entity Coverage: {$strategyConfig['entityCoverage']}\n";
+        
+        try {
+            $result = updateGraphRagConfiguration(
+                $this->flowName, 
+                $nodeId, 
+                $config, 
+                $this->apiToken
+            );
+            echo "✅ {$result['message']}\n";
+            return $result;
+        } catch (Exception $e) {
+            echo "❌ Update failed: " . $e->getMessage() . "\n";
+            throw $e;
+        }
+    }
+    
+    public function analyzeStrategyImpact($currentTopK, $targetStrategy) {
+        $targetConfig = $this->strategies[$targetStrategy];
+        $targetTopK = $targetConfig['topK'];
+        
+        // Determine current strategy
+        $currentStrategy = 'unknown';
+        foreach ($this->strategies as $name => $config) {
+            if ($config['topK'] === $currentTopK) {
+                $currentStrategy = $name;
+                break;
+            }
+        }
+        
+        $impact = [
+            'currentStrategy' => $currentStrategy,
+            'currentTopK' => $currentTopK,
+            'targetStrategy' => $targetStrategy,
+            'targetTopK' => $targetTopK,
+            'changes' => [],
+            'recommendations' => []
+        ];
+        
+        // Analyze changes
+        if ($currentTopK === null && $targetTopK !== null) {
+            $impact['changes'][] = "Switching from unlimited to limited processing";
+            $impact['recommendations'][] = "Monitor knowledge coverage after change";
+        } elseif ($currentTopK !== null && $targetTopK === null) {
+            $impact['changes'][] = "Switching to unlimited processing";
+            $impact['recommendations'][] = "Ensure adequate system resources";
+        } elseif ($currentTopK && $targetTopK) {
+            if ($targetTopK > $currentTopK) {
+                $increase = $targetTopK - $currentTopK;
+                $percentage = round(($increase / $currentTopK) * 100, 1);
+                $impact['changes'][] = "Increasing Top K by {$increase} (+{$percentage}%)";
+                $impact['recommendations'][] = "Expect increased resource usage and processing time";
+            } elseif ($targetTopK < $currentTopK) {
+                $decrease = $currentTopK - $targetTopK;
+                $percentage = round(($decrease / $currentTopK) * 100, 1);
+                $impact['changes'][] = "Decreasing Top K by {$decrease} (-{$percentage}%)";
+                $impact['recommendations'][] = "Monitor for potential knowledge coverage reduction";
+            }
+        }
+        
+        return $impact;
+    }
+    
+    public function printStrategyComparison() {
+        echo "🎯 Graph RAG Configuration Strategies Comparison\n";
+        echo str_repeat("=", 80) . "\n";
+        printf("%-15s %-10s %-10s %-12s %s\n", 'Strategy', 'Top K', 'Resource', 'Coverage', 'Description');
+        echo str_repeat("-", 80) . "\n";
+        
+        foreach ($this->strategies as $name => $config) {
+            $topKStr = $config['topK'] !== null ? (string)$config['topK'] : 'unlimited';
+            printf("%-15s %-10s %-10s %-12s %s\n", 
+                $name, 
+                $topKStr, 
+                $config['resourceLevel'],
+                $config['entityCoverage'],
+                $config['description']
+            );
+        }
+    }
+    
+    public function recommendStrategy($entityDensity = null, $relationshipRatio = null, 
+                                    $processingTimeConstraint = false, $resourceConstraint = false) {
+        echo "🔍 Analyzing Graph RAG requirements for strategy recommendation...\n";
+        
+        // Start with balanced as default
+        $recommended = 'balanced';
+        $reasoning = [];
+        
+        // Analyze entity density if provided
+        if ($entityDensity !== null) {
+            if ($entityDensity > 5.0) {
+                $recommended = 'precision';
+                $reasoning[] = "High entity density suggests precision strategy";
+            } elseif ($entityDensity < 1.5) {
+                $recommended = 'comprehensive';
+                $reasoning[] = "Low entity density suggests comprehensive strategy";
+            }
+        }
+        
+        // Analyze relationship ratio if provided
+        if ($relationshipRatio !== null && $relationshipRatio > 2.0) {
+            if ($recommended !== 'precision') {
+                $recommended = 'comprehensive';
+                $reasoning[] = "High relationship ratio suggests comprehensive exploration";
+            }
+        }
+        
+        // Apply constraints
+        if ($processingTimeConstraint && in_array($recommended, ['comprehensive', 'unlimited'])) {
+            $recommended = 'balanced';
+            $reasoning[] = "Processing time constraint limits strategy to balanced or precision";
+        }
+        
+        if ($resourceConstraint && in_array($recommended, ['comprehensive', 'unlimited'])) {
+            $recommended = 'precision';
+            $reasoning[] = "Resource constraint requires precision strategy";
+        }
+        
+        echo "💡 Recommended strategy: {$recommended}\n";
+        if (!empty($reasoning)) {
+            echo "   Reasoning:\n";
+            foreach ($reasoning as $reason) {
+                echo "   • {$reason}\n";
+            }
+        }
+        
+        $strategyInfo = $this->strategies[$recommended];
+        $topK = $strategyInfo['topK'] !== null ? $strategyInfo['topK'] : 'unlimited';
+        echo "   Top K: {$topK}\n";
+        echo "   Description: {$strategyInfo['description']}\n";
+        
+        return $recommended;
+    }
+}
+
+// Usage examples
+$manager = new GraphRagConfigurationManager("my-rag-pipeline", "YOUR_API_TOKEN");
+
+// Print strategy comparison
+$manager->printStrategyComparison();
+
+// Update to a specific strategy
+try {
+    $result = $manager->updateStrategy("graph-rag-1748287628685", "comprehensive");
+    echo "Configuration updated successfully\n";
+} catch (Exception $e) {
+    echo "Error updating configuration: " . $e->getMessage() . "\n";
+}
+
+// Analyze strategy impact
+$impact = $manager->analyzeStrategyImpact(15, "comprehensive");
+echo "\n📊 Strategy Impact Analysis:\n";
+foreach ($impact['changes'] as $change) {
+    echo "   • {$change}\n";
+}
+foreach ($impact['recommendations'] as $rec) {
+    echo "   💡 {$rec}\n";
+}
+
+// Get strategy recommendation
+$recommended = $manager->recommendStrategy(2.5, 1.8, false, false);
+?>
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Description | Example Response |
+|-------------|-------------|------------------|
+| 400 | Bad Request - Invalid configuration parameters | `{"detail": "Invalid topK value: must be a positive integer or null"}` |
+| 401 | Unauthorized - Invalid or missing API token | `{"detail": "Invalid authentication credentials"}` |
+| 404 | Not Found - Flow or node not found | `{"detail": "Graph RAG node not found"}` |
+| 422 | Validation Error - Configuration validation failed | `{"detail": "Configuration validation failed: topK must be between 1 and 100 or null"}` |
+| 500 | Internal Server Error - Server error | `{"detail": "Failed to update graph RAG configuration"}` |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+### Example Error Responses
+
+#### Invalid Configuration
+```json
+{
+  "detail": "Invalid topK value: must be a positive integer or null"
+}
+```
+
+#### Node Not Found
+```json
+{
+  "detail": "Graph RAG node not found"
+}
+```
+
+#### Validation Error
+```json
+{
+  "detail": "Configuration validation failed: topK must be between 1 and 100 or null"
+}
+```
+
+## Internal Configuration
+
+Graph RAG nodes use predefined internal configurations that are automatically applied:
+
+### Graph RAG Chunking Configuration
+
+```python
+GRAPH_RAG_CHUNKING_CONFIG = {
+    "embeddingModel": "text-embedding-3-small",
+    "chunkingSplitter": "TITLE",
+    "chunkSize": 5000,
+    "elementsToRemove": []
+}
+```
+
+### Graph RAG Retrieval Configuration
+
+```python
+GRAPH_RAG_RETRIEVAL_CONFIG = {
+    "searchType": "similarity",
+    "topK": 5,  # Overridden by node's topK configuration
+    "scoreThreshold": 0.5
+}
+```
+
+### NLP Extraction Configuration
+
+```python
+DEFAULT_ALLOWED_NODES = [
+    "Person", "Organization", "Location", 
+    "Product", "Technology"
+]
+
+DEFAULT_ALLOWED_EDGES = [
+    "IS_A", "PART_OF", "MEMBER_OF", 
+    "WORK_FOR", "KNOWS"
+]
+
+NLP_EXTRACTION_MODEL = "gpt-4.1"
+```
+
+## Best Practices
+
+### Configuration Management
+
+- **Start with Balanced**: Begin with `topK: 15` and adjust based on knowledge graph metrics
+- **Monitor Entity Density**: Track entities per chunk to guide configuration decisions
+- **Relationship Analysis**: Consider relationship ratios when choosing strategies
+- **Incremental Adjustments**: Make gradual changes and measure impact
+
+### Performance Optimization
+
+#### Knowledge Graph Efficiency
+- **Entity Focus**: Use precision strategy for entity-specific applications
+- **Relationship Mapping**: Use comprehensive strategy for relationship-heavy domains
+- **Resource Planning**: Plan system resources based on Top K configuration
+- **Processing Time**: Balance knowledge coverage with acceptable processing time
+
+#### Resource Management
+- **System Monitoring**: Track resource usage across different configurations
+- **Batch Optimization**: Consider entity extraction batch sizes
+- **Memory Usage**: Monitor knowledge graph memory consumption
+- **Storage Impact**: Plan for knowledge graph storage requirements
+
+### Quality Assurance
+
+#### Knowledge Graph Quality
+- **Entity Validation**: Regularly validate extracted entities for accuracy
+- **Relationship Quality**: Monitor relationship extraction quality
+- **Graph Connectivity**: Ensure optimal connectivity ratios
+- **Domain Alignment**: Verify entity types align with your domain
+
+#### Continuous Improvement
+- **Metrics Tracking**: Monitor entity density and relationship ratios
+- **Performance Baselines**: Establish knowledge graph quality benchmarks
+- **Regular Reviews**: Schedule periodic configuration reviews
+- **A/B Testing**: Test different configurations with real queries
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="exclamation-triangle" title="Configuration Update Failed">
+    **Solution**: Check that:
+    - The node ID is correct and exists in the specified flow
+    - The API token has sufficient permissions for flow modifications
+    - The topK value is valid (positive integer or null)
+    - The request body is properly formatted JSON
+  </Accordion>
+  
+  <Accordion icon="brain" title="Poor Entity Extraction After Update">
+    **Solution**: If entity extraction quality decreases:
+    - Verify that the new topK allows sufficient entity coverage
+    - Check if the configuration change affects knowledge graph completeness
+    - Review entity density metrics before and after the change
+    - Consider reverting to previous configuration if quality is significantly impacted
+  </Accordion>
+  
+  <Accordion icon="network-wired" title="Low Graph Connectivity">
+    **Solution**: If relationship mapping suffers:
+    - Ensure topK is sufficient for relationship discovery
+    - Review if comprehensive strategy is needed for your domain
+    - Check that source documents contain relational content
+    - Validate that allowed relationship types are appropriate
+  </Accordion>
+  
+  <Accordion icon="clock" title="Processing Performance Issues">
+    **Solution**: If processing becomes too slow:
+    - Consider reducing topK to improve processing speed
+    - Monitor system resources during knowledge graph construction
+    - Review if precision strategy is more appropriate
+    - Check for bottlenecks in NLP extraction or graph storage
+  </Accordion>
+  
+  <Accordion icon="memory" title="High Resource Usage">
+    **Solution**: If resource consumption is excessive:
+    - Reduce topK to limit processing scope
+    - Monitor memory usage during knowledge graph operations
+    - Consider implementing resource monitoring and alerts
+    - Evaluate if unlimited strategy is necessary for your use case
+  </Accordion>
+  
+  <Accordion icon="wifi" title="Connection Issues">
+    **Solution**: For connectivity problems:
+    - Check your internet connection
+    - Verify the flow URL is accessible
+    - Ensure your firewall allows HTTPS traffic to *.flows.graphorlm.com
+    - Try updating the configuration from a different network
+  </Accordion>
+</AccordionGroup>
+
+## Advanced Configuration
+
+### Dynamic Configuration Based on Metrics
+
+```python
+def dynamic_configuration_adjustment(entity_density, relationship_ratio, processing_time):
+    """
+    Dynamically adjust Graph RAG configuration based on knowledge graph metrics
+    """
+    # Base configuration
+    config = {'topK': 15}
+    
+    # Adjust based on entity density
+    if entity_density > 4.0:
+        # High entity density, reduce topK for efficiency
+        config['topK'] = min(config['topK'], 10)
+    elif entity_density < 1.0:
+        # Low entity density, increase topK for coverage
+        config['topK'] = max(config['topK'], 25)
+    
+    # Adjust based on relationship ratio
+    if relationship_ratio > 2.0:
+        # Rich relationships, increase topK for exploration
+        config['topK'] = max(config['topK'], 20)
+    elif relationship_ratio < 0.5:
+        # Sparse relationships, optimize for precision
+        config['topK'] = min(config['topK'], 12)
+    
+    # Performance constraint adjustments
+    if processing_time > 30:  # seconds
+        # Too slow, reduce topK
+        config['topK'] = max(5, config['topK'] - 5)
+    
+    return config
+```
+
+### Multi-Node Configuration Management
+
+```javascript
+class FlowGraphRagManager {
+  constructor(flowName, apiToken) {
+    this.flowName = flowName;
+    this.apiToken = apiToken;
+  }
+
+  async optimizeAllNodes() {
+    // Get all Graph RAG nodes
+    const nodes = await this.getGraphRagNodes();
+    
+    const results = [];
+    for (const node of nodes) {
+      try {
+        // Analyze node metrics
+        const metrics = await this.analyzeNodeMetrics(node.id);
+        
+        // Determine optimal configuration
+        const optimalConfig = this.calculateOptimalConfig(metrics);
+        
+        // Update node configuration
+        const result = await this.updateNodeConfiguration(node.id, optimalConfig);
+        
+        results.push({
+          nodeId: node.id,
+          nodeName: node.data.name,
+          success: true,
+          oldConfig: node.data.config,
+          newConfig: optimalConfig,
+          result: result
+        });
+        
+        // Small delay to avoid overwhelming the API
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+      } catch (error) {
+        results.push({
+          nodeId: node.id,
+          nodeName: node.data.name,
+          success: false,
+          error: error.message
+        });
+      }
+    }
+    
+    return results;
+  }
+
+  calculateOptimalConfig(metrics) {
+    const { entityDensity, relationshipRatio, processingTime, resourceUsage } = metrics;
+    
+    // Start with balanced configuration
+    let topK = 15;
+    
+    // Adjust based on entity density
+    if (entityDensity > 4.0) topK = Math.max(8, topK - 5);
+    if (entityDensity < 1.5) topK = Math.min(30, topK + 10);
+    
+    // Adjust based on relationship ratio
+    if (relationshipRatio > 2.0) topK = Math.min(35, topK + 8);
+    if (relationshipRatio < 0.8) topK = Math.max(8, topK - 3);
+    
+    // Performance constraints
+    if (processingTime > 45) topK = Math.max(5, topK - 8);
+    if (resourceUsage > 0.8) topK = Math.max(5, topK - 5);
+    
+    return { topK };
+  }
+}
+
+// Usage
+const manager = new FlowGraphRagManager('my-rag-pipeline', 'YOUR_API_TOKEN');
+manager.optimizeAllNodes().then(results => {
+  console.log('🎯 Multi-node optimization complete:');
+  results.forEach(result => {
+    if (result.success) {
+      console.log(`✅ ${result.nodeName}: Updated topK from ${result.oldConfig.topK} to ${result.newConfig.topK}`);
+    } else {
+      console.log(`❌ ${result.nodeName}: ${result.error}`);
+    }
+  });
+});
+```
+
+## Next Steps
+
+After updating your graph RAG configuration, consider:
+
+<CardGroup cols={2}>
+  <Card
+    title="List Graph RAG Nodes"
+    icon="list"
+    href="/api-reference/flows/graph-rag/list"
+  >
+    Verify your configuration changes and monitor knowledge graph metrics
+  </Card>
+  <Card
+    title="Run Flow"
+    icon="play"
+    href="/api-reference/flows/run"
+  >
+    Execute your flow to test the updated graph RAG configuration
+  </Card>
+  <Card
+    title="Monitor Performance"
+    icon="chart-line"
+    href="/guides/performance-monitoring"
+  >
+    Track knowledge graph performance and entity extraction quality
+  </Card>
+  <Card
+    title="Flow Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
+  >
+    Learn about other flow management capabilities
+  </Card>
+</CardGroup>

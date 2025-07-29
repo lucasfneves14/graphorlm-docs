@@ -103,6 +103,14 @@
                   "api-reference/flows/smart-rag/list",
                   "api-reference/flows/smart-rag/update"
                 ]
+              },
+              {
+                "group": "Graph RAG",
+                "pages": [
+                  "api-reference/flows/graph-rag/overview",
+                  "api-reference/flows/graph-rag/list",
+                  "api-reference/flows/graph-rag/update"
+                ]
               }
             ]
           }

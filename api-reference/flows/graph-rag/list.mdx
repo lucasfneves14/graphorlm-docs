@@ -1,0 +1,1185 @@
+---
+title: 'List Graph RAG Nodes'
+description: 'Retrieve graph RAG nodes from flows via the GraphorLM REST API'
+---
+
+Retrieve all graph RAG nodes from a specific flow in your GraphorLM project. Graph RAG nodes are advanced RAG (Retrieval-Augmented Generation) components that combine document processing, chunking, NLP graph extraction, entity recognition, and intelligent retrieval operations into a single, knowledge graph-powered unit.
+
+## Overview
+
+The List Graph RAG Nodes endpoint allows you to retrieve information about graph RAG nodes within a flow. Graph RAG nodes process document content by extracting entities and relationships, building knowledge graphs, and providing contextually enriched retrieval results with semantic understanding.
+
+- **Method**: `GET`
+- **URL**: `https://{flow_name}.flows.graphorlm.com/graph-rag`
+- **Authentication**: Required (API Token)
+
+## Authentication
+
+All requests must include a valid API token in the Authorization header:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+
+### Parameters
+
+No query parameters are required for this endpoint.
+
+### Example Request
+
+```bash
+GET https://my-rag-pipeline.flows.graphorlm.com/graph-rag
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+## Response Format
+
+### Success Response (200 OK)
+
+The response contains an array of graph RAG node objects:
+
+```json
+[
+  {
+    "id": "graph-rag-1748287628685",
+    "type": "graph-rag",
+    "position": {
+      "x": 600,
+      "y": 300
+    },
+    "style": {
+      "height": 220,
+      "width": 360
+    },
+    "data": {
+      "name": "Knowledge Graph RAG",
+      "config": {
+        "topK": 15
+      },
+      "result": {
+        "updated": true,
+        "processing": false,
+        "waiting": false,
+        "has_error": false,
+        "updatedMetrics": true,
+        "total_processed": 2150,
+        "total_chunks": 640,
+        "total_retrieved": 120,
+        "total_entities": 1280,
+        "total_relationships": 850
+      }
+    }
+  }
+]
+```
+
+### Response Structure
+
+Each graph RAG node in the array contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique identifier for the graph RAG node |
+| `type` | string | Node type (always "graph-rag" for graph RAG nodes) |
+| `position` | object | Position coordinates in the flow canvas |
+| `style` | object | Visual styling properties (height, width) |
+| `data` | object | Graph RAG node configuration and results |
+
+### Position Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `x` | number | X coordinate position in the flow canvas |
+| `y` | number | Y coordinate position in the flow canvas |
+
+### Style Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `height` | integer | Height of the node in pixels |
+| `width` | integer | Width of the node in pixels |
+
+### Data Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Display name of the graph RAG node |
+| `config` | object | Node configuration including graph RAG settings |
+| `result` | object | Processing results and status information (optional) |
+
+### Config Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `topK` | integer \| null | Number of top results to retrieve after graph processing. Set to `null` for unlimited processing |
+
+### Result Object (Optional)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `updated` | boolean | Whether the node has been processed with current configuration |
+| `processing` | boolean | Whether the node is currently being processed |
+| `waiting` | boolean | Whether the node is waiting for dependencies |
+| `has_error` | boolean | Whether the node encountered an error during processing |
+| `updatedMetrics` | boolean | Whether evaluation metrics have been computed |
+| `total_processed` | integer | Total number of documents processed through the graph RAG pipeline |
+| `total_chunks` | integer | Number of chunks generated during document processing |
+| `total_retrieved` | integer | Number of documents retrieved in recent queries |
+| `total_entities` | integer | Number of entities extracted from the knowledge graph |
+| `total_relationships` | integer | Number of relationships identified between entities |
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+async function listGraphRagNodes(flowName, apiToken) {
+  const response = await fetch(`https://${flowName}.flows.graphorlm.com/graph-rag`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+// Usage
+listGraphRagNodes('my-rag-pipeline', 'YOUR_API_TOKEN')
+  .then(graphRagNodes => {
+    console.log(`Found ${graphRagNodes.length} graph RAG node(s)`);
+    
+    graphRagNodes.forEach(node => {
+      console.log(`\nNode: ${node.data.name} (${node.id})`);
+      console.log(`Top K Configuration: ${node.data.config.topK || 'unlimited'}`);
+      
+      if (node.data.result) {
+        const status = node.data.result.processing ? 'Processing' : 
+                      node.data.result.waiting ? 'Waiting' :
+                      node.data.result.has_error ? 'Error' :
+                      node.data.result.updated ? 'Updated' : 'Needs Update';
+        console.log(`Status: ${status}`);
+        
+        // Graph RAG specific metrics
+        if (node.data.result.total_processed) {
+          console.log(`Documents processed: ${node.data.result.total_processed}`);
+        }
+        if (node.data.result.total_chunks) {
+          console.log(`Chunks generated: ${node.data.result.total_chunks}`);
+        }
+        if (node.data.result.total_entities) {
+          console.log(`Entities extracted: ${node.data.result.total_entities}`);
+        }
+        if (node.data.result.total_relationships) {
+          console.log(`Relationships identified: ${node.data.result.total_relationships}`);
+        }
+        if (node.data.result.total_retrieved) {
+          console.log(`Documents retrieved: ${node.data.result.total_retrieved}`);
+        }
+        
+        // Knowledge graph coverage metrics
+        if (node.data.result.total_entities && node.data.result.total_chunks) {
+          const entityDensity = (node.data.result.total_entities / node.data.result.total_chunks).toFixed(2);
+          console.log(`Entity density: ${entityDensity} entities/chunk`);
+        }
+        
+        if (node.data.result.total_relationships && node.data.result.total_entities) {
+          const relationshipRatio = (node.data.result.total_relationships / node.data.result.total_entities).toFixed(2);
+          console.log(`Relationship ratio: ${relationshipRatio} relationships/entity`);
+        }
+      }
+    });
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+### Python
+
+```python
+import requests
+import json
+
+def list_graph_rag_nodes(flow_name, api_token):
+    url = f"https://{flow_name}.flows.graphorlm.com/graph-rag"
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}"
+    }
+    
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    
+    return response.json()
+
+def analyze_graph_rag_nodes(graph_rag_nodes):
+    """Analyze graph RAG nodes and provide detailed knowledge graph summary"""
+    print(f"🕸️  Graph RAG Nodes Analysis")
+    print(f"Total graph RAG nodes: {len(graph_rag_nodes)}")
+    print("-" * 50)
+    
+    status_counts = {"updated": 0, "processing": 0, "waiting": 0, "error": 0, "needs_update": 0}
+    total_processed = 0
+    total_chunks = 0
+    total_entities = 0
+    total_relationships = 0
+    total_retrieved = 0
+    topk_configurations = {}
+    
+    for node in graph_rag_nodes:
+        node_data = node.get('data', {})
+        config = node_data.get('config', {})
+        result = node_data.get('result', {})
+        
+        # Track Top K configurations
+        top_k = config.get('topK')
+        top_k_key = 'unlimited' if top_k is None else str(top_k)
+        topk_configurations[top_k_key] = topk_configurations.get(top_k_key, 0) + 1
+        
+        print(f"\n🔗 Node: {node_data.get('name', 'Unnamed')} ({node['id']})")
+        print(f"   Top K Configuration: {top_k if top_k is not None else 'unlimited'}")
+        
+        if result:
+            # Track node status
+            if result.get('processing'):
+                status_counts["processing"] += 1
+                print("   🔄 Status: Processing")
+            elif result.get('waiting'):
+                status_counts["waiting"] += 1
+                print("   ⏳ Status: Waiting")
+            elif result.get('has_error'):
+                status_counts["error"] += 1
+                print("   ❌ Status: Error")
+            elif result.get('updated'):
+                status_counts["updated"] += 1
+                print("   ✅ Status: Updated")
+            else:
+                status_counts["needs_update"] += 1
+                print("   ⚠️  Status: Needs Update")
+            
+            # Aggregate metrics
+            processed = result.get('total_processed', 0)
+            chunks = result.get('total_chunks', 0)
+            entities = result.get('total_entities', 0)
+            relationships = result.get('total_relationships', 0)
+            retrieved = result.get('total_retrieved', 0)
+            
+            total_processed += processed
+            total_chunks += chunks
+            total_entities += entities
+            total_relationships += relationships
+            total_retrieved += retrieved
+            
+            # Display node-specific metrics
+            if processed > 0:
+                print(f"   📄 Documents processed: {processed:,}")
+            if chunks > 0:
+                print(f"   🧩 Chunks generated: {chunks:,}")
+            if entities > 0:
+                print(f"   🏷️  Entities extracted: {entities:,}")
+            if relationships > 0:
+                print(f"   🔗 Relationships found: {relationships:,}")
+            if retrieved > 0:
+                print(f"   📋 Documents retrieved: {retrieved:,}")
+            
+            # Calculate node-specific ratios
+            if chunks > 0 and entities > 0:
+                entity_density = entities / chunks
+                print(f"   📊 Entity density: {entity_density:.2f} entities/chunk")
+            
+            if entities > 0 and relationships > 0:
+                relationship_ratio = relationships / entities
+                print(f"   🔄 Relationship ratio: {relationship_ratio:.2f} relationships/entity")
+            
+            if result.get('updatedMetrics'):
+                print("   📈 Metrics: Available")
+            else:
+                print("   📈 Metrics: Not computed")
+    
+    # Summary section
+    print(f"\n📊 Knowledge Graph Summary:")
+    print(f"   Total documents processed: {total_processed:,}")
+    print(f"   Total chunks generated: {total_chunks:,}")
+    print(f"   Total entities extracted: {total_entities:,}")
+    print(f"   Total relationships found: {total_relationships:,}")
+    print(f"   Total documents retrieved: {total_retrieved:,}")
+    
+    # Calculate overall ratios
+    if total_chunks > 0:
+        avg_entity_density = total_entities / total_chunks
+        print(f"   Average entity density: {avg_entity_density:.2f} entities/chunk")
+        
+        if total_processed > 0:
+            processing_efficiency = total_chunks / total_processed
+            print(f"   Processing efficiency: {processing_efficiency:.2f} chunks/document")
+    
+    if total_entities > 0:
+        avg_relationship_ratio = total_relationships / total_entities
+        print(f"   Average relationship ratio: {avg_relationship_ratio:.2f} relationships/entity")
+        
+        if total_retrieved > 0:
+            entity_retrieval_rate = (total_retrieved / total_entities) * 100
+            print(f"   Entity-based retrieval rate: {entity_retrieval_rate:.1f}%")
+    
+    # Top K configuration distribution
+    print(f"\n🎯 Top K Configuration Distribution:")
+    for config, count in topk_configurations.items():
+        print(f"   {config}: {count} node(s)")
+    
+    # Node status distribution
+    print(f"\n📈 Node Status Distribution:")
+    for status, count in status_counts.items():
+        if count > 0:
+            print(f"   {status.replace('_', ' ').title()}: {count}")
+    
+    # Knowledge graph quality indicators
+    print(f"\n🧠 Knowledge Graph Quality Indicators:")
+    
+    if total_entities > 0 and total_relationships > 0:
+        graph_connectivity = total_relationships / total_entities
+        if graph_connectivity > 1.5:
+            print("   🟢 High connectivity: Rich relationship network")
+        elif graph_connectivity > 0.8:
+            print("   🟡 Medium connectivity: Moderate relationship network")
+        else:
+            print("   🔴 Low connectivity: Sparse relationship network")
+    
+    if total_chunks > 0 and total_entities > 0:
+        knowledge_coverage = total_entities / total_chunks
+        if knowledge_coverage > 3.0:
+            print("   🟢 Excellent knowledge extraction: High entity density")
+        elif knowledge_coverage > 1.5:
+            print("   🟡 Good knowledge extraction: Moderate entity density")
+        else:
+            print("   🔴 Limited knowledge extraction: Low entity density")
+
+# Usage
+try:
+    graph_rag_nodes = list_graph_rag_nodes("my-rag-pipeline", "YOUR_API_TOKEN")
+    analyze_graph_rag_nodes(graph_rag_nodes)
+    
+except requests.exceptions.HTTPError as e:
+    print(f"Error: {e}")
+    if e.response.status_code == 404:
+        print("Flow not found or no graph RAG nodes in this flow")
+    elif e.response.status_code == 401:
+        print("Invalid API token or insufficient permissions")
+```
+
+### cURL
+
+```bash
+# Basic request
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/graph-rag \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+
+# With jq for formatted output
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/graph-rag \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | jq '.'
+
+# Extract graph RAG configuration summary
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/graph-rag \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq -r '.[] | "\(.data.name): Top K = \(.data.config.topK // "unlimited")"'
+
+# Count total entities across all nodes
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/graph-rag \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq '[.[] | .data.result.total_entities // 0] | add'
+
+# Calculate knowledge graph metrics
+curl -X GET https://my-rag-pipeline.flows.graphorlm.com/graph-rag \
+  -H "Authorization: Bearer YOUR_API_TOKEN" | \
+  jq '{
+    total_entities: ([.[] | .data.result.total_entities // 0] | add),
+    total_relationships: ([.[] | .data.result.total_relationships // 0] | add),
+    total_chunks: ([.[] | .data.result.total_chunks // 0] | add),
+    connectivity_ratio: (([.[] | .data.result.total_relationships // 0] | add) / ([.[] | .data.result.total_entities // 0] | add)),
+    entity_density: (([.[] | .data.result.total_entities // 0] | add) / ([.[] | .data.result.total_chunks // 0] | add))
+  }'
+```
+
+### PHP
+
+```php
+<?php
+function listGraphRagNodes($flowName, $apiToken) {
+    $url = "https://{$flowName}.flows.graphorlm.com/graph-rag";
+    
+    $options = [
+        'http' => [
+            'header' => "Authorization: Bearer {$apiToken}",
+            'method' => 'GET'
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    
+    if ($result === FALSE) {
+        throw new Exception('Failed to retrieve graph RAG nodes');
+    }
+    
+    return json_decode($result, true);
+}
+
+function analyzeGraphRagNodes($graphRagNodes) {
+    $statusCounts = [
+        'updated' => 0,
+        'processing' => 0, 
+        'waiting' => 0,
+        'error' => 0,
+        'needs_update' => 0
+    ];
+    
+    $totalProcessed = 0;
+    $totalChunks = 0;
+    $totalEntities = 0;
+    $totalRelationships = 0;
+    $totalRetrieved = 0;
+    $topKConfigurations = [];
+    
+    echo "🕸️  Graph RAG Nodes Analysis\n";
+    echo "Total graph RAG nodes: " . count($graphRagNodes) . "\n";
+    echo str_repeat("-", 50) . "\n";
+    
+    foreach ($graphRagNodes as $node) {
+        $data = $node['data'] ?? [];
+        $config = $data['config'] ?? [];
+        $result = $data['result'] ?? [];
+        
+        // Track Top K configurations
+        $topK = $config['topK'] ?? null;
+        $topKKey = $topK === null ? 'unlimited' : (string)$topK;
+        $topKConfigurations[$topKKey] = ($topKConfigurations[$topKKey] ?? 0) + 1;
+        
+        echo "\n🔗 Node: " . ($data['name'] ?? 'Unnamed') . " ({$node['id']})\n";
+        echo "   Top K Configuration: " . ($topK !== null ? $topK : 'unlimited') . "\n";
+        
+        if (!empty($result)) {
+            // Track node status and display
+            if ($result['processing'] ?? false) {
+                $statusCounts['processing']++;
+                echo "   🔄 Status: Processing\n";
+            } elseif ($result['waiting'] ?? false) {
+                $statusCounts['waiting']++;
+                echo "   ⏳ Status: Waiting\n";
+            } elseif ($result['has_error'] ?? false) {
+                $statusCounts['error']++;
+                echo "   ❌ Status: Error\n";
+            } elseif ($result['updated'] ?? false) {
+                $statusCounts['updated']++;
+                echo "   ✅ Status: Updated\n";
+            } else {
+                $statusCounts['needs_update']++;
+                echo "   ⚠️  Status: Needs Update\n";
+            }
+            
+            // Aggregate metrics
+            $processed = $result['total_processed'] ?? 0;
+            $chunks = $result['total_chunks'] ?? 0;
+            $entities = $result['total_entities'] ?? 0;
+            $relationships = $result['total_relationships'] ?? 0;
+            $retrieved = $result['total_retrieved'] ?? 0;
+            
+            $totalProcessed += $processed;
+            $totalChunks += $chunks;
+            $totalEntities += $entities;
+            $totalRelationships += $relationships;
+            $totalRetrieved += $retrieved;
+            
+            // Display node-specific metrics
+            if ($processed > 0) {
+                echo "   📄 Documents processed: " . number_format($processed) . "\n";
+            }
+            if ($chunks > 0) {
+                echo "   🧩 Chunks generated: " . number_format($chunks) . "\n";
+            }
+            if ($entities > 0) {
+                echo "   🏷️  Entities extracted: " . number_format($entities) . "\n";
+            }
+            if ($relationships > 0) {
+                echo "   🔗 Relationships found: " . number_format($relationships) . "\n";
+            }
+            if ($retrieved > 0) {
+                echo "   📋 Documents retrieved: " . number_format($retrieved) . "\n";
+            }
+            
+            // Calculate node-specific ratios
+            if ($chunks > 0 && $entities > 0) {
+                $entityDensity = $entities / $chunks;
+                echo "   📊 Entity density: " . number_format($entityDensity, 2) . " entities/chunk\n";
+            }
+            
+            if ($entities > 0 && $relationships > 0) {
+                $relationshipRatio = $relationships / $entities;
+                echo "   🔄 Relationship ratio: " . number_format($relationshipRatio, 2) . " relationships/entity\n";
+            }
+            
+            if ($result['updatedMetrics'] ?? false) {
+                echo "   📈 Metrics: Available\n";
+            } else {
+                echo "   📈 Metrics: Not computed\n";
+            }
+        }
+    }
+    
+    // Summary section
+    echo "\n📊 Knowledge Graph Summary:\n";
+    echo "   Total documents processed: " . number_format($totalProcessed) . "\n";
+    echo "   Total chunks generated: " . number_format($totalChunks) . "\n";
+    echo "   Total entities extracted: " . number_format($totalEntities) . "\n";
+    echo "   Total relationships found: " . number_format($totalRelationships) . "\n";
+    echo "   Total documents retrieved: " . number_format($totalRetrieved) . "\n";
+    
+    // Calculate overall ratios
+    if ($totalChunks > 0) {
+        $avgEntityDensity = $totalEntities / $totalChunks;
+        echo "   Average entity density: " . number_format($avgEntityDensity, 2) . " entities/chunk\n";
+        
+        if ($totalProcessed > 0) {
+            $processingEfficiency = $totalChunks / $totalProcessed;
+            echo "   Processing efficiency: " . number_format($processingEfficiency, 2) . " chunks/document\n";
+        }
+    }
+    
+    if ($totalEntities > 0) {
+        $avgRelationshipRatio = $totalRelationships / $totalEntities;
+        echo "   Average relationship ratio: " . number_format($avgRelationshipRatio, 2) . " relationships/entity\n";
+        
+        if ($totalRetrieved > 0) {
+            $entityRetrievalRate = ($totalRetrieved / $totalEntities) * 100;
+            echo "   Entity-based retrieval rate: " . number_format($entityRetrievalRate, 1) . "%\n";
+        }
+    }
+    
+    // Top K configuration distribution
+    echo "\n🎯 Top K Configuration Distribution:\n";
+    foreach ($topKConfigurations as $config => $count) {
+        echo "   {$config}: {$count} node(s)\n";
+    }
+    
+    // Node status distribution
+    echo "\n📈 Node Status Distribution:\n";
+    foreach ($statusCounts as $status => $count) {
+        if ($count > 0) {
+            $statusLabel = ucwords(str_replace('_', ' ', $status));
+            echo "   {$statusLabel}: {$count}\n";
+        }
+    }
+    
+    // Knowledge graph quality indicators
+    echo "\n🧠 Knowledge Graph Quality Indicators:\n";
+    
+    if ($totalEntities > 0 && $totalRelationships > 0) {
+        $graphConnectivity = $totalRelationships / $totalEntities;
+        if ($graphConnectivity > 1.5) {
+            echo "   🟢 High connectivity: Rich relationship network\n";
+        } elseif ($graphConnectivity > 0.8) {
+            echo "   🟡 Medium connectivity: Moderate relationship network\n";
+        } else {
+            echo "   🔴 Low connectivity: Sparse relationship network\n";
+        }
+    }
+    
+    if ($totalChunks > 0 && $totalEntities > 0) {
+        $knowledgeCoverage = $totalEntities / $totalChunks;
+        if ($knowledgeCoverage > 3.0) {
+            echo "   🟢 Excellent knowledge extraction: High entity density\n";
+        } elseif ($knowledgeCoverage > 1.5) {
+            echo "   🟡 Good knowledge extraction: Moderate entity density\n";
+        } else {
+            echo "   🔴 Limited knowledge extraction: Low entity density\n";
+        }
+    }
+}
+
+// Usage
+try {
+    $graphRagNodes = listGraphRagNodes('my-rag-pipeline', 'YOUR_API_TOKEN');
+    analyzeGraphRagNodes($graphRagNodes);
+    
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+}
+?>
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Description | Example Response |
+|-------------|-------------|------------------|
+| 401 | Unauthorized - Invalid or missing API token | `{"detail": "Invalid authentication credentials"}` |
+| 404 | Not Found - Flow not found | `{"detail": "Flow not found"}` |
+| 500 | Internal Server Error - Server error | `{"detail": "Failed to retrieve graph RAG nodes"}` |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+### Example Error Responses
+
+#### Invalid API Token
+```json
+{
+  "detail": "Invalid authentication credentials"
+}
+```
+
+#### Flow Not Found
+```json
+{
+  "detail": "Flow not found"
+}
+```
+
+#### Server Error
+```json
+{
+  "detail": "Failed to retrieve graph RAG nodes"
+}
+```
+
+## Use Cases
+
+### Graph RAG Node Management
+
+Use this endpoint to:
+
+- **Knowledge Graph Monitoring**: Track entity extraction and relationship building progress
+- **Performance Analysis**: Monitor graph RAG processing efficiency and resource usage
+- **Quality Assessment**: Evaluate knowledge graph coverage and connectivity metrics
+- **Configuration Review**: Analyze Top K settings and their impact on retrieval quality
+- **Debugging**: Identify issues with graph construction or entity extraction processes
+
+### Integration Examples
+
+#### Graph RAG Performance Monitor
+
+```javascript
+class GraphRagPerformanceMonitor {
+  constructor(flowName, apiToken) {
+    this.flowName = flowName;
+    this.apiToken = apiToken;
+  }
+
+  async getKnowledgeGraphMetrics() {
+    try {
+      const nodes = await this.listGraphRagNodes();
+      const metrics = {
+        totalNodes: nodes.length,
+        activeNodes: 0,
+        processingNodes: 0,
+        errorNodes: 0,
+        knowledgeGraph: {
+          totalDocuments: 0,
+          totalChunks: 0,
+          totalEntities: 0,
+          totalRelationships: 0,
+          totalRetrieved: 0
+        },
+        qualityIndicators: {
+          avgEntityDensity: 0,
+          avgRelationshipRatio: 0,
+          graphConnectivity: 'unknown',
+          knowledgeCoverage: 'unknown'
+        },
+        topKDistribution: {},
+        performance: []
+      };
+
+      for (const node of nodes) {
+        const config = node.data.config || {};
+        const result = node.data.result || {};
+        
+        // Track Top K distribution
+        const topK = config.topK === null ? 'unlimited' : config.topK;
+        metrics.topKDistribution[topK] = (metrics.topKDistribution[topK] || 0) + 1;
+        
+        // Track node status
+        if (result.processing) {
+          metrics.processingNodes++;
+        } else if (result.has_error) {
+          metrics.errorNodes++;
+        } else if (result.updated) {
+          metrics.activeNodes++;
+        }
+        
+        // Aggregate knowledge graph metrics
+        metrics.knowledgeGraph.totalDocuments += result.total_processed || 0;
+        metrics.knowledgeGraph.totalChunks += result.total_chunks || 0;
+        metrics.knowledgeGraph.totalEntities += result.total_entities || 0;
+        metrics.knowledgeGraph.totalRelationships += result.total_relationships || 0;
+        metrics.knowledgeGraph.totalRetrieved += result.total_retrieved || 0;
+        
+        // Individual node performance
+        metrics.performance.push({
+          nodeId: node.id,
+          nodeName: node.data.name,
+          topK: config.topK,
+          documentsProcessed: result.total_processed || 0,
+          chunksGenerated: result.total_chunks || 0,
+          entitiesExtracted: result.total_entities || 0,
+          relationshipsFound: result.total_relationships || 0,
+          documentsRetrieved: result.total_retrieved || 0,
+          entityDensity: result.total_chunks > 0 ? 
+            (result.total_entities || 0) / result.total_chunks : 0,
+          relationshipRatio: result.total_entities > 0 ? 
+            (result.total_relationships || 0) / result.total_entities : 0,
+          status: result.processing ? 'Processing' :
+                 result.has_error ? 'Error' :
+                 result.updated ? 'Active' : 'Inactive'
+        });
+      }
+
+      // Calculate quality indicators
+      const kg = metrics.knowledgeGraph;
+      if (kg.totalChunks > 0) {
+        metrics.qualityIndicators.avgEntityDensity = kg.totalEntities / kg.totalChunks;
+      }
+      
+      if (kg.totalEntities > 0) {
+        metrics.qualityIndicators.avgRelationshipRatio = kg.totalRelationships / kg.totalEntities;
+        
+        // Determine graph connectivity
+        const connectivity = kg.totalRelationships / kg.totalEntities;
+        if (connectivity > 1.5) {
+          metrics.qualityIndicators.graphConnectivity = 'high';
+        } else if (connectivity > 0.8) {
+          metrics.qualityIndicators.graphConnectivity = 'medium';
+        } else {
+          metrics.qualityIndicators.graphConnectivity = 'low';
+        }
+      }
+      
+      if (kg.totalChunks > 0 && kg.totalEntities > 0) {
+        const coverage = kg.totalEntities / kg.totalChunks;
+        if (coverage > 3.0) {
+          metrics.qualityIndicators.knowledgeCoverage = 'excellent';
+        } else if (coverage > 1.5) {
+          metrics.qualityIndicators.knowledgeCoverage = 'good';
+        } else {
+          metrics.qualityIndicators.knowledgeCoverage = 'limited';
+        }
+      }
+
+      return metrics;
+    } catch (error) {
+      throw new Error(`Knowledge graph metrics failed: ${error.message}`);
+    }
+  }
+
+  async listGraphRagNodes() {
+    const response = await fetch(`https://${this.flowName}.flows.graphorlm.com/graph-rag`, {
+      headers: { 'Authorization': `Bearer ${this.apiToken}` }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  async generateKnowledgeGraphReport() {
+    const metrics = await this.getKnowledgeGraphMetrics();
+    
+    console.log('🕸️  Knowledge Graph Analysis Report');
+    console.log('====================================');
+    console.log(`Total Nodes: ${metrics.totalNodes}`);
+    console.log(`Active Nodes: ${metrics.activeNodes}`);
+    console.log(`Processing Nodes: ${metrics.processingNodes}`);
+    console.log(`Error Nodes: ${metrics.errorNodes}`);
+    
+    const kg = metrics.knowledgeGraph;
+    console.log('\n📊 Knowledge Graph Metrics:');
+    console.log(`Documents Processed: ${kg.totalDocuments.toLocaleString()}`);
+    console.log(`Chunks Generated: ${kg.totalChunks.toLocaleString()}`);
+    console.log(`Entities Extracted: ${kg.totalEntities.toLocaleString()}`);
+    console.log(`Relationships Found: ${kg.totalRelationships.toLocaleString()}`);
+    console.log(`Documents Retrieved: ${kg.totalRetrieved.toLocaleString()}`);
+    
+    console.log('\n🎯 Quality Indicators:');
+    console.log(`Entity Density: ${metrics.qualityIndicators.avgEntityDensity.toFixed(2)} entities/chunk`);
+    console.log(`Relationship Ratio: ${metrics.qualityIndicators.avgRelationshipRatio.toFixed(2)} relationships/entity`);
+    console.log(`Graph Connectivity: ${metrics.qualityIndicators.graphConnectivity}`);
+    console.log(`Knowledge Coverage: ${metrics.qualityIndicators.knowledgeCoverage}`);
+    
+    console.log('\n🔧 Configuration Distribution:');
+    for (const [topK, count] of Object.entries(metrics.topKDistribution)) {
+      console.log(`  Top K ${topK}: ${count} node(s)`);
+    }
+    
+    console.log('\n📈 Node Performance:');
+    metrics.performance.forEach(node => {
+      console.log(`  ${node.nodeName} (${node.nodeId}):`);
+      console.log(`    Status: ${node.status}, Top K: ${node.topK || 'unlimited'}`);
+      console.log(`    Entities: ${node.entitiesExtracted.toLocaleString()}, Relationships: ${node.relationshipsFound.toLocaleString()}`);
+      console.log(`    Entity Density: ${node.entityDensity.toFixed(2)}, Relationship Ratio: ${node.relationshipRatio.toFixed(2)}`);
+    });
+
+    return metrics;
+  }
+}
+
+// Usage
+const monitor = new GraphRagPerformanceMonitor('my-rag-pipeline', 'YOUR_API_TOKEN');
+monitor.generateKnowledgeGraphReport().catch(console.error);
+```
+
+#### Knowledge Graph Quality Validator
+
+```python
+import requests
+from typing import List, Dict, Any, Optional
+
+class KnowledgeGraphQualityValidator:
+    def __init__(self, flow_name: str, api_token: str):
+        self.flow_name = flow_name
+        self.api_token = api_token
+        self.base_url = f"https://{flow_name}.flows.graphorlm.com"
+        self.headers = {"Authorization": f"Bearer {api_token}"}
+    
+    def get_graph_rag_nodes(self) -> List[Dict[str, Any]]:
+        """Retrieve all graph RAG nodes from the flow"""
+        response = requests.get(f"{self.base_url}/graph-rag", headers=self.headers)
+        response.raise_for_status()
+        return response.json()
+    
+    def validate_knowledge_graph_quality(self) -> Dict[str, Any]:
+        """Validate knowledge graph quality and provide recommendations"""
+        nodes = self.get_graph_rag_nodes()
+        
+        validation_report = {
+            "summary": {
+                "total_nodes": len(nodes),
+                "healthy_nodes": 0,
+                "nodes_with_issues": 0,
+                "recommendations_count": 0
+            },
+            "quality_metrics": {
+                "entity_density": {"excellent": 0, "good": 0, "poor": 0},
+                "graph_connectivity": {"high": 0, "medium": 0, "low": 0},
+                "processing_efficiency": {"optimal": 0, "suboptimal": 0}
+            },
+            "nodes": [],
+            "recommendations": []
+        }
+        
+        for node in nodes:
+            node_info = {
+                "id": node["id"],
+                "name": node["data"]["name"],
+                "config": node["data"]["config"],
+                "result": node["data"].get("result", {}),
+                "quality_score": 0,
+                "issues": [],
+                "strengths": []
+            }
+            
+            config = node_info["config"]
+            result = node_info["result"]
+            
+            # Validate Top K configuration
+            top_k = config.get("topK")
+            if top_k is None:
+                node_info["issues"].append("Unlimited Top K may cause resource strain")
+            elif top_k > 50:
+                node_info["issues"].append("Very high Top K may affect performance")
+            elif top_k < 5:
+                node_info["issues"].append("Low Top K may limit knowledge coverage")
+            else:
+                node_info["strengths"].append("Well-configured Top K setting")
+                node_info["quality_score"] += 20
+            
+            # Validate processing status
+            if result.get("has_error"):
+                node_info["issues"].append("Node has processing errors")
+            elif result.get("processing"):
+                node_info["issues"].append("Node is currently processing")
+            elif result.get("updated"):
+                node_info["strengths"].append("Node is up to date")
+                node_info["quality_score"] += 20
+            
+            # Validate knowledge graph metrics
+            entities = result.get("total_entities", 0)
+            relationships = result.get("total_relationships", 0)
+            chunks = result.get("total_chunks", 0)
+            
+            # Entity density analysis
+            if chunks > 0 and entities > 0:
+                entity_density = entities / chunks
+                if entity_density > 3.0:
+                    validation_report["quality_metrics"]["entity_density"]["excellent"] += 1
+                    node_info["strengths"].append(f"Excellent entity density: {entity_density:.2f}")
+                    node_info["quality_score"] += 30
+                elif entity_density > 1.5:
+                    validation_report["quality_metrics"]["entity_density"]["good"] += 1
+                    node_info["strengths"].append(f"Good entity density: {entity_density:.2f}")
+                    node_info["quality_score"] += 15
+                else:
+                    validation_report["quality_metrics"]["entity_density"]["poor"] += 1
+                    node_info["issues"].append(f"Low entity density: {entity_density:.2f}")
+            
+            # Graph connectivity analysis
+            if entities > 0 and relationships > 0:
+                connectivity = relationships / entities
+                if connectivity > 1.5:
+                    validation_report["quality_metrics"]["graph_connectivity"]["high"] += 1
+                    node_info["strengths"].append(f"High graph connectivity: {connectivity:.2f}")
+                    node_info["quality_score"] += 30
+                elif connectivity > 0.8:
+                    validation_report["quality_metrics"]["graph_connectivity"]["medium"] += 1
+                    node_info["strengths"].append(f"Medium graph connectivity: {connectivity:.2f}")
+                    node_info["quality_score"] += 15
+                else:
+                    validation_report["quality_metrics"]["graph_connectivity"]["low"] += 1
+                    node_info["issues"].append(f"Low graph connectivity: {connectivity:.2f}")
+            
+            # Processing efficiency analysis
+            processed = result.get("total_processed", 0)
+            if processed > 0 and chunks > 0:
+                efficiency = chunks / processed
+                if efficiency > 8.0:
+                    validation_report["quality_metrics"]["processing_efficiency"]["optimal"] += 1
+                    node_info["strengths"].append(f"Optimal processing efficiency: {efficiency:.2f}")
+                    node_info["quality_score"] += 20
+                else:
+                    validation_report["quality_metrics"]["processing_efficiency"]["suboptimal"] += 1
+                    if efficiency < 3.0:
+                        node_info["issues"].append(f"Low processing efficiency: {efficiency:.2f}")
+            
+            # Determine overall node health
+            if len(node_info["issues"]) == 0:
+                validation_report["summary"]["healthy_nodes"] += 1
+            else:
+                validation_report["summary"]["nodes_with_issues"] += 1
+            
+            validation_report["nodes"].append(node_info)
+        
+        # Generate global recommendations
+        validation_report["recommendations"] = self._generate_global_recommendations(validation_report)
+        validation_report["summary"]["recommendations_count"] = len(validation_report["recommendations"])
+        
+        return validation_report
+    
+    def _generate_global_recommendations(self, report: Dict[str, Any]) -> List[str]:
+        """Generate system-wide recommendations based on validation results"""
+        recommendations = []
+        
+        # Entity density recommendations
+        entity_metrics = report["quality_metrics"]["entity_density"]
+        if entity_metrics["poor"] > entity_metrics["excellent"]:
+            recommendations.append(
+                "Consider optimizing entity extraction: Many nodes show low entity density"
+            )
+        
+        # Graph connectivity recommendations
+        connectivity_metrics = report["quality_metrics"]["graph_connectivity"]
+        if connectivity_metrics["low"] > connectivity_metrics["high"]:
+            recommendations.append(
+                "Improve relationship extraction: Graph connectivity is low across multiple nodes"
+            )
+        
+        # Processing efficiency recommendations
+        efficiency_metrics = report["quality_metrics"]["processing_efficiency"]
+        if efficiency_metrics["suboptimal"] > efficiency_metrics["optimal"]:
+            recommendations.append(
+                "Review document preprocessing: Processing efficiency could be improved"
+            )
+        
+        # Node health recommendations
+        if report["summary"]["nodes_with_issues"] > report["summary"]["healthy_nodes"]:
+            recommendations.append(
+                "Address node issues: More than half of the nodes have quality concerns"
+            )
+        
+        return recommendations
+    
+    def print_validation_report(self, report: Dict[str, Any]):
+        """Print formatted validation report"""
+        summary = report["summary"]
+        
+        print("🔍 Knowledge Graph Quality Validation Report")
+        print("=" * 55)
+        print(f"Flow: {self.flow_name}")
+        print(f"Total Nodes: {summary['total_nodes']}")
+        print(f"Healthy Nodes: {summary['healthy_nodes']}")
+        print(f"Nodes with Issues: {summary['nodes_with_issues']}")
+        print(f"Total Recommendations: {summary['recommendations_count']}")
+        
+        # Quality metrics overview
+        print(f"\n📊 Quality Metrics Overview:")
+        entity_density = report["quality_metrics"]["entity_density"]
+        print(f"   Entity Density - Excellent: {entity_density['excellent']}, Good: {entity_density['good']}, Poor: {entity_density['poor']}")
+        
+        connectivity = report["quality_metrics"]["graph_connectivity"]
+        print(f"   Graph Connectivity - High: {connectivity['high']}, Medium: {connectivity['medium']}, Low: {connectivity['low']}")
+        
+        efficiency = report["quality_metrics"]["processing_efficiency"]
+        print(f"   Processing Efficiency - Optimal: {efficiency['optimal']}, Suboptimal: {efficiency['suboptimal']}")
+        
+        # Node details
+        print(f"\n📋 Node Quality Assessment:")
+        print("-" * 30)
+        for node in report["nodes"]:
+            quality_icon = "🟢" if node["quality_score"] >= 60 else "🟡" if node["quality_score"] >= 30 else "🔴"
+            print(f"\n{quality_icon} {node['name']} ({node['id']})")
+            print(f"   Quality Score: {node['quality_score']}/100")
+            
+            if node["strengths"]:
+                print("   ✅ Strengths:")
+                for strength in node["strengths"]:
+                    print(f"      • {strength}")
+            
+            if node["issues"]:
+                print("   ⚠️  Issues:")
+                for issue in node["issues"]:
+                    print(f"      • {issue}")
+        
+        # Global recommendations
+        if report["recommendations"]:
+            print(f"\n💡 System-wide Recommendations:")
+            print("-" * 35)
+            for i, rec in enumerate(report["recommendations"], 1):
+                print(f"{i}. {rec}")
+
+# Usage
+validator = KnowledgeGraphQualityValidator("my-rag-pipeline", "YOUR_API_TOKEN")
+try:
+    report = validator.validate_knowledge_graph_quality()
+    validator.print_validation_report(report)
+except Exception as e:
+    print(f"Validation failed: {e}")
+```
+
+## Best Practices
+
+### Knowledge Graph Management
+
+- **Entity Quality**: Monitor entity extraction quality and density metrics regularly
+- **Relationship Mapping**: Ensure relationships between entities are meaningful and accurate
+- **Graph Connectivity**: Maintain optimal connectivity ratios for effective knowledge retrieval
+- **Configuration Tuning**: Adjust Top K values based on knowledge coverage requirements
+
+### Performance Optimization
+
+- **Resource Monitoring**: Track processing resource usage across different configurations
+- **Batch Processing**: Optimize entity extraction batch sizes for performance
+- **Incremental Updates**: Implement incremental graph updates to reduce processing overhead
+- **Quality vs Speed**: Balance graph extraction quality with processing speed requirements
+
+### Quality Assurance
+
+- **Entity Validation**: Regularly validate extracted entities for accuracy and relevance
+- **Relationship Quality**: Monitor relationship extraction quality and semantic accuracy
+- **Knowledge Coverage**: Ensure comprehensive knowledge extraction from source documents
+- **Retrieval Effectiveness**: Track how well the knowledge graph improves retrieval results
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="exclamation-triangle" title="Flow Not Found Error">
+    **Solution**: Verify that:
+    - The flow name in the URL is correct and matches exactly
+    - The flow exists in your project
+    - Your API token has access to the correct project
+    - The flow has been created and saved properly
+  </Accordion>
+  
+  <Accordion icon="list" title="Empty Graph RAG Nodes Array">
+    **Solution**: If no graph RAG nodes are returned:
+    - Verify the flow contains graph RAG components
+    - Check that graph RAG nodes have been added to the flow
+    - Ensure the flow has been saved after adding graph RAG nodes
+    - Confirm you're checking the correct flow
+  </Accordion>
+  
+  <Accordion icon="brain" title="Low Entity Extraction Quality">
+    **Solution**: If graph RAG nodes show poor entity density:
+    - Review source document quality and structure
+    - Check if documents contain sufficient entity-rich content
+    - Consider adjusting NLP extraction parameters
+    - Validate that entity types align with your domain
+  </Accordion>
+  
+  <Accordion icon="network-wired" title="Poor Graph Connectivity">
+    **Solution**: If relationship ratios are low:
+    - Review relationship extraction configuration
+    - Ensure documents contain relational content
+    - Check if entity types support meaningful relationships
+    - Consider expanding allowed relationship types
+  </Accordion>
+  
+  <Accordion icon="clock" title="Processing Performance Issues">
+    **Solution**: If graph RAG processing is slow:
+    - Monitor resource usage during entity extraction
+    - Consider reducing batch sizes for NLP processing
+    - Review Top K configurations for optimization
+    - Check for bottlenecks in graph storage operations
+  </Accordion>
+  
+  <Accordion icon="wifi" title="Connection Issues">
+    **Solution**: For connectivity problems:
+    - Check your internet connection
+    - Verify the flow URL is accessible
+    - Ensure your firewall allows HTTPS traffic to *.flows.graphorlm.com
+    - Try accessing the endpoint from a different network
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After retrieving graph RAG node information, you might want to:
+
+<CardGroup cols={2}>
+  <Card
+    title="Update Graph RAG Configuration"
+    icon="sliders"
+    href="/api-reference/flows/graph-rag/update"
+  >
+    Modify graph RAG node settings like Top K and processing parameters
+  </Card>
+  <Card
+    title="List Dataset Nodes"
+    icon="database"
+    href="/api-reference/flows/datasets/list"
+  >
+    View dataset nodes that provide input to graph RAG nodes
+  </Card>
+  <Card
+    title="Run Flow"
+    icon="play"
+    href="/api-reference/flows/run"
+  >
+    Execute your flow with the configured graph RAG nodes
+  </Card>
+  <Card
+    title="Flow Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
+  >
+    Learn about all available flow management endpoints
+  </Card>
+</CardGroup>
