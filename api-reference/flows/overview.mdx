@@ -3,7 +3,7 @@ title: 'Flows API Overview'
 description: 'Comprehensive guide to managing flows and datasets via the GraphorLM REST API'
 ---
 
-The Flows API provides complete control over your RAG pipelines in GraphorLM. From deploying flows to managing dataset configurations, these endpoints enable you to build, deploy, and execute intelligent document processing workflows programmatically.
+The Flows API provides complete control over your RAG pipelines in GraphorLM. From deploying flows to managing comprehensive node configurations (datasets, chunking, retrieval, reranking, advanced RAG, and LLM nodes), these endpoints enable you to build, deploy, and execute sophisticated intelligent document processing workflows programmatically.
 
 ## What are Flows?
 
@@ -19,19 +19,23 @@ Flows are visual representations of your RAG pipelines that define how documents
 ### Core Flow Components
 
 - **Dataset Nodes**: Connect source documents to your pipeline
-- **Processing Nodes**: Handle chunking, embedding, and indexing
-- **LLM Nodes**: Integrate language models for generation
-- **Logic Nodes**: Add custom processing and routing logic
+- **Chunking Nodes**: Split documents into smaller text chunks with embeddings
+- **Retrieval Nodes**: Perform similarity search and document retrieval
+- **Reranking Nodes**: Use LLMs to reorder retrieved documents by relevance
+- **Smart RAG Nodes**: Intelligent RAG with combined chunking and retrieval
+- **Graph RAG Nodes**: Advanced RAG with knowledge graph construction
+- **RAPTOR RAG Nodes**: Hierarchical RAG with tree-based document clustering
+- **LLM Nodes**: Generate natural language responses with quality evaluation
 
 ## Available API Endpoints
 
-The Flows API is organized into two main categories:
+The Flows API is organized into several categories for comprehensive flow and node management:
 
 ### Flow Management
 
 Core endpoints for managing flow lifecycles:
 
-<CardGroup cols={2}>
+<CardGroup cols={3}>
   <Card
     title="List Flows"
     icon="list"
@@ -55,11 +59,11 @@ Core endpoints for managing flow lifecycles:
   </Card>
 </CardGroup>
 
-### Dataset Management
+### Dataset Nodes
 
-Specialized endpoints for managing dataset nodes within flows:
+Manage source document connections:
 
-<CardGroup cols={2}>
+<CardGroup cols={3}>
   <Card
     title="Dataset Overview"
     icon="database"
@@ -80,6 +84,97 @@ Specialized endpoints for managing dataset nodes within flows:
     href="/api-reference/flows/datasets/update"
   >
     Modify dataset node configurations and file selections
+  </Card>
+</CardGroup>
+
+### Processing Nodes
+
+Handle document processing and retrieval:
+
+<CardGroup cols={3}>
+  <Card
+    title="Chunking Nodes"
+    icon="scissors"
+    href="/api-reference/flows/chunking/overview"
+  >
+    Split documents into chunks with embedding generation
+  </Card>
+  <Card
+    title="Retrieval Nodes"
+    icon="magnifying-glass"
+    href="/api-reference/flows/retrieval/overview"
+  >
+    Perform similarity search and document retrieval operations
+  </Card>
+  <Card
+    title="Reranking Nodes"
+    icon="arrow-up-arrow-down"
+    href="/api-reference/flows/reranking/overview"
+  >
+    Use LLMs to reorder documents by relevance scores
+  </Card>
+</CardGroup>
+
+### Advanced RAG Nodes
+
+Sophisticated RAG implementations:
+
+<CardGroup cols={3}>
+  <Card
+    title="Smart RAG"
+    icon="brain"
+    href="/api-reference/flows/smart-rag/overview"
+  >
+    Intelligent RAG with combined chunking and retrieval
+  </Card>
+  <Card
+    title="Graph RAG"
+    icon="project-diagram"
+    href="/api-reference/flows/graph-rag/overview"
+  >
+    Advanced RAG with knowledge graph construction
+  </Card>
+  <Card
+    title="RAPTOR RAG"
+    icon="sitemap"
+    href="/api-reference/flows/raptor-rag/overview"
+  >
+    Hierarchical RAG with tree-based document clustering
+  </Card>
+</CardGroup>
+
+### LLM Nodes
+
+Response generation and prompt management:
+
+<CardGroup cols={3}>
+  <Card
+    title="LLM Overview"
+    icon="robot"
+    href="/api-reference/flows/llm/overview"
+  >
+    Comprehensive guide to LLM node management and optimization
+  </Card>
+  <Card
+    title="List LLM Nodes"
+    icon="list"
+    href="/api-reference/flows/llm/list"
+  >
+    Retrieve LLM nodes with configurations and performance metrics
+  </Card>
+  <Card
+    title="Update LLM Configuration"
+    icon="sliders"
+    href="/api-reference/flows/llm/update"
+  >
+    Modify LLM settings including model selection and parameters
+  </Card>
+  <Card
+    title="List Prompts"
+    icon="file-text"
+    href="/api-reference/flows/llm/list-prompts"
+  >
+    Access available prompt templates for LLM customization
   </Card>
 </CardGroup>
 
@@ -120,11 +215,13 @@ Here's a typical workflow for managing flows from creation to execution:
 ```mermaid
 graph TD
     A[Create Flow in UI] --> B[Configure Dataset Nodes]
-    B --> C[Deploy Flow]
-    C --> D[Execute Flow]
-    D --> E[Monitor Results]
-    E --> F[Update Configuration]
-    F --> C
+    B --> C[Configure Processing Nodes]
+    C --> D[Configure LLM Nodes]
+    D --> E[Deploy Flow]
+    E --> F[Execute Flow]
+    F --> G[Monitor Results]
+    G --> H[Update Configuration]
+    H --> E
 ```
 
 ### 1. Flow Creation and Configuration
@@ -754,18 +851,32 @@ Ready to start building with the Flows API? Here's your roadmap:
   </Card>
 </CardGroup>
 
-### Advanced Usage
+### Node Management
 
 <CardGroup cols={2}>
   <Card
-    title="Dataset Management"
-    icon="database"
-    href="/api-reference/flows/datasets/overview"
+    title="Processing Nodes"
+    icon="cogs"
+    href="/api-reference/flows/chunking/overview"
   >
-    Master dataset node configuration and management
+    Master chunking, retrieval, and reranking node configurations
   </Card>
   <Card
-    title="Run Flow"
+    title="Advanced RAG"
+    icon="brain"
+    href="/api-reference/flows/smart-rag/overview"
+  >
+    Explore Smart RAG, Graph RAG, and RAPTOR RAG capabilities
+  </Card>
+  <Card
+    title="LLM Integration"
+    icon="robot"
+    href="/api-reference/flows/llm/overview"
+  >
+    Configure LLM nodes for response generation and optimization
+  </Card>
+  <Card
+    title="Flow Execution"
     icon="play"
     href="/api-reference/flows/run"
   >
@@ -806,4 +917,4 @@ Ready to start building with the Flows API? Here's your roadmap:
   </Card>
 </CardGroup>
 
-The Flows API provides the foundation for building sophisticated, production-ready RAG applications. Whether you're automating content management, building intelligent search systems, or creating custom AI workflows, these endpoints give you the tools to succeed.
+The Flows API provides the foundation for building sophisticated, production-ready RAG applications. With comprehensive node management including dataset processing, chunking, retrieval, reranking, advanced RAG implementations (Smart RAG, Graph RAG, RAPTOR RAG), and LLM integration, you have everything needed to create intelligent document processing workflows that scale from simple search to complex AI-powered applications.
