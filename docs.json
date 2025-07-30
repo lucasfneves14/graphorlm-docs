@@ -54,7 +54,8 @@
               "api-reference/sources/upload",
               "api-reference/sources/process",
               "api-reference/sources/list",
-              "api-reference/sources/delete"
+              "api-reference/sources/delete",
+              "api-reference/sources/list-elements"
             ]
           },
           {

@@ -1,0 +1,918 @@
+---
+title: 'List Elements'
+description: 'Retrieve document elements and partitions from your sources via the GraphorLM REST API'
+---
+
+The List Elements endpoint allows you to retrieve detailed information about document elements (partitions) from processed sources in your GraphorLM project. This endpoint provides access to individual text blocks, images, tables, and other document components with their metadata, positioning, and content, enabling you to analyze document structure and extract specific information programmatically.
+
+## Endpoint Overview
+
+<CardGroup cols={2}>
+  <Card title="HTTP Method" icon="list">
+    **POST**
+  </Card>
+  <Card title="Endpoint URL" icon="link">
+    **https://sources.graphorlm.com/elements**
+  </Card>
+</CardGroup>
+
+## Authentication
+
+This endpoint requires authentication using an API token. You must include your API token as a Bearer token in the Authorization header.
+
+<Note>
+  Learn how to create and manage API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | ✅ Yes |
+| `Content-Type` | `application/json` | ✅ Yes |
+
+### Request Body
+
+The endpoint requires a JSON payload with the following structure:
+
+```json
+{
+  "file_name": "document.pdf",
+  "page": 1,
+  "page_size": 10,
+  "filter": {
+    "type": "Title",
+    "page_numbers": [1, 2, 3],
+    "elementsToRemove": ["PageNumber", "Footer"]
+  }
+}
+```
+
+### Request Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `file_name` | string | ✅ Yes | Name of the source file to retrieve elements from |
+| `page` | integer | ❌ No | Page number for pagination (starts from 1) |
+| `page_size` | integer | ❌ No | Number of elements to return per page |
+| `filter` | object | ❌ No | Filter criteria to refine element selection |
+
+### Filter Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `type` | string | Filter by specific element type (e.g., "Title", "NarrativeText", "Table") |
+| `page_numbers` | array[integer] | Filter elements from specific page numbers |
+| `elementsToRemove` | array[string] | Exclude specific element types from results |
+
+## Response Format
+
+### Success Response (200 OK)
+
+The endpoint returns a paginated response containing document elements:
+
+```json
+{
+  "items": [
+    {
+      "id": null,
+      "metadata": {
+        "coordinates": {
+          "points": [
+            [211.488, 148.4256186],
+            [211.488, 165.64101860000005],
+            [399.89333760000005, 165.64101860000005],
+            [399.89333760000005, 148.4256186]
+          ],
+          "system": "PixelSpace",
+          "layout_width": 612.0,
+          "layout_height": 792.0
+        },
+        "file_directory": "/tmp",
+        "filename": "attention.pdf",
+        "languages": ["eng", "por"],
+        "last_modified": "2025-07-28T13:25:26",
+        "page_number": 1,
+        "filetype": "application/pdf",
+        "text_as_html": "<h2>Attention Is All You Need</h2>",
+        "id": "ba479967-85bd-43f9-abf9-c3fbfc2775ce",
+        "position": 5,
+        "element_type": "Title",
+        "element_id": "0ee55f099828817da5485796b339aeab",
+        "bounding_box": {
+          "height": 17.215400000000045,
+          "left": 211.488,
+          "top": 148.4256186,
+          "width": 188.40533760000005
+        },
+        "page_layout": {
+          "width": 612.0,
+          "height": 792.0
+        }
+      },
+      "page_content": "Attention Is All You Need",
+      "type": "Document"
+    }
+  ],
+  "total": 393,
+  "page": 1,
+  "page_size": 10,
+  "total_pages": 40
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `items` | array | Array of document elements in the current page |
+| `total` | integer | Total number of elements matching the filter |
+| `page` | integer | Current page number |
+| `page_size` | integer | Number of elements per page |
+| `total_pages` | integer | Total number of pages available |
+
+### Element Object Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string\|null | Element identifier (may be null) |
+| `page_content` | string | Text content of the element |
+| `type` | string | Always "Document" for this endpoint |
+| `metadata` | object | Rich metadata about the element |
+
+### Metadata Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `coordinates` | object | Pixel coordinates and layout information |
+| `filename` | string | Original filename of the source document |
+| `languages` | array[string] | Detected languages in the element |
+| `last_modified` | string | ISO timestamp of last modification |
+| `page_number` | integer | Page number where element appears |
+| `filetype` | string | MIME type of the source file |
+| `text_as_html` | string | HTML representation of the element |
+| `element_type` | string | Type classification of the element |
+| `element_id` | string | Unique identifier for the element |
+| `position` | integer | Sequential position within the document |
+| `bounding_box` | object | Rectangular bounds of the element |
+| `page_layout` | object | Overall page dimensions |
+
+## Element Types
+
+<AccordionGroup>
+  <Accordion icon="heading" title="Title">
+    **Description**: Headers, titles, and section headings
+    
+    **Common Uses**: Document structure analysis, content navigation
+  </Accordion>
+  
+  <Accordion icon="paragraph" title="NarrativeText">
+    **Description**: Regular paragraphs and body text
+    
+    **Common Uses**: Main content extraction, text analysis
+  </Accordion>
+  
+  <Accordion icon="list" title="ListItem">
+    **Description**: Bulleted or numbered list items
+    
+    **Common Uses**: Structured information extraction
+  </Accordion>
+  
+  <Accordion icon="table" title="Table">
+    **Description**: Tabular data and structured information
+    
+    **Common Uses**: Data extraction, structured analysis
+  </Accordion>
+  
+  <Accordion icon="image" title="Image">
+    **Description**: Images, figures, and visual elements
+    
+    **Common Uses**: Visual content analysis, figure extraction
+  </Accordion>
+  
+  <Accordion icon="code" title="CodeSnippet">
+    **Description**: Code blocks and technical snippets
+    
+    **Common Uses**: Technical documentation analysis
+  </Accordion>
+  
+  <Accordion icon="footer" title="Footer">
+    **Description**: Page footers and bottom-page content
+    
+    **Common Uses**: Metadata extraction, page numbering
+  </Accordion>
+  
+  <Accordion icon="text" title="UncategorizedText">
+    **Description**: Text that doesn't fit other categories
+    
+    **Common Uses**: Catch-all for miscellaneous content
+  </Accordion>
+</AccordionGroup>
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+const listElements = async (apiToken, fileName, options = {}) => {
+  const payload = {
+    file_name: fileName,
+    page: options.page || 1,
+    page_size: options.pageSize || 20,
+    filter: options.filter || {}
+  };
+
+  const response = await fetch('https://sources.graphorlm.com/elements', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (response.ok) {
+    const data = await response.json();
+    console.log(`Found ${data.total} elements (page ${data.page}/${data.total_pages})`);
+    return data;
+  } else {
+    const error = await response.text();
+    throw new Error(`Failed to list elements: ${response.status} ${error}`);
+  }
+};
+
+// Usage - Get all titles from first page
+listElements('grlm_your_api_token_here', 'document.pdf', {
+  page: 1,
+  pageSize: 10,
+  filter: { type: 'Title' }
+})
+.then(response => {
+  response.items.forEach(element => {
+    console.log(`${element.metadata.element_type}: ${element.page_content}`);
+  });
+})
+.catch(error => console.error('Error:', error));
+```
+
+### Python
+
+```python
+import requests
+
+def list_elements(api_token, file_name, page=1, page_size=20, filter_options=None):
+    url = "https://sources.graphorlm.com/elements"
+    
+    payload = {
+        "file_name": file_name,
+        "page": page,
+        "page_size": page_size,
+        "filter": filter_options or {}
+    }
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}",
+        "Content-Type": "application/json"
+    }
+    
+    response = requests.post(url, json=payload, headers=headers, timeout=30)
+    
+    if response.status_code == 200:
+        data = response.json()
+        print(f"Found {data['total']} elements (page {data['page']}/{data['total_pages']})")
+        return data
+    else:
+        response.raise_for_status()
+
+# Usage - Get tables from specific pages
+try:
+    elements = list_elements(
+        "grlm_your_api_token_here",
+        "document.pdf",
+        page=1,
+        page_size=50,
+        filter_options={
+            "type": "Table",
+            "page_numbers": [2, 3, 4]
+        }
+    )
+    
+    for element in elements['items']:
+        print(f"Page {element['metadata']['page_number']}: {element['page_content'][:100]}...")
+        
+except requests.exceptions.RequestException as e:
+    print(f"Error listing elements: {e}")
+```
+
+### cURL
+
+```bash
+curl -X POST https://sources.graphorlm.com/elements \
+  -H "Authorization: Bearer grlm_your_api_token_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "file_name": "document.pdf",
+    "page": 1,
+    "page_size": 10,
+    "filter": {
+      "type": "NarrativeText",
+      "page_numbers": [1, 2]
+    }
+  }'
+```
+
+### PHP
+
+```php
+<?php
+function listElements($apiToken, $fileName, $options = []) {
+    $url = "https://sources.graphorlm.com/elements";
+    
+    $payload = [
+        "file_name" => $fileName,
+        "page" => $options['page'] ?? 1,
+        "page_size" => $options['page_size'] ?? 20,
+        "filter" => $options['filter'] ?? (object)[]
+    ];
+    
+    $headers = [
+        "Authorization: Bearer " . $apiToken,
+        "Content-Type: application/json"
+    ];
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode === 200) {
+        return json_decode($response, true);
+    } else {
+        throw new Exception("Failed to list elements. HTTP code: " . $httpCode);
+    }
+}
+
+// Usage - Get all elements excluding footers
+try {
+    $elements = listElements("grlm_your_api_token_here", "document.pdf", [
+        'page' => 1,
+        'page_size' => 25,
+        'filter' => [
+            'elementsToRemove' => ['Footer', 'PageNumber']
+        ]
+    ]);
+    
+    echo "Found " . $elements['total'] . " elements\n";
+    
+    foreach ($elements['items'] as $element) {
+        echo $element['metadata']['element_type'] . ": " . 
+             substr($element['page_content'], 0, 50) . "...\n";
+    }
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+}
+?>
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Error Type | Description |
+|-------------|------------|-------------|
+| `400` | Bad Request | Invalid request payload or parameters |
+| `401` | Unauthorized | Invalid or missing API token |
+| `404` | Not Found | Specified file not found in project |
+| `500` | Internal Server Error | Server-side error processing request |
+
+### Error Response Format
+
+```json
+{
+  "detail": "File not found"
+}
+```
+
+### Error Examples
+
+<AccordionGroup>
+  <Accordion icon="exclamation-triangle" title="Invalid File Name (404)">
+    ```json
+    {
+      "detail": "File not found"
+    }
+    ```
+    
+    **Cause**: The specified file_name doesn't exist in your project
+    
+    **Solution**: Verify the file name and ensure the file has been uploaded and processed
+  </Accordion>
+  
+  <Accordion icon="key" title="Invalid API Token (401)">
+    ```json
+    {
+      "detail": "Invalid authentication credentials"
+    }
+    ```
+    
+    **Cause**: API token is invalid, expired, or malformed
+    
+    **Solution**: Verify your API token and ensure it hasn't been revoked
+  </Accordion>
+  
+  <Accordion icon="warning" title="Invalid Request (400)">
+    ```json
+    {
+      "detail": "Invalid input: page_size must be greater than 0"
+    }
+    ```
+    
+    **Cause**: Invalid pagination parameters or filter values
+    
+    **Solution**: Check that page and page_size are positive integers
+  </Accordion>
+  
+  <Accordion icon="server" title="Server Error (500)">
+    ```json
+    {
+      "detail": "Internal server error occurred while loading file elements"
+    }
+    ```
+    
+    **Cause**: Internal server error or database connection issue
+    
+    **Solution**: Retry the request or contact support if the problem persists
+  </Accordion>
+</AccordionGroup>
+
+## Response Analysis
+
+### Element Processing and Filtering
+
+```python
+def analyze_elements(elements_response):
+    """Analyze element distribution and content."""
+    items = elements_response['items']
+    
+    # Group by element type
+    type_counts = {}
+    total_text_length = 0
+    page_distribution = {}
+    
+    for element in items:
+        # Count by type
+        element_type = element['metadata']['element_type']
+        type_counts[element_type] = type_counts.get(element_type, 0) + 1
+        
+        # Calculate text metrics
+        total_text_length += len(element['page_content'])
+        
+        # Track page distribution
+        page_num = element['metadata']['page_number']
+        page_distribution[page_num] = page_distribution.get(page_num, 0) + 1
+    
+    return {
+        'element_types': type_counts,
+        'average_text_length': total_text_length / len(items) if items else 0,
+        'page_distribution': page_distribution,
+        'total_elements': len(items)
+    }
+
+# Usage
+elements = list_elements("grlm_your_token", "document.pdf", page_size=100)
+analysis = analyze_elements(elements)
+print(f"Analysis: {analysis}")
+```
+
+### Content Extraction
+
+```javascript
+const extractStructuredContent = (elementsResponse) => {
+  const items = elementsResponse.items;
+  
+  const structured = {
+    titles: [],
+    paragraphs: [],
+    tables: [],
+    images: [],
+    metadata: {
+      totalElements: items.length,
+      pages: new Set(),
+      languages: new Set()
+    }
+  };
+  
+  items.forEach(element => {
+    const type = element.metadata.element_type;
+    const content = element.page_content;
+    
+    // Collect metadata
+    structured.metadata.pages.add(element.metadata.page_number);
+    element.metadata.languages?.forEach(lang => 
+      structured.metadata.languages.add(lang)
+    );
+    
+    // Categorize content
+    switch (type) {
+      case 'Title':
+        structured.titles.push({
+          text: content,
+          page: element.metadata.page_number,
+          position: element.metadata.position
+        });
+        break;
+      case 'NarrativeText':
+        structured.paragraphs.push({
+          text: content,
+          page: element.metadata.page_number,
+          html: element.metadata.text_as_html
+        });
+        break;
+      case 'Table':
+        structured.tables.push({
+          content: content,
+          page: element.metadata.page_number,
+          bbox: element.metadata.bounding_box
+        });
+        break;
+      case 'Image':
+        structured.images.push({
+          page: element.metadata.page_number,
+          bbox: element.metadata.bounding_box,
+          description: content
+        });
+        break;
+    }
+  });
+  
+  // Convert Sets to Arrays for JSON serialization
+  structured.metadata.pages = Array.from(structured.metadata.pages).sort();
+  structured.metadata.languages = Array.from(structured.metadata.languages);
+  
+  return structured;
+};
+```
+
+## Integration Examples
+
+### Document Analyzer
+
+```python
+import requests
+from typing import List, Dict, Any
+
+class DocumentAnalyzer:
+    def __init__(self, api_token: str):
+        self.api_token = api_token
+        self.base_url = "https://sources.graphorlm.com"
+    
+    def get_document_structure(self, file_name: str) -> Dict[str, Any]:
+        """Get hierarchical document structure."""
+        # Get all titles first
+        titles_response = self._list_elements(
+            file_name, 
+            filter_options={"type": "Title"},
+            page_size=100
+        )
+        
+        # Get all content elements
+        content_response = self._list_elements(
+            file_name,
+            filter_options={"elementsToRemove": ["Footer", "PageNumber"]},
+            page_size=500
+        )
+        
+        return {
+            "document_outline": self._build_outline(titles_response['items']),
+            "content_summary": self._summarize_content(content_response['items']),
+            "total_elements": content_response['total'],
+            "pages": self._get_page_count(content_response['items'])
+        }
+    
+    def extract_tables(self, file_name: str) -> List[Dict]:
+        """Extract all tables from document."""
+        tables = []
+        page = 1
+        
+        while True:
+            response = self._list_elements(
+                file_name,
+                page=page,
+                page_size=50,
+                filter_options={"type": "Table"}
+            )
+            
+            tables.extend([
+                {
+                    "content": item['page_content'],
+                    "page": item['metadata']['page_number'],
+                    "position": item['metadata']['position'],
+                    "html": item['metadata']['text_as_html']
+                }
+                for item in response['items']
+            ])
+            
+            if page >= response['total_pages']:
+                break
+            page += 1
+        
+        return tables
+    
+    def _list_elements(self, file_name: str, page: int = 1, 
+                      page_size: int = 20, filter_options: Dict = None):
+        payload = {
+            "file_name": file_name,
+            "page": page,
+            "page_size": page_size,
+            "filter": filter_options or {}
+        }
+        
+        headers = {
+            "Authorization": f"Bearer {self.api_token}",
+            "Content-Type": "application/json"
+        }
+        
+        response = requests.post(
+            f"{self.base_url}/elements",
+            json=payload,
+            headers=headers,
+            timeout=30
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def _build_outline(self, titles: List[Dict]) -> List[Dict]:
+        return [
+            {
+                "title": item['page_content'],
+                "page": item['metadata']['page_number'],
+                "level": self._detect_heading_level(item['metadata']['text_as_html'])
+            }
+            for item in titles
+        ]
+    
+    def _detect_heading_level(self, html: str) -> int:
+        if '<h1>' in html: return 1
+        elif '<h2>' in html: return 2
+        elif '<h3>' in html: return 3
+        elif '<h4>' in html: return 4
+        else: return 5
+    
+    def _summarize_content(self, elements: List[Dict]) -> Dict:
+        type_counts = {}
+        total_chars = 0
+        
+        for element in elements:
+            element_type = element['metadata']['element_type']
+            type_counts[element_type] = type_counts.get(element_type, 0) + 1
+            total_chars += len(element['page_content'])
+        
+        return {
+            "element_distribution": type_counts,
+            "total_characters": total_chars,
+            "average_element_length": total_chars / len(elements) if elements else 0
+        }
+    
+    def _get_page_count(self, elements: List[Dict]) -> int:
+        return max(element['metadata']['page_number'] for element in elements) if elements else 0
+
+# Usage
+analyzer = DocumentAnalyzer("grlm_your_token")
+structure = analyzer.get_document_structure("research_paper.pdf")
+tables = analyzer.extract_tables("research_paper.pdf")
+
+print(f"Document has {structure['pages']} pages")
+print(f"Found {len(tables)} tables")
+```
+
+### Content Search System
+
+```javascript
+class ContentSearcher {
+  constructor(apiToken) {
+    this.apiToken = apiToken;
+    this.baseUrl = 'https://sources.graphorlm.com';
+  }
+  
+  async searchInDocument(fileName, query, options = {}) {
+    // Get all text elements
+    const allElements = await this.getAllElements(fileName, {
+      elementsToRemove: ['Image', 'PageNumber', 'Footer']
+    });
+    
+    // Search for query in content
+    const matches = allElements.filter(element => 
+      element.page_content.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    return {
+      query,
+      total_matches: matches.length,
+      matches: matches.map(match => ({
+        content: this.highlightMatch(match.page_content, query),
+        page: match.metadata.page_number,
+        type: match.metadata.element_type,
+        context: this.getContext(match, allElements, options.contextSize || 1)
+      }))
+    };
+  }
+  
+  async getAllElements(fileName, filter = {}) {
+    const allElements = [];
+    let page = 1;
+    let totalPages = 1;
+    
+    do {
+      const response = await this.listElements(fileName, {
+        page,
+        pageSize: 100,
+        filter
+      });
+      
+      allElements.push(...response.items);
+      totalPages = response.total_pages;
+      page++;
+    } while (page <= totalPages);
+    
+    return allElements;
+  }
+  
+  async listElements(fileName, options = {}) {
+    const payload = {
+      file_name: fileName,
+      page: options.page || 1,
+      page_size: options.pageSize || 20,
+      filter: options.filter || {}
+    };
+
+    const response = await fetch(`${this.baseUrl}/elements`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    }
+
+    return response.json();
+  }
+  
+  highlightMatch(text, query) {
+    const regex = new RegExp(`(${query})`, 'gi');
+    return text.replace(regex, '<mark>$1</mark>');
+  }
+  
+  getContext(element, allElements, contextSize) {
+    const currentIndex = allElements.findIndex(
+      el => el.metadata.element_id === element.metadata.element_id
+    );
+    
+    const start = Math.max(0, currentIndex - contextSize);
+    const end = Math.min(allElements.length, currentIndex + contextSize + 1);
+    
+    return allElements.slice(start, end).map(el => ({
+      content: el.page_content,
+      type: el.metadata.element_type,
+      isCurrent: el.metadata.element_id === element.metadata.element_id
+    }));
+  }
+}
+
+// Usage
+const searcher = new ContentSearcher('grlm_your_token');
+
+searcher.searchInDocument('research_paper.pdf', 'machine learning')
+  .then(results => {
+    console.log(`Found ${results.total_matches} matches for "${results.query}"`);
+    results.matches.forEach((match, index) => {
+      console.log(`Match ${index + 1} (Page ${match.page}):`);
+      console.log(match.content);
+      console.log('---');
+    });
+  })
+  .catch(error => console.error('Search error:', error));
+```
+
+## Best Practices
+
+### Performance Optimization
+
+- **Use appropriate page sizes**: Start with 20-50 elements per page for optimal performance
+- **Implement client-side caching**: Cache element data for repeated access patterns
+- **Filter server-side**: Use filter parameters to reduce data transfer and processing
+- **Batch processing**: Process multiple pages efficiently for large documents
+
+### Data Processing
+
+- **Element type awareness**: Different element types require different processing approaches
+- **Coordinate utilization**: Leverage bounding box data for spatial analysis and layout reconstruction
+- **HTML parsing**: Use `text_as_html` field for rich formatting and structure preservation
+- **Language handling**: Consider detected languages for multilingual document processing
+
+### Memory Management
+
+- **Stream large documents**: Process large files in chunks rather than loading all elements at once
+- **Clean unused data**: Remove unnecessary metadata fields when not needed
+- **Monitor response sizes**: Be aware of response size when requesting many elements
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="clock" title="Slow response times">
+    **Causes**: Large page sizes, complex filters, or server load
+    
+    **Solutions**:
+    - Reduce page_size to 25-50 elements
+    - Use specific filters to reduce result set
+    - Implement request timeouts (45+ seconds recommended)
+    - Consider processing in smaller batches
+  </Accordion>
+  
+  <Accordion icon="list" title="Empty results">
+    **Causes**: File not processed, incorrect file name, or overly restrictive filters
+    
+    **Solutions**:
+    - Verify file has been processed successfully
+    - Check file name matches exactly (case-sensitive)
+    - Remove or relax filter criteria
+    - Ensure file contains the expected element types
+  </Accordion>
+  
+  <Accordion icon="search" title="Missing expected elements">
+    **Causes**: Processing method limitations, file format issues, or filter conflicts
+    
+    **Solutions**:
+    - Try different partition methods during upload
+    - Check if elements are categorized under different types
+    - Remove elementsToRemove filter temporarily
+    - Verify page_numbers filter includes correct pages
+  </Accordion>
+  
+  <Accordion icon="coordinate" title="Incorrect coordinates">
+    **Causes**: PDF processing variations, DPI differences, or coordinate system misunderstanding
+    
+    **Solutions**:
+    - Understand PixelSpace coordinate system
+    - Check layout_width and layout_height for scaling
+    - Consider coordinate transformation for display purposes
+    - Use relative positioning when possible
+  </Accordion>
+  
+  <Accordion icon="memory" title="Memory issues with large documents">
+    **Causes**: Processing too many elements at once or inefficient data handling
+    
+    **Solutions**:
+    - Reduce page_size and process incrementally
+    - Filter out unnecessary element types
+    - Clear processed data from memory
+    - Use streaming processing patterns
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After successfully retrieving document elements:
+
+<CardGroup cols={2}>
+  <Card
+    title="Upload Source"
+    icon="arrow-up-from-bracket"
+    href="/api-reference/sources/upload"
+  >
+    Add new documents to analyze their structure and content
+  </Card>
+  <Card
+    title="Process Source"
+    icon="gears"
+    href="/api-reference/sources/process"
+  >
+    Reprocess documents with different methods for better element extraction
+  </Card>
+  <Card
+    title="List Sources"
+    icon="list"
+    href="/api-reference/sources/list"
+  >
+    View all available documents in your project
+  </Card>
+  <Card
+    title="Data Ingestion Guide"
+    icon="file-lines"
+    href="/guides/data-ingestion"
+  >
+    Learn about document processing and optimization strategies
+  </Card>
+</CardGroup>
