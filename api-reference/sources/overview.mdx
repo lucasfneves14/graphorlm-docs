@@ -18,7 +18,7 @@ All sources are processed through GraphorLM's advanced AI pipeline to extract te
 
 ## API Endpoints Overview
 
-The Sources API consists of four main endpoints that provide complete document lifecycle management:
+The Sources API consists of five main endpoints that provide complete document lifecycle management:
 
 <CardGroup cols={2}>
   <Card
@@ -49,6 +49,16 @@ The Sources API consists of four main endpoints that provide complete document l
     **GET** `https://sources.graphorlm.com`
     
     Retrieve information about all documents in your project
+  </Card>
+  
+  <Card
+    title="List Source Elements"
+    icon="file-text"
+    href="/api-reference/sources/list-elements"
+  >
+    **POST** `https://sources.graphorlm.com/elements`
+    
+    Retrieve detailed elements and partitions from processed documents
   </Card>
   
   <Card
