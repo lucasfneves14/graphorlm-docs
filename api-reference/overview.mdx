@@ -20,7 +20,7 @@ GraphorLM's REST API is organized around two main resource types that mirror the
 Handle document ingestion, processing, and lifecycle management.
 
 ### **Flows API** - Pipeline Management  
-Control RAG pipeline deployment, execution, and dataset configuration.
+Control RAG pipeline deployment, execution, and comprehensive node configuration (datasets, chunking, retrieval, reranking, advanced RAG, and LLM nodes).
 
 ## Available Endpoints
 
@@ -70,7 +70,7 @@ Manage your document library with full CRUD operations:
 
 ### Flow Management
 
-Control RAG pipelines from configuration to execution:
+Control RAG pipelines from configuration to execution with comprehensive node management:
 
 <CardGroup cols={2}>
   <Card
@@ -103,31 +103,38 @@ Control RAG pipelines from configuration to execution:
   </Card>
 </CardGroup>
 
-### Dataset Operations
+### Node Management
 
-Specialized endpoints for managing flow data sources:
+Specialized endpoints for managing all types of flow nodes:
 
 <CardGroup cols={2}>
   <Card
-    title="Dataset Overview"
+    title="Dataset Nodes"
     icon="database"
     href="/api-reference/flows/datasets/overview"
   >
-    Comprehensive guide to dataset node management
+    Manage source document connections and configurations
   </Card>
   <Card
-    title="List Dataset Nodes"
-    icon="list"
-    href="/api-reference/flows/datasets/list"
+    title="Processing Nodes"
+    icon="cogs"
+    href="/api-reference/flows/chunking/overview"
   >
-    Retrieve dataset configurations from flows
+    Configure chunking, retrieval, and reranking operations
   </Card>
   <Card
-    title="Update Dataset"
-    icon="pen-to-square"
-    href="/api-reference/flows/datasets/update"
+    title="Advanced RAG"
+    icon="brain"
+    href="/api-reference/flows/smart-rag/overview"
   >
-    Modify dataset file selections and configurations
+    Access Smart RAG, Graph RAG, and RAPTOR RAG capabilities
+  </Card>
+  <Card
+    title="LLM Nodes"
+    icon="robot"
+    href="/api-reference/flows/llm/overview"
+  >
+    Configure language models and prompt templates
   </Card>
 </CardGroup>
 
@@ -162,9 +169,12 @@ https://flows.graphorlm.com        # Flow listing and global operations
 
 ### Resource-Specific Operations
 ```
-https://{flow_name}.flows.graphorlm.com                 # Flow execution
-https://{flow_name}.flows.graphorlm.com/datasets        # Dataset management
-https://{flow_name}.flows.graphorlm.com/datasets/{id}   # Specific dataset operations
+https://{flow_name}.flows.graphorlm.com                 # Flow execution  
+https://{flow_name}.flows.graphorlm.com/datasets        # Dataset node management
+https://{flow_name}.flows.graphorlm.com/chunking        # Chunking node management
+https://{flow_name}.flows.graphorlm.com/retrieval       # Retrieval node management
+https://{flow_name}.flows.graphorlm.com/llm             # LLM node management
+https://{flow_name}.flows.graphorlm.com/prompts         # Prompt templates
 ```
 
 ## Response Formats
@@ -243,6 +253,22 @@ const datasetResponse = await fetch('https://my-rag-flow.flows.graphorlm.com/dat
   body: JSON.stringify({
     config: {
       files: ['research-paper.pdf', 'additional-source.pdf']
+    }
+  })
+});
+
+// Configure chunking node
+const chunkingResponse = await fetch('https://my-rag-flow.flows.graphorlm.com/chunking/chunking-456', {
+  method: 'PATCH', 
+  headers: {
+    'Authorization': 'Bearer YOUR_API_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    config: {
+      embeddingModel: 'text-embedding-3-small',
+      chunkingSplitter: 'semantic',
+      chunkSize: 1000
     }
   })
 });
@@ -358,7 +384,7 @@ class GraphorLMClient {
     return await response.json();
   }
 
-  // Dataset API methods
+  // Node API methods
   async getDatasetNodes(flowName) {
     const response = await fetch(`https://${flowName}.flows.graphorlm.com/datasets`, {
       headers: this.headers
@@ -371,6 +397,36 @@ class GraphorLMClient {
       method: 'PATCH',
       headers: this.headers,
       body: JSON.stringify({ config: { files } })
+    });
+    return await response.json();
+  }
+
+  async getChunkingNodes(flowName) {
+    const response = await fetch(`https://${flowName}.flows.graphorlm.com/chunking`, {
+      headers: this.headers
+    });
+    return await response.json();
+  }
+
+  async updateChunkingNode(flowName, nodeId, config) {
+    const response = await fetch(`https://${flowName}.flows.graphorlm.com/chunking/${nodeId}`, {
+      method: 'PATCH',
+      headers: this.headers,
+      body: JSON.stringify({ config })
+    });
+    return await response.json();
+  }
+
+  async getLLMNodes(flowName) {
+    const response = await fetch(`https://${flowName}.flows.graphorlm.com/llm`, {
+      headers: this.headers
+    });
+    return await response.json();
+  }
+
+  async getPrompts(flowName) {
+    const response = await fetch(`https://${flowName}.flows.graphorlm.com/prompts`, {
+      headers: this.headers
     });
     return await response.json();
   }
@@ -599,6 +655,14 @@ curl -X POST "https://my-flow.flows.graphorlm.com" \
   -H "Authorization: Bearer YOUR_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"query": "What is machine learning?", "page": 1, "page_size": 5}'
+
+# List chunking nodes
+curl -X GET "https://my-flow.flows.graphorlm.com/chunking" \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+
+# List available prompts
+curl -X GET "https://my-flow.flows.graphorlm.com/prompts" \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
 ## Common Use Cases
@@ -762,7 +826,21 @@ Ready to start building with GraphorLM APIs? Choose your path:
     icon="diagram-project"
     href="/api-reference/flows/overview"
   >
-    Master RAG pipeline management and execution
+    Master comprehensive RAG pipeline and node management
+  </Card>
+  <Card
+    title="LLM Integration"
+    icon="robot"
+    href="/api-reference/flows/llm/overview"
+  >
+    Advanced language model configuration and optimization
+  </Card>
+  <Card
+    title="Advanced RAG"
+    icon="brain"
+    href="/api-reference/flows/smart-rag/overview"
+  >
+    Explore Smart RAG, Graph RAG, and RAPTOR capabilities
   </Card>
   <Card
     title="Integration Patterns"
@@ -773,4 +851,4 @@ Ready to start building with GraphorLM APIs? Choose your path:
   </Card>
 </CardGroup>
 
-The GraphorLM REST API provides the foundation for building intelligent, document-driven applications. Whether you're building content management systems, research tools, or custom AI workflows, these APIs give you the power and flexibility to succeed.
+The GraphorLM REST API provides the foundation for building intelligent, document-driven applications. With comprehensive support for advanced RAG implementations, multiple node types (chunking, retrieval, reranking, Smart RAG, Graph RAG, RAPTOR RAG, and LLM), and flexible pipeline management, these APIs give you the power and flexibility to build sophisticated AI workflows that scale from simple document search to complex research analysis systems.
