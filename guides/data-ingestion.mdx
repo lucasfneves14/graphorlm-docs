@@ -32,7 +32,11 @@ GraphorLM supports a wide range of document formats:
 | Images | PNG, JPG, JPEG, TIFF, BMP, HEIC | OCR for text extraction, image analysis |
 | Presentations | PPT, PPTX | Slide extraction, image processing |
 | Spreadsheets | XLS, XLSX, CSV, TSV | Table parsing, data extraction |
+| Audio Files | MP3, WAV, M4A, OGG, FLAC | Speech-to-text transcription, audio analysis |
+| Video Files | MP4, MOV, AVI, MKV, WEBM | Video transcription, visual content extraction |
 | Web Content | URL | Web scraping, content extraction |
+| Code Repositories | GitHub URL | Repository content extraction, code analysis |
+| Video Content | YouTube URL | Video transcription, content extraction |
 
 ## Importing Documents
 
@@ -53,6 +57,8 @@ There are several ways to import documents into GraphorLM:
   loading="lazy"
 />
 
+**Note**: Large files (>100MB) are automatically uploaded in smaller chunks for improved reliability and progress tracking.
+
 ### Method 2: URL Import
 
 To import content directly from a web address:
@@ -61,9 +67,44 @@ To import content directly from a web address:
 2. Click **Add Sources**
 3. Select **URL**
 4. Enter the web address of the content you want to import
-5. Click **Finish** to begin processing
+5. Optionally enable **Crawl URLs** to extract links and import related pages
+6. Click **Finish** to begin processing
 
 GraphorLM will crawl the specified URL, extract the content, and process it for ingestion.
+
+### Method 3: GitHub Repository Import
+
+To import content from a GitHub repository:
+
+1. Navigate to **Sources** in the left sidebar
+2. Click **Add Sources**
+3. Select **GitHub**
+4. Enter the GitHub repository URL (e.g., `https://github.com/username/repository`)
+5. Click **Finish** to begin processing
+
+GraphorLM will clone the repository, extract code files, documentation, and README files for processing. This is particularly useful for:
+
+- Code documentation and analysis
+- Repository knowledge bases
+- Technical documentation extraction
+- Open source project analysis
+
+### Method 4: YouTube Video Import
+
+To import content from YouTube videos:
+
+1. Navigate to **Sources** in the left sidebar
+2. Click **Add Sources**
+3. Select **YouTube**
+4. Enter the YouTube video URL
+5. Click **Finish** to begin processing
+
+GraphorLM will extract audio from the video, perform speech-to-text transcription, and process the resulting content. This enables:
+
+- Lecture and educational content extraction
+- Meeting and conference transcription
+- Video-based knowledge extraction
+- Audio content analysis
 
 ## Advanced OCR Processing
 
@@ -79,7 +120,7 @@ GraphorLM utilizes state-of-the-art OCR (Optical Character Recognition) to extra
 
 ## Document Parsing Methods and Classification
 
-GraphorLM offers four parsing and classification methods to optimize document processing based on your needs:
+GraphorLM offers five parsing and classification methods to optimize document processing based on your needs:
 
 ### Basic
 
@@ -108,6 +149,13 @@ GraphorLM offers four parsing and classification methods to optimize document pr
 - Classifies document elements using a fine-tuned model
 - Highest accuracy for document structure recognition
 - Optimized for specialized document types
+
+### GraphorLM (Beta)
+
+- Advanced graph-based RAG partitioning method
+- Utilizes knowledge graph structures for content organization
+- Optimized for complex document relationships
+- Beta feature with enhanced semantic understanding
 
 To select a parsing method for your document:
 
@@ -182,10 +230,46 @@ For failed documents, you can view error details and retry processing with adjus
 
 To optimize data ingestion results:
 
+### General Practices
+
 1. **Use consistent formats** - When possible, standardize document formats
 2. **Check processing results** - Review extracted text for accuracy
 3. **Customize for complex documents** - Use advanced parsing for specialized content
 4. **Monitor processing status** - Check for failed documents and resolve issues
+
+### Source-Specific Practices
+
+**For Local Files:**
+- Optimize file sizes before upload (large files are processed in chunks automatically)
+- Use descriptive filenames for better organization
+- Group related documents for batch processing
+
+**For Web URLs:**
+- Enable "Crawl URLs" for comprehensive site extraction
+- Verify URLs are publicly accessible
+- Consider the depth of crawling for large websites
+
+**For GitHub Repositories:**
+- Use specific branch or tag URLs when needed
+- Be aware that large repositories may take longer to process
+
+**For YouTube Videos:**
+- Ensure videos have clear audio for better transcription
+- Consider video length - longer videos require more processing time
+- Check that videos are publicly accessible
+
+**For Audio/Video Files:**
+- Use high-quality audio for better transcription accuracy
+- Consider file size limits and processing time
+- Ensure proper audio codecs for compatibility
+
+### Processing Method Selection
+
+- **Basic**: Use for simple text documents and fastest processing
+- **OCR**: Choose for scanned documents and images
+- **YOLOX**: Ideal for complex layouts and mixed content types
+- **Advanced**: Best for specialized document types requiring highest accuracy
+- **GraphorLM (Beta)**: Experiment with for complex document relationships and advanced semantic understanding
 
 ## Troubleshooting
 
@@ -194,19 +278,37 @@ Common issues and solutions:
 <AccordionGroup>
   <Accordion icon="file-excel" title="Poor OCR quality">
     For low-quality scanned documents, try:
-    - Using OCR Only, YOLOX, or Advanced methods instead of Basic
+    - Using OCR Only, YOLOX, Advanced, or GraphorLM methods instead of Basic
     - Breaking large documents into smaller files
     - Improving document quality before upload if possible
   </Accordion>
   <Accordion icon="table" title="Table extraction problems">
     If tables aren't being properly recognized:
-    - Use YOLOX or Advanced method for better table detection
+    - Use YOLOX, Advanced, or GraphorLM method for better table detection
     - Convert complex tables to simpler formats before upload
   </Accordion>
   <Accordion icon="language" title="Multi-language document issues">
     For documents with multiple languages:
     - Process different language sections as separate documents
-    - Use YOLOX or Advanced method which has better multi-language support
+    - Use YOLOX, Advanced, or GraphorLM method which has better multi-language support
+  </Accordion>
+  <Accordion icon="github" title="GitHub repository access issues">
+    If you're having trouble importing from GitHub:
+    - Ensure the repository is public or you have proper access permissions
+    - Check that the repository URL is correctly formatted
+    - Large repositories may take longer to process - be patient during import
+  </Accordion>
+  <Accordion icon="youtube" title="YouTube video processing issues">
+    For YouTube video import problems:
+    - Verify the video URL is accessible and not private
+    - Note that very long videos may take significant processing time
+    - Audio quality affects transcription accuracy
+  </Accordion>
+  <Accordion icon="volume-up" title="Audio/Video processing issues">
+    For audio and video file problems:
+    - Ensure audio quality is clear for better transcription results
+    - Large video files may be automatically processed in chunks
+    - Check that audio language is supported for transcription
   </Accordion>
 </AccordionGroup>
 
@@ -256,6 +358,72 @@ Once configured, the Dataset component will process the selected documents and m
 - **Consider performance**: Very large datasets may impact processing time and performance
 - **Review regularly**: Update your dataset selection as your document library evolves
 
+## Document Reprocessing
+
+After uploading documents, you may want to reprocess them with different parsing methods to improve accuracy or extract additional information.
+
+### When to Reprocess
+
+- **Improve accuracy**: Switch from Basic to more advanced methods for better results
+- **Different content focus**: Use GraphorLM method for enhanced semantic relationships
+- **Quality issues**: Reprocess with OCR or YOLOX if initial parsing missed content
+- **Method comparison**: Test different methods to find optimal results for your use case
+
+### How to Reprocess
+
+1. Navigate to your **Sources** and select the document you want to reprocess
+2. In the document details panel, locate the **Methods** dropdown
+3. Select a different parsing method from the available options
+4. Click **"Reprocess elements"** to start the reprocessing
+5. Monitor the progress
+
+**Note**: Reprocessing will replace the existing document elements with newly extracted content using the selected method. The original file remains unchanged.
+
 ## Next Steps
 
-After successfully ingesting your documents, you're ready to move on to [Chunking](/guides/chunking) to prepare your data for efficient retrieval in your RAG pipeline.
+After successfully ingesting your documents, explore these next steps to build your RAG pipeline:
+
+<CardGroup cols={2}>
+  <Card
+    title="Document Chunking"
+    icon="scissors"
+    href="/guides/chunking"
+  >
+    Learn how to optimize document segmentation for efficient retrieval in your RAG pipeline
+  </Card>
+  <Card
+    title="API Integration"
+    icon="code"
+    href="/api-reference/sources/upload"
+  >
+    Integrate document upload into your applications using the GraphorLM REST API
+  </Card>
+  <Card
+    title="Flow Builder"
+    icon="sitemap"
+    href="/guides/flows"
+  >
+    Create custom RAG workflows using the visual Flow Builder interface
+  </Card>
+  <Card
+    title="API Tokens"
+    icon="key"
+    href="/guides/api-tokens"
+  >
+    Set up authentication for programmatic access to your documents and data
+  </Card>
+  <Card
+    title="Smart RAG"
+    icon="brain"
+    href="/api-reference/flows/smart-rag"
+  >
+    Implement intelligent retrieval with context-aware document processing
+  </Card>
+  <Card
+    title="Graph RAG"
+    icon="project-diagram"
+    href="/api-reference/flows/graph-rag"
+  >
+    Build knowledge graphs from your documents for enhanced semantic retrieval
+  </Card>
+</CardGroup>
