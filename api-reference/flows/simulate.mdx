@@ -1,0 +1,337 @@
+---
+title: 'Simulate Flow'
+description: 'Test complete flow execution using current configuration via the GraphorLM REST API'
+---
+
+Simulate the execution of a complete flow using the current flow configuration (not deployed version). This endpoint allows you to test your entire RAG pipeline before deployment to ensure it works correctly.
+
+## Overview
+
+The Simulate Flow endpoint executes your complete flow using the current configuration data, allowing you to test the entire pipeline before deploying. This is essential for validating flow logic and ensuring proper functionality.
+
+- **Method**: `POST`
+- **URL**: `https://{flow_name}.flows.graphorlm.com/simulate`
+- **Authentication**: Required (API Token)
+
+## Authentication
+
+All requests must include a valid API token in the Authorization header:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+| `Content-Type` | `application/json` | Yes |
+
+### Request Body
+
+The request body should be a JSON object with the following fields:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `query` | string | Yes | The query to process through the flow simulation |
+| `page` | integer | No | Page number for pagination (starts from 1) |
+| `page_size` | integer | No | Number of items per page (default: 10, max: 100) |
+
+### Example Request
+
+```json
+{
+  "query": "What is machine learning and how does it work?",
+  "page": 1,
+  "page_size": 5
+}
+```
+
+## Response Format
+
+### Success Response (200 OK)
+
+```json
+{
+  "items": [
+    {
+      "id": "doc-001",
+      "content": "Machine learning is a subset of artificial intelligence that enables computers to learn from data without being explicitly programmed. It uses algorithms to identify patterns in data and make predictions or decisions.",
+      "metadata": {
+        "source": "ml-textbook.pdf",
+        "score": 0.95,
+        "chunk_id": "chunk-123",
+        "processing_node": "retrieval-node-456"
+      }
+    },
+    {
+      "id": "doc-002",
+      "content": "The machine learning process typically involves training algorithms on historical data, validating their performance, and then deploying them to make predictions on new data.",
+      "metadata": {
+        "source": "ml-guide.pdf", 
+        "score": 0.89,
+        "chunk_id": "chunk-789",
+        "processing_node": "retrieval-node-456"
+      }
+    }
+  ],
+  "total": 25,
+  "page": 1,
+  "page_size": 5,
+  "total_pages": 5
+}
+```
+
+### Response Structure
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `items` | array | Array of document results from the flow simulation |
+| `total` | integer | Total number of items available across all pages |
+| `page` | integer | Current page number (if pagination was used) |
+| `page_size` | integer | Number of items per page (if pagination was used) |
+| `total_pages` | integer | Total number of pages available |
+
+### Document Structure
+
+Each document in the `items` array contains:
+
+```json
+{
+  "id": "doc-001",
+  "content": "Document content...",
+  "metadata": {
+    "source": "filename.pdf",
+    "score": 0.95,
+    "chunk_id": "chunk-123",
+    "processing_node": "node-id"
+  }
+}
+```
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+async function simulateFlow(flowName, query, options = {}, apiToken) {
+  const url = `https://${flowName}.flows.graphorlm.com/simulate`;
+  
+  const payload = {
+    query,
+    ...(options.page && { page: options.page }),
+    ...(options.pageSize && { page_size: options.pageSize })
+  };
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(`Flow simulation failed: ${errorData.detail}`);
+  }
+
+  return await response.json();
+}
+
+// Usage - Simulate complete flow
+simulateFlow('my-rag-pipeline', 'What is artificial intelligence?', { page: 1, pageSize: 10 }, 'YOUR_API_TOKEN')
+  .then(results => {
+    console.log(`Flow simulation completed successfully`);
+    console.log(`Total results: ${results.total}`);
+    console.log(`Results on this page: ${results.items.length}`);
+    
+    results.items.forEach((doc, index) => {
+      console.log(`${index + 1}. ${doc.content.substring(0, 100)}...`);
+      console.log(`   Source: ${doc.metadata?.source}, Score: ${doc.metadata?.score}`);
+    });
+  })
+  .catch(error => console.error('Simulation error:', error));
+```
+
+### Python
+
+```python
+import requests
+
+def simulate_flow(flow_name, query, api_token, page=None, page_size=None):
+    url = f"https://{flow_name}.flows.graphorlm.com/simulate"
+    
+    payload = {"query": query}
+    if page is not None:
+        payload["page"] = page
+    if page_size is not None:
+        payload["page_size"] = page_size
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}",
+        "Content-Type": "application/json"
+    }
+    
+    response = requests.post(url, headers=headers, json=payload)
+    response.raise_for_status()
+    
+    return response.json()
+
+# Usage - Simulate complete flow
+try:
+    results = simulate_flow("my-rag-pipeline", "What is artificial intelligence?", "YOUR_API_TOKEN", page=1, page_size=10)
+    print(f"Flow simulation completed successfully")
+    print(f"Total results: {results['total']}")
+    print(f"Results on this page: {len(results['items'])}")
+    
+    for i, doc in enumerate(results['items'], 1):
+        print(f"{i}. {doc['content'][:100]}...")
+        print(f"   Source: {doc['metadata'].get('source')}, Score: {doc['metadata'].get('score')}")
+        
+except Exception as e:
+    print(f"Simulation error: {e}")
+```
+
+### cURL
+
+```bash
+curl -X POST "https://my-rag-pipeline.flows.graphorlm.com/simulate" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "What is artificial intelligence?",
+    "page": 1,
+    "page_size": 10
+  }'
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Description | Common Causes |
+|-------------|-------------|---------------|
+| 400 | Bad Request | Invalid query or malformed request parameters |
+| 401 | Unauthorized | Invalid or missing API token |
+| 404 | Not Found | Flow not found or not accessible |
+| 500 | Internal Server Error | Flow simulation failed, processing error |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+### Example Error Responses
+
+#### Flow Not Found
+```json
+{
+  "detail": "Flow with name 'my-rag-flow' not found"
+}
+```
+
+#### Invalid Query
+```json
+{
+  "detail": "query is required in request body"
+}
+```
+
+#### Flow Simulation Failed
+```json
+{
+  "detail": "Error simulating flow: Node configuration error"
+}
+```
+
+## Use Cases
+
+### Pre-Deployment Testing
+Test your complete flow configuration before deploying to ensure all nodes work together correctly.
+
+### Query Validation
+Validate that your flow produces expected results for different types of queries.
+
+### Performance Testing
+Test flow performance and response quality with current configuration settings.
+
+## Best Practices
+
+- **Test Before Deploy**: Always simulate flows before deploying to production
+- **Query Variety**: Test with different types of queries to ensure robustness
+- **Error Handling**: Implement proper error handling for simulation failures
+- **Performance Monitoring**: Monitor simulation response times and quality
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="exclamation-triangle" title="Flow Simulation Failed">
+    **Solution**: If flow simulation fails:
+    - Verify all nodes in the flow are properly configured
+    - Check that dataset nodes have valid file selections
+    - Ensure node dependencies are correctly set up
+  </Accordion>
+  
+  <Accordion icon="list" title="No Results Returned">
+    **Solution**: For empty result sets:
+    - Verify the query is appropriate for your dataset
+    - Check that chunking and retrieval nodes are configured correctly
+    - Ensure your dataset contains relevant content
+  </Accordion>
+  
+  <Accordion icon="user-shield" title="Authentication Issues">
+    **Solution**: For authentication problems:
+    - Verify your API token is valid and not expired
+    - Check that the token has appropriate permissions for the flow
+    - Ensure the Authorization header is properly formatted
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After simulating your flow, you can:
+
+<CardGroup cols={2}>
+  <Card
+    title="Analyze Results"
+    icon="chart-bar"
+    href="/guides/evaluation"
+  >
+    Review simulation results to validate flow performance
+  </Card>
+  <Card
+    title="Update Configuration"
+    icon="sliders"
+    href="/api-reference/flows/overview"
+  >
+    Adjust node settings based on simulation feedback
+  </Card>
+  <Card
+    title="Deploy Flow"
+    icon="rocket"
+    href="/api-reference/flows/deploy"
+  >
+    Deploy your flow after successful simulation testing
+  </Card>
+  <Card
+    title="Run Production Flow"
+    icon="play"
+    href="/api-reference/flows/run"
+  >
+    Execute your deployed flow with real queries
+  </Card>
+</CardGroup>
+
+The Flow Simulation API enables comprehensive testing of your RAG pipeline using current configuration data before deployment, helping ensure your flows work correctly and produce quality results in production.

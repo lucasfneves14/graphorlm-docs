@@ -63,6 +63,7 @@
             "pages": [
               "api-reference/flows/overview",
               "api-reference/flows/list",
+              "api-reference/flows/simulate",
               "api-reference/flows/deploy",
               "api-reference/flows/run",
               {
