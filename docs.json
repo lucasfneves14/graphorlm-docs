@@ -66,66 +66,71 @@
               "api-reference/flows/deploy",
               "api-reference/flows/run",
               {
-                "group": "Datasets",
+                "group": "Nodes",
                 "pages": [
-                  "api-reference/flows/datasets/overview",
-                  "api-reference/flows/datasets/list",
-                  "api-reference/flows/datasets/update"
-                ]
-              },
-              {
-                "group": "Chunking",
-                "pages": [
-                  "api-reference/flows/chunking/overview",
-                  "api-reference/flows/chunking/list",
-                  "api-reference/flows/chunking/update"
-                ]
-              },
-              {
-                "group": "Retrieval",
-                "pages": [
-                  "api-reference/flows/retrieval/overview",
-                  "api-reference/flows/retrieval/list",
-                  "api-reference/flows/retrieval/update"
-                ]
-              },
-              {
-                "group": "Reranking",
-                "pages": [
-                  "api-reference/flows/reranking/overview",
-                  "api-reference/flows/reranking/list",
-                  "api-reference/flows/reranking/update"
-                ]
-              },
-              {
-                "group": "Smart RAG",
-                "pages": [
-                  "api-reference/flows/smart-rag/overview",
-                  "api-reference/flows/smart-rag/list",
-                  "api-reference/flows/smart-rag/update"
-                ]
-              },
-              {
-                "group": "Graph RAG",
-                "pages": [
-                  "api-reference/flows/graph-rag/overview",
-                  "api-reference/flows/graph-rag/list",
-                  "api-reference/flows/graph-rag/update"
-                ]
-              },
-              {
-                "group": "Raptor RAG",
-                "pages": [
-                  "api-reference/flows/raptor-rag/list",
-                  "api-reference/flows/raptor-rag/update"
-                ]
-              },
-              {
-                "group": "LLM",
-                "pages": [
-                  "api-reference/flows/llm/list",
-                  "api-reference/flows/llm/update",
-                  "api-reference/flows/llm/list-prompts"
+                  {
+                    "group": "Datasets",
+                    "pages": [
+                      "api-reference/flows/datasets/overview",
+                      "api-reference/flows/datasets/list",
+                      "api-reference/flows/datasets/update"
+                    ]
+                  },
+                  {
+                    "group": "Chunking",
+                    "pages": [
+                      "api-reference/flows/chunking/overview",
+                      "api-reference/flows/chunking/list",
+                      "api-reference/flows/chunking/update"
+                    ]
+                  },
+                  {
+                    "group": "Retrieval",
+                    "pages": [
+                      "api-reference/flows/retrieval/overview",
+                      "api-reference/flows/retrieval/list",
+                      "api-reference/flows/retrieval/update"
+                    ]
+                  },
+                  {
+                    "group": "Reranking",
+                    "pages": [
+                      "api-reference/flows/reranking/overview",
+                      "api-reference/flows/reranking/list",
+                      "api-reference/flows/reranking/update"
+                    ]
+                  },
+                  {
+                    "group": "Smart RAG",
+                    "pages": [
+                      "api-reference/flows/smart-rag/overview",
+                      "api-reference/flows/smart-rag/list",
+                      "api-reference/flows/smart-rag/update"
+                    ]
+                  },
+                  {
+                    "group": "Graph RAG",
+                    "pages": [
+                      "api-reference/flows/graph-rag/overview",
+                      "api-reference/flows/graph-rag/list",
+                      "api-reference/flows/graph-rag/update"
+                    ]
+                  },
+                  {
+                    "group": "Raptor RAG",
+                    "pages": [
+                      "api-reference/flows/raptor-rag/list",
+                      "api-reference/flows/raptor-rag/update"
+                    ]
+                  },
+                  {
+                    "group": "LLM",
+                    "pages": [
+                      "api-reference/flows/llm/list",
+                      "api-reference/flows/llm/update",
+                      "api-reference/flows/llm/list-prompts"
+                    ]
+                  }
                 ]
               }
             ]
