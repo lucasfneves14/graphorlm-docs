@@ -30,14 +30,14 @@ GraphorLM provides comprehensive REST API endpoints for chunking management:
   <Card
     title="List Chunking Nodes"
     icon="list"
-    href="/api-reference/flows/chunking/list"
+    href="/api-reference/flows/nodes/chunking/list"
   >
     Retrieve all chunking nodes from a specific flow with their configurations and processing status
   </Card>
   <Card
     title="Update Chunking Configuration"
     icon="sliders"
-    href="/api-reference/flows/chunking/update"
+    href="/api-reference/flows/nodes/chunking/update"
   >
     Modify chunking node parameters like embedding models, chunk sizes, and splitter types
   </Card>
@@ -111,8 +111,8 @@ Chunking nodes support various configuration options:
 
 ### Setting Up Chunking Configuration
 
-1. **List Current Nodes**: Use the [List Chunking Nodes](/api-reference/flows/chunking/list) endpoint to see existing configurations
-2. **Update Parameters**: Use the [Update Chunking Configuration](/api-reference/flows/chunking/update) endpoint to modify settings
+1. **List Current Nodes**: Use the [List Chunking Nodes](/api-reference/flows/nodes/chunking/list) endpoint to see existing configurations
+2. **Update Parameters**: Use the [Update Chunking Configuration](/api-reference/flows/nodes/chunking/update) endpoint to modify settings
 3. **Deploy Flow**: Deploy the flow to apply changes and reprocess documents
 4. **Monitor Results**: Check processing status and chunk generation metrics
 
@@ -575,7 +575,7 @@ class BatchChunkingOperations:
 Chunking endpoints work closely with other GraphorLM APIs:
 
 ### Dataset Management
-- Use [Dataset endpoints](/api-reference/flows/datasets/overview) to configure input sources
+- Use [Dataset endpoints](/api-reference/flows/nodes/datasets/overview) to configure input sources
 - Ensure dataset nodes are properly updated before chunking processing
 
 ### Flow Management
@@ -849,21 +849,21 @@ Ready to start managing your chunking nodes? Here are the next steps:
   <Card
     title="List Chunking Nodes"
     icon="list"
-    href="/api-reference/flows/chunking/list"
+    href="/api-reference/flows/nodes/chunking/list"
   >
     Start by exploring existing chunking nodes in your flows
   </Card>
   <Card
     title="Update Chunking Configuration"
     icon="sliders"
-    href="/api-reference/flows/chunking/update"
+    href="/api-reference/flows/nodes/chunking/update"
   >
     Learn how to optimize chunking parameters for your use case
   </Card>
   <Card
     title="Dataset Overview"
     icon="database"
-    href="/api-reference/flows/datasets/overview"
+    href="/api-reference/flows/nodes/datasets/overview"
   >
     Manage the dataset nodes that feed into chunking processing
   </Card>
