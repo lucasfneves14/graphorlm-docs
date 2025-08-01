@@ -63,8 +63,8 @@
             "pages": [
               "api-reference/flows/overview",
               "api-reference/flows/list",
-              "api-reference/flows/run",
               "api-reference/flows/deploy",
+              "api-reference/flows/run",
               {
                 "group": "Datasets",
                 "pages": [
