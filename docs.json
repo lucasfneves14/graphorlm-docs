@@ -119,6 +119,7 @@
                   {
                     "group": "Raptor RAG",
                     "pages": [
+                      "api-reference/flows/nodes/raptor-rag/overview",
                       "api-reference/flows/nodes/raptor-rag/list",
                       "api-reference/flows/nodes/raptor-rag/update"
                     ]
@@ -126,6 +127,7 @@
                   {
                     "group": "LLM",
                     "pages": [
+                      "api-reference/flows/nodes/llm/overview",
                       "api-reference/flows/nodes/llm/list",
                       "api-reference/flows/nodes/llm/update",
                       "api-reference/flows/nodes/llm/list-prompts"
