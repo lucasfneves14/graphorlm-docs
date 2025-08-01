@@ -1,6 +1,5 @@
 ---
 title: "Simulate Node"
-api: "POST https://{flow_name}.flows.graphorlm.com/simulate-node"
 description: "Simulate the execution of a specific node in a flow"
 ---
 
@@ -8,7 +7,7 @@ Simulate the execution of a specific node within a flow and retrieve the updated
 
 ## Overview
 
-The Simulate Node endpoint allows you to execute a specific node in your flow and returns all nodes that were updated as a result. This includes the target node itself and any downstream nodes that were affected by the execution.
+The Simulate Node endpoint allows you to execute a specific node in your flow and returns all nodes that were updated as a result. This includes the target node itself and any downstream nodes that were affected by the execution. This endpoint is essential for testing node configurations, debugging pipeline issues, and validating processing logic without running complete flows.
 
 - **Method**: `POST`
 - **URL**: `https://{flow_name}.flows.graphorlm.com/simulate-node`
@@ -258,6 +257,8 @@ curl -X POST "https://my-rag-flow.flows.graphorlm.com/simulate-node" \
 
 ## Use Cases
 
+The Simulate Node endpoint serves multiple critical purposes in flow development and maintenance:
+
 ### Testing Node Configuration
 Use this endpoint to test how configuration changes affect a specific node's execution without running the entire flow.
 
@@ -351,22 +352,197 @@ async function developmentWorkflow(flowName, apiToken) {
 developmentWorkflow('my-rag-flow', 'YOUR_API_TOKEN');
 ```
 
+### Integration Examples
+
+#### Node Performance Monitor
+
+```javascript
+class NodeSimulationMonitor {
+  constructor(flowName, apiToken) {
+    this.flowName = flowName;
+    this.apiToken = apiToken;
+  }
+
+  async simulateAndAnalyze(nodeId) {
+    try {
+      const startTime = Date.now();
+      const result = await this.simulateNode(nodeId);
+      const endTime = Date.now();
+      
+      const analysis = {
+        nodeId,
+        success: result.success,
+        simulationTime: endTime - startTime,
+        updatedNodesCount: result.updated_nodes.length,
+        performanceMetrics: this.extractPerformanceMetrics(result.updated_nodes)
+      };
+      
+      console.log('🔍 Node Simulation Analysis:');
+      console.log(`  Node ID: ${analysis.nodeId}`);
+      console.log(`  Success: ${analysis.success ? '✅' : '❌'}`);
+      console.log(`  Simulation Time: ${analysis.simulationTime}ms`);
+      console.log(`  Updated Nodes: ${analysis.updatedNodesCount}`);
+      
+      if (analysis.performanceMetrics.length > 0) {
+        console.log('  📊 Performance Metrics:');
+        analysis.performanceMetrics.forEach(metric => {
+          console.log(`    ${metric.nodeId}: ${metric.processingTime}s`);
+        });
+      }
+      
+      return analysis;
+    } catch (error) {
+      console.error(`❌ Simulation failed for node ${nodeId}:`, error.message);
+      throw error;
+    }
+  }
+
+  async simulateNode(nodeId) {
+    const response = await fetch(`https://${this.flowName}.flows.graphorlm.com/simulate-node`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ node_id: nodeId })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  extractPerformanceMetrics(nodes) {
+    return nodes
+      .filter(node => node.data?.result?.processing_time)
+      .map(node => ({
+        nodeId: node.id,
+        nodeType: node.type,
+        processingTime: node.data.result.processing_time
+      }));
+  }
+
+  async batchSimulate(nodeIds) {
+    const results = [];
+    
+    for (const nodeId of nodeIds) {
+      try {
+        const analysis = await this.simulateAndAnalyze(nodeId);
+        results.push(analysis);
+        
+        // Add delay between simulations to avoid overwhelming the system
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      } catch (error) {
+        results.push({
+          nodeId,
+          success: false,
+          error: error.message
+        });
+      }
+    }
+    
+    this.printBatchReport(results);
+    return results;
+  }
+
+  printBatchReport(results) {
+    console.log('\n📋 Batch Simulation Report:');
+    console.log('================================');
+    
+    const successful = results.filter(r => r.success);
+    const failed = results.filter(r => !r.success);
+    
+    console.log(`Total simulations: ${results.length}`);
+    console.log(`Successful: ${successful.length}`);
+    console.log(`Failed: ${failed.length}`);
+    
+    if (successful.length > 0) {
+      const avgSimulationTime = successful.reduce((sum, r) => sum + r.simulationTime, 0) / successful.length;
+      console.log(`Average simulation time: ${Math.round(avgSimulationTime)}ms`);
+    }
+    
+    if (failed.length > 0) {
+      console.log('\n❌ Failed simulations:');
+      failed.forEach(f => {
+        console.log(`  ${f.nodeId}: ${f.error}`);
+      });
+    }
+  }
+}
+
+// Usage
+const monitor = new NodeSimulationMonitor('my-rag-pipeline', 'YOUR_API_TOKEN');
+
+// Simulate single node
+monitor.simulateAndAnalyze('chunking-123').catch(console.error);
+
+// Simulate multiple nodes
+monitor.batchSimulate([
+  'dataset-456',
+  'chunking-789', 
+  'retrieval-012',
+  'llm-345'
+]).catch(console.error);
+```
+
 ## Best Practices
 
 ### Performance Considerations
 - **Resource Usage**: Simulating nodes will consume computational resources similar to running the actual flow
 - **Rate Limiting**: Avoid rapid successive simulations to prevent overwhelming the system
-- **Monitoring**: Track simulation performance to optimize node configurations
+- **Performance Monitoring**: Track simulation performance to optimize node configurations
+- **Processing Time**: Monitor node execution times for performance optimization
 
 ### Development Guidelines
 - **Test Early**: Simulate nodes as soon as they're configured
 - **Incremental Testing**: Test nodes in pipeline order to catch dependencies
 - **Error Handling**: Always implement proper error handling for simulation failures
+- **Performance Tracking**: Monitor execution times and resource usage during simulation
+- **Configuration Validation**: Verify node configurations before simulation to avoid errors
 
-### Security Considerations
-- **Token Management**: Secure API token storage and rotation
+### Security and Monitoring
+- **API Token Management**: Secure API token storage and rotation
 - **Access Control**: Limit simulation access to development environments when possible
-- **Audit Trails**: Log simulation activities for debugging and monitoring
+- **Activity Logging**: Log simulation activities for debugging and performance monitoring
+- **Resource Management**: Monitor simulation frequency and system resource usage
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="exclamation-triangle" title="Node Simulation Failed">
+    **Solution**: If node simulation fails:
+    - Verify the node ID exists in the specified flow
+    - Check that node dependencies are properly configured
+    - Ensure the node configuration is valid
+    - Review error logs for specific failure reasons
+  </Accordion>
+  
+  <Accordion icon="clock" title="Simulation Taking Too Long">
+    **Solution**: For slow simulations:
+    - Check if the node processes large amounts of data
+    - Verify system resources are available
+    - Consider optimizing node configuration (e.g., chunk size for chunking nodes)
+    - Monitor parallel simulation requests
+  </Accordion>
+  
+  <Accordion icon="network-wired" title="Connection Issues">
+    **Solution**: For connectivity problems:
+    - Verify your internet connection
+    - Check that the flow URL is accessible
+    - Ensure your firewall allows HTTPS traffic to *.flows.graphorlm.com
+    - Try accessing the endpoint from a different network
+  </Accordion>
+  
+  <Accordion icon="user-shield" title="Authentication Issues">
+    **Solution**: For authentication problems:
+    - Verify your API token is valid and not expired
+    - Check that the token has appropriate permissions for the flow
+    - Ensure the Authorization header is properly formatted
+    - Try regenerating your API token if issues persist
+  </Accordion>
+</AccordionGroup>
 
 ## Next Steps
 
@@ -376,7 +552,7 @@ After simulating nodes in your flow, you can:
   <Card
     title="Update Node Configuration"
     icon="gear"
-    href="/api-reference/flows/nodes"
+    href="/api-reference/flows/overview"
   >
     Modify node settings based on simulation results
   </Card>
@@ -395,10 +571,12 @@ After simulating nodes in your flow, you can:
     Execute the complete flow pipeline
   </Card>
   <Card
-    title="Flow Monitoring"
-    icon="chart-line"
-    href="/guides/monitoring"
+    title="Flow Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
   >
-    Monitor flow performance and health
+    Learn about complete flow management and all node types
   </Card>
 </CardGroup>
+
+The Node Simulation API provides essential testing and debugging capabilities for your RAG pipeline development. By enabling individual node testing, performance monitoring, and configuration validation, this endpoint helps ensure your flows operate efficiently and correctly before deployment to production environments.
