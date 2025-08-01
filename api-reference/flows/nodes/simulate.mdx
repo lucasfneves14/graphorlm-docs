@@ -10,7 +10,7 @@ Simulate the execution of a specific node within a flow and retrieve the updated
 The Simulate Node endpoint allows you to execute a specific node in your flow and returns all nodes that were updated as a result. This includes the target node itself and any downstream nodes that were affected by the execution. This endpoint is essential for testing node configurations, debugging pipeline issues, and validating processing logic without running complete flows.
 
 - **Method**: `POST`
-- **URL**: `https://{flow_name}.flows.graphorlm.com/simulate-node`
+- **URL**: `https://{flow_name}.flows.graphorlm.com/nodes/simulate`
 - **Authentication**: Required (API Token)
 
 ## Authentication
@@ -119,7 +119,7 @@ Each node object in the `updated_nodes` array contains:
 
 ```javascript
 async function simulateNode(flowName, nodeId, apiToken) {
-  const url = `https://${flowName}.flows.graphorlm.com/simulate-node`;
+  const url = `https://${flowName}.flows.graphorlm.com/nodes/simulate`;
   
   const response = await fetch(url, {
     method: 'POST',
@@ -163,7 +163,7 @@ import requests
 import json
 
 def simulate_node(flow_name, node_id, api_token):
-    url = f"https://{flow_name}.flows.graphorlm.com/simulate-node"
+    url = f"https://{flow_name}.flows.graphorlm.com/nodes/simulate"
     
     headers = {
         "Authorization": f"Bearer {api_token}",
@@ -198,7 +198,7 @@ except requests.exceptions.RequestException as e:
 ### cURL
 
 ```bash
-curl -X POST "https://my-rag-flow.flows.graphorlm.com/simulate-node" \
+curl -X POST "https://my-rag-flow.flows.graphorlm.com/nodes/simulate" \
   -H "Authorization: Bearer YOUR_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -398,7 +398,7 @@ class NodeSimulationMonitor {
   }
 
   async simulateNode(nodeId) {
-    const response = await fetch(`https://${this.flowName}.flows.graphorlm.com/simulate-node`, {
+    const response = await fetch(`https://${this.flowName}.flows.graphorlm.com/nodes/simulate`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${this.apiToken}`,
