@@ -9,6 +9,10 @@ Deploy your configured flows to make them publicly accessible and executable via
 
 The Deploy Flow endpoint creates a new revision of your flow and deploys it, making it accessible for execution via the public API. Once deployed, your flow will be available at `https://{flow_name}.flows.graphorlm.com`.
 
+<Warning>
+**Response Node Required**: Your flow must have a configured **Response Node** for deployment to work properly. The deployment process validates that all required components, including the Response Node, are properly configured.
+</Warning>
+
 - **Method**: `POST`
 - **URL**: `https://{flow_name}.flows.graphorlm.com/deploy`
 - **Authentication**: Required (API Token)
@@ -283,7 +287,7 @@ The deployment process involves several steps:
 1. **Validation**: Checks if the flow exists and is properly configured
 2. **Revision Creation**: Creates a new revision with updated node IDs
 3. **Graph Update**: Updates the flow graph with the new revision
-4. **Component Deployment**: Deploys all flow components (dataset, chunking, retrieval, LLM, etc.)
+4. **Component Deployment**: Deploys all flow components (dataset, chunking, retrieval, Response Node, etc.)
 5. **Traffic Routing**: Routes 100% of traffic to the new revision
 6. **Status Update**: Updates the flow status to "Deployed"
 
@@ -297,9 +301,10 @@ Before deploying a flow, ensure:
 
 ### 1. Flow Configuration
 - ✅ Flow has been created and saved
+- ✅ **Response Node is configured and properly connected**
 - ✅ All required components are configured
 - ✅ Dataset node has source documents selected
-- ✅ LLM configuration is complete and valid
+- ✅ Response Node model and prompt configuration is complete and valid
 
 ### 2. Source Documents
 - ✅ Documents are uploaded to the project
@@ -354,6 +359,13 @@ Before deploying a flow, ensure:
 ```json
 {
   "detail": "Failed to deploy flow: Component validation failed"
+}
+```
+
+#### Missing Response Node
+```json
+{
+  "detail": "Failed to deploy flow: No Response Node found in flow"
 }
 ```
 
@@ -454,7 +466,7 @@ class FlowDeploymentManager {
 
   async validateFlowConfiguration(flowName) {
     // Check if flow exists and is properly configured
-    // This would typically involve checking dataset nodes, etc.
+    // This would typically involve checking dataset nodes, Response Node, etc.
     const datasetsUrl = `https://${flowName}.flows.graphorlm.com/datasets`;
     
     const response = await fetch(datasetsUrl, {
@@ -473,6 +485,14 @@ class FlowDeploymentManager {
     }
 
     // Additional validation logic here
+    // You would also check for Response Node presence:
+    // const llmUrl = `https://${flowName}.flows.graphorlm.com/llm`;
+    // const llmResponse = await fetch(llmUrl, { headers: { 'Authorization': `Bearer ${this.apiToken}` }});
+    // const llmNodes = await llmResponse.json();
+    // if (llmNodes.length === 0) {
+    //   throw new Error('Flow has no Response Node configured');
+    // }
+    
     console.log('✅ Flow configuration is valid');
   }
 
@@ -635,11 +655,12 @@ async def deploy_all_flows():
 ## Best Practices
 
 ### Pre-Deployment Checklist
+- ✅ **Ensure Response Node is configured and connected**
 - ✅ Test your flow configuration in the GraphorLM interface
 - ✅ Verify all documents are processed and available
 - ✅ Ensure dataset nodes have appropriate source selections
 - ✅ Test component configurations individually
-- ✅ Validate LLM settings and API keys
+- ✅ Validate Response Node model, prompt, and API settings
 
 ### Deployment Strategy
 - **Start Small**: Deploy simple flows first to validate the process
@@ -672,11 +693,21 @@ async def deploy_all_flows():
   
   <Accordion icon="cog" title="Invalid Configuration Error">
     **Solution**: Check your flow configuration:
+    - **Ensure you have a Response Node configured in your flow**
     - Ensure all required nodes are present
     - Verify dataset nodes have source documents selected
     - Check that all node parameters are properly configured
-    - Validate LLM configuration and API keys
+    - Validate Response Node model and prompt configuration
     - Ensure all node connections are properly established
+  </Accordion>
+  
+  <Accordion icon="robot" title="Missing Response Node">
+    **Solution**: For "No Response Node found" deployment errors:
+    - Add a Response Node to your flow
+    - Configure the Response Node with a valid model and prompt
+    - Connect the Response Node properly to receive input from other nodes
+    - The Response Node is required to generate responses for deployed flows
+    - Ensure the Response Node is not disconnected from the flow
   </Accordion>
   
   <Accordion icon="clock" title="Deployment Timeout">
