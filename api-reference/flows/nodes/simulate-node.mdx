@@ -1,0 +1,159 @@
+---
+title: "Simulate Node"
+api: "POST /{flow_name}/simulate-node"
+description: "Simulate the execution of a specific node in a flow"
+---
+
+## Overview
+
+The simulate node endpoint allows you to execute a specific node within a flow and retrieve the updated node states. This is useful for testing individual nodes during flow development or debugging flow execution.
+
+This endpoint executes the specified node and returns all nodes that were updated as a result of the execution, including the target node itself and any downstream nodes that were affected.
+
+## Authentication
+
+This endpoint requires an API token for authentication. Include your token in the request headers:
+
+```
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+## Path Parameters
+
+<ParamField path="flow_name" type="string" required>
+  The name of the flow containing the node to simulate
+</ParamField>
+
+## Request Body
+
+<ParamField body="node_id" type="string" required>
+  The unique identifier of the node to simulate within the flow
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean" required>
+  Indicates whether the node simulation was successful
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  A descriptive message about the simulation result
+</ResponseField>
+
+<ResponseField name="updated_nodes" type="array" required>
+  An array of node objects that were updated during the simulation. Each node contains:
+  - `id`: The unique identifier of the node
+  - `type`: The type of the node (e.g., "dataset", "chunking", "retrieval")
+  - `data`: The node's configuration and result data
+  - Additional node-specific properties
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X POST "https://api.graphorlm.com/public/flows/my-rag-flow/simulate-node" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "node_id": "chunking-1234567890"
+  }'
+```
+
+## Example Response
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "message": "Node 'chunking-1234567890' simulated successfully",
+  "updated_nodes": [
+    {
+      "id": "chunking-1234567890",
+      "type": "chunking",
+      "data": {
+        "config": {
+          "embeddingModel": "text-embedding-3-small",
+          "chunkingSplitter": "recursive",
+          "chunkSize": 1000,
+          "chunkOverlap": 200
+        },
+        "result": {
+          "updated": true,
+          "chunks_created": 45,
+          "processing_time": 2.34
+        }
+      }
+    },
+    {
+      "id": "retrieval-0987654321",
+      "type": "retrieval",
+      "data": {
+        "config": {
+          "searchType": "similarity",
+          "topK": 10,
+          "scoreThreshold": 0.7
+        },
+        "result": {
+          "updated": false,
+          "reason": "Downstream node marked for re-execution"
+        }
+      }
+    }
+  ]
+}
+```
+</ResponseExample>
+
+## Error Responses
+
+<ResponseExample>
+```json
+{
+  "detail": "Flow not found"
+}
+```
+</ResponseExample>
+
+<ResponseExample>
+```json
+{
+  "detail": "Node with id 'invalid-node-id' not found in flow 'my-flow'"
+}
+```
+</ResponseExample>
+
+## Status Codes
+
+<ResponseField name="200" type="Success">
+  Node simulation completed successfully
+</ResponseField>
+
+<ResponseField name="401" type="Unauthorized">
+  Invalid or missing API token
+</ResponseField>
+
+<ResponseField name="404" type="Not Found">
+  Flow not found or node not found in the specified flow
+</ResponseField>
+
+<ResponseField name="500" type="Internal Server Error">
+  Server error during node simulation
+</ResponseField>
+
+## Use Cases
+
+### Testing Node Configuration
+Use this endpoint to test how configuration changes affect a specific node's execution without running the entire flow.
+
+### Debugging Flow Issues
+When a flow isn't producing expected results, simulate individual nodes to identify where issues occur.
+
+### Development and Iteration
+During flow development, test nodes individually as you build and refine your data processing pipeline.
+
+## Notes
+
+- Simulating a node will execute all its processing logic and may consume computational resources
+- The simulation uses the current flow configuration, not a deployed revision
+- Updated nodes include both the target node and any downstream nodes that are marked for re-execution
+- Node simulation is performed in the context of your dataset and uses the same data sources as the full flow execution

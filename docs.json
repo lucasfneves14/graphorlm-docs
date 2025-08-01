@@ -68,6 +68,7 @@
               {
                 "group": "Nodes",
                 "pages": [
+                  "api-reference/flows/nodes/simulate-node",
                   {
                     "group": "Datasets",
                     "pages": [
