@@ -3,7 +3,7 @@ title: 'Dataset Endpoints Overview'
 description: 'Comprehensive guide to managing dataset nodes in flows via the GraphorLM REST API'
 ---
 
-Dataset endpoints allow you to manage the data components of your flows in GraphorLM. Dataset nodes are the entry points that connect your uploaded documents to the RAG pipeline, determining which files are processed and how they're configured.
+Dataset endpoints allow you to manage the data components of your flows in GraphorLM. Dataset nodes are the entry points that connect your uploaded documents to the RAG pipeline.
 
 ## What are Dataset Nodes?
 
@@ -15,7 +15,7 @@ Dataset nodes are fundamental components in GraphorLM flows that:
 - **Support Flow Logic**: Act as the starting point for RAG pipelines
 
 <img
-  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  className="block border rounded-2xl border-gray-950/10 ring-2 ring-transparent"
   src="/images/dataset-component.png"
   alt="Dataset component"
   loading="lazy"
@@ -42,9 +42,7 @@ GraphorLM provides comprehensive REST API endpoints for dataset management:
   </Card>
 </CardGroup>
 
-## Core Concepts
-
-### Dataset Node Structure
+## Dataset Node Structure
 
 Each dataset node contains:
 
@@ -70,7 +68,7 @@ Each dataset node contains:
 }
 ```
 
-### Key Components
+## Key Components
 
 | Component | Description |
 |-----------|-------------|
@@ -78,62 +76,6 @@ Each dataset node contains:
 | **Config** | File selection and processing settings |
 | **Result** | Status and metadata from last processing |
 | **Position** | Visual placement in the flow editor |
-
-### File Management
-
-Dataset nodes manage file relationships through:
-
-- **File Selection**: Choose which uploaded sources to include
-- **Dynamic Updates**: Add or remove files without recreating the node
-- **Validation**: Ensure all specified files exist as sources
-- **Status Tracking**: Monitor processing state and updates needed
-
-## Common Workflows
-
-### Setting Up a New Dataset
-
-1. **List Available Nodes**: Use the [List Dataset Nodes](/api-reference/flows/nodes/datasets/list) endpoint to see existing datasets
-2. **Update Configuration**: Use the [Update Dataset](/api-reference/flows/nodes/datasets/update) endpoint to configure file selection
-3. **Deploy Flow**: Deploy the flow to apply changes and make it executable
-
-### Managing Dataset Files
-
-```javascript
-// Example: Adding new files to an existing dataset
-const updateDataset = async (flowName, nodeId, newFiles) => {
-  const response = await fetch(`https://${flowName}.flows.graphorlm.com/datasets/${nodeId}`, {
-    method: 'PATCH',
-    headers: {
-      'Authorization': 'Bearer YOUR_API_TOKEN',
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      config: { files: newFiles }
-    })
-  });
-  
-  return await response.json();
-};
-```
-
-### Monitoring Dataset Status
-
-```python
-# Example: Checking which datasets need updates
-def check_dataset_status(flow_name, api_token):
-    url = f"https://{flow_name}.flows.graphorlm.com/datasets"
-    headers = {"Authorization": f"Bearer {api_token}"}
-    
-    response = requests.get(url, headers=headers)
-    datasets = response.json()
-    
-    needs_update = [
-        d for d in datasets 
-        if not d['data']['result'].get('updated', True)
-    ]
-    
-    return needs_update
-```
 
 ## Authentication
 
@@ -159,53 +101,37 @@ Where:
 - `{flow_name}`: The name of your deployed flow
 - `{node_id}`: The specific dataset node identifier (for update operations)
 
-## Response Formats
+## Basic Usage Example
 
-### Dataset Node Object
+```javascript
+// List all dataset nodes
+const response = await fetch(`https://${flowName}.flows.graphorlm.com/datasets`, {
+  headers: { 'Authorization': `Bearer ${apiToken}` }
+});
+const datasets = await response.json();
 
-All endpoints return dataset nodes with this structure:
-
-```json
-{
-  "id": "string",
-  "type": "dataset",
-  "position": {
-    "x": "number",
-    "y": "number"
+// Update a dataset with new files
+const updateResponse = await fetch(`https://${flowName}.flows.graphorlm.com/datasets/${nodeId}`, {
+  method: 'PATCH',
+  headers: {
+    'Authorization': `Bearer ${apiToken}`,
+    'Content-Type': 'application/json'
   },
-  "style": {
-    "width": "number",
-    "height": "number"
-  },
-  "data": {
-    "name": "string",
-    "config": {
-      "files": ["string"]
-    },
-    "result": {
-      "updated": "boolean",
-      "lastRun": "string",
-      "fileCount": "number"
-    }
-  }
-}
+  body: JSON.stringify({
+    config: { files: ['new_file.pdf'] }
+  })
+});
 ```
 
-### Success Responses
+## Common Workflow
 
-Update operations return confirmation:
-
-```json
-{
-  "success": true,
-  "message": "Dataset node updated successfully",
-  "node_id": "dataset-1748287628684"
-}
-```
+1. **List Available Nodes**: Use the [List Dataset Nodes](/api-reference/flows/nodes/datasets/list) endpoint
+2. **Update Configuration**: Use the [Update Dataset](/api-reference/flows/nodes/datasets/update) endpoint to configure files
+3. **Deploy Flow**: Deploy the flow to apply changes
 
 ## Error Handling
 
-Common error scenarios and responses:
+Common error responses:
 
 | Error Type | HTTP Status | Description |
 |------------|-------------|-------------|
@@ -213,267 +139,8 @@ Common error scenarios and responses:
 | **Flow Not Found** | 404 | Flow doesn't exist or isn't accessible |
 | **Node Not Found** | 404 | Dataset node doesn't exist in the flow |
 | **Files Not Found** | 400 | Specified files don't exist as sources |
-| **Invalid Config** | 400 | Configuration validation failed |
-| **Server Error** | 500 | Internal processing error |
-
-### Error Response Format
-
-```json
-{
-  "detail": "Descriptive error message explaining the issue"
-}
-```
-
-## Integration Examples
-
-### Dataset Management Class
-
-```javascript
-class DatasetManager {
-  constructor(flowName, apiToken) {
-    this.flowName = flowName;
-    this.apiToken = apiToken;
-    this.baseUrl = `https://${flowName}.flows.graphorlm.com/datasets`;
-  }
-
-  async listNodes() {
-    const response = await fetch(this.baseUrl, {
-      headers: { 'Authorization': `Bearer ${this.apiToken}` }
-    });
-    return await response.json();
-  }
-
-  async updateNode(nodeId, files) {
-    const response = await fetch(`${this.baseUrl}/${nodeId}`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${this.apiToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ config: { files } })
-    });
-    return await response.json();
-  }
-
-  async getNodeStatus(nodeId) {
-    const nodes = await this.listNodes();
-    return nodes.find(node => node.id === nodeId);
-  }
-}
-```
-
-### Batch Operations
-
-```python
-class BatchDatasetOperations:
-    def __init__(self, flow_name, api_token):
-        self.flow_name = flow_name
-        self.api_token = api_token
-        self.base_url = f"https://{flow_name}.flows.graphorlm.com/datasets"
-    
-    def get_all_nodes(self):
-        """Get all dataset nodes in the flow"""
-        response = requests.get(
-            self.base_url,
-            headers={"Authorization": f"Bearer {self.api_token}"}
-        )
-        response.raise_for_status()
-        return response.json()
-    
-    def update_multiple_nodes(self, updates):
-        """Update multiple dataset nodes"""
-        results = []
-        for node_id, files in updates.items():
-            try:
-                response = requests.patch(
-                    f"{self.base_url}/{node_id}",
-                    headers={
-                        "Authorization": f"Bearer {self.api_token}",
-                        "Content-Type": "application/json"
-                    },
-                    json={"config": {"files": files}}
-                )
-                response.raise_for_status()
-                results.append({
-                    "node_id": node_id,
-                    "status": "success",
-                    "result": response.json()
-                })
-            except Exception as e:
-                results.append({
-                    "node_id": node_id,
-                    "status": "error",
-                    "error": str(e)
-                })
-        return results
-```
-
-## Best Practices
-
-### Configuration Management
-
-- **Version Control**: Keep track of dataset configurations over time
-- **Validation**: Always verify files exist before updating configurations
-- **Atomic Updates**: Update entire file lists rather than partial modifications
-- **Documentation**: Document the purpose of each dataset node
-
-### Performance Optimization
-
-- **File Organization**: Group related files in the same dataset nodes
-- **Batch Operations**: Update multiple nodes efficiently using batch processing
-- **Monitoring**: Regularly check dataset status to identify issues early
-- **Caching**: Cache dataset node information to reduce API calls
-
-### Error Prevention
-
-- **File Validation**: Use the [List Sources endpoint](/api-reference/sources/list) to verify file availability
-- **Status Monitoring**: Check node update status before flow deployment
-- **Graceful Degradation**: Handle missing files and failed updates appropriately
-- **Retry Logic**: Implement retry mechanisms for transient failures
-
-## Relationship with Other Endpoints
-
-Dataset endpoints work closely with other GraphorLM APIs:
-
-### Source Management
-- Use [Sources endpoints](/api-reference/sources/overview) to upload and manage files
-- Validate file availability before updating dataset configurations
-
-### Flow Management
-- Use [Flow endpoints](/api-reference/flows/overview) to deploy updated configurations
-- Monitor flow status after dataset changes
-
-### Flow Execution
-- Use [Run Flow endpoint](/api-reference/flows/run) to execute flows with updated datasets
-- Verify results reflect the new dataset configurations
-
-## Use Cases
-
-### Content Management System
-
-```javascript
-// Scenario: Managing document sets for different topics
-const contentManager = new DatasetManager('knowledge-base', 'YOUR_API_TOKEN');
-
-const topicDatasets = {
-  'ai-research': ['ai_overview.pdf', 'machine_learning.pdf', 'neural_networks.pdf'],
-  'documentation': ['user_guide.pdf', 'api_reference.pdf', 'tutorials.pdf'],
-  'legal': ['terms_of_service.pdf', 'privacy_policy.pdf', 'compliance.pdf']
-};
-
-// Update each dataset with topic-specific files
-for (const [topic, files] of Object.entries(topicDatasets)) {
-  const nodeId = await findDatasetNodeByTopic(topic);
-  await contentManager.updateNode(nodeId, files);
-}
-```
-
-### Dynamic Content Updates
-
-```python
-# Scenario: Updating datasets based on new document uploads
-def update_datasets_with_new_files(flow_name, api_token, new_files):
-    manager = BatchDatasetOperations(flow_name, api_token)
-    nodes = manager.get_all_nodes()
-    
-    updates = {}
-    for node in nodes:
-        current_files = node['data']['config'].get('files', [])
-        # Add new files to existing configuration
-        updated_files = list(set(current_files + new_files))
-        updates[node['id']] = updated_files
-    
-    return manager.update_multiple_nodes(updates)
-```
-
-### Quality Assurance
-
-```javascript
-// Scenario: Auditing dataset configurations for consistency
-async function auditDatasetConfigurations(flowName, apiToken) {
-  const manager = new DatasetManager(flowName, apiToken);
-  const nodes = await manager.listNodes();
-  
-  const audit = {
-    totalNodes: nodes.length,
-    emptyNodes: [],
-    outdatedNodes: [],
-    duplicateFiles: {}
-  };
-  
-  const fileUsage = {};
-  
-  for (const node of nodes) {
-    const files = node.data.config.files || [];
-    
-    // Check for empty nodes
-    if (files.length === 0) {
-      audit.emptyNodes.push(node.id);
-    }
-    
-    // Check for outdated nodes
-    if (!node.data.result?.updated) {
-      audit.outdatedNodes.push(node.id);
-    }
-    
-    // Track file usage for duplicate detection
-    for (const file of files) {
-      if (!fileUsage[file]) fileUsage[file] = [];
-      fileUsage[file].push(node.id);
-    }
-  }
-  
-  // Find duplicate files
-  for (const [file, nodeIds] of Object.entries(fileUsage)) {
-    if (nodeIds.length > 1) {
-      audit.duplicateFiles[file] = nodeIds;
-    }
-  }
-  
-  return audit;
-}
-```
-
-## Migration and Maintenance
-
-### Upgrading Dataset Configurations
-
-When migrating or updating your flow configurations:
-
-1. **Backup Current State**: List all current dataset configurations
-2. **Plan Updates**: Design new file organization structure
-3. **Test Changes**: Update configurations in a development environment
-4. **Apply Updates**: Use batch operations to update production datasets
-5. **Verify Results**: Check that all nodes are properly updated
-
-### Monitoring and Alerting
-
-Set up monitoring for dataset health:
-
-```python
-def monitor_dataset_health(flow_name, api_token):
-    """Monitor dataset health and return alerts"""
-    manager = BatchDatasetOperations(flow_name, api_token)
-    nodes = manager.get_all_nodes()
-    
-    alerts = []
-    
-    for node in nodes:
-        # Check for empty configurations
-        files = node['data']['config'].get('files', [])
-        if not files:
-            alerts.append(f"Empty dataset node: {node['id']}")
-        
-        # Check for outdated status
-        if not node['data']['result'].get('updated', True):
-            alerts.append(f"Outdated dataset node: {node['id']}")
-    
-    return alerts
-```
 
 ## Next Steps
-
-Ready to start managing your dataset nodes? Here are the next steps:
 
 <CardGroup cols={2}>
   <Card
@@ -503,24 +170,5 @@ Ready to start managing your dataset nodes? Here are the next steps:
     href="/api-reference/flows/deploy"
   >
     Deploy your updated flows to make changes active
-  </Card>
-</CardGroup>
-
-For more advanced usage patterns and integration examples, explore our comprehensive guides:
-
-<CardGroup cols={2}>
-  <Card
-    title="Data Ingestion Guide"
-    icon="file-lines"
-    href="/guides/data-ingestion"
-  >
-    Learn about uploading and processing documents
-  </Card>
-  <Card
-    title="Integrate Workflow"
-    icon="plug"
-    href="/guides/integrate-workflow"
-  >
-    Advanced integration patterns and best practices
   </Card>
 </CardGroup>
