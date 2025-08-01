@@ -1,67 +1,60 @@
 ---
 title: "Simulate Node"
-api: "POST /{flow_name}/simulate-node"
+api: "POST https://{flow_name}.flows.graphorlm.com/simulate-node"
 description: "Simulate the execution of a specific node in a flow"
 ---
 
+Simulate the execution of a specific node within a flow and retrieve the updated node states. This endpoint is useful for testing individual nodes during flow development or debugging flow execution without running the entire flow.
+
 ## Overview
 
-The simulate node endpoint allows you to execute a specific node within a flow and retrieve the updated node states. This is useful for testing individual nodes during flow development or debugging flow execution.
+The Simulate Node endpoint allows you to execute a specific node in your flow and returns all nodes that were updated as a result. This includes the target node itself and any downstream nodes that were affected by the execution.
 
-This endpoint executes the specified node and returns all nodes that were updated as a result of the execution, including the target node itself and any downstream nodes that were affected.
+- **Method**: `POST`
+- **URL**: `https://{flow_name}.flows.graphorlm.com/simulate-node`
+- **Authentication**: Required (API Token)
 
 ## Authentication
 
-This endpoint requires an API token for authentication. Include your token in the request headers:
+All requests must include a valid API token in the Authorization header:
 
-```
+```http
 Authorization: Bearer YOUR_API_TOKEN
 ```
 
-## Path Parameters
+<Note>
+Learn how to generate API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
 
-<ParamField path="flow_name" type="string" required>
-  The name of the flow containing the node to simulate
-</ParamField>
+## Request Format
 
-## Request Body
+### Headers
 
-<ParamField body="node_id" type="string" required>
-  The unique identifier of the node to simulate within the flow
-</ParamField>
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+| `Content-Type` | `application/json` | Yes |
 
-## Response
+### Request Body
 
-<ResponseField name="success" type="boolean" required>
-  Indicates whether the node simulation was successful
-</ResponseField>
+The request body should be a JSON object with the following required field:
 
-<ResponseField name="message" type="string" required>
-  A descriptive message about the simulation result
-</ResponseField>
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `node_id` | string | Yes | The unique identifier of the node to simulate within the flow |
 
-<ResponseField name="updated_nodes" type="array" required>
-  An array of node objects that were updated during the simulation. Each node contains:
-  - `id`: The unique identifier of the node
-  - `type`: The type of the node (e.g., "dataset", "chunking", "retrieval")
-  - `data`: The node's configuration and result data
-  - Additional node-specific properties
-</ResponseField>
+### Example Request
 
-## Example Request
-
-```bash
-curl -X POST "https://api.graphorlm.com/public/flows/my-rag-flow/simulate-node" \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "node_id": "chunking-1234567890"
-  }'
+```json
+{
+  "node_id": "chunking-1234567890"
+}
 ```
 
-## Example Response
+## Response Format
 
-<ResponseExample>
+### Success Response (200 OK)
+
 ```json
 {
   "success": true,
@@ -102,58 +95,310 @@ curl -X POST "https://api.graphorlm.com/public/flows/my-rag-flow/simulate-node" 
   ]
 }
 ```
-</ResponseExample>
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Whether the node simulation was successful |
+| `message` | string | Human-readable message about the simulation result |
+| `updated_nodes` | array | Array of node objects that were updated during the simulation |
+
+### Node Object Structure
+
+Each node object in the `updated_nodes` array contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | The unique identifier of the node |
+| `type` | string | The type of the node (e.g., "dataset", "chunking", "retrieval") |
+| `data` | object | The node's configuration and result data |
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+async function simulateNode(flowName, nodeId, apiToken) {
+  const url = `https://${flowName}.flows.graphorlm.com/simulate-node`;
+  
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      node_id: nodeId
+    })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(`Simulation failed: ${errorData.detail}`);
+  }
+
+  return await response.json();
+}
+
+// Usage
+simulateNode('my-rag-flow', 'chunking-1234567890', 'YOUR_API_TOKEN')
+  .then(result => {
+    console.log('✅ Simulation successful!');
+    console.log('Message:', result.message);
+    console.log('Updated nodes:', result.updated_nodes.length);
+    
+    result.updated_nodes.forEach(node => {
+      console.log(`📊 Node ${node.id} (${node.type}): ${node.data.result?.updated ? 'Updated' : 'Not updated'}`);
+    });
+  })
+  .catch(error => {
+    console.error('❌ Simulation failed:', error.message);
+  });
+```
+
+### Python
+
+```python
+import requests
+import json
+
+def simulate_node(flow_name, node_id, api_token):
+    url = f"https://{flow_name}.flows.graphorlm.com/simulate-node"
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "node_id": node_id
+    }
+    
+    response = requests.post(url, headers=headers, json=payload)
+    response.raise_for_status()
+    
+    return response.json()
+
+# Usage
+try:
+    result = simulate_node("my-rag-flow", "chunking-1234567890", "YOUR_API_TOKEN")
+    
+    print("✅ Simulation successful!")
+    print(f"Message: {result['message']}")
+    print(f"Updated nodes: {len(result['updated_nodes'])}")
+    
+    for node in result['updated_nodes']:
+        status = "Updated" if node['data'].get('result', {}).get('updated') else "Not updated"
+        print(f"📊 Node {node['id']} ({node['type']}): {status}")
+        
+except requests.exceptions.RequestException as e:
+    print(f"❌ Simulation failed: {e}")
+```
+
+### cURL
+
+```bash
+curl -X POST "https://my-rag-flow.flows.graphorlm.com/simulate-node" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "node_id": "chunking-1234567890"
+  }'
+```
 
 ## Error Responses
 
-<ResponseExample>
+### Common Error Codes
+
+| Status Code | Description | Common Causes |
+|-------------|-------------|---------------|
+| 400 | Bad Request | Invalid node ID or malformed request |
+| 401 | Unauthorized | Invalid or missing API token |
+| 404 | Not Found | Flow not found or node not found in the specified flow |
+| 500 | Internal Server Error | Node simulation failed, processing error |
+
+### Error Response Format
+
 ```json
 {
-  "detail": "Flow not found"
+  "detail": "Error message describing what went wrong"
 }
 ```
-</ResponseExample>
 
-<ResponseExample>
+### Example Error Responses
+
+#### Flow Not Found
 ```json
 {
-  "detail": "Node with id 'invalid-node-id' not found in flow 'my-flow'"
+  "detail": "Flow with name 'my-rag-flow' not found"
 }
 ```
-</ResponseExample>
 
-## Status Codes
+#### Node Not Found
+```json
+{
+  "detail": "Node with id 'invalid-node-id' not found in flow 'my-rag-flow'"
+}
+```
 
-<ResponseField name="200" type="Success">
-  Node simulation completed successfully
-</ResponseField>
+#### Simulation Failed
+```json
+{
+  "detail": "Failed to simulate node: Processing error in node execution"
+}
+```
 
-<ResponseField name="401" type="Unauthorized">
-  Invalid or missing API token
-</ResponseField>
-
-<ResponseField name="404" type="Not Found">
-  Flow not found or node not found in the specified flow
-</ResponseField>
-
-<ResponseField name="500" type="Internal Server Error">
-  Server error during node simulation
-</ResponseField>
+#### Invalid Request
+```json
+{
+  "detail": "node_id is required in request body"
+}
+```
 
 ## Use Cases
 
 ### Testing Node Configuration
 Use this endpoint to test how configuration changes affect a specific node's execution without running the entire flow.
 
+```javascript
+// Test different chunking configurations
+const testConfigurations = [
+  { chunkSize: 500, chunkOverlap: 100 },
+  { chunkSize: 1000, chunkOverlap: 200 },
+  { chunkSize: 1500, chunkOverlap: 300 }
+];
+
+for (const config of testConfigurations) {
+  // Update node configuration first
+  await updateChunkingNode(flowName, nodeId, config);
+  
+  // Then simulate to see results
+  const result = await simulateNode(flowName, nodeId, apiToken);
+  console.log(`Config ${JSON.stringify(config)}: ${result.updated_nodes[0].data.result.chunks_created} chunks`);
+}
+```
+
 ### Debugging Flow Issues
 When a flow isn't producing expected results, simulate individual nodes to identify where issues occur.
+
+```python
+def debug_flow_nodes(flow_name, node_ids, api_token):
+    """Debug multiple nodes in sequence to identify issues"""
+    for node_id in node_ids:
+        try:
+            result = simulate_node(flow_name, node_id, api_token)
+            
+            if result['success']:
+                print(f"✅ Node {node_id}: Working correctly")
+                
+                # Check if node produced expected output
+                target_node = next((n for n in result['updated_nodes'] if n['id'] == node_id), None)
+                if target_node and target_node['data'].get('result', {}).get('updated'):
+                    print(f"   📊 Node executed and updated successfully")
+                else:
+                    print(f"   ⚠️  Node didn't update as expected")
+            else:
+                print(f"❌ Node {node_id}: Failed simulation")
+                
+        except Exception as e:
+            print(f"❌ Node {node_id}: Error - {e}")
+
+# Debug pipeline step by step
+debug_flow_nodes(
+    "my-rag-flow", 
+    ["dataset-123", "chunking-456", "retrieval-789", "llm-012"],
+    "YOUR_API_TOKEN"
+)
+```
 
 ### Development and Iteration
 During flow development, test nodes individually as you build and refine your data processing pipeline.
 
-## Notes
+```javascript
+// Development workflow: simulate after each node configuration
+async function developmentWorkflow(flowName, apiToken) {
+  const nodes = [
+    { id: 'dataset-123', type: 'dataset' },
+    { id: 'chunking-456', type: 'chunking' },
+    { id: 'retrieval-789', type: 'retrieval' },
+    { id: 'llm-012', type: 'llm' }
+  ];
+  
+  for (const node of nodes) {
+    console.log(`\n🔧 Testing ${node.type} node: ${node.id}`);
+    
+    try {
+      const result = await simulateNode(flowName, node.id, apiToken);
+      
+      if (result.success) {
+        console.log(`✅ ${node.type} node working correctly`);
+        
+        // Log performance metrics if available
+        const targetNode = result.updated_nodes.find(n => n.id === node.id);
+        if (targetNode?.data?.result?.processing_time) {
+          console.log(`   ⏱️  Processing time: ${targetNode.data.result.processing_time}s`);
+        }
+      }
+    } catch (error) {
+      console.log(`❌ ${node.type} node failed: ${error.message}`);
+      console.log("   🛑 Fix this node before continuing");
+      break;
+    }
+  }
+}
 
-- Simulating a node will execute all its processing logic and may consume computational resources
-- The simulation uses the current flow configuration, not a deployed revision
-- Updated nodes include both the target node and any downstream nodes that are marked for re-execution
-- Node simulation is performed in the context of your dataset and uses the same data sources as the full flow execution
+developmentWorkflow('my-rag-flow', 'YOUR_API_TOKEN');
+```
+
+## Best Practices
+
+### Performance Considerations
+- **Resource Usage**: Simulating nodes will consume computational resources similar to running the actual flow
+- **Rate Limiting**: Avoid rapid successive simulations to prevent overwhelming the system
+- **Monitoring**: Track simulation performance to optimize node configurations
+
+### Development Guidelines
+- **Test Early**: Simulate nodes as soon as they're configured
+- **Incremental Testing**: Test nodes in pipeline order to catch dependencies
+- **Error Handling**: Always implement proper error handling for simulation failures
+
+### Security Considerations
+- **Token Management**: Secure API token storage and rotation
+- **Access Control**: Limit simulation access to development environments when possible
+- **Audit Trails**: Log simulation activities for debugging and monitoring
+
+## Next Steps
+
+After simulating nodes in your flow, you can:
+
+<CardGroup cols={2}>
+  <Card
+    title="Update Node Configuration"
+    icon="gear"
+    href="/api-reference/flows/nodes"
+  >
+    Modify node settings based on simulation results
+  </Card>
+  <Card
+    title="Deploy Flow"
+    icon="rocket"
+    href="/api-reference/flows/deploy"
+  >
+    Deploy your flow once nodes are working correctly
+  </Card>
+  <Card
+    title="Run Full Flow"
+    icon="play"
+    href="/api-reference/flows/run"
+  >
+    Execute the complete flow pipeline
+  </Card>
+  <Card
+    title="Flow Monitoring"
+    icon="chart-line"
+    href="/guides/monitoring"
+  >
+    Monitor flow performance and health
+  </Card>
+</CardGroup>
