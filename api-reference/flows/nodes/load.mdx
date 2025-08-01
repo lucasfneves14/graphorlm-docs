@@ -1,0 +1,356 @@
+---
+title: 'Load Node Results'
+description: 'Retrieve simulation results from flow nodes via the GraphorLM REST API'
+---
+
+Retrieve simulation results from specific nodes within your GraphorLM flows. This endpoint provides access to the output data generated during node simulation (not from deployed flow execution) with pagination support.
+
+## Overview
+
+Load simulation data from individual flow nodes for debugging, analysis, or testing purposes. Each node type returns different data structures based on their simulated processing function.
+
+- **Method**: `POST`
+- **URL**: `https://{flow_name}.flows.graphorlm.com/nodes/results`
+- **Authentication**: Required (API Token)
+
+## Authentication
+
+All requests must include a valid API token in the Authorization header:
+
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+<Note>
+Learn how to generate API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+| `Content-Type` | `application/json` | Yes |
+
+### Request Body
+
+The request body should be a JSON object with the following fields:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `node_id` | string | Yes | The unique identifier of the node to load data from |
+| `page` | integer | No | Page number for pagination (starts from 1) |
+| `page_size` | integer | No | Number of items per page (default: 10, max: 100) |
+
+### Example Request
+
+```json
+{
+  "node_id": "chunking-1748287628685",
+  "page": 1,
+  "page_size": 20
+}
+```
+
+## Response Format
+
+### Success Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Node simulation data loaded successfully for 'chunking-1748287628685'",
+  "items": [
+    {
+      "id": "chunk-001",
+      "content": "Machine learning is a subset of artificial intelligence that enables computers to learn and improve from experience without being explicitly programmed.",
+      "metadata": {
+        "chunk_index": 0,
+        "source_file": "ml-basics.pdf",
+        "page_number": 1,
+        "chunk_size": 150,
+        "embedding_model": "text-embedding-3-small"
+      },
+      "embedding": [0.1234, -0.5678, 0.9101, "..."],
+      "score": 0.95
+    },
+    {
+      "id": "chunk-002", 
+      "content": "Supervised learning algorithms learn from labeled training data to make predictions on new, unseen data.",
+      "metadata": {
+        "chunk_index": 1,
+        "source_file": "ml-basics.pdf",
+        "page_number": 1,
+        "chunk_size": 105,
+        "embedding_model": "text-embedding-3-small"
+      },
+      "embedding": [0.2345, -0.6789, 0.1234, "..."],
+      "score": 0.89
+    }
+  ],
+  "total": 420,
+  "page": 1,
+  "page_size": 20,
+  "total_pages": 21
+}
+```
+
+### Response Structure
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success` | boolean | Whether the simulation data loading operation was successful |
+| `message` | string | Human-readable message about the operation result |
+| `items` | array | Array of simulation data objects from the specified node |
+| `total` | integer | Total number of items available across all pages |
+| `page` | integer | Current page number (if pagination was used) |
+| `page_size` | integer | Number of items per page (if pagination was used) |
+| `total_pages` | integer | Total number of pages available |
+
+### Node Data Structures by Type
+
+The structure of `items` varies based on the node type:
+
+#### Chunking Node Data
+```json
+{
+  "id": "chunk-001",
+  "content": "Chunk content...",
+  "metadata": {
+    "source_file": "document.pdf",
+    "chunk_size": 1000,
+    "embedding_model": "text-embedding-3-small"
+  },
+  "embedding": [0.1234, -0.5678, "..."]
+}
+```
+
+#### LLM Node Data
+```json
+{
+  "id": "answer-001",
+  "content": "Generated response...",
+  "metadata": {
+    "question": "What is machine learning?",
+    "model": "gpt-4",
+    "generation_time": 2.34
+  }
+}
+```
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+async function loadNodeResults(flowName, nodeId, options = {}, apiToken) {
+  const url = `https://${flowName}.flows.graphorlm.com/nodes/results`;
+  
+  const payload = {
+    node_id: nodeId,
+    ...(options.page && { page: options.page }),
+    ...(options.pageSize && { page_size: options.pageSize })
+  };
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(`Failed to load node results: ${errorData.detail}`);
+  }
+
+  return await response.json();
+}
+
+// Usage - Load simulation results from a node
+loadNodeResults('my-rag-pipeline', 'chunking-123', { page: 1, pageSize: 20 }, 'YOUR_API_TOKEN')
+  .then(results => {
+    console.log(`Total simulation items: ${results.total}`);
+    console.log(`Simulation items on this page: ${results.items.length}`);
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+### Python
+
+```python
+import requests
+
+def load_node_results(flow_name, node_id, api_token, page=None, page_size=None):
+    url = f"https://{flow_name}.flows.graphorlm.com/nodes/results"
+    
+    payload = {"node_id": node_id}
+    if page is not None:
+        payload["page"] = page
+    if page_size is not None:
+        payload["page_size"] = page_size
+    
+    headers = {
+        "Authorization": f"Bearer {api_token}",
+        "Content-Type": "application/json"
+    }
+    
+    response = requests.post(url, headers=headers, json=payload)
+    response.raise_for_status()
+    
+    return response.json()
+
+# Usage - Load simulation results from a node
+try:
+    results = load_node_results("my-rag-pipeline", "chunking-123", "YOUR_API_TOKEN", page=1, page_size=20)
+    print(f"Total simulation items: {results['total']}")
+    print(f"Simulation items on this page: {len(results['items'])}")
+except Exception as e:
+    print(f"Error: {e}")
+```
+
+### cURL
+
+```bash
+curl -X POST "https://my-rag-pipeline.flows.graphorlm.com/nodes/results" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "node_id": "chunking-123",
+    "page": 1,
+    "page_size": 20
+  }'
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Description | Common Causes |
+|-------------|-------------|---------------|
+| 400 | Bad Request | Invalid node ID, malformed pagination parameters |
+| 401 | Unauthorized | Invalid or missing API token |
+| 404 | Not Found | Flow not found, node not found in the specified flow |
+| 500 | Internal Server Error | Node data loading failed, processing error |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+### Example Error Responses
+
+#### Flow Not Found
+```json
+{
+  "detail": "Flow with name 'my-rag-flow' not found"
+}
+```
+
+#### Node Not Found
+```json
+{
+  "detail": "Node with id 'invalid-node-id' not found in flow 'my-rag-flow'"
+}
+```
+
+#### Invalid Pagination
+```json
+{
+  "detail": "page_size must be between 1 and 100"
+}
+```
+
+#### Simulation Data Loading Failed
+```json
+{
+  "detail": "Failed to load node simulation data"
+}
+```
+
+## Use Cases
+
+### Simulation Data Analysis
+Examine the simulation output data from different node types to validate processing logic and data structures.
+
+### Debug Node Issues
+Identify problems in individual nodes by examining their simulation results before deploying the flow.
+
+### Testing and Validation
+Extract simulation data to test node configurations and validate processing logic before production deployment.
+
+## Best Practices
+
+- **Pagination**: Use appropriate page sizes (20-100 items) for optimal performance
+- **Error Handling**: Implement proper error handling for API failures
+- **Data Validation**: Validate expected data structures from different node types
+- **Security**: Secure API token storage and rotation
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="exclamation-triangle" title="Node Simulation Data Loading Failed">
+    **Solution**: If node simulation data loading fails:
+    - Verify the node ID exists in the specified flow
+    - Check that the node has been simulated and contains simulation data
+    - Ensure node dependencies are properly configured
+  </Accordion>
+  
+  <Accordion icon="list" title="Empty Simulation Results Returned">
+    **Solution**: For empty simulation result sets:
+    - Verify the node has been simulated and processed data
+    - Check if upstream nodes are providing input data for simulation
+    - Confirm the node configuration is correct
+  </Accordion>
+  
+  <Accordion icon="user-shield" title="Authentication Issues">
+    **Solution**: For authentication problems:
+    - Verify your API token is valid and not expired
+    - Check that the token has appropriate permissions for the flow
+    - Ensure the Authorization header is properly formatted
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After loading node simulation results, you can:
+
+<CardGroup cols={2}>
+  <Card
+    title="Analyze Simulation Results"
+    icon="chart-bar"
+    href="/guides/evaluation"
+  >
+    Analyze and validate your node simulation data before deployment
+  </Card>
+  <Card
+    title="Update Node Configuration"
+    icon="sliders"
+    href="/api-reference/flows/overview"
+  >
+    Optimize node settings based on simulation analysis
+  </Card>
+  <Card
+    title="Deploy Flow"
+    icon="rocket"
+    href="/api-reference/flows/deploy"
+  >
+    Deploy your flow after validating simulation results
+  </Card>
+  <Card
+    title="Flow Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
+  >
+    Learn about complete flow management and all node types
+  </Card>
+</CardGroup>
+
+The Load Node Results API provides access to simulation data from your flow nodes with pagination support, enabling testing, debugging, and validation of node configurations before deployment.
