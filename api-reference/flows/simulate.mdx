@@ -9,6 +9,10 @@ Simulate the execution of a complete flow using the current flow configuration (
 
 The Simulate Flow endpoint executes your complete flow using the current configuration data, allowing you to test the entire pipeline before deploying. This is essential for validating flow logic and ensuring proper functionality.
 
+<Warning>
+**Response Node Required**: Your flow must have a configured **Response Node** for simulation to work properly. The simulation executes the complete pipeline and returns results from the Response Node.
+</Warning>
+
 - **Method**: `POST`
 - **URL**: `https://{flow_name}.flows.graphorlm.com/simulate`
 - **Authentication**: Required (API Token)
@@ -256,6 +260,13 @@ curl -X POST "https://my-rag-pipeline.flows.graphorlm.com/simulate" \
 }
 ```
 
+#### Missing Response Node
+```json
+{
+  "detail": "Error simulating flow: No Response Node found in flow"
+}
+```
+
 ## Use Cases
 
 ### Pre-Deployment Testing
@@ -269,6 +280,7 @@ Test flow performance and response quality with current configuration settings.
 
 ## Best Practices
 
+- **Configure Response Node**: Ensure your flow has a properly configured Response Node to generate responses
 - **Test Before Deploy**: Always simulate flows before deploying to production
 - **Query Variety**: Test with different types of queries to ensure robustness
 - **Error Handling**: Implement proper error handling for simulation failures
@@ -280,8 +292,17 @@ Test flow performance and response quality with current configuration settings.
   <Accordion icon="exclamation-triangle" title="Flow Simulation Failed">
     **Solution**: If flow simulation fails:
     - Verify all nodes in the flow are properly configured
+    - **Ensure you have a Response Node configured in your flow**
     - Check that dataset nodes have valid file selections
     - Ensure node dependencies are correctly set up
+  </Accordion>
+  
+  <Accordion icon="robot" title="Missing Response Node">
+    **Solution**: For "No Response Node found" errors:
+    - Add a Response Node to your flow
+    - Configure the Response Node with a valid model and prompt
+    - Connect the Response Node properly to receive input from other nodes
+    - The Response Node generates the final answers for your flow
   </Accordion>
   
   <Accordion icon="list" title="No Results Returned">
