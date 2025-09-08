@@ -18,7 +18,7 @@ All sources are processed through GraphorLM's advanced AI pipeline to extract te
 
 ## API Endpoints Overview
 
-The Sources API consists of five main endpoints that provide complete document lifecycle management:
+The Sources API consists of seven main endpoints that provide complete document lifecycle management:
 
 <CardGroup cols={2}>
   <Card
@@ -29,6 +29,26 @@ The Sources API consists of five main endpoints that provide complete document l
     **POST** `https://sources.graphorlm.com/upload`
     
     Upload documents from your local system to GraphorLM for processing
+  </Card>
+  
+  <Card
+    title="Upload Source from URL"
+    icon="link"
+    href="/api-reference/sources/upload-url"
+  >
+    **POST** `https://sources.graphorlm.com/upload-url-source`
+    
+    Import documents by providing a publicly accessible URL
+  </Card>
+  
+  <Card
+    title="Upload Source from GitHub"
+    icon="code-branch"
+    href="/api-reference/sources/upload-github"
+  >
+    **POST** `https://sources.graphorlm.com/upload-github-source`
+    
+    Ingest content directly from a GitHub repository
   </Card>
   
   <Card

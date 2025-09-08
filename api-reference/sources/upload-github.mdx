@@ -1,0 +1,237 @@
+---
+title: 'Upload Source from GitHub'
+description: 'Ingest content from a GitHub repository into your project via the GraphorLM REST API'
+---
+
+The Upload Source from GitHub endpoint lets you ingest content directly from a GitHub repository into your GraphorLM project.
+
+## Endpoint Overview
+
+<CardGroup cols={2}>
+  <Card title="HTTP Method" icon="arrow-up">
+    **POST**
+  </Card>
+  <Card title="Endpoint URL" icon="link">
+    **https://sources.graphorlm.com/upload-github-source**
+  </Card>
+</CardGroup>
+
+## Authentication
+
+This endpoint requires authentication using an API token. Include your API token as a Bearer token in the Authorization header.
+
+<Note>
+  Learn how to create and manage API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request Format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | ✅ Yes |
+| `Content-Type` | `application/json` | ✅ Yes |
+
+### Request Body
+
+Send a JSON body with the following field:
+
+| Field | Type | Description | Required |
+|-------|------|-------------|----------|
+| `url` | string | The GitHub repository URL to ingest (e.g., `https://github.com/org/repo`) | ✅ Yes |
+
+### Repository Requirements
+
+<AccordionGroup>
+  <Accordion icon="link" title="Supported URLs">
+    - Public GitHub repositories
+    - HTTPS URLs (`https://github.com/...`)
+  </Accordion>
+  
+  <Accordion icon="shield" title="Access requirements">
+    - Only public repositories are supported via this endpoint
+    - Private repository ingestion is not supported
+  </Accordion>
+</AccordionGroup>
+
+## Response Format
+
+### Success Response (200 OK)
+
+```json
+{
+  "status": "Processing",
+  "message": "Source processed successfully",
+  "file_name": "https://github.com/org/repo",
+  "file_size": 0,
+  "file_type": "",
+  "file_source": "github",
+  "project_id": "550e8400-e29b-41d4-a716-446655440000",
+  "project_name": "My Project",
+  "partition_method": "basic"
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | string | Processing status (`New`, `Processing`, `Completed`, `Failed`, etc.) |
+| `message` | string | Human-readable status message |
+| `file_name` | string | The repository URL |
+| `file_size` | integer | Size in bytes (0 for initial GitHub record) |
+| `file_type` | string | Detected file type (when applicable) |
+| `file_source` | string | Source type (`github`) |
+| `project_id` | string | UUID of the project |
+| `project_name` | string | Name of the project |
+| `partition_method` | string | Document processing method used |
+
+## Code Examples
+
+### JavaScript/Node.js
+
+```javascript
+import fetch from 'node-fetch';
+
+const uploadGithubSource = async (apiToken, repoUrl) => {
+  const response = await fetch('https://sources.graphorlm.com/upload-github-source', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ url: repoUrl })
+  });
+
+  if (!response.ok) {
+    throw new Error(`GitHub upload failed: ${response.status} ${response.statusText}`);
+  }
+
+  const result = await response.json();
+  console.log('GitHub upload accepted:', result);
+  return result;
+};
+
+// Usage
+uploadGithubSource('grlm_your_api_token_here', 'https://github.com/org/repo');
+```
+
+### Python
+
+```python
+import requests
+
+def upload_github_source(api_token, repo_url):
+    endpoint = "https://sources.graphorlm.com/upload-github-source"
+    headers = {"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"}
+    payload = {"url": repo_url}
+
+    response = requests.post(endpoint, headers=headers, json=payload, timeout=300)
+    response.raise_for_status()
+    return response.json()
+
+# Usage
+result = upload_github_source("grlm_your_api_token_here", "https://github.com/org/repo")
+print("GitHub upload accepted:", result["file_name"])  # echoes the repo URL
+```
+
+### cURL
+
+```bash
+curl -X POST https://sources.graphorlm.com/upload-github-source \
+  -H "Authorization: Bearer grlm_your_api_token_here" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://github.com/org/repo"}'
+```
+
+## Error Responses
+
+### Common Error Codes
+
+| Status Code | Error Type | Description |
+|-------------|------------|-------------|
+| `400` | Bad Request | Invalid or missing URL, malformed JSON |
+| `401` | Unauthorized | Invalid or missing API token |
+| `403` | Forbidden | Access denied to the specified project |
+| `404` | Not Found | Project or source not found |
+| `500` | Internal Server Error | Error during repository processing |
+
+### Error Response Format
+
+```json
+{
+  "detail": "Invalid input: URL is required"
+}
+```
+
+### Error Examples
+
+<AccordionGroup>
+  <Accordion icon="link-slash" title="Invalid URL (400)">
+    ```json
+    { "detail": "Invalid input: URL is required" }
+    ```
+  </Accordion>
+  
+  <Accordion icon="key" title="Invalid API Token (401)">
+    ```json
+    { "detail": "Invalid authentication credentials" }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Document Processing
+
+After a successful request, GraphorLM begins processing the GitHub source in the background.
+
+### Processing Stages
+
+1. **Request Accepted** - The request is validated and scheduled
+2. **Repository Fetch** - Repository content is retrieved
+3. **Text Extraction** - Content is extracted and normalized
+4. **Structure Recognition** - Document elements are identified and classified
+5. **Ready for Use** - Content is available for chunking and retrieval
+
+<Note>
+  You can reprocess sources using the [Process Source](/api-reference/sources/process) endpoint after ingestion.
+</Note>
+
+## Best Practices
+
+- **Provide valid repository URLs**: Use the canonical HTTPS GitHub URL
+- **Public repositories only**: Private repositories are not supported
+- **Retry logic**: Implement retries for transient network issues
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Process Source"
+    icon="gears"
+    href="/api-reference/sources/process"
+  >
+    Reprocess with different parsing methods for optimal results
+  </Card>
+  <Card
+    title="List Sources"
+    icon="list"
+    href="/api-reference/sources/list"
+  >
+    Retrieve information about all uploaded documents in your project
+  </Card>
+  <Card
+    title="Chunking"
+    icon="file-dashed-line"
+    href="/guides/chunking"
+  >
+    Learn how to optimize document segmentation for your RAG pipeline
+  </Card>
+  <Card
+    title="Delete Source"
+    icon="trash"
+    href="/api-reference/sources/delete"
+  >
+    Remove documents that are no longer needed from your project
+  </Card>
+</CardGroup>
