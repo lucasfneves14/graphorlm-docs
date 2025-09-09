@@ -103,6 +103,19 @@ The request must be sent as JSON with the following fields:
   </Accordion>
 </AccordionGroup>
 
+## Processing Method Selection Guide
+
+### Method Comparison
+
+| Method | Speed | Text Parsing | Element Classification | Bounding Boxes | Best Use Cases | OCR |
+|--------|-------|--------------|------------------------|----------------|----------------|-----|
+| **Basic** | ⚡⚡⚡ | ⭐⭐ | ⭐⭐ | ✅ (limited) | Simple text files, testing | ❌ |
+| **OCR** | ⚡⚡ | ⭐⭐⭐ | ⭐⭐ | ✅ (images) | Scanned documents, images | ✅ |
+| **Hi-Res** | ⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ | Complex layouts, mixed content | ✅ |
+| **Hi-Res (fine-tuned)** | ⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ | Premium accuracy needed | ✅ |
+| **GraphorLM** | ⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ | Custom workflows | ✅ |
+| **MAI** | ⚡⚡⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ❌ | Text precision without layout metadata | ✅ |
+
 ## Request Example
 
 ```json
@@ -363,19 +376,6 @@ try {
   </Accordion>
 </AccordionGroup>
 
-## Processing Method Selection Guide
-
-### Method Comparison
-
-| Method | Speed | Text Parsing | Element Classification | Bounding Boxes | Best Use Cases | OCR |
-|--------|-------|--------------|------------------------|----------------|----------------|-----|
-| **Basic** | ⚡⚡⚡ | ⭐⭐ | ⭐⭐ | ✅ (limited) | Simple text files, testing | ❌ |
-| **OCR** | ⚡⚡ | ⭐⭐⭐ | ⭐⭐ | ✅ (images) | Scanned documents, images | ✅ |
-| **Hi-Res** | ⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ | Complex layouts, mixed content | ✅ |
-| **Hi-Res (fine-tuned)** | ⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ | Premium accuracy needed | ✅ |
-| **GraphorLM** | ⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ | Custom workflows | ✅ |
-| **MAI** | ⚡⚡⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ❌ | Text precision without layout metadata | ✅ |
-
 ### When to Reprocess
 
 <AccordionGroup>
@@ -419,7 +419,7 @@ try {
 ### Processing Strategy
 
 - **Start with Basic**: For testing and simple documents
-- **Upgrade gradually**: Move to OCR → Hi-Res → Hi-Res (fine-tuned) based on needs
+- **Upgrade gradually**: Move to OCR → Hi-Res → Hi-Res (fine-tuned) -> GraphorLM -> MAI based on needs
 - **Monitor results**: Use document preview to evaluate processing quality
 - **Consider efficiency vs. quality**: Advanced methods take longer but provide better results
 
