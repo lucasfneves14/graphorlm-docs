@@ -125,7 +125,7 @@ GraphorLM offers multiple processing methods, selectable via the [Process Source
     - Balances speed and accuracy
   </Accordion>
   
-  <Accordion icon="brain" title="YOLOX Method">
+  <Accordion icon="brain" title="Hi-Res Method">
     **Speed**: ⚡ **Accuracy**: ⭐⭐⭐⭐
     
     - AI-powered document structure recognition
@@ -134,13 +134,33 @@ GraphorLM offers multiple processing methods, selectable via the [Process Source
     - Recommended for complex documents
   </Accordion>
   
-  <Accordion icon="sparkles" title="Advanced Method">
+  <Accordion icon="sparkles" title="Hi-Res (fine-tuned) Method">
     **Speed**: ⚡ **Accuracy**: ⭐⭐⭐⭐⭐
     
     - Premium fine-tuned AI models
     - Highest accuracy for specialized documents
     - Advanced structure recognition
     - Best-in-class text extraction
+  </Accordion>
+  
+  <Accordion icon="project-diagram" title="GraphorLM (Beta) Method">
+    **Speed**: ⚡ **Accuracy**: ⭐⭐⭐⭐
+    
+    - Advanced graph-based RAG partitioning method
+    - Utilizes knowledge graph structures for content organization
+    - Optimized for complex document relationships and semantic understanding
+  </Accordion>
+  
+  <Accordion icon="bars" title="MAI Method">
+    **Speed**: ⚡⚡⚡ **Accuracy**: ⭐⭐⭐⭐⭐
+    
+    - Model-assisted, text-focused partitioning
+    - No bounding boxes or page layout metadata (no bbox)
+    - Ideal when you only need clean text and element types
+    - Performs page annotation (page-level labels and context)
+    - Performs document annotation (document-level labels and summaries)
+    - Performs image annotation when images are present in the document
+    - Best-in-class text parsing; element classification quality is limited
   </Accordion>
 </AccordionGroup>
 
@@ -189,16 +209,16 @@ graph LR
     A[Upload with Basic] --> B[Review Results]
     B --> C{Quality Good?}
     C -->|Yes| D[Use Document]
-    C -->|No| E[Reprocess with YOLOX]
+    C -->|No| E[Reprocess with Hi-Res]
     E --> F[Review Again]
     F --> G{Better?}
     G -->|Yes| D
-    G -->|No| H[Try Advanced Method]
+    G -->|No| H[Try Hi-Res (fine-tuned) Method]
 ```
 
 1. Start with Basic method for speed
 2. Review extraction quality
-3. Upgrade to YOLOX or Advanced if needed
+3. Upgrade to Hi-Res or Hi-Res (fine-tuned) if needed
 4. Use best results in your application
 
 ### Document Lifecycle Management
@@ -236,12 +256,12 @@ The Sources API supports a wide range of document formats:
 
 | File Type | Recommended Method | Notes |
 |-----------|-------------------|-------|
-| Clean PDFs | Basic or OCR | Fast processing for digital PDFs |
-| Scanned PDFs | OCR or YOLOX | OCR needed for text extraction |
-| Complex Documents | YOLOX or Advanced | Better structure recognition |
-| Images with Text | OCR or YOLOX | Requires OCR for text extraction |
-| Spreadsheets | Basic or YOLOX | YOLOX better for complex tables |
-| Presentations | YOLOX or Advanced | Better slide layout recognition |
+| Clean PDFs | Basic, OCR, or MAI | Fast processing for digital PDFs; use MAI for text-only without layout |
+| Scanned PDFs | OCR or Hi-Res | OCR needed for text extraction |
+| Complex Documents | Hi-Res or Hi-Res (fine-tuned) | Better structure recognition; consider GraphorLM (Beta) for semantic relationships |
+| Images with Text | OCR or Hi-Res | Requires OCR for text extraction |
+| Spreadsheets | Basic or Hi-Res | Hi-Res better for complex tables |
+| Presentations | Hi-Res or Hi-Res (fine-tuned) | Better slide layout recognition |
 
 ## Rate Limits and Best Practices
 
@@ -269,8 +289,10 @@ The Sources API supports a wide range of document formats:
     **Method Selection**:
     - Start with Basic for testing and simple documents
     - Use OCR for scanned documents and images
-    - Choose YOLOX for complex layouts and tables
-    - Reserve Advanced for premium accuracy needs
+    - Choose Hi-Res for complex layouts and tables
+    - Reserve Hi-Res (fine-tuned) for premium accuracy needs
+    - Prefer MAI when you don't need bounding boxes/layout metadata and want speed with top text parsing
+    - Use GraphorLM (Beta) for enhanced semantic relationships and graph-based organization
     
     **Quality Monitoring**:
     - Review processing results in GraphorLM dashboard
@@ -476,7 +498,7 @@ if status == 'completed':
         upload_result['file_name'], 
         "yolox"
     )
-    print(f"Reprocessed with YOLOX: {process_result['partition_method']}")
+    print(f"Reprocessed with Hi-Res: {process_result['partition_method']}")
 ```
 
 ### Document Quality Assessment Pipeline
@@ -489,7 +511,7 @@ class DocumentQualityPipeline {
   }
 
   async assessAndOptimize(fileName) {
-    const methods = ['basic', 'ocr', 'yolox', 'advanced'];
+    const methods = ['basic', 'ocr', 'yolox', 'advanced', 'graphorlm', 'mai'];
     let bestResult = null;
     let bestScore = 0;
 
@@ -533,7 +555,9 @@ class DocumentQualityPipeline {
       'basic': 0.1,
       'ocr': 0.2,
       'yolox': 0.3,
-      'advanced': 0.4
+      'advanced': 0.4,
+      'graphorlm': 0.4,
+      'mai': 0.4
     };
     score += methodScores[result.partition_method] || 0;
     

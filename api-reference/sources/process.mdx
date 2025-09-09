@@ -63,16 +63,16 @@ The request must be sent as JSON with the following fields:
     - Balances processing speed and accuracy
   </Accordion>
   
-  <Accordion icon="brain" title="YOLOX">
+  <Accordion icon="brain" title="Hi-Res">
     **Best for**: Complex documents with varied layouts
     
     - OCR-based text extraction
-    - AI-powered document structure classification using YOLOX model
+    - AI-powered document structure classification using Hi-Res model
     - Better recognition of tables, figures, and document elements
     - Enhanced accuracy for complex layouts
   </Accordion>
   
-  <Accordion icon="sparkles" title="Advanced">
+  <Accordion icon="sparkles" title="Hi-Res (fine-tuned)">
     **Best for**: Premium accuracy, specialized documents
     
     - OCR-based text extraction
@@ -89,6 +89,18 @@ The request must be sent as JSON with the following fields:
     - Custom document analysis pipeline
     - Advanced document understanding capabilities
   </Accordion>
+  
+  <Accordion icon="bars" title="MAI">
+    **Best for**: Fast text-focused processing without layout metadata
+    
+    - Model-assisted partitioning focused on textual content
+    - Does not output bounding boxes or page layout (no bbox)
+    - Lightweight and faster when you only need clean text and element types
+    - Performs page annotation (page-level labels and context)
+    - Performs document annotation (document-level labels and summaries)
+    - Performs image annotation when images are present in the document
+    - Best-in-class text parsing quality; element classification is limited
+  </Accordion>
 </AccordionGroup>
 
 ## Request Example
@@ -101,7 +113,7 @@ The request must be sent as JSON with the following fields:
 ```
 
 <Warning>
-Processing can take several minutes depending on document size, complexity, and the selected processing method. Advanced methods like YOLOX and Advanced typically require more time for analysis.
+Processing can take several minutes depending on document size, complexity, and the selected processing method. Advanced methods like Hi-Res, Hi-Res (fine-tuned), GraphorLM and MAI typically require more time for analysis.
 </Warning>
 
 ## Response Format
@@ -347,7 +359,7 @@ try {
     
     **Cause**: Unsupported or invalid partition method
     
-    **Solution**: Use one of: basic, ocr, yolox, advanced, graphorlm
+    **Solution**: Use one of: basic, ocr, yolox, advanced, graphorlm, mai
   </Accordion>
 </AccordionGroup>
 
@@ -355,13 +367,14 @@ try {
 
 ### Method Comparison
 
-| Method | Speed | Accuracy | Best Use Cases | OCR | AI Classification |
-|--------|-------|----------|----------------|-----|-------------------|
-| **Basic** | ⚡⚡⚡ | ⭐⭐ | Simple text files, testing | ❌ | ❌ |
-| **OCR** | ⚡⚡ | ⭐⭐⭐ | Scanned documents, images | ✅ | ❌ |
-| **YOLOX** | ⚡ | ⭐⭐⭐⭐ | Complex layouts, mixed content | ✅ | ✅ |
-| **Advanced** | ⚡ | ⭐⭐⭐⭐⭐ | Premium accuracy needed | ✅ | ✅ Premium |
-| **GraphorLM** | ⚡ | ⭐⭐⭐⭐ | Custom workflows | ✅ | ✅ Custom |
+| Method | Speed | Text Parsing | Element Classification | Bounding Boxes | Best Use Cases | OCR |
+|--------|-------|--------------|------------------------|----------------|----------------|-----|
+| **Basic** | ⚡⚡⚡ | ⭐⭐ | ⭐⭐ | ✅ (limited) | Simple text files, testing | ❌ |
+| **OCR** | ⚡⚡ | ⭐⭐⭐ | ⭐⭐ | ✅ (images) | Scanned documents, images | ✅ |
+| **Hi-Res** | ⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ | Complex layouts, mixed content | ✅ |
+| **Hi-Res (fine-tuned)** | ⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ | Premium accuracy needed | ✅ |
+| **GraphorLM** | ⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ | Custom workflows | ✅ |
+| **MAI** | ⚡⚡⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ❌ | Text precision without layout metadata | ✅ |
 
 ### When to Reprocess
 
@@ -371,31 +384,33 @@ try {
     
     **Recommended methods**: 
     - OCR for scanned documents
-    - YOLOX or Advanced for complex layouts
+    - Hi-Res or Hi-Res (fine-tuned) for complex layouts
+    - MAI for text-only documents when bounding boxes are not required
   </Accordion>
   
   <Accordion icon="table" title="Table detection issues">
     **Symptoms**: Tables not properly recognized, merged cells, structure lost
     
     **Recommended methods**:
-    - YOLOX for better table detection
-    - Advanced for complex table structures
+    - Hi-Res for better table detection
+    - Hi-Res (fine-tuned) for complex table structures
   </Accordion>
   
   <Accordion icon="image" title="Image and figure handling">
     **Symptoms**: Missing captions, poor figure recognition
     
     **Recommended methods**:
-    - YOLOX for figure detection
-    - Advanced for comprehensive image analysis
+    - Hi-Res for figure detection
+    - Hi-Res (fine-tuned) for comprehensive image analysis
   </Accordion>
   
   <Accordion icon="list" title="Document structure problems">
     **Symptoms**: Headers/footers mixed with content, poor section detection
     
     **Recommended methods**:
-    - YOLOX for structure recognition
-    - Advanced for complex document hierarchies
+    - Hi-Res for structure recognition
+    - Hi-Res (fine-tuned) for complex document hierarchies
+    - GraphorLM for enhanced semantic structure and relationships
   </Accordion>
 </AccordionGroup>
 
@@ -404,7 +419,7 @@ try {
 ### Processing Strategy
 
 - **Start with Basic**: For testing and simple documents
-- **Upgrade gradually**: Move to OCR → YOLOX → Advanced based on needs
+- **Upgrade gradually**: Move to OCR → Hi-Res → Hi-Res (fine-tuned) based on needs
 - **Monitor results**: Use document preview to evaluate processing quality
 - **Consider efficiency vs. quality**: Advanced methods take longer but provide better results
 
@@ -430,7 +445,7 @@ After processing, evaluate the results by:
 ```python
 def improve_processing_quality(api_token, file_name):
     """Automatically upgrade processing method for better quality."""
-    methods = ['basic', 'ocr', 'yolox', 'advanced']
+    methods = ['basic', 'ocr', 'yolox', 'advanced', 'graphorlm', 'mai']
     
     for method in methods:
         try:
@@ -589,7 +604,7 @@ results = process_with_progress('grlm_your_token', processing_queue)
     **Causes**: Method not suitable for document type, or complex layout
     
     **Solutions**:
-    - Upgrade to YOLOX or Advanced method
+    - Upgrade to Hi-Res or Hi-Res (fine-tuned) method
     - Ensure document quality is good
     - Consider pre-processing the document
     - Review processing results in the dashboard
