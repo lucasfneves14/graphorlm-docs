@@ -1,9 +1,9 @@
 ---
-title: 'Upload Source from URL'
-description: 'Import documents into your project by providing a URL via the GraphorLM REST API'
+title: 'Scrape Web Page by URL'
+description: 'Ingest the textual content of a public web page by providing its URL'
 ---
 
-The Upload Source from URL endpoint lets you ingest documents into your GraphorLM project by providing a URL. This is useful for importing web pages, publicly accessible files, or enabling automated ingestion workflows.
+Use this endpoint to ingest content by scraping a public web page. It fetches the page, extracts text, and creates a source in your project for downstream processing.
 
 ## Endpoint Overview
 
@@ -39,16 +39,15 @@ Send a JSON body with the following fields:
 
 | Field | Type | Description | Required |
 |-------|------|-------------|----------|
-| `url` | string | The URL of the source to ingest (web page or file) | ✅ Yes |
+| `url` | string | The URL of the web page to scrape | ✅ Yes |
 | `crawlUrls` | boolean | Whether to crawl and ingest links from the given URL | No (default: `false`) |
 
 ### URL Requirements
 
 <AccordionGroup>
   <Accordion icon="link" title="Supported URL types">
-    - Publicly accessible document URLs (e.g., PDF, DOCX, HTML)
     - Public web pages
-    - Direct file URLs
+    - Pages that render primary content server-side and are reachable without interaction
   </Accordion>
   
   <Accordion icon="shield" title="Access requirements">
@@ -56,6 +55,10 @@ Send a JSON body with the following fields:
     - Authentication-protected pages are not supported by this endpoint
   </Accordion>
 </AccordionGroup>
+
+<Note>
+  This endpoint scrapes web pages. To ingest files (PDF, DOCX, etc.), use the [Upload File](/api-reference/sources/upload) endpoint.
+</Note>
 
 ## Response Format
 
@@ -65,7 +68,7 @@ Send a JSON body with the following fields:
 {
   "status": "Processing",
   "message": "Source processed successfully",
-  "file_name": "https://example.com/doc.pdf",
+  "file_name": "https://example.com/",
   "file_size": 0,
   "file_type": "",
   "file_source": "url",
@@ -83,7 +86,7 @@ Send a JSON body with the following fields:
 | `message` | string | Human-readable status message |
 | `file_name` | string | Name or URL for the ingested source |
 | `file_size` | integer | Size in bytes (0 for URL-based initial record) |
-| `file_type` | string | Detected file type/extension when applicable |
+| `file_type` | string | Detected type when applicable |
 | `file_source` | string | Source type (`url`) |
 | `project_id` | string | UUID of the project |
 | `project_name` | string | Name of the project |
@@ -115,8 +118,8 @@ const uploadUrlSource = async (apiToken, url, crawlUrls = false) => {
   return result;
 };
 
-// Usage
-uploadUrlSource('grlm_your_api_token_here', 'https://example.com/doc.pdf');
+// Usage (scrapes the page content)
+uploadUrlSource('grlm_your_api_token_here', 'https://example.com/');
 ```
 
 ### Python
@@ -133,9 +136,9 @@ def upload_url_source(api_token, url, crawl_urls=False):
     response.raise_for_status()
     return response.json()
 
-# Usage
-result = upload_url_source("grlm_your_api_token_here", "https://example.com/doc.pdf")
-print("URL upload accepted:", result["file_name"])  # typically echoes the URL
+# Usage (scrapes the page content)
+result = upload_url_source("grlm_your_api_token_here", "https://example.com")
+print("URL scraping accepted:", result["file_name"])  # typically echoes the URL
 ```
 
 ### cURL
@@ -144,7 +147,7 @@ print("URL upload accepted:", result["file_name"])  # typically echoes the URL
 curl -X POST https://sources.graphorlm.com/upload-url-source \
   -H "Authorization: Bearer grlm_your_api_token_here" \
   -H "Content-Type: application/json" \
-  -d '{"url":"https://example.com/doc.pdf","crawlUrls":false}'
+  -d '{"url":"https://example.com/","crawlUrls":false}'
 ```
 
 ## Error Responses
@@ -185,19 +188,19 @@ curl -X POST https://sources.graphorlm.com/upload-url-source \
 
 ## Document Processing
 
-After a successful request, GraphorLM begins processing the URL source in the background.
+After a successful request, GraphorLM begins fetching and scraping the web page in the background.
 
 ### Processing Stages
 
 1. **URL Accepted** - The request is validated and scheduled
-2. **Content Retrieval** - The URL content is fetched
-3. **Text Extraction** - Content is extracted and normalized
+2. **Content Retrieval** - The page is fetched over HTTPS
+3. **Text Extraction** - Visible text is extracted and normalized
 4. **Structure Recognition** - Document elements are identified and classified
 5. **Ready for Use** - Document is available for chunking and retrieval
 
 ### Processing Methods
 
-The system selects the optimal processing method based on the content type. You can reprocess with a different method after ingestion.
+The system selects the optimal processing method based on the detected content. You can reprocess with a different method after ingestion.
 
 <Note>
   You can reprocess sources using the [Process Source](/api-reference/sources/process) endpoint after ingestion.
@@ -205,8 +208,9 @@ The system selects the optimal processing method based on the content type. You 
 
 ## Best Practices
 
-- **Provide reachable URLs**: Ensure the URL is publicly accessible over HTTPS
+- **Provide reachable URLs**: Ensure the page is publicly accessible over HTTPS
 - **Disable crawling when unneeded**: Set `crawlUrls` to `false` to ingest only the provided URL
+- **Respect site policies**: Only scrape pages you are permitted to and consider website rate limits
 - **Retry logic**: Implement retries for transient network issues
 
 ## Next Steps
@@ -225,6 +229,13 @@ The system selects the optimal processing method based on the content type. You 
     href="/api-reference/sources/list"
   >
     Retrieve information about all uploaded documents in your project
+  </Card>
+  <Card
+    title="Upload File"
+    icon="arrow-up"
+    href="/api-reference/sources/upload"
+  >
+    Ingest local files (PDF, DOCX, etc.)
   </Card>
   <Card
     title="Chunking"
