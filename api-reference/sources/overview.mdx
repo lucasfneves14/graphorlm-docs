@@ -161,6 +161,7 @@ GraphorLM offers multiple processing methods, selectable via the [Process Source
     - Performs document annotation (document-level labels and summaries)
     - Performs image annotation when images are present in the document
     - Best-in-class text parsing; element classification quality is limited
+    - Recommended for multi-source RAG due to page and document annotations
   </Accordion>
 </AccordionGroup>
 
@@ -262,6 +263,7 @@ The Sources API supports a wide range of document formats:
 | Images with Text | OCR or Hi-Res | Requires OCR for text extraction |
 | Spreadsheets | Basic or Hi-Res | Hi-Res better for complex tables |
 | Presentations | Hi-Res or Hi-Res (fine-tuned) | Better slide layout recognition |
+| Multi-source RAG | MAI | Page and document annotations help unify heterogeneous sources |
 
 ## Rate Limits and Best Practices
 
@@ -293,6 +295,7 @@ The Sources API supports a wide range of document formats:
     - Reserve Hi-Res (fine-tuned) for premium accuracy needs
     - Prefer MAI when you don't need bounding boxes/layout metadata and want speed with top text parsing
     - Use GraphorLM (Beta) for enhanced semantic relationships and graph-based organization
+    - For multi-source RAG across heterogeneous sources, prefer MAI because it provides page and document annotations
     
     **Quality Monitoring**:
     - Review processing results in GraphorLM dashboard

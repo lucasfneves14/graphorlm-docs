@@ -54,7 +54,7 @@ The request must be sent as JSON with the following fields:
     - Recommended for testing and development
   </Accordion>
   
-  <Accordion icon="eye" title="OCR">
+  <Accordion icon="eye" title="OCR Only">
     **Best for**: Scanned documents, images with text
     
     - Utilizes OCR for text extraction and parsing
@@ -103,6 +103,19 @@ The request must be sent as JSON with the following fields:
   </Accordion>
 </AccordionGroup>
 
+### `partition_method` values
+
+Use these values for the `partition_method` field when calling the endpoint:
+
+| Method | partition_method |
+|--------|------------------|
+| Basic | basic |
+| OCR Only | ocr |
+| Hi-Res | yolox |
+| Hi-Res (fine-tuned) | advanced |
+| GraphorLM | graphorlm |
+| MAI | mai |
+
 ## Processing Method Selection Guide
 
 ### Method Comparison
@@ -110,7 +123,7 @@ The request must be sent as JSON with the following fields:
 | Method | Speed | Text Parsing | Element Classification | Bounding Boxes | Best Use Cases | OCR |
 |--------|-------|--------------|------------------------|----------------|----------------|-----|
 | **Basic** | ⚡⚡⚡ | ⭐⭐ | ⭐⭐ | ✅ (limited) | Simple text files, testing | ❌ |
-| **OCR** | ⚡⚡ | ⭐⭐⭐ | ⭐⭐ | ✅ (images) | Scanned documents, images | ✅ |
+| **OCR Only** | ⚡⚡ | ⭐⭐⭐ | ⭐⭐ | ✅ (images) | Scanned documents, images | ✅ |
 | **Hi-Res** | ⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ | Complex layouts, mixed content | ✅ |
 | **Hi-Res (fine-tuned)** | ⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ | Premium accuracy needed | ✅ |
 | **GraphorLM** | ⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ | Custom workflows | ✅ |
