@@ -129,7 +129,7 @@ GraphorLM offers five parsing and classification methods to optimize document pr
 - Suitable for simple text documents with clear structure
 - Fastest processing option
 
-### OCR Only
+### OCR
 
 - Utilizes OCR for text extraction and parsing
 - Classifies document elements using heuristic methods
@@ -143,14 +143,14 @@ GraphorLM offers five parsing and classification methods to optimize document pr
 - Better recognition of document structure and components
 - Improved accuracy for complex documents
 
-### Hi-Res (fine-tuned)
+### Hi-Res FT
 
 - Utilizes OCR for text extraction and parsing
 - Classifies document elements using a fine-tuned model
 - Highest accuracy for document structure recognition
 - Optimized for specialized document types
 
-### GraphorLM (Beta)
+### GraphorLM
 
 - Advanced graph-based RAG partitioning method
 - Utilizes knowledge graph structures for content organization
@@ -280,8 +280,8 @@ To optimize data ingestion results:
 - **Basic**: Use for simple text documents and fastest processing
 - **OCR**: Choose for scanned documents and images
 - **Hi-Res**: Ideal for complex layouts and mixed content types
-- **Hi-Res (fine-tuned)**: Best for specialized document types requiring highest accuracy
-- **GraphorLM (Beta)**: Experiment with for complex document relationships and advanced semantic understanding
+- **Hi-Res FT**: Best for specialized document types requiring highest accuracy
+- **GraphorLM**: Experiment with for complex document relationships and advanced semantic understanding
 - **MAI**: Prefer when you don't need bounding boxes/layout metadata and want speed and text precision
 
 ## Troubleshooting
@@ -291,14 +291,14 @@ Common issues and solutions:
 <AccordionGroup>
   <Accordion icon="file-excel" title="Poor OCR quality">
     For low-quality scanned documents, try:
-    - Using OCR Only, Hi-Res, Hi-Res (tuned), or GraphorLM methods instead of Basic
+    - Using OCR, Hi-Res, Hi-Res (tuned), or GraphorLM methods instead of Basic
     - Breaking large documents into smaller files
     - Improving document quality before upload if possible
     - Consider MAI for best text parsing and speed when you don't need bounding boxes
   </Accordion>
   <Accordion icon="table" title="Table extraction problems">
     If tables aren't being properly recognized:
-    - Use Hi-Res, Hi-Res (fine-tuned), or GraphorLM method for better table detection
+    - Use Hi-Res, Hi-Res FT, or GraphorLM method for better table detection
     - Convert complex tables to simpler formats before upload
   </Accordion>
   <Accordion icon="language" title="Multi-language document issues">
@@ -310,7 +310,7 @@ Common issues and solutions:
   <Accordion icon="gauge" title="Slow processing time">
     If processing is taking too long:
     - Prefer MAI when you don't need bounding boxes or layout metadata to reduce latency
-    - Avoid using Hi-Res (fine-tuned) unless you need its layout accuracy
+    - Avoid using Hi-Res FT unless you need its layout accuracy
   </Accordion>
   <Accordion icon="github" title="GitHub repository access issues">
     If you're having trouble importing from GitHub:

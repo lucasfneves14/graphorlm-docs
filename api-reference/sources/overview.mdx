@@ -134,7 +134,7 @@ GraphorLM offers multiple processing methods, selectable via the [Process Source
     - Recommended for complex documents
   </Accordion>
   
-  <Accordion icon="sparkles" title="Hi-Res (fine-tuned) Method">
+  <Accordion icon="sparkles" title="Hi-Res FT Method">
     **Speed**: ⚡ **Accuracy**: ⭐⭐⭐⭐⭐
     
     - Premium fine-tuned AI models
@@ -143,7 +143,7 @@ GraphorLM offers multiple processing methods, selectable via the [Process Source
     - Best-in-class text extraction
   </Accordion>
   
-  <Accordion icon="project-diagram" title="GraphorLM (Beta) Method">
+  <Accordion icon="project-diagram" title="GraphorLM Method">
     **Speed**: ⚡ **Accuracy**: ⭐⭐⭐⭐
     
     - Advanced graph-based RAG partitioning method
@@ -219,7 +219,7 @@ graph LR
 
 1. Start with Basic method for speed
 2. Review extraction quality
-3. Upgrade to Hi-Res or Hi-Res (fine-tuned) if needed
+3. Upgrade to Hi-Res or Hi-Res FT if needed
 4. Use best results in your application
 
 ### Document Lifecycle Management
@@ -259,10 +259,10 @@ The Sources API supports a wide range of document formats:
 |-----------|-------------------|-------|
 | Clean PDFs | Basic, OCR, or MAI | Fast processing for digital PDFs; use MAI for text-only without layout |
 | Scanned PDFs | OCR or Hi-Res | OCR needed for text extraction |
-| Complex Documents | Hi-Res or Hi-Res (fine-tuned) | Better structure recognition; consider GraphorLM (Beta) for semantic relationships |
+| Complex Documents | Hi-Res or Hi-Res FT | Better structure recognition; consider GraphorLM for semantic relationships |
 | Images with Text | OCR or Hi-Res | Requires OCR for text extraction |
 | Spreadsheets | Basic or Hi-Res | Hi-Res better for complex tables |
-| Presentations | Hi-Res or Hi-Res (fine-tuned) | Better slide layout recognition |
+| Presentations | Hi-Res or Hi-Res FT | Better slide layout recognition |
 | Multi-source RAG | MAI | Page and document annotations help unify heterogeneous sources |
 
 ## Rate Limits and Best Practices
@@ -292,9 +292,9 @@ The Sources API supports a wide range of document formats:
     - Start with Basic for testing and simple documents
     - Use OCR for scanned documents and images
     - Choose Hi-Res for complex layouts and tables
-    - Reserve Hi-Res (fine-tuned) for premium accuracy needs
+    - Reserve Hi-Res FT for premium accuracy needs
     - Prefer MAI when you don't need bounding boxes/layout metadata and want speed with top text parsing
-    - Use GraphorLM (Beta) for enhanced semantic relationships and graph-based organization
+    - Use GraphorLM for enhanced semantic relationships and graph-based organization
     - For multi-source RAG across heterogeneous sources, prefer MAI because it provides page and document annotations
     
     **Quality Monitoring**:

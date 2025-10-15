@@ -54,7 +54,7 @@ The request must be sent as JSON with the following fields:
     - Recommended for testing and development
   </Accordion>
   
-  <Accordion icon="eye" title="OCR Only">
+  <Accordion icon="eye" title="OCR">
     **Best for**: Scanned documents, images with text
     
     - Utilizes OCR for text extraction and parsing
@@ -72,7 +72,7 @@ The request must be sent as JSON with the following fields:
     - Enhanced accuracy for complex layouts
   </Accordion>
   
-  <Accordion icon="sparkles" title="Hi-Res (fine-tuned)">
+  <Accordion icon="sparkles" title="Hi-Res FT">
     **Best for**: Premium accuracy, specialized documents
     
     - OCR-based text extraction
@@ -110,9 +110,9 @@ Use these values for the `partition_method` field when calling the endpoint:
 | Method | partition_method |
 |--------|------------------|
 | Basic | basic |
-| OCR Only | ocr |
+| OCR | ocr |
 | Hi-Res | yolox |
-| Hi-Res (fine-tuned) | advanced |
+| Hi-Res FT | advanced |
 | GraphorLM | graphorlm |
 | MAI | mai |
 
@@ -123,9 +123,9 @@ Use these values for the `partition_method` field when calling the endpoint:
 | Method | Speed | Text Parsing | Element Classification | Bounding Boxes | Best Use Cases | OCR |
 |--------|-------|--------------|------------------------|----------------|----------------|-----|
 | **Basic** | ⚡⚡⚡ | ⭐⭐ | ⭐⭐ | ✅ (limited) | Simple text files, testing | ❌ |
-| **OCR Only** | ⚡⚡ | ⭐⭐⭐ | ⭐⭐ | ✅ (images) | Scanned documents, images | ✅ |
+| **OCR** | ⚡⚡ | ⭐⭐⭐ | ⭐⭐ | ✅ (images) | Scanned documents, images | ✅ |
 | **Hi-Res** | ⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ | Complex layouts, mixed content | ✅ |
-| **Hi-Res (fine-tuned)** | ⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ | Premium accuracy needed | ✅ |
+| **Hi-Res FT** | ⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ | Premium accuracy needed | ✅ |
 | **GraphorLM** | ⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ | Custom workflows | ✅ |
 | **MAI** | ⚡⚡⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ❌ | Text precision without layout metadata | ✅ |
 
@@ -139,7 +139,7 @@ Use these values for the `partition_method` field when calling the endpoint:
 ```
 
 <Warning>
-Processing can take several minutes depending on document size, complexity, and the selected processing method. Advanced methods like Hi-Res, Hi-Res (fine-tuned), GraphorLM and MAI typically require more time for analysis.
+Processing can take several minutes depending on document size, complexity, and the selected processing method. Advanced methods like Hi-Res, Hi-Res FT, GraphorLM and MAI typically require more time for analysis.
 </Warning>
 
 ## Response Format
@@ -397,7 +397,7 @@ try {
     
     **Recommended methods**: 
     - OCR for scanned documents
-    - Hi-Res or Hi-Res (fine-tuned) for complex layouts
+    - Hi-Res or Hi-Res FT for complex layouts
     - MAI for text-only documents when bounding boxes are not required
   </Accordion>
   
@@ -406,7 +406,7 @@ try {
     
     **Recommended methods**:
     - Hi-Res for better table detection
-    - Hi-Res (fine-tuned) for complex table structures
+    - Hi-Res FT for complex table structures
   </Accordion>
   
   <Accordion icon="image" title="Image and figure handling">
@@ -414,7 +414,7 @@ try {
     
     **Recommended methods**:
     - Hi-Res for figure detection
-    - Hi-Res (fine-tuned) for comprehensive image analysis
+    - Hi-Res FT for comprehensive image analysis
   </Accordion>
   
   <Accordion icon="list" title="Document structure problems">
@@ -422,7 +422,7 @@ try {
     
     **Recommended methods**:
     - Hi-Res for structure recognition
-    - Hi-Res (fine-tuned) for complex document hierarchies
+    - Hi-Res FT for complex document hierarchies
     - GraphorLM for enhanced semantic structure and relationships
   </Accordion>
 </AccordionGroup>
@@ -432,7 +432,7 @@ try {
 ### Processing Strategy
 
 - **Start with Basic**: For testing and simple documents
-- **Upgrade gradually**: Move to OCR → Hi-Res → Hi-Res (fine-tuned) -> GraphorLM -> MAI based on needs
+- **Upgrade gradually**: Move to OCR → Hi-Res → Hi-Res FT -> GraphorLM -> MAI based on needs
 - **Monitor results**: Use document preview to evaluate processing quality
 - **Consider efficiency vs. quality**: Advanced methods take longer but provide better results
 
@@ -617,7 +617,7 @@ results = process_with_progress('grlm_your_token', processing_queue)
     **Causes**: Method not suitable for document type, or complex layout
     
     **Solutions**:
-    - Upgrade to Hi-Res or Hi-Res (fine-tuned) method
+    - Upgrade to Hi-Res or Hi-Res FT method
     - Ensure document quality is good
     - Consider pre-processing the document
     - Review processing results in the dashboard
