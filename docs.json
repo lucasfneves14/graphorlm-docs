@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "GraphorLM Docs",
+  "name": "Graphor Docs",
   "colors": {
     "primary": "#cc6ca7",
     "light": "#cc6ca7",

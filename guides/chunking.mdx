@@ -3,7 +3,7 @@ title: 'Chunking'
 description: 'Learn how to optimize document segmentation for maximum retrieval relevance'
 ---
 
-This guide explains document chunking in GraphorLM - the critical process of dividing your documents into optimally-sized segments for retrieval. You'll learn about different chunking strategies, how to configure the chunking component in your RAG pipeline, and best practices for improving retrieval quality through effective document segmentation.
+This guide explains document chunking in Graphor - the critical process of dividing your documents into optimally-sized segments for retrieval. You'll learn about different chunking strategies, how to configure the chunking component in your RAG pipeline, and best practices for improving retrieval quality through effective document segmentation.
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
@@ -17,7 +17,7 @@ This guide explains document chunking in GraphorLM - the critical process of div
 Effective document chunking is critical for RAG pipeline performance. This guide explains:
 
 1. What chunking is and why it matters
-2. GraphorLM's chunking strategies and capabilities
+2. Graphor's chunking strategies and capabilities
 3. How to configure chunking for your specific use case
 4. Best practices for optimizing retrieval quality
 
@@ -33,9 +33,9 @@ The way you chunk your documents directly impacts:
 - **Context quality**: How complete and coherent the retrieved information is
 - **Processing efficiency**: How quickly the system can handle and respond to queries
 
-## Element-Aware Chunking in GraphorLM
+## Element-Aware Chunking in Graphor
 
-GraphorLM leverages document structure and element classifications (from the data ingestion phase) to make intelligent chunking decisions:
+Graphor leverages document structure and element classifications (from the data ingestion phase) to make intelligent chunking decisions:
 
 - **Preserves semantic units**: Keeps related content together
 - **Respects document hierarchies**: Maintains the relationship between headings and content
@@ -43,7 +43,7 @@ GraphorLM leverages document structure and element classifications (from the dat
 
 ## Available Chunking Strategies
 
-GraphorLM provides multiple chunking strategies, each with specific use cases and configuration requirements:
+Graphor provides multiple chunking strategies, each with specific use cases and configuration requirements:
 
 ### Smart Chunking
 
@@ -125,7 +125,7 @@ Select the embedding model to use for converting text chunks into vector represe
     - Requires more computational resources and may increase processing time
     - May result in slower response times during retrieval operations
     - Consider these tradeoffs when choosing this option for production workflows
-- **Other models**: Depending on your GraphorLM configuration
+- **Other models**: Depending on your Graphor configuration
 
 #### 2. Elements to Remove
 

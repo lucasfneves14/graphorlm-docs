@@ -1,6 +1,6 @@
 ---
 title: 'Process Source'
-description: 'Reprocess uploaded documents with different parsing methods via the GraphorLM REST API'
+description: 'Reprocess uploaded documents with different parsing methods via the Graphor REST API'
 ---
 
 The Process Source endpoint allows you to reprocess previously uploaded documents using different parsing and classification methods. This enables you to optimize document processing for better text extraction, structure recognition, and retrieval performance without re-uploading the file.
@@ -82,7 +82,7 @@ The request must be sent as JSON with the following fields:
     - **Note**: Premium feature
   </Accordion>
   
-  <Accordion icon="robot" title="GraphorLM">
+  <Accordion icon="robot" title="Graphor">
     **Best for**: Custom processing workflows
     
     - Specialized processing method
@@ -113,7 +113,7 @@ Use these values for the `partition_method` field when calling the endpoint:
 | OCR | ocr |
 | Hi-Res | yolox |
 | Hi-Res FT | advanced |
-| GraphorLM | graphorlm |
+| Graphor | graphorlm |
 | MAI | mai |
 
 ## Processing Method Selection Guide
@@ -126,7 +126,7 @@ Use these values for the `partition_method` field when calling the endpoint:
 | **OCR** | ⚡⚡ | ⭐⭐⭐ | ⭐⭐ | ✅ (images) | Scanned documents, images | ✅ |
 | **Hi-Res** | ⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ | Complex layouts, mixed content | ✅ |
 | **Hi-Res FT** | ⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ | Premium accuracy needed | ✅ |
-| **GraphorLM** | ⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ | Custom workflows | ✅ |
+| **Graphor** | ⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ | Custom workflows | ✅ |
 | **MAI** | ⚡⚡⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ❌ | Text precision without layout metadata | ✅ |
 
 ## Request Example
@@ -139,7 +139,7 @@ Use these values for the `partition_method` field when calling the endpoint:
 ```
 
 <Warning>
-Processing can take several minutes depending on document size, complexity, and the selected processing method. Advanced methods like Hi-Res, Hi-Res FT, GraphorLM and MAI typically require more time for analysis.
+Processing can take several minutes depending on document size, complexity, and the selected processing method. Advanced methods like Hi-Res, Hi-Res FT, Graphor and MAI typically require more time for analysis.
 </Warning>
 
 ## Response Format
@@ -423,7 +423,7 @@ try {
     **Recommended methods**:
     - Hi-Res for structure recognition
     - Hi-Res FT for complex document hierarchies
-    - GraphorLM for enhanced semantic structure and relationships
+    - Graphor for enhanced semantic structure and relationships
   </Accordion>
 </AccordionGroup>
 
@@ -432,7 +432,7 @@ try {
 ### Processing Strategy
 
 - **Start with Basic**: For testing and simple documents
-- **Upgrade gradually**: Move to OCR → Hi-Res → Hi-Res FT -> GraphorLM -> MAI based on needs
+- **Upgrade gradually**: Move to OCR → Hi-Res → Hi-Res FT -> Graphor -> MAI based on needs
 - **Monitor results**: Use document preview to evaluate processing quality
 - **Consider efficiency vs. quality**: Advanced methods take longer but provide better results
 

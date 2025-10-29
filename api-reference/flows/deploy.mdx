@@ -1,9 +1,9 @@
 ---
 title: 'Deploy Flow'
-description: 'Deploy flows to make them accessible via the GraphorLM REST API'
+description: 'Deploy flows to make them accessible via the Graphor REST API'
 ---
 
-Deploy your configured flows to make them publicly accessible and executable via the GraphorLM REST API. Deployment creates a new revision and makes your flow available at a public URL.
+Deploy your configured flows to make them publicly accessible and executable via the Graphor REST API. Deployment creates a new revision and makes your flow available at a public URL.
 
 ## Overview
 
@@ -656,7 +656,7 @@ async def deploy_all_flows():
 
 ### Pre-Deployment Checklist
 - ✅ **Ensure Response Node is configured and connected**
-- ✅ Test your flow configuration in the GraphorLM interface
+- ✅ Test your flow configuration in the Graphor interface
 - ✅ Verify all documents are processed and available
 - ✅ Ensure dataset nodes have appropriate source selections
 - ✅ Test component configurations individually
@@ -685,7 +685,7 @@ async def deploy_all_flows():
 <AccordionGroup>
   <Accordion icon="exclamation-triangle" title="Flow Not Found Error">
     **Solution**: Verify that:
-    - The flow exists in your GraphorLM project
+    - The flow exists in your Graphor project
     - The flow name in the URL exactly matches the flow name in the system
     - Your API token has access to the correct project
     - The flow has been saved properly in the flow builder
@@ -736,7 +736,7 @@ async def deploy_all_flows():
   
   <Accordion icon="server" title="Internal Server Errors">
     **Solution**: For deployment infrastructure issues:
-    - Check GraphorLM status page for service incidents
+    - Check Graphor status page for service incidents
     - Try deployment again after a few minutes
     - Simplify flow configuration if possible
     - Contact support with revision ID if error persists
@@ -748,12 +748,12 @@ async def deploy_all_flows():
 After successful deployment, you can:
 
 ### Check Deployment Status
-- Monitor flow execution through the GraphorLM dashboard
+- Monitor flow execution through the Graphor dashboard
 - Use the [Run Flow endpoint](/api-reference/flows/run) to test functionality
 - Review logs and performance metrics
 
 ### Update Deployments
-- Modify your flow configuration in the GraphorLM interface
+- Modify your flow configuration in the Graphor interface
 - Deploy again to create a new revision
 - Previous revisions are automatically replaced
 

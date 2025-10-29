@@ -3,7 +3,7 @@ title: 'LLM Integration'
 description: 'Learn how to optionally enhance your RAG pipeline with language model integration'
 ---
 
-This guide explains how to optionally integrate and configure Language Models (LLMs) in GraphorLM to generate natural language responses based on retrieved information.
+This guide explains how to optionally integrate and configure Language Models (LLMs) in Graphor to generate natural language responses based on retrieved information.
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
@@ -13,7 +13,7 @@ This guide explains how to optionally integrate and configure Language Models (L
 
 ## Overview
 
-While GraphorLM focuses primarily on high-quality information retrieval, you can optionally add an LLM component to your pipeline to transform retrieved information into natural language responses. It's important to note that **using an LLM node is completely optional** - many users can achieve their goals using just the Retrieval component as the final output.
+While Graphor focuses primarily on high-quality information retrieval, you can optionally add an LLM component to your pipeline to transform retrieved information into natural language responses. It's important to note that **using an LLM node is completely optional** - many users can achieve their goals using just the Retrieval component as the final output.
 
 ### When to Use Retrieval Only
 
@@ -36,7 +36,7 @@ Consider adding the LLM component when:
 
 ## The LLM Component
 
-In GraphorLM's Flow Builder, the LLM component takes retrieved document chunks as input and uses them to generate natural language responses:
+In Graphor's Flow Builder, the LLM component takes retrieved document chunks as input and uses them to generate natural language responses:
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
@@ -57,7 +57,7 @@ To set up the LLM component for your RAG pipeline:
 
 ### Model Selection
 
-GraphorLM supports integration with various language models:
+Graphor supports integration with various language models:
 
 - **OpenAI models**:
   - GPT-4o
@@ -90,7 +90,7 @@ Effective prompt design is crucial for getting optimal results from the LLM comp
 
 ### Basic Prompt Structure
 
-GraphorLM automatically structures prompts using this general pattern:
+Graphor automatically structures prompts using this general pattern:
 
 1. **System prompt**: Sets the tone and provides general instructions
 2. **Retrieved context**: Inserts the information retrieved from your documents

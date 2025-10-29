@@ -1,9 +1,9 @@
 ---
 title: 'Data Ingestion'
-description: 'Learn how to efficiently import and process unstructured documents in GraphorLM'
+description: 'Learn how to efficiently import and process unstructured documents in Graphor'
 ---
 
-Transforming unstructured documents into processable data is the foundation of any effective RAG pipeline. GraphorLM's data ingestion capabilities provide advanced tools for extracting, processing, and organizing information from various document formats.
+Transforming unstructured documents into processable data is the foundation of any effective RAG pipeline. Graphor's data ingestion capabilities provide advanced tools for extracting, processing, and organizing information from various document formats.
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
@@ -14,7 +14,7 @@ Transforming unstructured documents into processable data is the foundation of a
 
 ## Overview
 
-GraphorLM's data ingestion process involves:
+Graphor's data ingestion process involves:
 
 1. **Document upload** - Import files from various sources
 2. **Text extraction** - Convert documents to machine-readable text
@@ -24,7 +24,7 @@ GraphorLM's data ingestion process involves:
 
 ## Supported Document Types
 
-GraphorLM supports a wide range of document formats:
+Graphor supports a wide range of document formats:
 
 | Document Type | Extensions | Features |
 | ------------ | ---------- | -------- |
@@ -40,7 +40,7 @@ GraphorLM supports a wide range of document formats:
 
 ## Importing Documents
 
-There are several ways to import documents into GraphorLM:
+There are several ways to import documents into Graphor:
 
 ### Method 1: Local Files Upload
 
@@ -70,7 +70,7 @@ To import content directly from a web address:
 5. Optionally enable **Crawl URLs** to extract links and import related pages
 6. Click **Finish** to begin processing
 
-GraphorLM will crawl the specified URL, extract the content, and process it for ingestion.
+Graphor will crawl the specified URL, extract the content, and process it for ingestion.
 
 ### Method 3: GitHub Repository Import
 
@@ -82,7 +82,7 @@ To import content from a GitHub repository:
 4. Enter the GitHub repository URL (e.g., `https://github.com/username/repository`)
 5. Click **Finish** to begin processing
 
-GraphorLM will clone the repository, extract code files, documentation, and README files for processing. This is particularly useful for:
+Graphor will clone the repository, extract code files, documentation, and README files for processing. This is particularly useful for:
 
 - Code documentation and analysis
 - Repository knowledge bases
@@ -99,7 +99,7 @@ To import content from YouTube videos:
 4. Enter the YouTube video URL
 5. Click **Finish** to begin processing
 
-GraphorLM will extract audio from the video, perform speech-to-text transcription, and process the resulting content. This enables:
+Graphor will extract audio from the video, perform speech-to-text transcription, and process the resulting content. This enables:
 
 - Lecture and educational content extraction
 - Meeting and conference transcription
@@ -108,7 +108,7 @@ GraphorLM will extract audio from the video, perform speech-to-text transcriptio
 
 ## Advanced OCR Processing
 
-GraphorLM utilizes state-of-the-art OCR (Optical Character Recognition) to extract text from images and scanned documents.
+Graphor utilizes state-of-the-art OCR (Optical Character Recognition) to extract text from images and scanned documents.
 
 ### OCR Features
 
@@ -120,7 +120,7 @@ GraphorLM utilizes state-of-the-art OCR (Optical Character Recognition) to extra
 
 ## Document Parsing Methods and Classification
 
-GraphorLM offers five parsing and classification methods to optimize document processing based on your needs:
+Graphor offers five parsing and classification methods to optimize document processing based on your needs:
 
 ### Basic
 
@@ -150,7 +150,7 @@ GraphorLM offers five parsing and classification methods to optimize document pr
 - Highest accuracy for document structure recognition
 - Optimized for specialized document types
 
-### GraphorLM
+### Graphor
 
 - Advanced graph-based RAG partitioning method
 - Utilizes knowledge graph structures for content organization
@@ -171,7 +171,7 @@ GraphorLM offers five parsing and classification methods to optimize document pr
 
 To select a parsing method for your document:
 
-1. Upload your document to GraphorLM
+1. Upload your document to Graphor
 2. Select the document in the Sources list to open the document settings
 3. In the document settings modal, locate the Methods dropdown in the top-right corner
 4. Select your preferred parsing method from the dropdown menu
@@ -189,7 +189,7 @@ When reprocessing is complete, you'll see the updated document structure and cla
 
 ## Content Classification
 
-GraphorLM can automatically classify document sections to improve retrieval relevance:
+Graphor can automatically classify document sections to improve retrieval relevance:
 
 ### Document Element Types
 
@@ -215,11 +215,11 @@ The platform classifies content into the following specific element types:
 - **Link** - Hyperlinks and references
 - **Uncategorized text** - Text that doesn't fit other categories
 
-These classifications help GraphorLM understand document structure and perform more intelligent chunking during the RAG pipeline process. By recognizing different element types, the system can make better decisions about how to segment documents, keeping related elements together and creating more semantically meaningful chunks.
+These classifications help Graphor understand document structure and perform more intelligent chunking during the RAG pipeline process. By recognizing different element types, the system can make better decisions about how to segment documents, keeping related elements together and creating more semantically meaningful chunks.
 
 ## Metadata Extraction
 
-GraphorLM automatically extracts and processes document metadata:
+Graphor automatically extracts and processes document metadata:
 
 - File name and type
 - Creation and modification dates
@@ -281,7 +281,7 @@ To optimize data ingestion results:
 - **OCR**: Choose for scanned documents and images
 - **Hi-Res**: Ideal for complex layouts and mixed content types
 - **Hi-Res FT**: Best for specialized document types requiring highest accuracy
-- **GraphorLM**: Experiment with for complex document relationships and advanced semantic understanding
+- **Graphor**: Experiment with for complex document relationships and advanced semantic understanding
 - **MAI**: Prefer when you don't need bounding boxes/layout metadata and want speed and text precision
 
 ## Troubleshooting
@@ -291,20 +291,20 @@ Common issues and solutions:
 <AccordionGroup>
   <Accordion icon="file-excel" title="Poor OCR quality">
     For low-quality scanned documents, try:
-    - Using OCR, Hi-Res, Hi-Res (tuned), or GraphorLM methods instead of Basic
+    - Using OCR, Hi-Res, Hi-Res (tuned), or Graphor methods instead of Basic
     - Breaking large documents into smaller files
     - Improving document quality before upload if possible
     - Consider MAI for best text parsing and speed when you don't need bounding boxes
   </Accordion>
   <Accordion icon="table" title="Table extraction problems">
     If tables aren't being properly recognized:
-    - Use Hi-Res, Hi-Res FT, or GraphorLM method for better table detection
+    - Use Hi-Res, Hi-Res FT, or Graphor method for better table detection
     - Convert complex tables to simpler formats before upload
   </Accordion>
   <Accordion icon="language" title="Multi-language document issues">
     For documents with multiple languages:
     - Process different language sections as separate documents
-    - Use Hi-Res, Hi-Res (tuned), or GraphorLM method which has better multi-language support
+    - Use Hi-Res, Hi-Res (tuned), or Graphor method which has better multi-language support
     - For multilingual content where layout metadata is unnecessary, MAI provides strong OCR-backed text parsing without bbox
   </Accordion>
   <Accordion icon="gauge" title="Slow processing time">
@@ -385,7 +385,7 @@ After uploading documents, you may want to reprocess them with different parsing
 ### When to Reprocess
 
 - **Improve accuracy**: Switch from Basic to more advanced methods for better results
-- **Different content focus**: Use GraphorLM method for enhanced semantic relationships
+- **Different content focus**: Use Graphor method for enhanced semantic relationships
 - **Quality issues**: Reprocess with OCR or Hi-Res if initial parsing missed content
 - **Method comparison**: Test different methods to find optimal results for your use case
 
@@ -416,7 +416,7 @@ After successfully ingesting your documents, explore these next steps to build y
     icon="code"
     href="/api-reference/sources/upload"
   >
-    Integrate document upload into your applications using the GraphorLM REST API
+    Integrate document upload into your applications using the Graphor REST API
   </Card>
   <Card
     title="Flow Builder"

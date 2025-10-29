@@ -1,20 +1,20 @@
 ---
 title: 'Sources API Overview'
-description: 'Complete guide to managing documents in GraphorLM via the REST API'
+description: 'Complete guide to managing documents in Graphor via the REST API'
 ---
 
-The GraphorLM Sources API provides a comprehensive set of endpoints for managing documents in your projects. From uploading files to processing content with advanced AI models, these endpoints enable you to build powerful document ingestion pipelines and RAG applications.
+The Graphor Sources API provides a comprehensive set of endpoints for managing documents in your projects. From uploading files to processing content with advanced AI models, these endpoints enable you to build powerful document ingestion pipelines and RAG applications.
 
 ## What are Sources?
 
-Sources in GraphorLM represent documents that serve as the foundation of your knowledge base. These can include:
+Sources in Graphor represent documents that serve as the foundation of your knowledge base. These can include:
 
 - **Local files**: PDFs, Word documents, text files, images, spreadsheets, presentations
 - **Web content**: URLs, web pages, online articles
 - **Code repositories**: GitHub repositories and documentation
 - **Media content**: Audio and video files for transcription and analysis
 
-All sources are processed through GraphorLM's advanced AI pipeline to extract text, recognize structure, and prepare content for retrieval-augmented generation (RAG) workflows.
+All sources are processed through Graphor's advanced AI pipeline to extract text, recognize structure, and prepare content for retrieval-augmented generation (RAG) workflows.
 
 ## API Endpoints Overview
 
@@ -28,7 +28,7 @@ The Sources API consists of seven main endpoints that provide complete document 
   >
     **POST** `https://sources.graphorlm.com/upload`
     
-    Upload documents from your local system to GraphorLM for processing
+    Upload documents from your local system to Graphor for processing
   </Card>
   
   <Card
@@ -94,7 +94,7 @@ The Sources API consists of seven main endpoints that provide complete document 
 
 ## Document Processing Pipeline
 
-Understanding how GraphorLM processes your documents helps you make the most of the Sources API:
+Understanding how Graphor processes your documents helps you make the most of the Sources API:
 
 ### 1. Upload Stage
 When you upload a document using the [Upload Source](/api-reference/sources/upload) endpoint:
@@ -104,7 +104,7 @@ When you upload a document using the [Upload Source](/api-reference/sources/uplo
 - Processing begins automatically with the default method
 
 ### 2. Processing Methods
-GraphorLM offers multiple processing methods, selectable via the [Process Source](/api-reference/sources/process) endpoint:
+Graphor offers multiple processing methods, selectable via the [Process Source](/api-reference/sources/process) endpoint:
 
 <AccordionGroup>
   <Accordion icon="gauge-simple" title="Basic Method">
@@ -143,7 +143,7 @@ GraphorLM offers multiple processing methods, selectable via the [Process Source
     - Best-in-class text extraction
   </Accordion>
   
-  <Accordion icon="project-diagram" title="GraphorLM Method">
+  <Accordion icon="project-diagram" title="Graphor Method">
     **Speed**: ⚡ **Accuracy**: ⭐⭐⭐⭐
     
     - Advanced graph-based RAG partitioning method
@@ -214,7 +214,7 @@ graph LR
     E --> F[Review Again]
     F --> G{Better?}
     G -->|Yes| D
-    G -->|No| H[Try GraphorLM Method]
+    G -->|No| H[Try Graphor Method]
 ```
 
 1. Start with Basic method for speed
@@ -259,7 +259,7 @@ The Sources API supports a wide range of document formats:
 |-----------|-------------------|-------|
 | Clean PDFs | Basic, OCR, or MAI | Fast processing for digital PDFs; use MAI for text-only without layout |
 | Scanned PDFs | OCR or Hi-Res | OCR needed for text extraction |
-| Complex Documents | Hi-Res or Hi-Res FT | Better structure recognition; consider GraphorLM for semantic relationships |
+| Complex Documents | Hi-Res or Hi-Res FT | Better structure recognition; consider Graphor for semantic relationships |
 | Images with Text | OCR or Hi-Res | Requires OCR for text extraction |
 | Spreadsheets | Basic or Hi-Res | Hi-Res better for complex tables |
 | Presentations | Hi-Res or Hi-Res FT | Better slide layout recognition |
@@ -294,11 +294,11 @@ The Sources API supports a wide range of document formats:
     - Choose Hi-Res for complex layouts and tables
     - Reserve Hi-Res FT for premium accuracy needs
     - Prefer MAI when you don't need bounding boxes/layout metadata and want speed with top text parsing
-    - Use GraphorLM for enhanced semantic relationships and graph-based organization
+    - Use Graphor for enhanced semantic relationships and graph-based organization
     - For multi-source RAG across heterogeneous sources, prefer MAI because it provides page and document annotations
     
     **Quality Monitoring**:
-    - Review processing results in GraphorLM dashboard
+    - Review processing results in Graphor dashboard
     - Test different methods for optimal results
     - Monitor processing times and resource usage
   </Accordion>
@@ -406,7 +406,7 @@ class GraphorLMSourcesClient:
         }
     
     def upload_document(self, file_path: str) -> Dict:
-        """Upload a document to GraphorLM."""
+        """Upload a document to Graphor."""
         upload_headers = {"Authorization": f"Bearer {self.api_token}"}
         
         with open(file_path, "rb") as f:
