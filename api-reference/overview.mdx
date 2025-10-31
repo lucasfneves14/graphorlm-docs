@@ -235,7 +235,7 @@ const processResponse = await fetch('https://sources.graphorlm.com/process', {
   },
   body: JSON.stringify({
     file_name: 'research-paper.pdf',
-    partition_method: 'yolox'
+    partition_method: 'hi_res'
   })
 });
 ```
@@ -443,7 +443,7 @@ async function buildRAGPipeline() {
     const uploadResult = await client.uploadSource(file, file.name);
     console.log('Upload successful:', uploadResult);
 
-    await client.processSource(file.name, 'yolox');
+    await client.processSource(file.name, 'hi_res');
     console.log('Processing initiated');
 
     // 2. Configure flow datasets
@@ -567,7 +567,7 @@ def setup_research_pipeline(documents: List[str], flow_name: str):
             upload_result = api.upload_source(doc_path)
             file_name = upload_result['file_name']
             
-            api.process_source(file_name, 'yolox')
+            api.process_source(file_name, 'hi_res')
             processed_files.append(file_name)
             print(f"✅ {file_name} processed")
         
@@ -681,7 +681,7 @@ class ContentSearchAPI {
   async addDocument(file, metadata = {}) {
     // Upload and process new document
     const uploadResult = await this.client.uploadSource(file, file.name);
-    await this.client.processSource(file.name, 'yolox');
+    await this.client.processSource(file.name, 'hi_res');
     
     // Update flow configuration
     const datasets = await this.client.getDatasetNodes(this.flowName);
@@ -716,7 +716,7 @@ class ResearchPipeline:
         for paper_path in paper_paths:
             self.api.upload_source(paper_path)
             filename = os.path.basename(paper_path)
-            self.api.process_source(filename, "yolox")
+            self.api.process_source(filename, "hi_res")
         
         # Deploy updated flow
         self.api.deploy_flow(self.flow_name, f"Analysis of {len(paper_paths)} papers")

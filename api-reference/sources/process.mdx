@@ -111,9 +111,9 @@ Use these values for the `partition_method` field when calling the endpoint:
 |--------|------------------|
 | Basic | basic |
 | OCR | ocr |
-| Hi-Res | yolox |
-| Hi-Res FT | advanced |
-| Graphor | graphorlm |
+| Hi-Res | hi_res |
+| Hi-Res FT | hi_res_ft |
+| GraphorLM | graphorlm |
 | MAI | mai |
 
 ## Processing Method Selection Guide
@@ -134,7 +134,7 @@ Use these values for the `partition_method` field when calling the endpoint:
 ```json
 {
   "file_name": "document.pdf",
-  "partition_method": "yolox"
+  "partition_method": "hi_res"
 }
 ```
 
@@ -156,7 +156,7 @@ Processing can take several minutes depending on document size, complexity, and 
   "file_source": "local file",
   "project_id": "550e8400-e29b-41d4-a716-446655440000",
   "project_name": "My Project",
-  "partition_method": "yolox"
+  "partition_method": "hi_res"
 }
 ```
 
@@ -203,7 +203,7 @@ const processDocument = async (apiToken, fileName, partitionMethod) => {
 };
 
 // Usage
-processDocument('grlm_your_api_token_here', 'document.pdf', 'yolox')
+processDocument('grlm_your_api_token_here', 'document.pdf', 'hi_res')
   .then(result => console.log('Document processed:', result.file_name))
   .catch(error => console.error('Error:', error));
 ```
@@ -247,7 +247,7 @@ try:
     result = process_document(
         "grlm_your_api_token_here", 
         "document.pdf", 
-        "yolox"
+        "hi_res"
     )
     print(f"Document processed with method: {result['partition_method']}")
 except requests.exceptions.RequestException as e:
@@ -262,7 +262,7 @@ curl -X POST https://sources.graphorlm.com/process \
   -H "Content-Type: application/json" \
   -d '{
     "file_name": "document.pdf",
-    "partition_method": "yolox"
+    "partition_method": "hi_res"
   }'
 ```
 
@@ -307,7 +307,7 @@ try {
     $result = processDocument(
         "grlm_your_api_token_here", 
         "document.pdf", 
-        "yolox"
+        "hi_res"
     );
     echo "Document processed: " . $result['file_name'] . "\n";
     echo "Method used: " . $result['partition_method'] . "\n";
@@ -385,7 +385,7 @@ try {
     
     **Cause**: Unsupported or invalid partition method
     
-    **Solution**: Use one of: basic, ocr, yolox, advanced, graphorlm, mai
+    **Solution**: Use one of: basic, ocr, hi_res, hi_res_ft, graphorlm, mai
   </Accordion>
 </AccordionGroup>
 
@@ -458,7 +458,7 @@ After processing, evaluate the results by:
 ```python
 def improve_processing_quality(api_token, file_name):
     """Automatically upgrade processing method for better quality."""
-    methods = ['basic', 'ocr', 'yolox', 'advanced', 'graphorlm', 'mai']
+    methods = ['basic', 'ocr', 'hi_res', 'hi_res_ft', 'graphorlm', 'mai']
     
     for method in methods:
         try:
@@ -510,7 +510,7 @@ const batchReprocess = async (apiToken, files, method) => {
 
 // Usage
 const files = ['doc1.pdf', 'doc2.pdf', 'doc3.pdf'];
-batchReprocess('grlm_your_token', files, 'yolox')
+batchReprocess('grlm_your_token', files, 'hi_res')
   .then(results => console.log('Batch processing complete:', results));
 ```
 
@@ -573,8 +573,8 @@ def process_with_progress(api_token: str, files_and_methods: List[Dict]):
 
 # Usage
 processing_queue = [
-    {'file_name': 'document1.pdf', 'method': 'yolox'},
-    {'file_name': 'document2.pdf', 'method': 'advanced'},
+    {'file_name': 'document1.pdf', 'method': 'hi_res'},
+    {'file_name': 'document2.pdf', 'method': 'hi_res_ft'},
     {'file_name': 'document3.pdf', 'method': 'ocr'}
 ]
 

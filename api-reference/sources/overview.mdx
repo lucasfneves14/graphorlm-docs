@@ -421,7 +421,7 @@ class GraphorLMSourcesClient:
         response.raise_for_status()
         return response.json()
     
-    def process_document(self, file_name: str, method: str = "yolox") -> Dict:
+    def process_document(self, file_name: str, method: str = "hi_res") -> Dict:
         """Reprocess a document with specified method."""
         payload = {
             "file_name": file_name,
@@ -499,7 +499,7 @@ print(f"Initial processing: {status}")
 if status == 'completed':
     process_result = client.process_document(
         upload_result['file_name'], 
-        "yolox"
+        "hi_res"
     )
     print(f"Reprocessed with Hi-Res: {process_result['partition_method']}")
 ```
@@ -514,7 +514,7 @@ class DocumentQualityPipeline {
   }
 
   async assessAndOptimize(fileName) {
-    const methods = ['basic', 'ocr', 'yolox', 'advanced', 'graphorlm', 'mai'];
+    const methods = ['basic', 'ocr', 'hi_res', 'hi_res_ft', 'graphorlm', 'mai'];
     let bestResult = null;
     let bestScore = 0;
 
@@ -533,7 +533,7 @@ class DocumentQualityPipeline {
         }
         
         // If score is good enough, don't try more resource-intensive methods
-        if (score >= 0.8 && method !== 'advanced') {
+        if (score >= 0.8 && method !== 'hi_res_ft') {
           break;
         }
         
@@ -557,8 +557,8 @@ class DocumentQualityPipeline {
     const methodScores = {
       'basic': 0.1,
       'ocr': 0.2,
-      'yolox': 0.3,
-      'advanced': 0.4,
+      'hi_res': 0.3,
+      'hi_res_ft': 0.4,
       'graphorlm': 0.4,
       'mai': 0.4
     };
