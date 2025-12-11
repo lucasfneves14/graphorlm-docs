@@ -1,0 +1,298 @@
+---
+title: 'Smart RAG'
+description: 'Combine intelligent chunking and retrieval with optimized configurations for enhanced RAG performance'
+---
+
+The Smart RAG node combines intelligent chunking and retrieval in a single, optimized component. It automatically processes documents using title-based chunking with embedding generation, then performs similarity-based retrieval with predefined optimal settings — simplifying your pipeline while delivering high-quality results.
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/smart-rag-overview.png"
+  alt="Smart RAG node overview"
+  loading="lazy"
+/>
+
+## Overview
+
+The Smart RAG node streamlines RAG pipelines by:
+
+1. **Automatic chunking** — Splits documents using title-based chunking with optimal settings
+2. **Embedding generation** — Creates vector embeddings using `text-embedding-3-small`
+3. **Similarity retrieval** — Finds relevant chunks based on query similarity
+4. **Built-in optimization** — Uses pre-configured settings tuned for best performance
+
+<Note>
+Smart RAG is ideal when you want a quick, high-quality RAG setup without manually configuring separate Chunking and Retrieval nodes. For more control, use the individual nodes instead.
+</Note>
+
+## When to Use Smart RAG
+
+| Scenario | Recommendation |
+|----------|----------------|
+| Quick RAG setup | ✅ Recommended — Get started fast with optimized defaults |
+| Standard documents | ✅ Recommended — Works well for most document types |
+| Prototyping | ✅ Recommended — Rapid iteration without configuration |
+| Custom chunking needs | ⚠️ Use separate Chunking node — More control over settings |
+| Custom retrieval logic | ⚠️ Use separate Retrieval node — Full configuration access |
+| ColPali/visual documents | ⚠️ Use separate Chunking node — More embedding options |
+
+## Using the Smart RAG Node
+
+### Adding the Smart RAG Node
+
+1. Open your flow in the **Flow Builder**
+2. Drag the **Smart RAG** node from the sidebar onto the canvas
+3. Connect your **Dataset** node to Smart RAG
+4. Connect a **Question** or **Testset** node for queries
+5. Double-click the Smart RAG node to configure
+
+### Input Connections
+
+The Smart RAG node accepts input from:
+
+| Source Node | Purpose |
+|-------------|---------|
+| **Dataset** | **Required** — Provides documents to process |
+| **Question** | Provides queries for retrieval (simulation/testing) |
+| **Testset** | Provides multiple queries for comprehensive testing |
+
+<Warning>
+To simulate Smart RAG, you must connect a **Question** or **Testset** node as input. Without queries, the node cannot demonstrate retrieval results.
+</Warning>
+
+### Output Connections
+
+The Smart RAG node can connect to:
+
+| Target Node | Use Case |
+|-------------|----------|
+| **Reranking** | Further improve result quality with LLM-based scoring |
+| **LLM** | Generate natural language responses |
+| **Analysis** | Evaluate retrieval performance |
+| **Response** | Output retrieved results directly |
+
+## Configuring the Smart RAG Node
+
+Double-click the Smart RAG node to open the configuration panel:
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/smart-rag-settings.png"
+  alt="Smart RAG configuration"
+  loading="lazy"
+/>
+
+### Top K
+
+The number of chunks to retrieve for each query:
+
+| Value | Use Case |
+|-------|----------|
+| **1-3** | Precise, focused answers |
+| **4-6** | Balanced coverage (default: 5) |
+| **7-10** | Comprehensive context |
+
+### Add Metadata
+
+When enabled, includes document metadata in chunk content:
+- File name
+- Page number
+- Position information
+
+<Tip>
+Enable metadata when the LLM needs context about where information comes from (e.g., "According to page 5 of document X...").
+</Tip>
+
+### Add Page Annotation
+
+When enabled, includes page-level annotations in chunk content.
+
+<Note>
+Only available for files processed with the **Graphor** parsing method.
+</Note>
+
+### Add Document Annotation
+
+When enabled, includes document-level annotations in chunk content.
+
+<Note>
+Only available for files processed with the **Graphor** parsing method.
+</Note>
+
+## Built-in Configuration
+
+Smart RAG uses optimized default settings:
+
+### Chunking Settings
+
+| Setting | Value | Description |
+|---------|-------|-------------|
+| **Embedding Model** | text-embedding-3-small | OpenAI's efficient embedding model |
+| **Splitter** | Title-based | Preserves document structure |
+| **Chunk Size** | 5000 | Balanced size for context and precision |
+
+### Retrieval Settings
+
+| Setting | Value | Description |
+|---------|-------|-------------|
+| **Search Type** | Similarity | Semantic vector search |
+| **Score Threshold** | 0.5 | Minimum relevance score |
+
+## Pipeline Examples
+
+### Simple Smart RAG Pipeline
+
+```
+Dataset → Smart RAG → LLM → Response
+              ↑
+          Question
+```
+
+Best for: Quick Q&A setup with minimal configuration.
+
+### Smart RAG with Reranking
+
+```
+Dataset → Smart RAG → Reranking → LLM → Response
+              ↑
+          Question
+```
+
+Best for: Higher quality results by adding LLM-based relevance scoring.
+
+### Smart RAG Evaluation Pipeline
+
+```
+Dataset → Smart RAG → Analysis
+              ↑
+           Testset
+```
+
+Best for: Testing retrieval quality across multiple questions.
+
+### Comparison Pipeline
+
+```
+                    ┌──→ Smart RAG ──────────────┐
+Dataset ────────────┤                            ├──→ Analysis
+                    └──→ Chunking → Retrieval ──┘
+                              ↑
+                           Testset
+```
+
+Best for: Comparing Smart RAG against custom chunking/retrieval settings.
+
+## Viewing Results
+
+After running the pipeline (click **Update Results**):
+
+1. Results show documents grouped by question
+2. Each result displays:
+   - **Question** — The query being answered
+   - **Content** — Retrieved chunk text
+   - **Score** — Similarity score
+   - **File name** — Source document
+   - **Page number** — Location in document
+
+### JSON View
+
+Toggle **JSON** to see the raw result structure:
+
+```json
+{
+  "page_content": "Retrieved chunk text...",
+  "metadata": {
+    "question": "What is machine learning?",
+    "question_id": "abc-123",
+    "expected_answer": "...",
+    "score": 0.89,
+    "file_name": "ml-guide.pdf",
+    "page_number": 5,
+    "position": 12
+  }
+}
+```
+
+## Smart RAG vs. Separate Nodes
+
+| Aspect | Smart RAG | Chunking + Retrieval |
+|--------|-----------|---------------------|
+| **Setup time** | Fast (one node) | Longer (two nodes) |
+| **Configuration** | Limited options | Full control |
+| **Embedding models** | text-embedding-3-small only | Multiple options including ColPali |
+| **Chunk strategies** | Title-based only | 5 strategies available |
+| **Retrieval types** | Similarity only | Similarity, Full text, Hybrid |
+| **Best for** | Quick setup, prototyping | Production, fine-tuning |
+
+## Best Practices
+
+1. **Start with Smart RAG** — Use it for initial prototyping, then switch to separate nodes if needed
+2. **Use Testsets** — Evaluate performance with multiple questions before deployment
+3. **Consider Reranking** — Add Reranking node for improved precision
+4. **Check document parsing** — Ensure documents are parsed with appropriate methods for best chunking results
+5. **Enable annotations** — Use page/document annotations for Graphor-parsed documents
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="circle-exclamation" title="No results showing">
+    If Smart RAG returns no results:
+    - Verify a Question or Testset node is connected
+    - Check that Dataset contains processed documents
+    - Ensure documents have status "Processed"
+    - Try lowering the score threshold (not configurable in Smart RAG; use separate nodes)
+  </Accordion>
+  <Accordion icon="magnifying-glass-minus" title="Poor retrieval quality">
+    If results aren't relevant:
+    - Check document parsing quality
+    - Try adding Reranking node for better scoring
+    - Consider using separate Chunking + Retrieval for more control
+    - Verify questions are well-formed
+  </Accordion>
+  <Accordion icon="clock" title="Slow processing">
+    If Smart RAG is slow:
+    - Reduce number of documents in Dataset
+    - Lower Top K value
+    - Check document sizes (large documents take longer)
+  </Accordion>
+  <Accordion icon="triangle-exclamation" title="Annotations not appearing">
+    If page/document annotations don't show:
+    - Verify documents were parsed with **Graphor** method
+    - Enable the corresponding checkbox in settings
+    - Reprocess documents if needed
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Dataset"
+    icon="database"
+    href="/guides/dataset"
+  >
+    Configure document selection for Smart RAG
+  </Card>
+  <Card
+    title="Reranking"
+    icon="arrow-up-wide-short"
+    href="/guides/reranking"
+  >
+    Add LLM-based reranking for better results
+  </Card>
+  <Card
+    title="Chunking"
+    icon="scissors"
+    href="/guides/chunking"
+  >
+    Learn about custom chunking strategies
+  </Card>
+  <Card
+    title="Retrieval"
+    icon="magnifying-glass"
+    href="/guides/retrieval"
+  >
+    Explore advanced retrieval configurations
+  </Card>
+</CardGroup>
+
