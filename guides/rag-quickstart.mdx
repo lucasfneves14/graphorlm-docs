@@ -1,5 +1,5 @@
 ---
-title: 'RAG Pipeline Quickstart'
+title: 'Quickstart'
 description: 'Build your first RAG pipeline with Dataset, Chunking, Retrieval, LLM, and Response nodes'
 ---
 
@@ -21,8 +21,8 @@ You'll build this pipeline:
 
 ```
 Dataset → Chunking → Retrieval → LLM → Response
-              ↑
-         Question/Testset
+                        ↑
+                 Question/Testset
 ```
 
 | Node | Purpose |
@@ -222,21 +222,6 @@ Your pipeline is now deployed and accessible via:
 - **MCP Server** — For AI assistant integration (Claude, Cursor)
 
 Click **Connect to flow** to see your endpoint URLs and integration instructions.
-
-## Complete Pipeline Diagram
-
-```
-┌──────────┐     ┌───────────┐     ┌───────────┐     ┌─────┐     ┌──────────┐
-│ Dataset  │────▶│ Chunking  │────▶│ Retrieval │────▶│ LLM │────▶│ Response │
-└──────────┘     └───────────┘     └───────────┘     └─────┘     └──────────┘
-                                         ▲
-                                         │
-                              ┌──────────┴──────────┐
-                              │                     │
-                        ┌─────────┐           ┌─────────┐
-                        │Question │           │ Testset │
-                        └─────────┘           └─────────┘
-```
 
 ## Quick Reference: Node Settings
 
