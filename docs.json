@@ -83,7 +83,7 @@
             ]
           },
           {
-            "group": "RAG Pipelines",
+            "group": "RAG Pipelines API",
             "pages": [
               "api-reference/flows/overview",
               "api-reference/flows/list",
