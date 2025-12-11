@@ -21,6 +21,10 @@ Document Chat enables you to:
 - **Maintain conversation context** — Follow-up questions understand previous context
 - **Scope to specific documents** — Focus on one document or search across all sources
 
+<Note>
+Document Chat uses the **active parsing version** of each document. The quality of answers directly depends on how well your documents were parsed. For better results, adjust the parsing settings and use advanced methods like **MAI** or **Graphor** for complex documents. See [Data Ingestion](/guides/data-ingestion#document-parsing-methods) for details.
+</Note>
+
 ## Chat Options
 
 Graphor provides two chat interfaces depending on your needs:
@@ -137,13 +141,26 @@ To start a new conversation without previous context, click the **New conversati
 
 ### Parsing Quality Matters
 
-The quality of chat responses depends on how well your documents were parsed:
+Document Chat uses the **active parsing version** of each document to generate answers. The quality of responses directly depends on the parsing quality.
 
-- **Complex documents** — Use **MAI** or **Graphor** parsing for better understanding
-- **Scanned documents** — Use **Hi-Res** or **Hi-Res FT** for accurate OCR
-- **Simple text** — **Fast** parsing is usually sufficient
+**Recommended parsing methods by document type:**
 
-If you're getting poor answers, try reprocessing the document with a more advanced parsing method.
+| Document Type | Recommended Method |
+|---------------|-------------------|
+| Simple text documents | Fast |
+| Complex layouts | MAI or Graphor |
+| Scanned documents / PDFs with images | Hi-Res or Hi-Res FT |
+| Manuscripts / Handwritten | MAI |
+| Multi-page tables, diagrams | Graphor |
+
+**If you're getting poor answers:**
+
+1. Double-click the document to open Source details
+2. Go to the **Settings** tab
+3. Select a more advanced parsing method
+4. Click **Parse** and wait for processing
+
+The chat will automatically use the new active version for future questions. See [Data Ingestion](/guides/data-ingestion#document-parsing-methods) for detailed parsing method comparisons.
 
 ## API Integration
 
