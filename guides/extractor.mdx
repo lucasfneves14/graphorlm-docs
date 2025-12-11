@@ -126,28 +126,6 @@ The schema defines what information to extract. Each field has:
 | `in_stock` | boolean | Whether product is available | true |
 | `features` | array | List of product features | ["Durable", "Lightweight"] |
 
-## How Extraction Works
-
-The Extractor node processes documents differently based on the input source:
-
-### From Dataset Node
-
-1. **Supported files (PDF, images)** → Processed via Mistral document annotation
-2. **Other files** → Processed via LLM over document elements
-
-### From Chunking Node
-
-1. **Chunks are grouped by file** for context preservation
-2. **Batched within token limits** to optimize LLM calls
-3. **Processed with memory** to avoid duplicate extractions
-4. **Consolidated globally** to merge and deduplicate results
-
-### Processing Pipeline
-
-```
-Documents → Batch by File → Token-Based Batching → LLM Extraction → Consolidation → Post-Processing → Results
-```
-
 ## Viewing Results
 
 After running the extraction (click **Update Results**):
