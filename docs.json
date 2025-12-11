@@ -45,6 +45,7 @@
               "guides/extractor",
               "guides/reranking",
               "guides/smart-rag",
+              "guides/agentic-rag",
               "guides/integrate-workflow"
             ]
           }

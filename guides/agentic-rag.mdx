@@ -1,0 +1,235 @@
+---
+title: 'Agentic RAG'
+description: 'Intelligent agent-based retrieval that autonomously decides how to retrieve and process information'
+---
+
+The Agentic RAG node uses an intelligent agent-based approach to perform retrieval-augmented generation. It autonomously decides how to retrieve and process information based on the query context, providing adaptive and context-aware responses.
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/agentic-rag-overview.png"
+  alt="Agentic RAG node overview"
+  loading="lazy"
+/>
+
+## Overview
+
+The Agentic RAG node provides intelligent retrieval by:
+
+1. **Autonomous retrieval** — Agent decides the best way to find relevant information
+2. **Context-aware processing** — Adapts retrieval strategy based on query context
+3. **Source grounding** — Returns references to source documents
+4. **Zero configuration** — Works out of the box with no setup required
+
+<Note>
+Agentic RAG is the simplest RAG node to set up — it requires no configuration and handles document processing automatically.
+</Note>
+
+## When to Use Agentic RAG
+
+| Scenario | Recommendation |
+|----------|----------------|
+| Simplest setup | ✅ Recommended — No configuration needed |
+| Adaptive retrieval | ✅ Recommended — Agent optimizes retrieval strategy |
+| Quick prototyping | ✅ Recommended — Get started immediately |
+| Custom chunking control | ❌ Use Smart RAG or Chunking + Retrieval |
+| Fine-tuned embedding models | ❌ Use Chunking + Retrieval |
+
+## Using the Agentic RAG Node
+
+### Adding the Agentic RAG Node
+
+1. Open your flow in the **Flow Builder**
+2. Drag the **Agentic RAG** node from the sidebar onto the canvas
+3. Connect your **Dataset** node to Agentic RAG
+4. Connect a **Question** or **Testset** node for queries
+5. Double-click the Agentic RAG node to view settings
+
+### Input Connections
+
+The Agentic RAG node accepts input from:
+
+| Source Node | Purpose |
+|-------------|---------|
+| **Dataset** | **Required** — Provides documents to process |
+| **Question** | Provides queries for retrieval (simulation/testing) |
+| **Testset** | Provides multiple queries for comprehensive testing |
+
+<Warning>
+To simulate Agentic RAG, you must connect a **Question** or **Testset** node as input. Without queries, the node cannot demonstrate retrieval results.
+</Warning>
+
+### Output Connections
+
+The Agentic RAG node can connect to:
+
+| Target Node | Use Case |
+|-------------|----------|
+| **Reranking** | Further improve result quality with LLM-based scoring |
+| **LLM** | Generate natural language responses |
+| **Analysis** | Evaluate retrieval performance |
+| **Response** | Output retrieved results directly |
+
+## Configuration
+
+The Agentic RAG node has no configurable parameters. It uses Google File Search with optimized default settings, making it the simplest RAG node to set up.
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/agentic-rag-settings.png"
+  alt="Agentic RAG configuration"
+  loading="lazy"
+/>
+
+## How Agentic RAG Works
+
+### Processing Flow
+
+1. **Document Processing** — Documents from Dataset are automatically processed
+2. **Query Analysis** — The agent analyzes the user query
+3. **Autonomous Retrieval** — Agent decides the best retrieval strategy
+4. **Source Grounding** — Results include source references
+5. **Response** — Retrieved chunks are returned with metadata
+
+### Key Differences from Other RAG Nodes
+
+| Aspect | Agentic RAG | Smart RAG | Chunking + Retrieval |
+|--------|-------------|-----------|---------------------|
+| **Chunking** | Automatic | Local (title-based) | Local (configurable) |
+| **Configuration** | None | Limited | Full control |
+| **Setup time** | Fastest | Fast | Longer |
+| **Embedding model** | Automatic | text-embedding-3-small | Multiple options |
+
+## Pipeline Examples
+
+### Simple Agentic RAG Pipeline
+
+**Dataset** → **Agentic RAG** → **LLM** → **Response** ← *Question*
+
+Best for: Quickest setup with intelligent retrieval.
+
+### Agentic RAG with Reranking
+
+**Dataset** → **Agentic RAG** → **Reranking** → **LLM** → **Response** ← *Question*
+
+Best for: Enhanced precision through additional LLM-based scoring.
+
+### Agentic RAG Evaluation Pipeline
+
+**Dataset** → **Agentic RAG** → **Analysis** ← *Testset*
+
+Best for: Evaluating retrieval quality across multiple questions.
+
+## Viewing Results
+
+After running the pipeline (click **Update Results**):
+
+1. Results show documents grouped by question
+2. Each result displays:
+   - **Question** — The query being answered
+   - **Content** — Retrieved text
+   - **Score** — Relevance score
+   - **File name** — Source document
+
+### JSON View
+
+Toggle **JSON** to see the raw result structure:
+
+```json
+{
+  "page_content": "Retrieved chunk text...",
+  "metadata": {
+    "question": "What is machine learning?",
+    "question_id": "abc-123",
+    "expected_answer": "...",
+    "score": 0.92,
+    "file_name": "ml-guide.pdf"
+  }
+}
+```
+
+## Agentic RAG vs. Smart RAG
+
+| Feature | Agentic RAG | Smart RAG |
+|---------|-------------|-----------|
+| **Complexity** | Simplest | Simple |
+| **Configuration** | None | Top K, metadata options |
+| **Document processing** | Automatic | Title-based chunking |
+| **Embedding control** | No | No (fixed model) |
+| **Best for** | Quick start, zero config | More control over retrieval |
+
+**Choose Agentic RAG when:**
+- You want the simplest possible setup
+- You don't need fine-grained control
+- You want agent-based adaptive retrieval
+
+**Choose Smart RAG when:**
+- You need metadata/annotation options
+- You want Top K control
+- You need title-based chunking
+
+## Best Practices
+
+1. **Ensure documents are parsed** — Agentic RAG uses the active parsing version from your sources
+2. **Use clear questions** — Well-formed queries help the agent retrieve better results
+3. **Test with Testsets** — Evaluate performance across diverse questions before deployment
+4. **Consider Reranking** — Add a Reranking node if precision is critical
+5. **Check source files** — Verify retrieved content comes from expected documents
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="circle-exclamation" title="No results showing">
+    If Agentic RAG returns no results:
+    - Verify a Question or Testset node is connected
+    - Check that Dataset contains processed documents
+    - Ensure documents have status "Processed"
+  </Accordion>
+  <Accordion icon="magnifying-glass-minus" title="Poor retrieval quality">
+    If results aren't relevant:
+    - Improve document parsing quality
+    - Rephrase questions to be more specific
+    - Consider using Smart RAG for more control
+    - Add Reranking node for better scoring
+  </Accordion>
+  <Accordion icon="clock" title="Slow processing">
+    If Agentic RAG is slow:
+    - Reduce number of documents in Dataset
+    - Simplify query complexity
+    - Consider using Smart RAG if you need faster local processing
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Smart RAG"
+    icon="bolt"
+    href="/guides/smart-rag"
+  >
+    More configurable RAG with local processing
+  </Card>
+  <Card
+    title="Dataset"
+    icon="database"
+    href="/guides/dataset"
+  >
+    Configure document selection for Agentic RAG
+  </Card>
+  <Card
+    title="Reranking"
+    icon="arrow-up-wide-short"
+    href="/guides/reranking"
+  >
+    Add LLM-based reranking for better results
+  </Card>
+  <Card
+    title="Evaluation"
+    icon="square-poll-vertical"
+    href="/guides/evaluation"
+  >
+    Measure retrieval quality with metrics
+  </Card>
+</CardGroup>
+
