@@ -21,8 +21,7 @@
             "group": "Get Started",
             "pages": [
               "introduction",
-              "quickstart",
-              "guides/api-tokens"
+              "quickstart"
             ]
           },
           {
@@ -64,7 +63,8 @@
           {
             "group": "Get Started",
             "pages": [
-              "api-reference/overview"
+              "api-reference/overview",
+              "guides/api-tokens"
             ]
           },
           {
