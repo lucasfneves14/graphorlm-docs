@@ -33,6 +33,7 @@
               {
                 "group": "RAG Pipelines",
                 "pages": [
+                  "guides/rag-quickstart",
                   "guides/dataset",
                   "guides/chunking",
                   "guides/retrieval",
