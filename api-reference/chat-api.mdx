@@ -1,0 +1,205 @@
+---
+title: 'Chat API'
+description: 'Ask questions about your documents using natural language'
+---
+
+## Overview
+
+The Document Chat API allows you to ask questions about your ingested documents and receive answers grounded in your content. The API supports conversational memory, enabling follow-up questions that maintain context.
+
+## Endpoint
+
+```
+POST https://sources.graphorlm.com/ask-sources
+```
+
+## Authentication
+
+Include your API token in the Authorization header:
+
+```
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+## Request
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+| `Content-Type` | `application/json` | Yes |
+
+### Body Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `question` | string | Yes | The question to ask about your documents |
+| `conversation_id` | string | No | Conversation identifier to maintain memory context across questions |
+| `reset` | boolean | No | When `true`, starts a new conversation and ignores previous history. Default: `false` |
+| `file_name` | string | No | Restrict search to a specific document by file name |
+
+### Example Request
+
+```bash
+curl -X POST "https://sources.graphorlm.com/ask-sources" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "What are the main findings in this report?"
+  }'
+```
+
+### Example with Conversation Memory
+
+```bash
+# First question
+curl -X POST "https://sources.graphorlm.com/ask-sources" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "What products are mentioned in the catalog?"
+  }'
+
+# Response: { "answer": "...", "conversation_id": "conv_abc123" }
+
+# Follow-up question using conversation_id
+curl -X POST "https://sources.graphorlm.com/ask-sources" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Which one is the most expensive?",
+    "conversation_id": "conv_abc123"
+  }'
+```
+
+### Example with Specific Document
+
+```bash
+curl -X POST "https://sources.graphorlm.com/ask-sources" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "What is the total amount due?",
+    "file_name": "invoice-2024.pdf"
+  }'
+```
+
+## Response
+
+### Success Response (200 OK)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `answer` | string | The answer to your question, grounded in document content |
+| `conversation_id` | string | Conversation identifier for follow-up questions |
+
+### Example Response
+
+```json
+{
+  "answer": "The main findings in the report indicate that revenue increased by 15% year-over-year, with the strongest growth in the digital services segment. The report also highlights three key challenges: supply chain disruptions, increased competition, and regulatory changes.",
+  "conversation_id": "conv_abc123"
+}
+```
+
+### Error Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 400 | Bad Request - Invalid parameters |
+| 401 | Unauthorized - Invalid or missing API token |
+| 404 | Not Found - Specified file not found |
+| 500 | Internal Server Error |
+
+## Usage Examples
+
+### Python
+
+```python
+import requests
+
+url = "https://sources.graphorlm.com/ask-sources"
+headers = {
+    "Authorization": "Bearer YOUR_API_TOKEN",
+    "Content-Type": "application/json"
+}
+
+# Simple question
+response = requests.post(url, headers=headers, json={
+    "question": "What are the key terms in this contract?"
+})
+
+data = response.json()
+print(data["answer"])
+
+# Follow-up question
+response = requests.post(url, headers=headers, json={
+    "question": "When does it expire?",
+    "conversation_id": data["conversation_id"]
+})
+
+print(response.json()["answer"])
+```
+
+### JavaScript
+
+```javascript
+const API_URL = "https://sources.graphorlm.com/ask-sources";
+const API_TOKEN = "YOUR_API_TOKEN";
+
+async function askQuestion(question, conversationId = null, fileName = null) {
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${API_TOKEN}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      question,
+      conversation_id: conversationId,
+      file_name: fileName
+    })
+  });
+  
+  return response.json();
+}
+
+// Usage
+const result = await askQuestion("What products are available?");
+console.log(result.answer);
+
+// Follow-up
+const followUp = await askQuestion(
+  "Tell me more about the first one", 
+  result.conversation_id
+);
+console.log(followUp.answer);
+```
+
+## Best Practices
+
+1. **Use conversation memory** — Pass `conversation_id` for follow-up questions to maintain context
+2. **Be specific** — Clear, specific questions get better answers
+3. **Scope when needed** — Use `file_name` to focus on a specific document
+4. **Reset when changing topics** — Set `reset: true` when switching to unrelated questions
+
+## Related
+
+<CardGroup cols={2}>
+  <Card
+    title="Document Chat Guide"
+    icon="comments"
+    href="/guides/document-chat"
+  >
+    Learn best practices for chatting with your documents
+  </Card>
+  <Card
+    title="Data Ingestion"
+    icon="file-import"
+    href="/guides/data-ingestion"
+  >
+    Improve parsing quality for better chat responses
+  </Card>
+</CardGroup>
+

@@ -1,0 +1,312 @@
+---
+title: 'Extraction API'
+description: 'Extract structured data from documents using custom schemas'
+---
+
+## Overview
+
+The Data Extraction API allows you to extract structured information from your documents using custom schemas and natural language instructions. The extraction uses the active parsing version of the specified document.
+
+## Endpoint
+
+```
+POST https://sources.graphorlm.com/run-extraction
+```
+
+## Authentication
+
+Include your API token in the Authorization header:
+
+```
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+## Request
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+| `Content-Type` | `application/json` | Yes |
+
+### Body Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `file_name` | string | Yes | The name of the file to extract from |
+| `user_instruction` | string | Yes | Natural language instructions to guide the extraction |
+| `output_schema_fields` | array | Yes | List of field definitions for the extraction schema |
+
+### Schema Field Object
+
+Each field in `output_schema_fields` has the following properties:
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `key` | string | Yes | Field name in the output (use snake_case) |
+| `type` | string | Yes | Data type: `string`, `number`, `date`, or `boolean` |
+| `description` | string | Yes | Description of what to extract |
+
+### Example Request
+
+```bash
+curl -X POST "https://sources.graphorlm.com/run-extraction" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "file_name": "invoice-2024.pdf",
+    "user_instruction": "Extract all invoice information. Use YYYY-MM-DD format for dates.",
+    "output_schema_fields": [
+      {
+        "key": "invoice_number",
+        "type": "string",
+        "description": "The unique invoice identifier"
+      },
+      {
+        "key": "invoice_date",
+        "type": "date",
+        "description": "Invoice date in YYYY-MM-DD format"
+      },
+      {
+        "key": "total_amount",
+        "type": "number",
+        "description": "Total amount due"
+      },
+      {
+        "key": "vendor_name",
+        "type": "string",
+        "description": "Name of the company issuing the invoice"
+      }
+    ]
+  }'
+```
+
+## Response
+
+### Success Response (200 OK)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `file_name` | string | The file name of the source |
+| `build_id` | string | The parsing version used for extraction |
+| `extracted_items` | array | List of extracted items with page references |
+
+### Extracted Item Object
+
+Each item in `extracted_items` contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `output` | object | Extracted data matching your schema fields |
+| `page_numbers` | array | List of page numbers where the data was found |
+
+### Example Response
+
+```json
+{
+  "file_name": "invoice-2024.pdf",
+  "build_id": "build_xyz789",
+  "extracted_items": [
+    {
+      "output": {
+        "invoice_number": "INV-2024-001",
+        "invoice_date": "2024-01-15",
+        "total_amount": 1250.00,
+        "vendor_name": "Acme Corporation"
+      },
+      "page_numbers": [1]
+    }
+  ]
+}
+```
+
+### Multiple Items Response
+
+When a document contains multiple extractable entities:
+
+```json
+{
+  "file_name": "product-catalog.pdf",
+  "build_id": "build_abc456",
+  "extracted_items": [
+    {
+      "output": {
+        "product_name": "Widget Pro",
+        "price": 49.99,
+        "in_stock": true
+      },
+      "page_numbers": [2, 3]
+    },
+    {
+      "output": {
+        "product_name": "Widget Basic",
+        "price": 29.99,
+        "in_stock": true
+      },
+      "page_numbers": [4]
+    }
+  ]
+}
+```
+
+### Error Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 400 | Bad Request - Invalid parameters or schema |
+| 401 | Unauthorized - Invalid or missing API token |
+| 404 | Not Found - File not found or no parsing history |
+| 500 | Internal Server Error |
+
+## Schema Examples
+
+### Invoice Extraction
+
+```json
+{
+  "file_name": "invoice.pdf",
+  "user_instruction": "Extract all invoice details. Convert amounts to numbers without currency symbols.",
+  "output_schema_fields": [
+    { "key": "invoice_number", "type": "string", "description": "Unique invoice identifier" },
+    { "key": "invoice_date", "type": "date", "description": "Invoice date (YYYY-MM-DD)" },
+    { "key": "due_date", "type": "date", "description": "Payment due date (YYYY-MM-DD)" },
+    { "key": "vendor_name", "type": "string", "description": "Company issuing the invoice" },
+    { "key": "customer_name", "type": "string", "description": "Customer being billed" },
+    { "key": "subtotal", "type": "number", "description": "Subtotal before tax" },
+    { "key": "tax_amount", "type": "number", "description": "Tax amount" },
+    { "key": "total_amount", "type": "number", "description": "Total amount due" }
+  ]
+}
+```
+
+### Contract Analysis
+
+```json
+{
+  "file_name": "contract.pdf",
+  "user_instruction": "Extract key contract terms. List all parties involved.",
+  "output_schema_fields": [
+    { "key": "contract_title", "type": "string", "description": "Title or name of the contract" },
+    { "key": "effective_date", "type": "date", "description": "When the contract becomes effective" },
+    { "key": "termination_date", "type": "date", "description": "When the contract ends" },
+    { "key": "parties", "type": "string", "description": "Names of all parties involved" },
+    { "key": "auto_renewal", "type": "boolean", "description": "Whether contract auto-renews" }
+  ]
+}
+```
+
+### Resume Parsing
+
+```json
+{
+  "file_name": "resume.pdf",
+  "user_instruction": "Extract candidate information. Include all skills as a comma-separated list.",
+  "output_schema_fields": [
+    { "key": "full_name", "type": "string", "description": "Candidate's full name" },
+    { "key": "email", "type": "string", "description": "Email address" },
+    { "key": "phone", "type": "string", "description": "Phone number" },
+    { "key": "skills", "type": "string", "description": "List of technical and soft skills" },
+    { "key": "years_experience", "type": "number", "description": "Total years of experience" }
+  ]
+}
+```
+
+## Usage Examples
+
+### Python
+
+```python
+import requests
+
+url = "https://sources.graphorlm.com/run-extraction"
+headers = {
+    "Authorization": "Bearer YOUR_API_TOKEN",
+    "Content-Type": "application/json"
+}
+
+payload = {
+    "file_name": "invoice.pdf",
+    "user_instruction": "Extract invoice information. Use YYYY-MM-DD for dates.",
+    "output_schema_fields": [
+        {"key": "invoice_number", "type": "string", "description": "Invoice ID"},
+        {"key": "total_amount", "type": "number", "description": "Total due"},
+        {"key": "invoice_date", "type": "date", "description": "Invoice date"}
+    ]
+}
+
+response = requests.post(url, headers=headers, json=payload)
+data = response.json()
+
+for item in data["extracted_items"]:
+    print(f"Invoice: {item['output']['invoice_number']}")
+    print(f"Amount: ${item['output']['total_amount']}")
+    print(f"Found on pages: {item['page_numbers']}")
+```
+
+### JavaScript
+
+```javascript
+const API_URL = "https://sources.graphorlm.com/run-extraction";
+const API_TOKEN = "YOUR_API_TOKEN";
+
+async function extractData(fileName, instruction, schema) {
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${API_TOKEN}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      file_name: fileName,
+      user_instruction: instruction,
+      output_schema_fields: schema
+    })
+  });
+  
+  return response.json();
+}
+
+// Usage
+const result = await extractData(
+  "invoice.pdf",
+  "Extract invoice details",
+  [
+    { key: "invoice_number", type: "string", description: "Invoice ID" },
+    { key: "total_amount", type: "number", description: "Total due" }
+  ]
+);
+
+result.extracted_items.forEach(item => {
+  console.log(item.output);
+  console.log(`Pages: ${item.page_numbers.join(", ")}`);
+});
+```
+
+## Best Practices
+
+1. **Be specific in descriptions** — Detailed field descriptions improve extraction accuracy
+2. **Use appropriate types** — Match field types to expected data (number for amounts, date for dates)
+3. **Provide clear instructions** — Guide the extraction with format preferences and edge cases
+4. **Handle multiple items** — Design your schema for documents that may contain multiple entities
+5. **Check page references** — Use `page_numbers` to verify extraction accuracy
+
+## Related
+
+<CardGroup cols={2}>
+  <Card
+    title="Data Extraction Guide"
+    icon="table"
+    href="/guides/data-extraction"
+  >
+    Learn schema design and extraction best practices
+  </Card>
+  <Card
+    title="Data Ingestion"
+    icon="file-import"
+    href="/guides/data-ingestion"
+  >
+    Improve parsing quality for better extraction results
+  </Card>
+</CardGroup>
+
