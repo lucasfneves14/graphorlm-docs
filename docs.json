@@ -195,6 +195,42 @@
   "footer": {
     "socials": {
       "linkedin": "https://linkedin.com/company/graphorlm"
-    }
+    },
+    "links": [
+      {
+        "header": "Product",
+        "items": [
+          {
+            "label": "Homepage",
+            "href": "https://graphorlm.com"
+          },
+          {
+            "label": "Pricing",
+            "href": "https://graphorlm.com/#pricing"
+          },
+          {
+            "label": "Features",
+            "href": "https://graphorlm.com/#bento"
+          },
+          {
+            "label": "Login",
+            "href": "https://app.graphorlm.com/login"
+          }
+        ]
+      },
+      {
+        "header": "Legal",
+        "items": [
+          {
+            "label": "Privacy Policy",
+            "href": "https://graphorlm.com/privacy-policy"
+          },
+          {
+            "label": "Terms of Use",
+            "href": "https://graphorlm.com/terms-of-use"
+          }
+        ]
+      }
+    ]
   }
 }
