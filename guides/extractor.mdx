@@ -1,0 +1,282 @@
+---
+title: 'Extractor'
+description: 'Extract structured data from documents using LLM-powered extraction with custom schemas'
+---
+
+The Extractor node uses LLM to extract structured information from documents based on custom schemas. It processes documents from Dataset or Chunking nodes through intelligent batching and parallel file processing, supporting multimodal content including text, HTML, and images.
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/extractor-overview.png"
+  alt="Extractor node overview"
+  loading="lazy"
+/>
+
+## Overview
+
+The Extractor node transforms unstructured documents into structured data by:
+
+1. **Processing documents** — Receives documents from Dataset or Chunking nodes
+2. **Applying custom schemas** — Extracts data according to your defined fields
+3. **Using LLM intelligence** — Leverages language models to understand and extract information
+4. **Outputting structured data** — Returns results as structured JSON that can be exported to CSV
+
+<Note>
+The Extractor node is different from [Data Extraction](/guides/data-extraction) in the Sources page. The Extractor node is part of a RAG pipeline and processes documents in batch, while Data Extraction works on individual documents with page-level provenance.
+</Note>
+
+## Using the Extractor Node
+
+### Adding the Extractor Node
+
+1. Open your flow in the **Flow Builder**
+2. Drag the **Extractor** node from the sidebar onto the canvas
+3. Connect an input node to the Extractor:
+   - **Dataset** → Extractor (extracts from raw documents)
+   - **Chunking** → Extractor (extracts from chunked content)
+4. Double-click the Extractor node to configure
+
+### Input Connections
+
+The Extractor node accepts input from:
+
+| Source Node | Use Case |
+|-------------|----------|
+| **Dataset** | Extract from full documents (uses Mistral for PDFs/images) |
+| **Chunking** | Extract from chunked content (better for large documents) |
+
+### Output Connections
+
+The Extractor node can connect to:
+
+| Target Node | Use Case |
+|-------------|----------|
+| **Response** | Output extracted data as the pipeline result |
+
+## Configuring the Extractor Node
+
+Double-click the Extractor node to open the configuration panel:
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/extractor-component.png"
+  alt="Extractor configuration"
+  loading="lazy"
+/>
+
+### Defining Your Schema
+
+The schema defines what information to extract. Each field has:
+
+| Property | Description | Example |
+|----------|-------------|---------|
+| **Key** | Field name in the output | `invoice_number` |
+| **Type** | Data type (string, number, boolean, array) | `string` |
+| **Description** | What to extract | "The unique invoice identifier" |
+| **Example** | Sample value (helps the LLM) | "INV-2024-001" |
+
+#### Adding Fields
+
+1. In the **Settings** tab, click **Add Field**
+2. Fill in the field properties:
+   - **Key**: Use snake_case names (e.g., `customer_name`)
+   - **Type**: Choose the appropriate data type
+   - **Description**: Be specific about what to extract
+   - **Example**: Provide a realistic example value
+3. Repeat for all fields you need
+
+#### Field Types
+
+| Type | Description | Example Output |
+|------|-------------|----------------|
+| **string** | Text values | `"John Doe"` |
+| **number** | Numeric values | `299.99` |
+| **boolean** | True/false values | `true` |
+| **array** | Lists of values | `["item1", "item2"]` |
+
+### Schema Examples
+
+#### Invoice Extraction
+
+| Key | Type | Description | Example |
+|-----|------|-------------|---------|
+| `invoice_number` | string | The unique invoice identifier | INV-2024-001 |
+| `invoice_date` | string | Invoice date in YYYY-MM-DD format | 2024-01-15 |
+| `vendor_name` | string | Name of the company issuing the invoice | Acme Corp |
+| `total_amount` | number | Total amount due | 1250.00 |
+| `line_items` | array | List of products/services | ["Widget A", "Service B"] |
+
+#### Contract Analysis
+
+| Key | Type | Description | Example |
+|-----|------|-------------|---------|
+| `contract_title` | string | Title or name of the contract | Service Agreement |
+| `parties` | array | Names of all parties involved | ["Company A", "Company B"] |
+| `effective_date` | string | When the contract becomes effective | 2024-02-01 |
+| `termination_date` | string | When the contract ends | 2025-01-31 |
+| `auto_renewal` | boolean | Whether contract auto-renews | true |
+
+#### Product Catalog
+
+| Key | Type | Description | Example |
+|-----|------|-------------|---------|
+| `product_name` | string | Name of the product | Widget Pro |
+| `sku` | string | Stock keeping unit identifier | WDG-PRO-001 |
+| `price` | number | Product price | 49.99 |
+| `in_stock` | boolean | Whether product is available | true |
+| `features` | array | List of product features | ["Durable", "Lightweight"] |
+
+## How Extraction Works
+
+The Extractor node processes documents differently based on the input source:
+
+### From Dataset Node
+
+1. **Supported files (PDF, images)** → Processed via Mistral document annotation
+2. **Other files** → Processed via LLM over document elements
+
+### From Chunking Node
+
+1. **Chunks are grouped by file** for context preservation
+2. **Batched within token limits** to optimize LLM calls
+3. **Processed with memory** to avoid duplicate extractions
+4. **Consolidated globally** to merge and deduplicate results
+
+### Processing Pipeline
+
+```
+Documents → Batch by File → Token-Based Batching → LLM Extraction → Consolidation → Post-Processing → Results
+```
+
+## Viewing Results
+
+After running the extraction (click **Update Results**):
+
+1. Go to the **Results** tab
+2. View extracted data in a table format
+3. Each row represents one extracted item
+4. Columns correspond to your schema fields
+
+### Exporting Results
+
+Click **Download CSV** to export the extracted data:
+- All fields are included as columns
+- Each extracted item is a row
+- Values are properly escaped for CSV format
+
+## Best Practices
+
+### Schema Design
+
+1. **Start simple** — Begin with essential fields, then expand
+2. **Be specific in descriptions** — Tell the LLM exactly what to look for
+3. **Provide examples** — Example values help the LLM understand the expected format
+4. **Use appropriate types** — Match field types to expected data
+
+### Input Selection
+
+| Scenario | Recommended Input |
+|----------|-------------------|
+| Small documents (< 50 pages) | Dataset node |
+| Large documents | Chunking node |
+| Image-heavy PDFs | Dataset node (uses Mistral) |
+| Text-heavy documents | Either works well |
+
+### Performance Tips
+
+1. **Limit concurrent files** — Default is 3-5 for optimal balance
+2. **Reduce batch size for images** — Image processing is more resource-intensive
+3. **Use chunking for large docs** — Better memory management and extraction quality
+
+## Pipeline Examples
+
+### Direct Extraction Pipeline
+
+```
+Dataset → Extractor → Response
+```
+
+Best for: Simple extraction from a collection of documents.
+
+### Chunked Extraction Pipeline
+
+```
+Dataset → Chunking → Extractor → Response
+```
+
+Best for: Large documents that need to be split for better extraction.
+
+### Combined RAG + Extraction Pipeline
+
+```
+                    ┌──→ Chunking → Retrieval → LLM → Response
+Dataset ────────────┤
+                    └──→ Extractor → Response
+```
+
+Best for: Both Q&A and structured extraction from the same documents.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="circle-exclamation" title="Empty or missing extractions">
+    If no data is extracted:
+    - Verify schema fields have clear descriptions
+    - Add example values to guide the LLM
+    - Check that input documents contain the expected information
+    - Try using Chunking node for better document processing
+  </Accordion>
+  <Accordion icon="copy" title="Duplicate extractions">
+    If seeing duplicate items:
+    - The Extractor automatically deduplicates, but check your schema
+    - Ensure key fields are unique identifiers
+    - Review if documents contain repeated information
+  </Accordion>
+  <Accordion icon="clock" title="Slow extraction">
+    If extraction is taking too long:
+    - Reduce the number of input documents
+    - Use Chunking node to split large documents
+    - Consider extracting fewer fields
+    - Check document complexity (image-heavy PDFs take longer)
+  </Accordion>
+  <Accordion icon="triangle-exclamation" title="Incorrect data types">
+    If extracted values have wrong types:
+    - Be explicit in field descriptions about expected format
+    - Add examples that match the expected type
+    - Use specific instructions (e.g., "as a number without currency symbols")
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Dataset"
+    icon="database"
+    href="/guides/dataset"
+  >
+    Learn how to configure the Dataset node as input
+  </Card>
+  <Card
+    title="Chunking"
+    icon="scissors"
+    href="/guides/chunking"
+  >
+    Optimize document segmentation before extraction
+  </Card>
+  <Card
+    title="Data Extraction"
+    icon="table"
+    href="/guides/data-extraction"
+  >
+    Extract from individual documents with page provenance
+  </Card>
+  <Card
+    title="Integrate Workflow"
+    icon="plug"
+    href="/guides/integrate-workflow"
+  >
+    Connect your extraction pipeline via REST API
+  </Card>
+</CardGroup>
+

@@ -39,6 +39,7 @@
                   "guides/retrieval",
                   "guides/llm-integration",
                   "guides/evaluation",
+                  "guides/extractor",
                   "guides/integrate-workflow"
                 ]
               },
