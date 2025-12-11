@@ -28,6 +28,7 @@
             "group": "Guides",
             "pages": [
               "guides/data-ingestion",
+              "guides/data-extraction",
               "guides/chunking",
               "guides/retrieval",
               "guides/llm-integration",

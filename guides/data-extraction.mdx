@@ -1,0 +1,308 @@
+---
+title: 'Data Extraction'
+description: 'Extract structured data from your documents using VLM-powered extraction with custom schemas and natural language instructions'
+---
+
+Graphor's Data Extraction feature transforms unstructured documents into structured, actionable data. Define custom output schemas, provide natural language instructions, and extract exactly the information you need — with full page-level provenance.
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/source-extraction-details.png"
+  alt="Data extraction interface"
+  loading="lazy"
+/>
+
+## Overview
+
+Data Extraction uses LLM-powered processing to intelligently extract structured information from your documents. This is perfect for:
+
+- **Invoice processing** — Extract invoice numbers, dates, amounts, and line items
+- **Contract analysis** — Pull key terms, parties, dates, and obligations
+- **Resume parsing** — Extract contact info, skills, experience, and education
+- **Product catalogs** — Capture product names, prices, descriptions, and specifications
+- **Research papers** — Extract titles, authors, abstracts, and citations
+
+## How It Works
+
+1. **Parse your document** — First, ingest and parse your document using any parsing method
+2. **Define your schema** — Specify the fields you want to extract with types and descriptions
+3. **Add instructions** — Provide optional natural language guidance for the extraction
+4. **Run extraction** — The LLM processes the document and extracts matching data
+5. **Review results** — View extracted data with page-level provenance
+
+## Accessing Data Extraction
+
+To access the Data Extraction feature:
+
+1. Navigate to **Sources** in the left sidebar
+2. Double-click on a processed document to open Source details
+3. Click the **Extraction** tab at the top center of the page
+
+<Tip>
+You can run Data Extraction on **any parsing version** of your document. Select the desired version from the Versions panel before running the extraction.
+</Tip>
+
+## Defining Your Schema
+
+The extraction schema defines what information to extract from your document. Each field in your schema has three components:
+
+### Field Name
+
+The key that will be used in the extracted data output. Use descriptive, snake_case names:
+
+- `invoice_number`
+- `total_amount`
+- `customer_name`
+- `line_items`
+
+### Field Type
+
+Choose the appropriate data type for each field:
+
+| Type | Description | Example Output |
+|------|-------------|----------------|
+| **Text** | String values | `"INV-2024-001"` |
+| **Number** | Numeric values | `299.99` |
+| **Boolean** | True/false values | `true` |
+| **Array** | Lists of values | `["item1", "item2"]` |
+
+### Field Description
+
+A natural language description that helps the LLM understand what to extract. Be specific and include:
+
+- What the field represents
+- Expected format (if applicable)
+- Any special instructions
+
+**Good descriptions:**
+- "The unique invoice identifier, usually starting with 'INV-'"
+- "Total amount due in USD, as a number without currency symbols"
+- "List of all product names mentioned in the document"
+
+**Avoid vague descriptions:**
+- "The number"
+- "Amount"
+- "Items"
+
+## Writing Effective Instructions
+
+Instructions provide additional context and guidance for the extraction process. They help the LLM understand:
+
+- **Scope** — What parts of the document to focus on
+- **Format** — How to format the extracted data
+- **Edge cases** — How to handle ambiguous situations
+- **Multiple items** — How to handle documents with multiple extractable entities
+
+### Example Instructions
+
+**For invoice extraction:**
+```
+Extract all invoice information from the document. If multiple invoices 
+are present, extract each one as a separate item. Use USD for currency 
+values and convert dates to YYYY-MM-DD format. If a field is not found, 
+leave it empty rather than guessing.
+```
+
+**For contract analysis:**
+```
+Focus on extracting the main contractual terms. For dates, use ISO format 
+(YYYY-MM-DD). For monetary values, include the currency. If there are 
+multiple parties, list all of them in the parties field.
+```
+
+**For product catalog:**
+```
+Extract each product as a separate item. Prices should be numeric values 
+in the document's currency. Include all product variants as separate items.
+```
+
+## Running an Extraction
+
+Once your schema and instructions are ready:
+
+1. Review your field definitions in the schema builder
+2. Add your instructions in the instructions text area
+3. Click **Extract** to start the extraction process
+4. Wait for the extraction to complete (processing time varies by document size)
+
+The extraction runs asynchronously. You can navigate away and return later — the results will be saved.
+
+## Viewing Results
+
+After extraction completes, the **Results** view displays:
+
+### Extracted Data Table
+
+A structured table showing all extracted items with:
+- Each row representing one extracted entity
+- Columns for each field in your schema
+- Values extracted from the document
+
+### Page References
+
+Each extracted item includes **page numbers** indicating where the information was found. This provides:
+- **Traceability** — Know exactly where each piece of data came from
+- **Verification** — Quickly check the source for accuracy
+- **Context** — Understand the surrounding content
+
+### Export Options
+
+Export your extracted data for use in other systems:
+- **JSON** — Structured data for programmatic use
+- **CSV** — Tabular format for spreadsheets and databases
+
+## Schema Examples
+
+### Invoice Extraction
+
+| Field Name | Type | Description |
+|------------|------|-------------|
+| `invoice_number` | Text | The unique invoice identifier |
+| `invoice_date` | Text | Invoice date in YYYY-MM-DD format |
+| `due_date` | Text | Payment due date in YYYY-MM-DD format |
+| `vendor_name` | Text | Name of the company issuing the invoice |
+| `customer_name` | Text | Name of the customer being billed |
+| `subtotal` | Number | Subtotal amount before tax |
+| `tax_amount` | Number | Tax amount |
+| `total_amount` | Number | Total amount due |
+| `line_items` | Text | Description of products/services with quantities and prices |
+
+### Resume Parsing
+
+| Field Name | Type | Description |
+|------------|------|-------------|
+| `full_name` | Text | Candidate's full name |
+| `email` | Text | Email address |
+| `phone` | Text | Phone number |
+| `location` | Text | City and country |
+| `summary` | Text | Professional summary or objective |
+| `skills` | Text | List of technical and soft skills |
+| `experience` | Text | Work experience with company names, titles, and dates |
+| `education` | Text | Educational background with institutions and degrees |
+
+### Product Catalog
+
+| Field Name | Type | Description |
+|------------|------|-------------|
+| `product_name` | Text | Name of the product |
+| `sku` | Text | Product SKU or identifier |
+| `price` | Number | Product price |
+| `description` | Text | Product description |
+| `category` | Text | Product category |
+| `in_stock` | Boolean | Whether the product is in stock |
+
+## Best Practices
+
+### Schema Design
+
+1. **Start simple** — Begin with a few essential fields, then expand
+2. **Be specific** — Detailed descriptions produce better results
+3. **Use appropriate types** — Match the field type to expected data
+4. **Consider edge cases** — Think about what happens when data is missing
+
+### Instructions
+
+1. **Be explicit about format** — Specify date formats, currency handling, etc.
+2. **Handle multiples** — Clarify how to handle multiple items (e.g., multiple invoices)
+3. **Set defaults** — Explain what to do when information isn't found
+4. **Provide context** — Mention the document type if relevant
+
+### Parsing Method Selection
+
+The quality of extraction depends on the quality of parsing. For best results:
+
+- **Complex layouts** — Use **MAI** or **Graphor** parsing methods
+- **Scanned documents** — Use **Hi-Res** or **Hi-Res FT** for better OCR
+- **Simple text documents** — **Fast** method is usually sufficient
+
+## API Integration
+
+Data Extraction is available via the REST API for programmatic use:
+
+```bash
+curl -X POST "https://sources.graphorlm.com/run-extraction" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "file_name": "invoice.pdf",
+    "user_instruction": "Extract all invoice information. Use YYYY-MM-DD for dates.",
+    "output_schema_fields": [
+      {
+        "name": "invoice_number",
+        "type": "string",
+        "description": "The unique invoice identifier"
+      },
+      {
+        "name": "total_amount",
+        "type": "number",
+        "description": "Total amount due"
+      }
+    ]
+  }'
+```
+
+The API returns the extracted data for the active document version.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="circle-exclamation" title="Missing or incorrect extractions">
+    If fields are missing or incorrect:
+    - Improve field descriptions with more specific guidance
+    - Add detailed instructions for edge cases
+    - Try a different parsing method for better document understanding
+    - Verify the document is properly parsed before extraction
+  </Accordion>
+  <Accordion icon="clock" title="Slow extraction times">
+    Extraction time depends on document size and complexity:
+    - Large documents take longer to process
+    - Complex schemas with many fields require more processing
+    - Consider extracting from specific page ranges for large documents
+  </Accordion>
+  <Accordion icon="file-circle-question" title="Poor results on scanned documents">
+    For scanned or image-heavy documents:
+    - Use **Hi-Res**, **Hi-Res FT**, or **MAI** parsing methods
+    - Ensure the document was properly OCR'd during parsing
+    - Check the parsing results before running extraction
+  </Accordion>
+  <Accordion icon="list" title="Handling multiple items">
+    When extracting multiple items (e.g., multiple invoices in one document):
+    - Explicitly state in instructions how to handle multiples
+    - Each extracted entity appears as a separate row in results
+    - Page references help identify which item came from where
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Document Chat"
+    icon="comments"
+    href="/guides/document-chat"
+  >
+    Ask questions about your documents using natural language
+  </Card>
+  <Card
+    title="Data Ingestion"
+    icon="file-import"
+    href="/guides/data-ingestion"
+  >
+    Learn about parsing methods and document processing options
+  </Card>
+  <Card
+    title="API Reference"
+    icon="code"
+    href="/api-reference/sources/run-extraction"
+  >
+    Integrate Data Extraction into your applications
+  </Card>
+  <Card
+    title="Build RAG Pipelines"
+    icon="diagram-project"
+    href="/guides/retrieval"
+  >
+    Use extracted data in retrieval-augmented generation workflows
+  </Card>
+</CardGroup>
+
