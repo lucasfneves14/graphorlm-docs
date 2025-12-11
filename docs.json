@@ -37,17 +37,22 @@
             "group": "RAG Pipelines",
             "pages": [
               "guides/rag-quickstart",
-              "guides/dataset",
-              "guides/chunking",
-              "guides/retrieval",
-              "guides/llm-integration",
-              "guides/evaluation",
-              "guides/extractor",
-              "guides/reranking",
-              "guides/smart-rag",
-              "guides/agentic-rag",
-              "guides/graph-rag",
-              "guides/raptor-rag",
+              {
+                "group": "Nodes",
+                "pages": [
+                  "guides/dataset",
+                  "guides/chunking",
+                  "guides/retrieval",
+                  "guides/llm-integration",
+                  "guides/evaluation",
+                  "guides/extractor",
+                  "guides/reranking",
+                  "guides/smart-rag",
+                  "guides/agentic-rag",
+                  "guides/graph-rag",
+                  "guides/raptor-rag"
+                ]
+              },
               "guides/integrate-workflow"
             ]
           }
