@@ -45,8 +45,10 @@ Each field in `output_schema_fields` has the following properties:
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 | `key` | string | Yes | Field name in the output (use snake_case) |
-| `type` | string | Yes | Data type: `string`, `number`, `date`, or `boolean` |
+| `type` | string | Yes | Data type: `string`, `number`, `date`, `boolean`, `object`, or `array` |
 | `description` | string | Yes | Description of what to extract |
+| `nested_fields` | array | No | Required for `object` type or `array` with `items_type: "object"`. Defines nested field structure |
+| `items_type` | string | No | Required for `array` type. Type of array items: `string`, `number`, `date`, `boolean`, or `object` |
 
 ### Example Request
 
@@ -77,6 +79,54 @@ curl -X POST "https://sources.graphorlm.com/run-extraction" \
         "key": "vendor_name",
         "type": "string",
         "description": "Name of the company issuing the invoice"
+      }
+    ]
+  }'
+```
+
+### Example Request with Object and Array Types
+
+```bash
+curl -X POST "https://sources.graphorlm.com/run-extraction" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "file_name": "invoice-2024.pdf",
+    "user_instruction": "Extract invoice with line items and address details.",
+    "output_schema_fields": [
+      {
+        "key": "invoice_number",
+        "type": "string",
+        "description": "The unique invoice identifier"
+      },
+      {
+        "key": "billing_address",
+        "type": "object",
+        "description": "Billing address details",
+        "nested_fields": [
+          { "key": "street", "type": "string", "description": "Street address" },
+          { "key": "city", "type": "string", "description": "City name" },
+          { "key": "zip_code", "type": "string", "description": "Postal code" },
+          { "key": "country", "type": "string", "description": "Country name" }
+        ]
+      },
+      {
+        "key": "tags",
+        "type": "array",
+        "description": "Invoice tags or categories",
+        "items_type": "string"
+      },
+      {
+        "key": "line_items",
+        "type": "array",
+        "description": "Invoice line items",
+        "items_type": "object",
+        "nested_fields": [
+          { "key": "description", "type": "string", "description": "Item description" },
+          { "key": "quantity", "type": "number", "description": "Item quantity" },
+          { "key": "unit_price", "type": "number", "description": "Price per unit" },
+          { "key": "total", "type": "number", "description": "Line item total" }
+        ]
       }
     ]
   }'
@@ -150,6 +200,46 @@ When a document contains multiple extractable entities:
 }
 ```
 
+### Response with Object and Array Types
+
+When using `object` and `array` types in your schema:
+
+```json
+{
+  "file_name": "invoice-2024.pdf",
+  "build_id": "build_xyz789",
+  "extracted_items": [
+    {
+      "output": {
+        "invoice_number": "INV-2024-001",
+        "billing_address": {
+          "street": "123 Main Street",
+          "city": "New York",
+          "zip_code": "10001",
+          "country": "USA"
+        },
+        "tags": ["urgent", "corporate", "Q1-2024"],
+        "line_items": [
+          {
+            "description": "Professional Services",
+            "quantity": 10,
+            "unit_price": 100.00,
+            "total": 1000.00
+          },
+          {
+            "description": "Software License",
+            "quantity": 1,
+            "unit_price": 250.00,
+            "total": 250.00
+          }
+        ]
+      },
+      "page_numbers": [1, 2]
+    }
+  ]
+}
+```
+
 ### Error Responses
 
 | Status Code | Description |
@@ -185,13 +275,33 @@ When a document contains multiple extractable entities:
 ```json
 {
   "file_name": "contract.pdf",
-  "user_instruction": "Extract key contract terms. List all parties involved.",
+  "user_instruction": "Extract key contract terms with all parties and obligations.",
   "output_schema_fields": [
     { "key": "contract_title", "type": "string", "description": "Title or name of the contract" },
     { "key": "effective_date", "type": "date", "description": "When the contract becomes effective" },
     { "key": "termination_date", "type": "date", "description": "When the contract ends" },
-    { "key": "parties", "type": "string", "description": "Names of all parties involved" },
-    { "key": "auto_renewal", "type": "boolean", "description": "Whether contract auto-renews" }
+    { "key": "auto_renewal", "type": "boolean", "description": "Whether contract auto-renews" },
+    {
+      "key": "parties",
+      "type": "array",
+      "description": "All parties involved in the contract",
+      "items_type": "object",
+      "nested_fields": [
+        { "key": "name", "type": "string", "description": "Party name" },
+        { "key": "role", "type": "string", "description": "Role (e.g., Licensor, Licensee)" },
+        { "key": "address", "type": "string", "description": "Party address" }
+      ]
+    },
+    {
+      "key": "key_terms",
+      "type": "object",
+      "description": "Key contract terms and conditions",
+      "nested_fields": [
+        { "key": "payment_terms", "type": "string", "description": "Payment conditions" },
+        { "key": "liability_cap", "type": "number", "description": "Maximum liability amount" },
+        { "key": "notice_period_days", "type": "number", "description": "Notice period in days" }
+      ]
+    }
   ]
 }
 ```
@@ -201,13 +311,83 @@ When a document contains multiple extractable entities:
 ```json
 {
   "file_name": "resume.pdf",
-  "user_instruction": "Extract candidate information. Include all skills as a comma-separated list.",
+  "user_instruction": "Extract complete candidate information including work history and education.",
   "output_schema_fields": [
     { "key": "full_name", "type": "string", "description": "Candidate's full name" },
     { "key": "email", "type": "string", "description": "Email address" },
     { "key": "phone", "type": "string", "description": "Phone number" },
-    { "key": "skills", "type": "string", "description": "List of technical and soft skills" },
-    { "key": "years_experience", "type": "number", "description": "Total years of experience" }
+    { "key": "years_experience", "type": "number", "description": "Total years of experience" },
+    {
+      "key": "skills",
+      "type": "array",
+      "description": "List of technical and soft skills",
+      "items_type": "string"
+    },
+    {
+      "key": "work_experience",
+      "type": "array",
+      "description": "Work history",
+      "items_type": "object",
+      "nested_fields": [
+        { "key": "company", "type": "string", "description": "Company name" },
+        { "key": "title", "type": "string", "description": "Job title" },
+        { "key": "start_date", "type": "date", "description": "Start date" },
+        { "key": "end_date", "type": "date", "description": "End date (or current)" }
+      ]
+    },
+    {
+      "key": "education",
+      "type": "array",
+      "description": "Educational background",
+      "items_type": "object",
+      "nested_fields": [
+        { "key": "institution", "type": "string", "description": "School or university name" },
+        { "key": "degree", "type": "string", "description": "Degree obtained" },
+        { "key": "graduation_year", "type": "number", "description": "Year of graduation" }
+      ]
+    }
+  ]
+}
+```
+
+### Product Catalog
+
+```json
+{
+  "file_name": "catalog.pdf",
+  "user_instruction": "Extract all products with their specifications and variants.",
+  "output_schema_fields": [
+    { "key": "product_name", "type": "string", "description": "Product name" },
+    { "key": "sku", "type": "string", "description": "Product SKU" },
+    { "key": "base_price", "type": "number", "description": "Base price" },
+    { "key": "in_stock", "type": "boolean", "description": "Whether product is in stock" },
+    {
+      "key": "specifications",
+      "type": "object",
+      "description": "Product specifications",
+      "nested_fields": [
+        { "key": "weight", "type": "number", "description": "Weight in kg" },
+        { "key": "dimensions", "type": "string", "description": "Dimensions (LxWxH)" },
+        { "key": "material", "type": "string", "description": "Main material" }
+      ]
+    },
+    {
+      "key": "categories",
+      "type": "array",
+      "description": "Product categories",
+      "items_type": "string"
+    },
+    {
+      "key": "variants",
+      "type": "array",
+      "description": "Product variants",
+      "items_type": "object",
+      "nested_fields": [
+        { "key": "color", "type": "string", "description": "Variant color" },
+        { "key": "size", "type": "string", "description": "Variant size" },
+        { "key": "price_modifier", "type": "number", "description": "Price adjustment" }
+      ]
+    }
   ]
 }
 ```
@@ -225,6 +405,7 @@ headers = {
     "Content-Type": "application/json"
 }
 
+# Basic extraction
 payload = {
     "file_name": "invoice.pdf",
     "user_instruction": "Extract invoice information. Use YYYY-MM-DD for dates.",
@@ -242,6 +423,59 @@ for item in data["extracted_items"]:
     print(f"Invoice: {item['output']['invoice_number']}")
     print(f"Amount: ${item['output']['total_amount']}")
     print(f"Found on pages: {item['page_numbers']}")
+```
+
+### Python with Object and Array Types
+
+```python
+import requests
+
+url = "https://sources.graphorlm.com/run-extraction"
+headers = {
+    "Authorization": "Bearer YOUR_API_TOKEN",
+    "Content-Type": "application/json"
+}
+
+# Extraction with nested objects and arrays
+payload = {
+    "file_name": "invoice.pdf",
+    "user_instruction": "Extract invoice with line items and address.",
+    "output_schema_fields": [
+        {"key": "invoice_number", "type": "string", "description": "Invoice ID"},
+        {
+            "key": "billing_address",
+            "type": "object",
+            "description": "Billing address",
+            "nested_fields": [
+                {"key": "street", "type": "string", "description": "Street"},
+                {"key": "city", "type": "string", "description": "City"},
+                {"key": "country", "type": "string", "description": "Country"}
+            ]
+        },
+        {
+            "key": "line_items",
+            "type": "array",
+            "description": "Invoice line items",
+            "items_type": "object",
+            "nested_fields": [
+                {"key": "description", "type": "string", "description": "Item description"},
+                {"key": "quantity", "type": "number", "description": "Quantity"},
+                {"key": "price", "type": "number", "description": "Unit price"}
+            ]
+        }
+    ]
+}
+
+response = requests.post(url, headers=headers, json=payload)
+data = response.json()
+
+for item in data["extracted_items"]:
+    output = item["output"]
+    print(f"Invoice: {output['invoice_number']}")
+    print(f"City: {output['billing_address']['city']}")
+    print("Line Items:")
+    for line in output["line_items"]:
+        print(f"  - {line['description']}: {line['quantity']} x ${line['price']}")
 ```
 
 ### JavaScript
@@ -267,7 +501,7 @@ async function extractData(fileName, instruction, schema) {
   return response.json();
 }
 
-// Usage
+// Basic usage
 const result = await extractData(
   "invoice.pdf",
   "Extract invoice details",
@@ -283,6 +517,73 @@ result.extracted_items.forEach(item => {
 });
 ```
 
+### JavaScript with Object and Array Types
+
+```javascript
+const API_URL = "https://sources.graphorlm.com/run-extraction";
+const API_TOKEN = "YOUR_API_TOKEN";
+
+// Extraction with nested objects and arrays
+const schema = [
+  { key: "invoice_number", type: "string", description: "Invoice ID" },
+  {
+    key: "billing_address",
+    type: "object",
+    description: "Billing address",
+    nested_fields: [
+      { key: "street", type: "string", description: "Street" },
+      { key: "city", type: "string", description: "City" },
+      { key: "country", type: "string", description: "Country" }
+    ]
+  },
+  {
+    key: "tags",
+    type: "array",
+    description: "Invoice tags",
+    items_type: "string"
+  },
+  {
+    key: "line_items",
+    type: "array",
+    description: "Invoice line items",
+    items_type: "object",
+    nested_fields: [
+      { key: "description", type: "string", description: "Item description" },
+      { key: "quantity", type: "number", description: "Quantity" },
+      { key: "price", type: "number", description: "Unit price" }
+    ]
+  }
+];
+
+const response = await fetch(API_URL, {
+  method: "POST",
+  headers: {
+    "Authorization": `Bearer ${API_TOKEN}`,
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    file_name: "invoice.pdf",
+    user_instruction: "Extract invoice with all details",
+    output_schema_fields: schema
+  })
+});
+
+const data = await response.json();
+
+data.extracted_items.forEach(item => {
+  const { invoice_number, billing_address, tags, line_items } = item.output;
+  
+  console.log(`Invoice: ${invoice_number}`);
+  console.log(`Address: ${billing_address.street}, ${billing_address.city}`);
+  console.log(`Tags: ${tags.join(", ")}`);
+  
+  console.log("Line Items:");
+  line_items.forEach(line => {
+    console.log(`  - ${line.description}: ${line.quantity} x $${line.price}`);
+  });
+});
+```
+
 ## Best Practices
 
 1. **Be specific in descriptions** — Detailed field descriptions improve extraction accuracy
@@ -290,6 +591,10 @@ result.extracted_items.forEach(item => {
 3. **Provide clear instructions** — Guide the extraction with format preferences and edge cases
 4. **Handle multiple items** — Design your schema for documents that may contain multiple entities
 5. **Check page references** — Use `page_numbers` to verify extraction accuracy
+6. **Use objects for structured data** — Group related fields using `object` type (e.g., address with street, city, zip)
+7. **Use arrays for lists** — Extract repeating items using `array` type with appropriate `items_type`
+8. **Keep nesting shallow** — Avoid deeply nested structures for better extraction accuracy
+9. **Use primitive arrays when possible** — For simple lists (tags, categories), use `items_type: "string"` instead of objects
 
 ## Related
 

@@ -71,7 +71,7 @@ The schema defines what information to extract. Each field has:
 | Property | Description | Example |
 |----------|-------------|---------|
 | **Key** | Field name in the output | `invoice_number` |
-| **Type** | Data type (string, number, boolean, array) | `string` |
+| **Type** | Data type (string, number, boolean, date, object, array) | `string` |
 | **Description** | What to extract | "The unique invoice identifier" |
 | **Example** | Sample value (helps the LLM) | "INV-2024-001" |
 
@@ -92,7 +92,27 @@ The schema defines what information to extract. Each field has:
 | **string** | Text values | `"John Doe"` |
 | **number** | Numeric values | `299.99` |
 | **boolean** | True/false values | `true` |
-| **array** | Lists of values | `["item1", "item2"]` |
+| **date** | Date values | `"2024-01-15"` |
+| **object** | Nested structured data | `{"street": "123 Main St", "city": "NYC"}` |
+| **array** | Lists of values | `["item1", "item2"]` or `[{...}, {...}]` |
+
+#### Object Type
+
+Use **object** type to group related fields together (e.g., address, specifications). When selecting object, define nested fields with their own key, type, and description.
+
+#### Array Type
+
+Use **array** type for lists. Specify the **Items Type** to define what the array contains:
+
+| Items Type | Use Case | Example |
+|------------|----------|---------|
+| **string** | List of text | Tags, skills |
+| **number** | List of numbers | Quantities |
+| **boolean** | List of booleans | Feature flags |
+| **date** | List of dates | Event dates |
+| **object** | List of structured items | Line items, experience |
+
+When using **object** as items type, define nested fields that apply to each array item.
 
 ### Schema Examples
 
@@ -101,20 +121,32 @@ The schema defines what information to extract. Each field has:
 | Key | Type | Description | Example |
 |-----|------|-------------|---------|
 | `invoice_number` | string | The unique invoice identifier | INV-2024-001 |
-| `invoice_date` | string | Invoice date in YYYY-MM-DD format | 2024-01-15 |
+| `invoice_date` | date | Invoice date in YYYY-MM-DD format | 2024-01-15 |
 | `vendor_name` | string | Name of the company issuing the invoice | Acme Corp |
 | `total_amount` | number | Total amount due | 1250.00 |
-| `line_items` | array | List of products/services | ["Widget A", "Service B"] |
+| `billing_address` | object | Billing address details | - |
+| ↳ `street` | string | Street address | 123 Main St |
+| ↳ `city` | string | City name | New York |
+| ↳ `country` | string | Country | USA |
+| `line_items` | array (object) | List of products/services | - |
+| ↳ `description` | string | Item description | Widget A |
+| ↳ `quantity` | number | Quantity | 2 |
+| ↳ `price` | number | Unit price | 50.00 |
 
 #### Contract Analysis
 
 | Key | Type | Description | Example |
 |-----|------|-------------|---------|
 | `contract_title` | string | Title or name of the contract | Service Agreement |
-| `parties` | array | Names of all parties involved | ["Company A", "Company B"] |
-| `effective_date` | string | When the contract becomes effective | 2024-02-01 |
-| `termination_date` | string | When the contract ends | 2025-01-31 |
+| `effective_date` | date | When the contract becomes effective | 2024-02-01 |
+| `termination_date` | date | When the contract ends | 2025-01-31 |
 | `auto_renewal` | boolean | Whether contract auto-renews | true |
+| `parties` | array (object) | Parties involved in the contract | - |
+| ↳ `name` | string | Party name | Company A |
+| ↳ `role` | string | Role in contract | Licensor |
+| `key_terms` | object | Key contract terms | - |
+| ↳ `payment_terms` | string | Payment conditions | Net 30 |
+| ↳ `notice_period` | number | Notice period in days | 30 |
 
 #### Product Catalog
 
@@ -124,7 +156,13 @@ The schema defines what information to extract. Each field has:
 | `sku` | string | Stock keeping unit identifier | WDG-PRO-001 |
 | `price` | number | Product price | 49.99 |
 | `in_stock` | boolean | Whether product is available | true |
-| `features` | array | List of product features | ["Durable", "Lightweight"] |
+| `features` | array (string) | List of product features | ["Durable", "Lightweight"] |
+| `specifications` | object | Product specifications | - |
+| ↳ `weight` | number | Weight in kg | 0.5 |
+| ↳ `dimensions` | string | Dimensions | 10x5x3 cm |
+| `variants` | array (object) | Product variants | - |
+| ↳ `color` | string | Variant color | Blue |
+| ↳ `size` | string | Variant size | Large |
 
 
 ## Viewing Results
@@ -151,6 +189,9 @@ Click **Download CSV** to export the extracted data:
 2. **Be specific in descriptions** — Tell the LLM exactly what to look for
 3. **Provide examples** — Example values help the LLM understand the expected format
 4. **Use appropriate types** — Match field types to expected data
+5. **Use objects for structured data** — Group related fields (address, specifications) using object type
+6. **Use arrays for lists** — Line items, skills, and features are perfect for array type
+7. **Keep nesting shallow** — Avoid deeply nested structures for better extraction accuracy
 
 ### Input Selection
 

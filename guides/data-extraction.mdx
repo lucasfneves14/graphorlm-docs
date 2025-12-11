@@ -64,7 +64,33 @@ Choose the appropriate data type for each field:
 | **Text** | String values | `"INV-2024-001"` |
 | **Number** | Numeric values | `299.99` |
 | **Boolean** | True/false values | `true` |
-| **Array** | Lists of values | `["item1", "item2"]` |
+| **Date** | Date values (YYYY-MM-DD) | `"2024-01-15"` |
+| **Object** | Nested structured data | `{"street": "123 Main St", "city": "NYC"}` |
+| **Array** | Lists of values | `["item1", "item2"]` or `[{...}, {...}]` |
+
+### Object Type
+
+Use the **Object** type when you need to group related fields together. This is useful for:
+
+- Addresses (street, city, zip, country)
+- Contact information (name, email, phone)
+- Specifications (weight, dimensions, material)
+
+When you select Object type, you can define **nested fields** with their own key, type, and description.
+
+### Array Type
+
+Use the **Array** type for extracting lists of items. Arrays require you to specify the **Items Type**:
+
+| Items Type | Use Case | Example |
+|------------|----------|---------|
+| **Text** | List of strings | Tags, categories, skills |
+| **Number** | List of numbers | Page numbers, quantities |
+| **Boolean** | List of booleans | Feature flags |
+| **Date** | List of dates | Event dates, milestones |
+| **Object** | List of structured items | Line items, work experience, products |
+
+When using **Object** as the items type, you define nested fields that apply to each item in the array.
 
 ### Field Description
 
@@ -158,14 +184,23 @@ Export your extracted data for use in other systems:
 | Field Name | Type | Description |
 |------------|------|-------------|
 | `invoice_number` | Text | The unique invoice identifier |
-| `invoice_date` | Text | Invoice date in YYYY-MM-DD format |
-| `due_date` | Text | Payment due date in YYYY-MM-DD format |
+| `invoice_date` | Date | Invoice date in YYYY-MM-DD format |
+| `due_date` | Date | Payment due date in YYYY-MM-DD format |
 | `vendor_name` | Text | Name of the company issuing the invoice |
 | `customer_name` | Text | Name of the customer being billed |
+| `billing_address` | Object | Billing address details |
+| ↳ `street` | Text | Street address |
+| ↳ `city` | Text | City name |
+| ↳ `zip_code` | Text | Postal code |
+| ↳ `country` | Text | Country name |
 | `subtotal` | Number | Subtotal amount before tax |
 | `tax_amount` | Number | Tax amount |
 | `total_amount` | Number | Total amount due |
-| `line_items` | Text | Description of products/services with quantities and prices |
+| `line_items` | Array (Object) | List of products/services |
+| ↳ `description` | Text | Item description |
+| ↳ `quantity` | Number | Quantity ordered |
+| ↳ `unit_price` | Number | Price per unit |
+| ↳ `total` | Number | Line item total |
 
 ### Resume Parsing
 
@@ -176,9 +211,17 @@ Export your extracted data for use in other systems:
 | `phone` | Text | Phone number |
 | `location` | Text | City and country |
 | `summary` | Text | Professional summary or objective |
-| `skills` | Text | List of technical and soft skills |
-| `experience` | Text | Work experience with company names, titles, and dates |
-| `education` | Text | Educational background with institutions and degrees |
+| `skills` | Array (Text) | List of technical and soft skills |
+| `work_experience` | Array (Object) | Work history |
+| ↳ `company` | Text | Company name |
+| ↳ `title` | Text | Job title |
+| ↳ `start_date` | Date | Employment start date |
+| ↳ `end_date` | Date | Employment end date (or "Present") |
+| ↳ `responsibilities` | Text | Key responsibilities |
+| `education` | Array (Object) | Educational background |
+| ↳ `institution` | Text | School or university name |
+| ↳ `degree` | Text | Degree obtained |
+| ↳ `graduation_year` | Number | Year of graduation |
 
 ### Product Catalog
 
@@ -188,8 +231,16 @@ Export your extracted data for use in other systems:
 | `sku` | Text | Product SKU or identifier |
 | `price` | Number | Product price |
 | `description` | Text | Product description |
-| `category` | Text | Product category |
 | `in_stock` | Boolean | Whether the product is in stock |
+| `categories` | Array (Text) | Product categories |
+| `specifications` | Object | Product specifications |
+| ↳ `weight` | Number | Weight in kg |
+| ↳ `dimensions` | Text | Dimensions (LxWxH) |
+| ↳ `material` | Text | Main material |
+| `variants` | Array (Object) | Product variants |
+| ↳ `color` | Text | Variant color |
+| ↳ `size` | Text | Variant size |
+| ↳ `price_modifier` | Number | Price adjustment |
 
 ## Best Practices
 
@@ -199,6 +250,10 @@ Export your extracted data for use in other systems:
 2. **Be specific** — Detailed descriptions produce better results
 3. **Use appropriate types** — Match the field type to expected data
 4. **Consider edge cases** — Think about what happens when data is missing
+5. **Use objects for structured data** — Group related fields (address, contact info) using Object type
+6. **Use arrays for repeating items** — Line items, work history, and skills are perfect for Array type
+7. **Keep nesting shallow** — Avoid deeply nested structures for better extraction accuracy
+8. **Choose the right array items type** — Use Text arrays for simple lists (tags, skills), Object arrays for complex items (line items, experience)
 
 ### Instructions
 
@@ -219,6 +274,8 @@ The quality of extraction depends on the quality of parsing. For best results:
 
 Data Extraction is available via the REST API for programmatic use:
 
+### Basic Extraction
+
 ```bash
 curl -X POST "https://sources.graphorlm.com/run-extraction" \
   -H "Authorization: Bearer YOUR_API_TOKEN" \
@@ -228,12 +285,12 @@ curl -X POST "https://sources.graphorlm.com/run-extraction" \
     "user_instruction": "Extract all invoice information. Use YYYY-MM-DD for dates.",
     "output_schema_fields": [
       {
-        "name": "invoice_number",
+        "key": "invoice_number",
         "type": "string",
         "description": "The unique invoice identifier"
       },
       {
-        "name": "total_amount",
+        "key": "total_amount",
         "type": "number",
         "description": "Total amount due"
       }
@@ -241,7 +298,53 @@ curl -X POST "https://sources.graphorlm.com/run-extraction" \
   }'
 ```
 
-The API returns the extracted data for the active document version.
+### Extraction with Object and Array Types
+
+```bash
+curl -X POST "https://sources.graphorlm.com/run-extraction" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "file_name": "invoice.pdf",
+    "user_instruction": "Extract invoice with line items and billing address.",
+    "output_schema_fields": [
+      {
+        "key": "invoice_number",
+        "type": "string",
+        "description": "The unique invoice identifier"
+      },
+      {
+        "key": "billing_address",
+        "type": "object",
+        "description": "Billing address details",
+        "nested_fields": [
+          { "key": "street", "type": "string", "description": "Street address" },
+          { "key": "city", "type": "string", "description": "City name" },
+          { "key": "country", "type": "string", "description": "Country name" }
+        ]
+      },
+      {
+        "key": "tags",
+        "type": "array",
+        "description": "Invoice tags",
+        "items_type": "string"
+      },
+      {
+        "key": "line_items",
+        "type": "array",
+        "description": "Invoice line items",
+        "items_type": "object",
+        "nested_fields": [
+          { "key": "description", "type": "string", "description": "Item description" },
+          { "key": "quantity", "type": "number", "description": "Quantity" },
+          { "key": "unit_price", "type": "number", "description": "Price per unit" }
+        ]
+      }
+    ]
+  }'
+```
+
+The API returns the extracted data for the active document version. See the [Extraction API Reference](/api-reference/extract-api) for complete documentation.
 
 ## Troubleshooting
 
