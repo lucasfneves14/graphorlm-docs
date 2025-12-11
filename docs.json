@@ -65,14 +65,19 @@
           {
             "group": "Data Options",
             "pages": [
-              "api-reference/sources/overview",
-              "api-reference/sources/upload",
-              "api-reference/sources/upload-url",
-              "api-reference/sources/upload-github",
-              "api-reference/sources/process",
-              "api-reference/sources/list",
-              "api-reference/sources/delete",
-              "api-reference/sources/list-elements"
+              {
+                "group": "Ingestion API",
+                "pages": [
+                  "api-reference/sources/overview",
+                  "api-reference/sources/upload",
+                  "api-reference/sources/upload-url",
+                  "api-reference/sources/upload-github",
+                  "api-reference/sources/process",
+                  "api-reference/sources/list",
+                  "api-reference/sources/delete",
+                  "api-reference/sources/list-elements"
+                ]
+              }
             ]
           },
           {
