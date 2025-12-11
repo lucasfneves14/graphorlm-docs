@@ -11,25 +11,63 @@ description: "Graphor is a comprehensive platform for unstructured data processi
 />
 
 ## Unstructured Data into Intelligent Insights
-Graphor empowers organizations to unlock the full potential of their unstructured data through advanced RAG pipelines and intelligent processing workflows. Our platform bridges the gap between raw information and actionable knowledge, enabling you to build powerful AI applications with precision and ease.
+
+Graphor empowers organizations to unlock the full potential of their unstructured data through state-of-the-art document parsing, intelligent data extraction, and advanced RAG pipelines. Our platform bridges the gap between raw information and actionable knowledge, enabling you to build powerful AI applications with precision and ease.
+
+## Data Ingestion
+
+Graphor applies **state-of-the-art parsing** to your documents, combining advanced OCR capabilities with intelligent text classification to transform unstructured content into structured, queryable formats.
+
+### Supported File Formats
+
+<CardGroup cols={3}>
+  <Card title="Documents" icon="file-word">
+    PDF, DOC, DOCX, ODT, PPT, PPTX, HTML, TXT
+  </Card>
+  <Card title="Tabular Data" icon="table">
+    CSV, TSV, XLS, XLSX
+  </Card>
+  <Card title="Media Files" icon="photo-film">
+    Images (PNG, JPG, TIFF, BMP, HEIC), Videos (MP4, MOV, AVI, MKV, WebM), Audio (MP3, WAV, M4A, OGG, FLAC)
+  </Card>
+</CardGroup>
+
+### Multi-Source Ingestion
+
+Beyond local file uploads, Graphor supports ingestion from multiple sources:
+
+- **Web Scraping** - Ingest content directly from URLs with optional crawling to capture linked pages
+- **GitHub Repositories** - Automatically process code and documentation from GitHub repos
+- **YouTube Videos** - Extract and process transcripts from YouTube videos
+
+## Data Extraction
+
+Transform your documents into structured data with **LLM-powered extraction**. Define custom output schemas and provide natural language instructions to extract exactly the information you need.
+
+- **Custom Schema Definition** - Define output fields with types (string, number, boolean, array) and descriptions
+- **Natural Language Instructions** - Guide the extraction process with custom prompts
+- **Page-Level Provenance** - Each extracted item includes references to source pages for full traceability
 
 ## Core Platform Capabilities
+
 Our platform integrates:
 
-- **Advanced Data Ingestion** - Process unstructured data from multiple sources into structured, queryable formats with advanced OCR capabilities and intelligent text classification
-- **Intelligent Chunking** - Utilize integrated classification models to optimize document segmentation for enhanced retrieval quality
-- **End-to-End RAG Pipeline** - Build and manage retrieval-augmented generation pipelines with configurable components, including support for ColPali retrieval technology
-- **Support for mainstream LLMs** - Compatible with popular language models including OpenAI, Anthropic, and open-source alternatives
-- **Evaluation Framework** - Test and optimize RAG performance with comprehensive metrics and benchmarks
-- **Export Flexibility** - Expose your intelligent systems via REST API or MCP Server for seamless integration
-- **User-Friendly Interface** - An Intuitive Low-code Workflow for managing data, models, and deployments
+- **Advanced Data Ingestion** - Process unstructured data from multiple sources with state-of-the-art OCR and classification
+- **LLM-Powered Data Extraction** - Extract structured data from documents using customizable schemas
+- **Intelligent Chunking** - Optimize document segmentation with classification models for enhanced retrieval
+- **End-to-End RAG Pipeline** - Build retrieval-augmented generation pipelines with ColPali technology support
+- **Support for Mainstream LLMs** - Compatible with OpenAI, Anthropic, and open-source alternatives
+- **Evaluation Framework** - Test and optimize RAG performance with comprehensive metrics
+- **Export Flexibility** - Expose your systems via REST API or MCP Server integration
+- **User-Friendly Interface** - Intuitive low-code workflow for managing data, models, and deployments
 
 ## Why Graphor?
 
 Graphor stands apart with its comprehensive approach to unstructured data processing and RAG pipeline implementation, offering:
 
+- **State-of-the-art parsing** - Advanced document understanding across 25+ file formats
 - **End-to-end solution** - From raw data to deployment-ready APIs
-- **Optimized performance** - Fine-tuned retrieval and generation for your specific use cases
+- **Structured extraction** - Transform documents into actionable structured data
 - **Evaluation-driven improvement** - Continuous refinement through robust metrics
 - **Flexibility and integration** - Works with your existing data and AI infrastructure
 
