@@ -63,7 +63,7 @@
             ]
           },
           {
-            "group": "Sources",
+            "group": "Data Options",
             "pages": [
               "api-reference/sources/overview",
               "api-reference/sources/upload",
@@ -76,7 +76,7 @@
             ]
           },
           {
-            "group": "Flows",
+            "group": "RAG Pipelines",
             "pages": [
               "api-reference/flows/overview",
               "api-reference/flows/list",
