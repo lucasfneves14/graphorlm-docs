@@ -40,6 +40,7 @@
                   "guides/llm-integration",
                   "guides/evaluation",
                   "guides/extractor",
+                  "guides/reranking",
                   "guides/integrate-workflow"
                 ]
               },

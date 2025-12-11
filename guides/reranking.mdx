@@ -1,0 +1,273 @@
+---
+title: 'Reranking'
+description: 'Improve retrieval quality by reordering documents using LLM-based relevance scoring'
+---
+
+The Reranking node improves retrieval quality by reordering documents using LLM-based relevance scoring. It takes retrieved documents from upstream nodes and uses advanced language models to assess each document's relevance to the query, ensuring the most relevant content appears first.
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/reranking-overview.png"
+  alt="Reranking node overview"
+  loading="lazy"
+/>
+
+## Overview
+
+The Reranking node enhances your RAG pipeline by:
+
+1. **Receiving retrieved documents** — Takes results from Retrieval or RAG nodes
+2. **Scoring relevance** — Uses LLM to evaluate how relevant each document is to the query
+3. **Reordering results** — Sorts documents by relevance score (highest first)
+4. **Filtering top results** — Returns only the top-K most relevant documents
+
+<Note>
+Reranking is particularly useful when initial retrieval returns many results of varying quality. The LLM-based scoring provides a more nuanced relevance assessment than vector similarity alone.
+</Note>
+
+## When to Use Reranking
+
+| Scenario | Recommendation |
+|----------|----------------|
+| High Top-K retrieval (10+) | ✅ Recommended — Filter down to most relevant |
+| Complex queries | ✅ Recommended — LLM better understands nuanced relevance |
+| Domain-specific content | ✅ Recommended — LLM can assess semantic relevance |
+| Simple keyword queries | ⚠️ Optional — Vector similarity may be sufficient |
+| Low latency requirements | ⚠️ Consider tradeoffs — Adds LLM calls |
+
+## Using the Reranking Node
+
+### Adding the Reranking Node
+
+1. Open your flow in the **Flow Builder**
+2. Drag the **Reranking** node from the sidebar onto the canvas
+3. Connect a retrieval node to the Reranking input
+4. Double-click the Reranking node to configure
+
+### Input Connections
+
+The Reranking node accepts input from:
+
+| Source Node | Use Case |
+|-------------|----------|
+| **Retrieval** | Rerank results from standard vector retrieval |
+| **Smart RAG** | Rerank results from Smart RAG |
+| **Agentic RAG** | Rerank results from Agentic RAG |
+| **Graph RAG** | Rerank results from Graph RAG |
+| **Raptor RAG** | Rerank results from Raptor RAG |
+
+### Output Connections
+
+The Reranking node can connect to:
+
+| Target Node | Use Case |
+|-------------|----------|
+| **LLM** | Generate responses using reranked context |
+| **Analysis** | Evaluate pipeline performance |
+| **Response** | Output reranked results directly |
+
+## Configuring the Reranking Node
+
+Double-click the Reranking node to open the configuration panel:
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/reranking-settings.png"
+  alt="Reranking configuration"
+  loading="lazy"
+/>
+
+### Top K
+
+The number of documents to return after reranking:
+
+| Value | Use Case |
+|-------|----------|
+| **1-3** | When you need only the most relevant result |
+| **4-6** | Balanced approach for most Q&A applications |
+| **7-10** | When broader context is needed |
+| **10+** | Comprehensive coverage, higher token usage |
+
+<Tip>
+Set Top-K lower than your Retrieval node's Top-K. For example, if Retrieval returns 10 documents, Reranking might filter to the top 5.
+</Tip>
+
+## How Reranking Works
+
+### Scoring Process
+
+1. **Document Preparation** — Each retrieved document is formatted for LLM evaluation
+2. **Relevance Assessment** — LLM scores each document's relevance to the query (0.0 to 1.0)
+3. **Token Management** — Large documents are intelligently truncated to fit model context
+4. **Parallel Processing** — Documents are scored in parallel for efficiency
+
+### Metadata Added
+
+After reranking, each document includes additional metadata:
+
+| Field | Description |
+|-------|-------------|
+| `rerank_score` | Relevance score from 0.0 (irrelevant) to 1.0 (highly relevant) |
+| `rerank_position` | New position after reranking (1 = most relevant) |
+| `original_score` | Original retrieval score for comparison |
+
+## Pipeline Examples
+
+### Standard Reranking Pipeline
+
+```
+Dataset → Chunking → Retrieval → Reranking → LLM → Response
+                         ↑
+                    Question
+```
+
+Best for: Improving retrieval precision before LLM response generation.
+
+### Evaluation Pipeline with Reranking
+
+```
+Dataset → Chunking → Retrieval → Reranking → Analysis
+                         ↑
+                      Testset
+```
+
+Best for: Comparing retrieval quality before and after reranking.
+
+### Smart RAG with Reranking
+
+```
+Dataset → Smart RAG → Reranking → LLM → Response
+              ↑
+          Question
+```
+
+Best for: Adding an extra quality layer to Smart RAG results.
+
+## Viewing Results
+
+After running the pipeline (click **Update Results**):
+
+1. Results show documents grouped by question
+2. Each document displays:
+   - **Question** — The query being answered
+   - **Content** — Document text
+   - **Rerank Score** — LLM-assigned relevance score
+   - **Rerank Position** — New ranking position
+   - **Original metadata** — File name, page number, etc.
+
+### JSON View
+
+Toggle **JSON** to see the raw result structure:
+
+```json
+{
+  "page_content": "Document text...",
+  "metadata": {
+    "question": "What is machine learning?",
+    "rerank_score": 0.92,
+    "rerank_position": 1,
+    "original_score": 0.85,
+    "file_name": "ml-guide.pdf",
+    "page_number": 12
+  }
+}
+```
+
+## Performance Considerations
+
+### Latency Impact
+
+Reranking adds LLM calls to your pipeline:
+
+| Documents | Approximate Additional Time |
+|-----------|---------------------------|
+| 5 | ~1-2 seconds |
+| 10 | ~2-4 seconds |
+| 20 | ~4-8 seconds |
+
+<Note>
+Documents are scored in parallel batches, so the relationship isn't strictly linear. Actual times depend on document size and LLM response time.
+</Note>
+
+### Token Usage
+
+Each document requires tokens for:
+- Query text
+- Document content (truncated if needed)
+- Scoring prompt template
+
+### Optimization Tips
+
+1. **Reduce retrieval Top-K** — Retrieve fewer documents to rerank
+2. **Use efficient chunking** — Smaller chunks = faster scoring
+3. **Balance quality vs. speed** — Not all pipelines need reranking
+
+## Best Practices
+
+1. **Use with high Top-K retrieval** — Reranking adds most value when filtering many results
+2. **Position before LLM** — Rerank first, then generate responses with better context
+3. **Monitor scores** — Low rerank scores across the board may indicate retrieval issues
+4. **Compare with/without** — Use Analysis node to measure the impact of reranking
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="clock" title="Reranking is slow">
+    To improve performance:
+    - Reduce Top-K in the upstream Retrieval node
+    - Use smaller chunk sizes in Chunking
+    - Consider if reranking is necessary for your use case
+  </Accordion>
+  <Accordion icon="arrow-down-short-wide" title="All documents have similar scores">
+    If scores cluster together:
+    - Query may be too broad or vague
+    - Documents may all be equally relevant
+    - Check if retrieval is returning appropriate content
+  </Accordion>
+  <Accordion icon="circle-xmark" title="Good documents getting low scores">
+    If relevant documents score poorly:
+    - Verify chunking preserves semantic meaning
+    - Check if documents are being truncated too aggressively
+    - Review the query phrasing
+  </Accordion>
+  <Accordion icon="triangle-exclamation" title="Reranking fails with errors">
+    If seeing errors:
+    - Check LLM API connectivity
+    - Verify API tokens are valid
+    - The node has built-in retries; persistent failures indicate infrastructure issues
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Retrieval"
+    icon="magnifying-glass"
+    href="/guides/retrieval"
+  >
+    Configure the retrieval node that feeds into Reranking
+  </Card>
+  <Card
+    title="LLM"
+    icon="brain"
+    href="/guides/llm-integration"
+  >
+    Generate responses using reranked context
+  </Card>
+  <Card
+    title="Evaluation"
+    icon="square-poll-vertical"
+    href="/guides/evaluation"
+  >
+    Measure the impact of reranking on pipeline quality
+  </Card>
+  <Card
+    title="RAG Quickstart"
+    icon="bolt"
+    href="/guides/rag-quickstart"
+  >
+    Build a complete RAG pipeline from scratch
+  </Card>
+</CardGroup>
+
