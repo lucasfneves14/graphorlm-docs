@@ -1,0 +1,313 @@
+---
+title: 'RAG Pipeline Quickstart'
+description: 'Build your first RAG pipeline with Dataset, Chunking, Retrieval, LLM, and Response nodes'
+---
+
+This quickstart walks you through building a complete RAG (Retrieval-Augmented Generation) pipeline in Graphor. You'll create a pipeline that retrieves relevant information from your documents and generates natural language responses.
+
+## Prerequisites
+
+Before starting, ensure you have:
+- A Graphor project with ingested and parsed documents
+- At least one source with status "Processed"
+
+<Note>
+If you haven't ingested documents yet, see the [Quickstart](/quickstart) or [Data Ingestion](/guides/data-ingestion) guide first.
+</Note>
+
+## Pipeline Overview
+
+You'll build this pipeline:
+
+```
+Dataset → Chunking → Retrieval → LLM → Response
+              ↑
+         Question/Testset
+```
+
+| Node | Purpose |
+|------|---------|
+| **Dataset** | Selects which documents to include |
+| **Chunking** | Splits documents into searchable chunks |
+| **Retrieval** | Finds relevant chunks based on queries |
+| **Question/Testset** | Provides queries to test the pipeline |
+| **LLM** | Generates natural language responses |
+| **Response** | Outputs the final result |
+
+## Step 1: Create a New Flow
+
+1. Navigate to **Flows** in the left sidebar
+2. Click **New Flow**
+3. Enter a name (e.g., "my-first-rag")
+4. Click **Create**
+
+You'll see the Flow Builder canvas with available nodes in the left sidebar.
+
+## Step 2: Add the Dataset Node
+
+The Dataset node is the starting point — it defines which documents your pipeline will use.
+
+1. Drag the **Dataset** node from the sidebar onto the canvas
+2. Double-click the node to open its configuration
+3. Select the documents you want to include:
+   - Check individual files, or
+   - Select all files using the header checkbox
+4. Close the configuration panel
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/dataset-configuration.png"
+  alt="Dataset configuration"
+  loading="lazy"
+/>
+
+<Tip>
+Start with a few documents for faster testing. You can add more later.
+</Tip>
+
+## Step 3: Add the Chunking Node
+
+The Chunking node splits your documents into smaller pieces that can be efficiently searched.
+
+1. Drag the **Chunking** node onto the canvas
+2. Connect **Dataset** → **Chunking** by dragging from Dataset's output (right) to Chunking's input (left)
+3. Double-click Chunking to configure:
+
+| Setting | Recommended Value | Description |
+|---------|-------------------|-------------|
+| **Embedding Model** | text-embedding-3-small | Converts text to vectors for search |
+| **Elements to Remove** | Header, Footer, Page number | Removes noise from chunks |
+| **Splitter** | Smart chunking | Preserves semantic meaning |
+| **Chunk Size** | 5000 | Maximum characters per chunk |
+
+4. Click **Update Results** to process the chunks
+5. Review the chunking results to verify quality
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/chunking-component.png"
+  alt="Chunking configuration"
+  loading="lazy"
+/>
+
+## Step 4: Add the Retrieval Node
+
+The Retrieval node searches your chunks to find information relevant to user queries.
+
+1. Drag the **Retrieval** node onto the canvas
+2. Connect **Chunking** → **Retrieval**
+3. Double-click Retrieval to configure:
+
+| Setting | Recommended Value | Description |
+|---------|-------------------|-------------|
+| **Search Type** | Similarity | Semantic search using embeddings |
+| **Top K** | 5 | Number of chunks to retrieve |
+| **Score Threshold** | 0.5 | Minimum relevance score (0-1) |
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/retrieval-component.png"
+  alt="Retrieval configuration"
+  loading="lazy"
+/>
+
+## Step 5: Add a Question Node for Testing
+
+Before adding the LLM, let's test that retrieval works correctly using a Question node.
+
+1. Drag the **Questions** node onto the canvas
+2. Connect **Questions** → **Retrieval** (Questions provides input to Retrieval)
+3. Double-click Questions to configure:
+   - Enter a test question related to your documents
+   - Example: "What is the main topic of this document?"
+4. Click **Update Results** on the Retrieval node
+5. Review the retrieved chunks — do they contain relevant information?
+
+<Tip>
+If the retrieved chunks aren't relevant, try:
+- Adjusting the Score Threshold (lower = more results)
+- Increasing Top K (more chunks retrieved)
+- Using a different Search Type
+</Tip>
+
+## Step 6: Add the LLM Node
+
+The LLM node takes the retrieved chunks and generates a natural language response.
+
+1. Drag the **LLM** node onto the canvas
+2. Connect **Retrieval** → **LLM**
+3. Double-click LLM to configure:
+
+| Setting | Recommended Value | Description |
+|---------|-------------------|-------------|
+| **Model** | GPT-4o or GPT-4 Mini | The language model to use |
+| **System Prompt** | See example below | Instructions for the LLM |
+
+**Example System Prompt:**
+```
+You are a helpful assistant that answers questions based on the provided context.
+Always base your answers on the information given in the context.
+If the context doesn't contain enough information to answer, say "I don't have enough information to answer this question."
+Be concise and accurate.
+```
+
+4. Click **Update Results** to see the generated response
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/llm-component.png"
+  alt="LLM configuration"
+  loading="lazy"
+/>
+
+## Step 7: Add the Response Node
+
+The Response node provides the final output of your pipeline.
+
+1. Drag the **Response** node onto the canvas
+2. Connect **LLM** → **Response**
+3. Click **Update Results** on the Response node
+
+Your complete pipeline is now built!
+
+## Testing with Testsets
+
+For more comprehensive testing, use a Testset instead of (or in addition to) single Questions.
+
+### Creating a Testset
+
+1. Navigate to **Testsets** in the left sidebar
+2. Click **New Testset**
+3. Add multiple test questions:
+   - Questions that cover different topics in your documents
+   - Questions with varying complexity
+   - Edge cases (questions that might not have answers)
+4. Optionally add expected answers for evaluation
+5. Save the testset
+
+### Using a Testset in Your Flow
+
+1. Drag the **Testset** node onto the canvas
+2. Connect **Testset** → **Retrieval** (same as Questions)
+3. Double-click Testset and select your created testset
+4. Click **Update Results** to run all questions through the pipeline
+5. Review results for each question
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/testset-selection.png"
+  alt="Testset selection"
+  loading="lazy"
+/>
+
+<Note>
+You can have both Question and Testset nodes connected to the same Retrieval node for flexible testing.
+</Note>
+
+## Deploying Your Pipeline
+
+Once your pipeline is working well:
+
+1. Click **Deploy new revision** in the top-right corner
+2. Add a **Tool description** (important for MCP integration):
+   ```
+   This tool answers questions about [your document topics].
+   Use it when users ask about [specific topics covered].
+   ```
+3. Enable **Display this revision immediately**
+4. Click **Create**
+
+Your pipeline is now deployed and accessible via:
+- **REST API** — For custom application integration
+- **MCP Server** — For AI assistant integration (Claude, Cursor)
+
+Click **Connect to flow** to see your endpoint URLs and integration instructions.
+
+## Complete Pipeline Diagram
+
+```
+┌──────────┐     ┌───────────┐     ┌───────────┐     ┌─────┐     ┌──────────┐
+│ Dataset  │────▶│ Chunking  │────▶│ Retrieval │────▶│ LLM │────▶│ Response │
+└──────────┘     └───────────┘     └───────────┘     └─────┘     └──────────┘
+                                         ▲
+                                         │
+                              ┌──────────┴──────────┐
+                              │                     │
+                        ┌─────────┐           ┌─────────┐
+                        │Question │           │ Testset │
+                        └─────────┘           └─────────┘
+```
+
+## Quick Reference: Node Settings
+
+| Node | Key Settings |
+|------|--------------|
+| **Dataset** | Select files to include |
+| **Chunking** | Embedding model, Splitter type, Chunk size |
+| **Retrieval** | Search type, Top K, Score threshold |
+| **Question** | Test queries for quick testing |
+| **Testset** | Multiple queries for comprehensive testing |
+| **LLM** | Model selection, System prompt |
+| **Response** | Output format |
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="link-slash" title="Nodes won't connect">
+    - Ensure you're dragging from output (right) to input (left)
+    - Check that the connection is allowed (see node compatibility)
+    - Verify previous nodes are properly configured
+  </Accordion>
+  <Accordion icon="magnifying-glass-minus" title="Retrieval returns irrelevant results">
+    - Lower the Score Threshold
+    - Increase Top K
+    - Try Hybrid search type
+    - Check if documents are properly parsed
+  </Accordion>
+  <Accordion icon="robot" title="LLM gives poor responses">
+    - Improve the System Prompt with clearer instructions
+    - Increase Top K to provide more context
+    - Try a different LLM model
+    - Check that retrieval is returning relevant chunks
+  </Accordion>
+  <Accordion icon="clock" title="Pipeline is slow">
+    - Reduce the number of selected documents
+    - Lower Top K value
+    - Use a faster embedding model
+    - Use GPT-4 Mini instead of GPT-4o
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Dataset"
+    icon="database"
+    href="/guides/dataset"
+  >
+    Learn advanced Dataset node configuration
+  </Card>
+  <Card
+    title="Chunking"
+    icon="scissors"
+    href="/guides/chunking"
+  >
+    Explore different chunking strategies
+  </Card>
+  <Card
+    title="Retrieval"
+    icon="magnifying-glass"
+    href="/guides/retrieval"
+  >
+    Optimize search parameters for better results
+  </Card>
+  <Card
+    title="Integrate Workflow"
+    icon="plug"
+    href="/guides/integrate-workflow"
+  >
+    Connect your pipeline via REST API or MCP Server
+  </Card>
+</CardGroup>
+

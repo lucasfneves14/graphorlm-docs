@@ -30,12 +30,18 @@
               "guides/data-ingestion",
               "guides/data-extraction",
               "guides/document-chat",
-              "guides/chunking",
-              "guides/retrieval",
-              "guides/llm-integration",
-              "guides/evaluation",
-              "guides/api-tokens",
-              "guides/integrate-workflow"
+              {
+                "group": "RAG Pipelines",
+                "pages": [
+                  "guides/dataset",
+                  "guides/chunking",
+                  "guides/retrieval",
+                  "guides/llm-integration",
+                  "guides/evaluation",
+                  "guides/integrate-workflow"
+                ]
+              },
+              "guides/api-tokens"
             ]
           }
         ]

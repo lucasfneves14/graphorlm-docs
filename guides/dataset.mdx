@@ -1,0 +1,249 @@
+---
+title: 'Dataset'
+description: 'Learn how to configure the Dataset node to select and manage sources in your RAG pipeline'
+---
+
+The Dataset node is the starting point of any RAG pipeline in Graphor. It defines which sources (documents) will be processed through your flow, allowing you to select specific files or include all available sources.
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/dataset-component.png"
+  alt="Dataset component in Flow Builder"
+  loading="lazy"
+/>
+
+## Overview
+
+The Dataset node serves as the data foundation for your RAG pipeline:
+
+1. **Selects sources** — Choose which documents to include in the pipeline
+2. **Loads parsed content** — Retrieves the active parsing version of each selected document
+3. **Feeds downstream nodes** — Provides document elements to Chunking and other nodes
+
+<Note>
+The Dataset node uses the **active parsing version** of each selected document. For better pipeline results, ensure your documents are parsed with appropriate methods. See [Data Ingestion](/guides/data-ingestion#document-parsing-methods) for parsing options.
+</Note>
+
+## Using the Dataset Component
+
+In the Flow Builder, the Dataset component is typically the first node in your pipeline:
+
+### Adding the Dataset Node
+
+1. Open the **Flow Builder** by navigating to Flows and creating or editing a flow
+2. Drag the **Dataset** component from the left sidebar onto the canvas
+3. Double-click the node to open its configuration panel
+
+### Connecting to Other Nodes
+
+The Dataset node can connect to the following nodes:
+
+| Target Node | Use Case |
+|-------------|----------|
+| **Chunking** | Most common — splits documents into retrievable chunks |
+| **Smart RAG** | Intelligent retrieval with automatic optimization |
+| **Agentic RAG** | Agent-based retrieval with reasoning capabilities |
+| **Graph RAG** | Knowledge graph-enhanced retrieval |
+| **Raptor RAG** | Hierarchical retrieval with summarization |
+| **Extractor** | Extract structured information from documents |
+| **Response** | Direct output without additional processing |
+
+To connect nodes, drag from the output point (right side) of the Dataset node to the input point (left side) of the target node.
+
+## Configuring the Dataset Node
+
+Double-click the Dataset node to open the configuration panel:
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/dataset-configuration.png"
+  alt="Dataset configuration panel"
+  loading="lazy"
+/>
+
+### File Selection
+
+The configuration panel displays all available sources in your project. You can:
+
+- **Select individual files** — Check the boxes next to specific documents
+- **Select all files** — Use the header checkbox to include all sources
+- **Deselect files** — Uncheck to exclude documents from the pipeline
+
+Each file shows:
+- **File name** — The source document name
+- **Checkbox** — Selection state for the pipeline
+
+### Source Elements Preview
+
+When you select files, you can preview the elements that will be processed:
+
+- **File position** — Order of elements within the file
+- **Page number** — Which page the element appears on
+- **Length** — Character count of the element
+- **Content preview** — Text content of the element
+- **Element type** — Classification (Title, Narrative text, Table, etc.)
+
+This preview helps you verify that your documents are properly parsed before running the pipeline.
+
+## How Dataset Works with Parsing
+
+The Dataset node loads elements from the **active parsing version** of each selected document:
+
+1. **Elements are loaded** — All classified elements (titles, paragraphs, tables, etc.) from selected files
+2. **Metadata is preserved** — File name, page number, position, and element type
+3. **Content flows downstream** — Elements are passed to connected nodes (typically Chunking)
+
+### Impact of Parsing Quality
+
+The quality of your RAG pipeline starts with parsing quality:
+
+| Parsing Method | Impact on Dataset |
+|----------------|-------------------|
+| **Fast** | Basic element classification, suitable for simple documents |
+| **Hi-Res** | Better structure recognition, improved element boundaries |
+| **Hi-Res FT** | Highest accuracy for specialized documents |
+| **MAI** | Best text quality for complex layouts, manuscripts |
+| **Graphor** | Rich annotations for tables, diagrams, images |
+
+<Tip>
+If you're not getting good results from your RAG pipeline, try reprocessing your source documents with a more advanced parsing method before adjusting other pipeline settings.
+</Tip>
+
+## Common Configurations
+
+### Include All Sources
+
+Best for:
+- Projects with a cohesive document collection
+- General-purpose knowledge bases
+- When all documents are relevant to expected queries
+
+**Configuration**: Select all files in the Dataset configuration
+
+### Selective Sources
+
+Best for:
+- Topic-specific pipelines (e.g., only technical docs, only contracts)
+- Multi-tenant applications with document segregation
+- A/B testing different document sets
+
+**Configuration**: Select only the relevant files for your use case
+
+### Single Document Pipeline
+
+Best for:
+- Document-specific Q&A applications
+- Testing and debugging
+- Focused analysis of one source
+
+**Configuration**: Select only one file
+
+## Pipeline Examples
+
+### Basic RAG Pipeline
+
+```
+Dataset → Chunking → Retrieval → LLM → Response
+```
+
+The Dataset node provides documents that are chunked, indexed for retrieval, and used to augment LLM responses.
+
+### Smart RAG Pipeline
+
+```
+Dataset → Smart RAG → LLM → Response
+```
+
+Smart RAG handles chunking and retrieval automatically with optimized settings.
+
+### Graph RAG Pipeline
+
+```
+Dataset → Graph RAG → LLM → Response
+```
+
+Graph RAG builds a knowledge graph for enhanced semantic retrieval.
+
+### Evaluation Pipeline
+
+```
+Dataset → Chunking → Retrieval ← Testset
+                         ↓
+                    Evaluation
+```
+
+The Dataset provides source documents for testing retrieval quality against ground-truth answers from Testset.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="file-circle-xmark" title="No elements loading from Dataset">
+    If the Dataset shows no elements:
+    - Verify selected files have status "Processed"
+    - Check that files have an active parsing version
+    - Ensure the parsing completed successfully
+    - Try reprocessing the document with a different parsing method
+  </Accordion>
+  <Accordion icon="triangle-exclamation" title="Poor quality elements">
+    If elements appear incorrectly classified or fragmented:
+    - Review the source document's parsing results
+    - Use a more advanced parsing method (Hi-Res, MAI, or Graphor)
+    - Check if element types are being properly identified
+  </Accordion>
+  <Accordion icon="clock" title="Slow pipeline performance">
+    If the pipeline is slow:
+    - Reduce the number of selected files
+    - Consider using the Colpali embedding model only for visual documents
+    - Check if very large documents are causing bottlenecks
+  </Accordion>
+  <Accordion icon="link-slash" title="Dataset not connecting to Chunking">
+    If you can't connect the nodes:
+    - Ensure you're dragging from the output (right side) of Dataset
+    - Connect to the input (left side) of Chunking
+    - Verify both nodes are properly placed on the canvas
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+1. **Start with parsed documents** — Ensure all selected sources are fully processed before building the pipeline
+2. **Use appropriate parsing** — Match parsing methods to document complexity
+3. **Be selective** — Only include documents relevant to your use case
+4. **Preview elements** — Check the Dataset configuration to verify element quality
+5. **Test incrementally** — Start with a few documents and expand after validating results
+
+## Next Steps
+
+After configuring your Dataset node, continue building your RAG pipeline:
+
+<CardGroup cols={2}>
+  <Card
+    title="Chunking"
+    icon="scissors"
+    href="/guides/chunking"
+  >
+    Learn how to split documents into optimal chunks for retrieval
+  </Card>
+  <Card
+    title="Retrieval"
+    icon="magnifying-glass"
+    href="/guides/retrieval"
+  >
+    Configure search parameters and algorithms for your RAG
+  </Card>
+  <Card
+    title="Data Ingestion"
+    icon="file-import"
+    href="/guides/data-ingestion"
+  >
+    Improve your source documents with advanced parsing methods
+  </Card>
+  <Card
+    title="Evaluation"
+    icon="square-poll-vertical"
+    href="/guides/evaluation"
+  >
+    Measure and improve your RAG pipeline performance
+  </Card>
+</CardGroup>
+
