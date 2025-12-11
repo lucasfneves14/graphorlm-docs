@@ -29,6 +29,7 @@
             "pages": [
               "guides/data-ingestion",
               "guides/data-extraction",
+              "guides/document-chat",
               "guides/chunking",
               "guides/retrieval",
               "guides/llm-integration",

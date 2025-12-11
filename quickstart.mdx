@@ -1,24 +1,15 @@
 ---
 title: 'Quickstart'
-description: 'Ingest your data and start extracting insights in minutes'
+description: 'Ingest your data, process documents, and start extracting insights in minutes'
 ---
 
-This quickstart gets you up and running with Graphor as quickly as possible. You'll learn how to ingest documents from multiple sources, extract structured data, and chat with your documents — all without diving into complex configurations.
+This quickstart gets you up and running with Graphor. You'll upload a document, apply advanced parsing, extract structured data, and chat with your content.
 
-In this tutorial, you will:
-- Ingest data from local files, URLs, GitHub, and YouTube
-- Parse and process your documents with state-of-the-art OCR
-- Extract structured data using LLM-powered extraction
-- Chat with your documents using natural language
-
-## Step 1: Set up Your Project
-
-Graphor Cloud provides a fully-managed environment where you can ingest, process, and interact with your data without worrying about infrastructure.
+## Step 1: Create Your Project
 
 1. Sign up for a [Graphor Cloud account](https://app.graphorlm.com/register)
-2. Login to your account at [Login](https://app.graphorlm.com/login)
-3. Once logged in, you'll see the Graphor dashboard
-4. Click **New project** and give it a descriptive name
+2. Login at [app.graphorlm.com/login](https://app.graphorlm.com/login)
+3. Click **New project** and give it a name
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
@@ -27,9 +18,9 @@ Graphor Cloud provides a fully-managed environment where you can ingest, process
   loading="lazy"
 />
 
-Once your project is created, you'll be taken to the Sources dashboard where you can begin ingesting your data.
+## Step 2: Upload a Document
 
-## Step 2: Ingest Your Data
+The fastest way to add a document is to **drag and drop** it directly onto the Sources page.
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
@@ -38,144 +29,80 @@ Once your project is created, you'll be taken to the Sources dashboard where you
   loading="lazy"
 />
 
-Graphor supports ingesting data from multiple sources. Navigate to **Sources** in the left sidebar to get started.
-
-### Upload Local Files
-
-Upload documents directly from your computer. You have two options:
-
-**Option 1: Drag and drop directly**
-- Simply drag and drop your files anywhere on the Sources page
-
-**Option 2: Use the upload interface**
-1. Click **Add** to open the upload interface
-2. Select **Local files**
-3. Select your files or drag and drop them into the upload area
-
-<img
-  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
-  src="/images/local-files-upload.png"
-  alt="Local files upload"
-  loading="lazy"
-/>
-
-**Supported formats include:**
-
-| Category | Formats |
-|----------|---------|
-| **Documents** | PDF, DOC, DOCX, ODT, PPT, PPTX, HTML, TXT |
-| **Tabular** | CSV, TSV, XLS, XLSX |
-| **Images** | PNG, JPG, JPEG, TIFF, BMP, HEIC |
-| **Video** | MP4, MOV, AVI, MKV, WebM |
-| **Audio** | MP3, WAV, M4A, OGG, FLAC |
-| **Markdown** | MD |
-
-### Import from URL
-
-Ingest content directly from web pages:
-
-1. Click **Add** and select **Web page**
-2. Enter the web address you want to ingest
-3. Optionally enable **Crawl URLs** to capture linked pages
-4. Click **Finish** to start processing
-
-This is perfect for ingesting documentation sites, blog posts, or any public web content.
-
-### Import GitHub Repository
-
-Process code and documentation from GitHub:
-
-1. Click **Add Sources** and select **GitHub**
-2. Enter the repository URL (e.g., `https://github.com/owner/repo`)
-3. Click **Finish** to begin ingestion
-
-Graphor will automatically process README files, documentation, and code files from the repository.
-
-### Import YouTube Video
-
-Extract and process transcripts from YouTube:
-
-1. Click **Add** and select **YouTube**
-2. Paste the YouTube video URL
-3. Click **Finish** to extract the transcript
-
-This allows you to make video content searchable and queryable.
-
----
-
-After adding sources, you can monitor the ingestion progress on the Sources dashboard. Each source shows its current status: **Waiting**, **Uploading**, **Processing**, **Processed**, **Not parsed**, or **Failed**.
+Graphor supports PDFs, Word documents, images, spreadsheets, and [25+ other formats](/guides/data-ingestion#supported-document-types).
 
 <Tip>
-**Navigation tip:** Single-click on a source to select it. Double-click to open the Source details page.
+You can also ingest content from URLs, GitHub repositories, and YouTube videos. See the [Data Ingestion guide](/guides/data-ingestion) for all options.
 </Tip>
 
-## Step 3: Parse & Process Documents
+After uploading, Graphor automatically processes your document using the **Fast** parsing method. Wait for the status to change to **Processed**.
 
-When you upload a source, Graphor automatically applies the **Fast** parsing method — optimized for speed with heuristic classification for text documents, transcription for videos/audio, and fast scraping for web pages.
+<Note>
+**Navigation tip:** Single-click on a source to select it. Double-click to open Source details.
+</Note>
 
-For more complex documents, you can manually apply advanced parsing methods:
+## Step 3: Apply Advanced Parsing
+
+For complex documents, you can apply more powerful parsing methods:
 
 | Method | Best For |
 |--------|----------|
-| **Fast** | Quick processing of simple text documents (applied by default) |
-| **Hi-Res** | Complex layouts and mixed content with OCR |
-| **Hi-Res FT** | Specialized document types requiring highest accuracy |
-| **MAI** | Manuscript and handwritten documents |
-| **Graphor** | Complex layouts, multi-page tables, diagrams, and images with rich annotations |
+| **Fast** | Simple text documents (default) |
+| **Hi-Res** | Complex layouts with OCR |
+| **Hi-Res FT** | Specialized documents requiring highest accuracy |
+| **MAI** | Complex layouts, manuscripts, handwritten documents |
+| **Graphor** | Multi-page tables, diagrams, images with rich annotations |
 
 To apply a different parsing method:
 
-1. Double-click on a processed file from the Sources list to open Source details
-2. Review the extracted content in the **Results** tab
-3. Select a different **parsing method** from the **Settings** tab
-4. Click **Parse** to apply the new method
+1. Double-click on your document to open **Source details**
+2. Go to the **Settings** tab
+3. Select a parsing method
+4. Click **Parse**
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
   src="/images/source-parsing-settings.png"
-  alt="Source parsing settings"
+  alt="Parsing settings"
   loading="lazy"
 />
 
-### Version History
+### Viewing Results
 
-Every parsing result is saved and available in the **Versions** panel on the left side of the Source details page. This allows you to:
-
-- **Compare different parsing methods** — Try multiple methods and compare results
-- **Switch active version** — Click on any version to set it as active
-- **Automatic activation** — When a new parsing completes successfully, it's automatically set as the active version
-
-The active version (marked with a green "active" badge) is the one used for Document Chat and RAG pipelines.
-
-The parsing **Results** view shows:
-- **Page-by-page preview** of extracted content
-- **Element types** identified in each section
-- **Markdown output** ready for downstream processing
+After parsing, check the **Results** tab to see:
+- **Document view** — Visual preview of parsed content
+- **Markdown view** — Raw text output
+- **Page navigation** — Browse multi-page documents
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
   src="/images/source-parsing-details.png"
-  alt="Source parsing details"
+  alt="Parsing results"
   loading="lazy"
 />
 
+Each parsing run is saved in the **Versions** panel on the left. You can compare different methods and switch the active version at any time.
+
+<Info>
+For detailed information about parsing methods and options, see the [Data Ingestion guide](/guides/data-ingestion#document-parsing-methods).
+</Info>
+
 ## Step 4: Extract Structured Data
 
-Transform your documents into structured data using **LLM-powered extraction**. This is perfect for extracting specific information like names, dates, prices, or any custom fields.
+Transform your documents into structured data using **VLM-powered extraction**.
 
-1. Double-click on a processed document from Sources to open Source details
-2. Navigate to the **Extraction** tab (located at the top center of the page)
-3. Add optional **instructions** to guide the extraction
-4. Define your output schema by adding fields:
-   - **Field name**: The key for extracted data (e.g., `product_name`)
+1. In Source details, go to the **Extraction** tab
+2. Add **instructions** to guide the extraction (optional)
+3. Define your schema with fields:
+   - **Field name**: e.g., `invoice_number`
    - **Field type**: Text, Number, Boolean, or Array
-   - **Description**: Help the LLM understand what to extract
-5. Click **Extract** to run the extraction
+   - **Description**: What to extract
+4. Click **Extract**
 
 **Example for invoice extraction:**
 
 *Instructions:*
-> Extract all invoice information from the document. If multiple invoices are present, extract each one as a separate item. Use USD for currency values and convert dates to YYYY-MM-DD format.
+> Extract all invoice information. Use YYYY-MM-DD for dates and USD for amounts.
 
 *Schema:*
 
@@ -183,94 +110,81 @@ Transform your documents into structured data using **LLM-powered extraction**. 
 |------------|------|-------------|
 | `invoice_number` | Text | The unique invoice identifier |
 | `date` | Text | Invoice date in YYYY-MM-DD format |
-| `total_amount` | Number | Total amount due in USD |
-| `line_items` | Text | List of products/services with quantities and prices |
+| `total_amount` | Number | Total amount due |
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
   src="/images/source-extraction-details.png"
-  alt="Source extraction details"
+  alt="Data extraction"
   loading="lazy"
 />
 
-The extraction **Results** view shows:
-- **Extracted data table** with all items found in your document
-- **Page references** indicating which pages each piece of data came from
-- **Export options** to download results as JSON or CSV
+The results show extracted data with **page references** indicating where each item was found.
+
+<Info>
+For more schema examples and best practices, see the [Data Extraction guide](/guides/data-extraction).
+</Info>
 
 ## Step 5: Chat with Your Documents
 
-Once your data is ingested, you can immediately start asking questions using the **Document Chat** feature. Graphor provides two chat options:
+Click the **Chat** button in the top-right corner to start asking questions.
 
-### Chat with All Sources
-
-On the **Sources** page, click the **Chat** button in the top-right corner to chat with all your ingested documents at once. This is useful when you want to:
-- Search across your entire knowledge base
-- Find information without knowing which document contains it
-- Compare information from multiple sources
-
-### Chat with a Specific Document
-
-On the **Source details** page (after double-clicking on a specific file), click the **Chat** button in the top-right corner to chat only with that document. This is useful when you want to:
-- Focus your questions on a single document
-- Avoid noise from other sources
-- Deep-dive into a specific file's content
+**Two chat options:**
+- **Sources page** → Chat with all documents
+- **Source details page** → Chat with one specific document
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
   src="/images/chat-details.png"
-  alt="Source extraction details"
+  alt="Document chat"
   loading="lazy"
 />
 
+Ask questions in natural language:
+
+> **You:** What are the main findings in this document?
+> 
+> **Chat:** The document presents three main findings...
+> 
+> **You:** Tell me more about the first one.
+
+The chat maintains **conversational memory**, so follow-up questions understand previous context.
+
+<Info>
+For tips on getting better answers, see the [Document Chat guide](/guides/document-chat).
+</Info>
+
 ---
 
-**Example questions:**
-- "What are the main topics covered in this document?"
-- "Summarize the key findings from the report"
-- "What is the total revenue mentioned?"
-
-The chat maintains **conversational memory**, so you can ask follow-up questions without losing context:
-
-> **You:** What products are mentioned in the catalog?
-> 
-> **Sources:** The catalog mentions Product A, Product B, and Product C...
-> 
-> **You:** Which one has the highest price?
-> 
-> **Sources:** Based on the catalog, Product B has the highest price at $299...
-
-## Next Steps
-
-Congratulations! You've successfully ingested data, processed documents, extracted structured information, and chatted with your content. Here's what you can explore next:
+## What's Next?
 
 <CardGroup cols={2}>
   <Card
-    title="Build a RAG Pipeline"
+    title="Data Ingestion"
+    icon="file-import"
+    href="/guides/data-ingestion"
+  >
+    Deep dive into parsing methods, multiple source types, and OCR options
+  </Card>
+  <Card
+    title="Data Extraction"
+    icon="table"
+    href="/guides/data-extraction"
+  >
+    Advanced schema design and extraction best practices
+  </Card>
+  <Card
+    title="Document Chat"
+    icon="comments"
+    href="/guides/document-chat"
+  >
+    Tips for asking better questions and API integration
+  </Card>
+  <Card
+    title="Build RAG Pipelines"
     icon="diagram-project"
-    href="guides/retrieval"
+    href="/guides/retrieval"
   >
-    Create end-to-end retrieval-augmented generation pipelines with visual flow builder
-  </Card>
-  <Card
-    title="Data Ingestion Guide"
-    icon="file-lines"
-    href="guides/data-ingestion"
-  >
-    Deep dive into advanced ingestion options, parsing methods, and OCR configuration
-  </Card>
-  <Card
-    title="Chunking Strategies"
-    icon="file-dashed-line"
-    href="guides/chunking"
-  >
-    Optimize document segmentation for better retrieval performance
-  </Card>
-  <Card
-    title="Integrate via API"
-    icon="plug"
-    href="guides/integrate-workflow"
-  >
-    Connect your data to applications via REST API and MCP Server
+    Create advanced retrieval-augmented generation workflows
   </Card>
 </CardGroup>

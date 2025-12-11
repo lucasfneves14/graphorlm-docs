@@ -1,0 +1,249 @@
+---
+title: 'Document Chat'
+description: 'Ask questions about your documents using natural language and get answers grounded in your content'
+---
+
+Graphor's Document Chat lets you have natural conversations with your documents. Ask questions in plain language and receive answers grounded in your actual content — with full conversational memory to maintain context across multiple questions.
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/chat-details.png"
+  alt="Document chat interface"
+  loading="lazy"
+/>
+
+## Overview
+
+Document Chat enables you to:
+
+- **Ask questions naturally** — No query syntax needed, just ask like you would ask a colleague
+- **Get grounded answers** — Responses are based on your actual document content
+- **Maintain conversation context** — Follow-up questions understand previous context
+- **Scope to specific documents** — Focus on one document or search across all sources
+
+## Chat Options
+
+Graphor provides two chat interfaces depending on your needs:
+
+### Chat with All Sources
+
+Access the global chat from the **Sources** page by clicking the **Chat** button in the top-right corner.
+
+This mode searches across **all ingested documents** in your project, making it ideal for:
+
+- Finding information when you don't know which document contains it
+- Comparing information across multiple sources
+- Getting a comprehensive view of your entire knowledge base
+- Answering questions that span multiple documents
+
+### Chat with a Specific Document
+
+Access the focused chat from the **Source details** page (double-click on any source) by clicking the **Chat** button in the top-right corner.
+
+This mode searches only within **the selected document**, making it ideal for:
+
+- Deep-diving into a specific document's content
+- Avoiding noise from other sources
+- Getting precise answers from a known document
+- Analyzing a single file in detail
+
+## How to Use Document Chat
+
+### Starting a Conversation
+
+1. Navigate to **Sources** (for all documents) or double-click a specific source (for single document)
+2. Click the **Chat** button in the top-right corner
+3. Type your question in the chat input
+4. Press Enter or click Send
+
+### Asking Effective Questions
+
+Document Chat works best with clear, specific questions:
+
+**Good questions:**
+- "What are the main findings in the Q3 financial report?"
+- "Summarize the key terms of the service agreement"
+- "What products are mentioned and what are their prices?"
+- "Who are the parties involved in this contract?"
+
+**Questions that could be improved:**
+- "Tell me everything" → Too broad, be more specific
+- "What?" → Provide context about what you're looking for
+- "Info" → Ask a complete question
+
+### Following Up
+
+Document Chat maintains **conversational memory**, so you can ask follow-up questions without repeating context:
+
+> **You:** What products are mentioned in the catalog?
+> 
+> **Chat:** The catalog mentions three products: Product A ($199), Product B ($299), and Product C ($149)...
+> 
+> **You:** Which one is the most expensive?
+> 
+> **Chat:** Based on the catalog, Product B is the most expensive at $299...
+> 
+> **You:** What features does it have?
+> 
+> **Chat:** Product B includes the following features: ...
+
+### Starting Fresh
+
+To start a new conversation without previous context, click the **New conversation** button or refresh the chat interface.
+
+## Use Cases
+
+### Research & Analysis
+
+- "What methodology was used in this study?"
+- "Summarize the literature review section"
+- "What are the limitations mentioned by the authors?"
+
+### Document Review
+
+- "What are the key obligations in this contract?"
+- "When does the agreement expire?"
+- "What are the payment terms?"
+
+### Knowledge Discovery
+
+- "What topics are covered in these documents?"
+- "Find all mentions of [specific term]"
+- "What recommendations are made?"
+
+### Quick Lookups
+
+- "What is the contact information listed?"
+- "What is the total amount on this invoice?"
+- "When was this document created?"
+
+## Best Practices
+
+### For Better Answers
+
+1. **Be specific** — The more specific your question, the more precise the answer
+2. **Provide context** — If asking about something specific, mention what you're looking for
+3. **Use follow-ups** — Build on previous answers rather than asking unrelated questions
+4. **Ask one thing at a time** — Complex questions with multiple parts may get partial answers
+
+### Choosing the Right Scope
+
+| Use All Sources When... | Use Specific Document When... |
+|------------------------|------------------------------|
+| You don't know which document has the answer | You know exactly which document to search |
+| You want to compare across documents | You want focused, precise answers |
+| You're exploring your knowledge base | You're analyzing a specific file |
+| Questions span multiple topics/files | Questions are about one document's content |
+
+### Parsing Quality Matters
+
+The quality of chat responses depends on how well your documents were parsed:
+
+- **Complex documents** — Use **MAI** or **Graphor** parsing for better understanding
+- **Scanned documents** — Use **Hi-Res** or **Hi-Res FT** for accurate OCR
+- **Simple text** — **Fast** parsing is usually sufficient
+
+If you're getting poor answers, try reprocessing the document with a more advanced parsing method.
+
+## API Integration
+
+Document Chat is available via the REST API:
+
+```bash
+curl -X POST "https://sources.graphorlm.com/ask-sources" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "What are the main findings in this report?",
+    "conversation_id": null,
+    "reset": false,
+    "file_name": null
+  }'
+```
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `question` | string | Your question in natural language |
+| `conversation_id` | string (optional) | ID to continue a previous conversation |
+| `reset` | boolean | Set to `true` to start a fresh conversation |
+| `file_name` | string (optional) | Restrict search to a specific document |
+
+### Response
+
+```json
+{
+  "answer": "The main findings indicate that...",
+  "conversation_id": "conv_abc123"
+}
+```
+
+Use the returned `conversation_id` in subsequent requests to maintain conversation context.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="circle-question" title="Getting irrelevant answers">
+    If answers don't match your questions:
+    - Be more specific in your question
+    - Use the single-document chat if you know which file has the answer
+    - Check that documents are properly parsed
+    - Try rephrasing your question
+  </Accordion>
+  <Accordion icon="file-circle-xmark" title="Document content not found">
+    If the chat can't find information you know exists:
+    - Verify the document status is "Processed"
+    - Check the active parsing version has the content
+    - Try a different parsing method for better extraction
+    - Ensure the content isn't in images (may need OCR)
+  </Accordion>
+  <Accordion icon="clock" title="Slow responses">
+    Response time depends on:
+    - Number of documents being searched
+    - Document size and complexity
+    - Question complexity
+    
+    For faster responses, use single-document chat when possible.
+  </Accordion>
+  <Accordion icon="comments" title="Lost conversation context">
+    If the chat seems to forget previous context:
+    - Don't refresh the page mid-conversation
+    - Use the same chat session for related questions
+    - The API requires passing `conversation_id` to maintain context
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Data Extraction"
+    icon="table"
+    href="/guides/data-extraction"
+  >
+    Extract structured data from your documents with custom schemas
+  </Card>
+  <Card
+    title="Data Ingestion"
+    icon="file-import"
+    href="/guides/data-ingestion"
+  >
+    Learn about parsing methods to improve chat quality
+  </Card>
+  <Card
+    title="API Reference"
+    icon="code"
+    href="/api-reference/sources/ask-sources"
+  >
+    Integrate Document Chat into your applications
+  </Card>
+  <Card
+    title="Build RAG Pipelines"
+    icon="diagram-project"
+    href="/guides/retrieval"
+  >
+    Create advanced retrieval workflows with the Flow Builder
+  </Card>
+</CardGroup>
+
