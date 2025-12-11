@@ -187,11 +187,10 @@ Best for: Large documents that need to be split for better extraction.
 
 ### Combined RAG + Extraction Pipeline
 
-```
-                    ┌──→ Chunking → Retrieval → LLM → Response
-Dataset ────────────┤
-                    └──→ Extractor → Response
-```
+| Path | Flow |
+|------|------|
+| RAG Path | Dataset → Chunking → Retrieval → LLM → Response |
+| Extraction Path | Dataset → Extractor → Response |
 
 Best for: Both Q&A and structured extraction from the same documents.
 

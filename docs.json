@@ -21,31 +21,31 @@
             "group": "Get Started",
             "pages": [
               "introduction",
-              "quickstart"
+              "quickstart",
+              "guides/api-tokens"
             ]
           },
           {
-            "group": "Guides",
+            "group": "Data",
             "pages": [
               "guides/data-ingestion",
               "guides/data-extraction",
-              "guides/document-chat",
-              {
-                "group": "RAG Pipelines",
-                "pages": [
-                  "guides/rag-quickstart",
-                  "guides/dataset",
-                  "guides/chunking",
-                  "guides/retrieval",
-                  "guides/llm-integration",
-                  "guides/evaluation",
-                  "guides/extractor",
-                  "guides/reranking",
-                  "guides/smart-rag",
-                  "guides/integrate-workflow"
-                ]
-              },
-              "guides/api-tokens"
+              "guides/document-chat"
+            ]
+          },
+          {
+            "group": "RAG",
+            "pages": [
+              "guides/rag-quickstart",
+              "guides/dataset",
+              "guides/chunking",
+              "guides/retrieval",
+              "guides/llm-integration",
+              "guides/evaluation",
+              "guides/extractor",
+              "guides/reranking",
+              "guides/smart-rag",
+              "guides/integrate-workflow"
             ]
           }
         ]

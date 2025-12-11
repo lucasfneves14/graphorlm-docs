@@ -142,43 +142,30 @@ Smart RAG uses optimized default settings:
 
 ### Simple Smart RAG Pipeline
 
-```
-Dataset → Smart RAG → LLM → Response
-              ↑
-          Question
-```
+**Dataset** → **Smart RAG** → **LLM** → **Response** ← *Question*
 
 Best for: Quick Q&A setup with minimal configuration.
 
 ### Smart RAG with Reranking
 
-```
-Dataset → Smart RAG → Reranking → LLM → Response
-              ↑
-          Question
-```
+**Dataset** → **Smart RAG** → **Reranking** → **LLM** → **Response** ← *Question*
 
 Best for: Higher quality results by adding LLM-based relevance scoring.
 
 ### Smart RAG Evaluation Pipeline
 
-```
-Dataset → Smart RAG → Analysis
-              ↑
-           Testset
-```
+**Dataset** → **Smart RAG** → **Analysis** ← *Testset*
 
 Best for: Testing retrieval quality across multiple questions.
 
 ### Comparison Pipeline
 
-```
-                    ┌──→ Smart RAG ──────────────┐
-Dataset ────────────┤                            ├──→ Analysis
-                    └──→ Chunking → Retrieval ──┘
-                              ↑
-                           Testset
-```
+| Path | Flow |
+|------|------|
+| Path A | Dataset → Smart RAG → Analysis |
+| Path B | Dataset → Chunking → Retrieval → Analysis |
+
+Both paths receive queries from a **Testset** node.
 
 Best for: Comparing Smart RAG against custom chunking/retrieval settings.
 
