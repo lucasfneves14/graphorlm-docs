@@ -5,7 +5,7 @@ description: "Graphor is a comprehensive platform for unstructured data processi
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
-  src="/images/flow-demo.png"
+  src="/images/introduction.png"
   alt="Flow demo"
   loading="lazy"
 />
@@ -20,17 +20,14 @@ Graphor applies **state-of-the-art parsing** to your documents, combining advanc
 
 ### Supported File Formats
 
-<CardGroup cols={3}>
-  <Card title="Documents" icon="file-word">
-    PDF, DOC, DOCX, ODT, PPT, PPTX, HTML, TXT
-  </Card>
-  <Card title="Tabular Data" icon="table">
-    CSV, TSV, XLS, XLSX
-  </Card>
-  <Card title="Media Files" icon="photo-film">
-    Images (PNG, JPG, TIFF, BMP, HEIC), Videos (MP4, MOV, AVI, MKV, WebM), Audio (MP3, WAV, M4A, OGG, FLAC)
-  </Card>
-</CardGroup>
+| Category | Formats |
+|----------|---------|
+| **Documents** | PDF, DOC, DOCX, ODT, PPT, PPTX, HTML, TXT |
+| **Tabular** | CSV, TSV, XLS, XLSX |
+| **Images** | PNG, JPG, JPEG, TIFF, BMP, HEIC |
+| **Video** | MP4, MOV, AVI, MKV, WebM |
+| **Audio** | MP3, WAV, M4A, OGG, FLAC |
+| **Markdown** | MD |
 
 ### Multi-Source Ingestion
 
@@ -48,12 +45,21 @@ Transform your documents into structured data with **LLM-powered extraction**. D
 - **Natural Language Instructions** - Guide the extraction process with custom prompts
 - **Page-Level Provenance** - Each extracted item includes references to source pages for full traceability
 
+## Document Chat
+
+**Chat with your documents** using natural language. Ask questions and get answers grounded in your ingested content.
+
+- **Conversational Memory** - Maintain context across multiple questions in the same conversation
+- **Document Scoping** - Focus your questions on a specific document or search across all sources
+- **Contextual Answers** - Responses are grounded in your actual document content
+
 ## Core Platform Capabilities
 
 Our platform integrates:
 
 - **Advanced Data Ingestion** - Process unstructured data from multiple sources with state-of-the-art OCR and classification
 - **LLM-Powered Data Extraction** - Extract structured data from documents using customizable schemas
+- **Document Chat** - Ask questions and get answers grounded in your document content
 - **Intelligent Chunking** - Optimize document segmentation with classification models for enhanced retrieval
 - **End-to-End RAG Pipeline** - Build retrieval-augmented generation pipelines with ColPali technology support
 - **Support for Mainstream LLMs** - Compatible with OpenAI, Anthropic, and open-source alternatives
