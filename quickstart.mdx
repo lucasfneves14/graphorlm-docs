@@ -128,15 +128,32 @@ To apply a different parsing method:
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
-  src="/images/source-parsing-details.png"
-  alt="Source parsing details"
+  src="/images/source-parsing-settings.png"
+  alt="Source parsing settings"
   loading="lazy"
 />
+
+### Version History
+
+Every parsing result is saved and available in the **Versions** panel on the left side of the Source details page. This allows you to:
+
+- **Compare different parsing methods** — Try multiple methods and compare results
+- **Switch active version** — Click on any version to set it as active
+- **Automatic activation** — When a new parsing completes successfully, it's automatically set as the active version
+
+The active version (marked with a green "active" badge) is the one used for Document Chat and RAG pipelines.
 
 The parsing **Results** view shows:
 - **Page-by-page preview** of extracted content
 - **Element types** identified in each section
 - **Markdown output** ready for downstream processing
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/source-parsing-details.png"
+  alt="Source parsing details"
+  loading="lazy"
+/>
 
 ## Step 4: Extract Structured Data
 
