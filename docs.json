@@ -68,7 +68,7 @@
             ]
           },
           {
-            "group": "Data Options",
+            "group": "Data API Options",
             "pages": [
               {
                 "group": "Ingestion API",
