@@ -1,23 +1,24 @@
 ---
 title: 'Quickstart'
-description: 'Build your first RAG pipeline in minutes'
+description: 'Ingest your data and start extracting insights in minutes'
 ---
 
-This quickstart gets you up and running with Graphor as quickly as possible. It introduces you to the platform's interface and core RAG pipeline components without diving into technical details or complex configurations.
+This quickstart gets you up and running with Graphor as quickly as possible. You'll learn how to ingest documents from multiple sources, extract structured data, and chat with your documents — all without diving into complex configurations.
 
 In this tutorial, you will:
-- Load your data into Graphor
-- Configure a basic RAG pipeline with intelligent chunking
-- Deploy your pipeline
+- Ingest data from local files, URLs, GitHub, and YouTube
+- Parse and process your documents with state-of-the-art OCR
+- Extract structured data using LLM-powered extraction
+- Chat with your documents using natural language
 
-## Step one: Set up Graphor Project
+## Step 1: Set up Your Project
 
-Graphor Cloud provides a fully-managed environment where you can build, test, and deploy RAG pipelines without worrying about infrastructure or complex setup. The free trial gives you full access to all platform features.
+Graphor Cloud provides a fully-managed environment where you can ingest, process, and interact with your data without worrying about infrastructure.
 
 1. Sign up for a [Graphor Cloud account](https://app.graphorlm.com/register)
-2. Login to your account [Login](https://app.graphorlm.com/login)
-2. Once logged in, you'll see the Graphor dashboard
-3. Select **New project** and name it as you want
+2. Login to your account at [Login](https://app.graphorlm.com/login)
+3. Once logged in, you'll see the Graphor dashboard
+4. Click **New project** and give it a descriptive name
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
@@ -26,199 +27,229 @@ Graphor Cloud provides a fully-managed environment where you can build, test, an
   loading="lazy"
 />
 
-Once your project is created, you'll be taken to the sources dashboard where you can begin building your RAG pipeline.
+Once your project is created, you'll be taken to the Sources dashboard where you can begin ingesting your data.
 
-## Step two: Load your data
-
-Graphor allows you to easily upload your own documents to use in your RAG pipeline.
-
-1. In your project, navigate to **Sources** in the left sidebar
-2. Click **Add Sources** to open the data upload interface
-3. Choose your preferred import method:
-   - **Local files**: Upload files from your computer (PDF, MD, PNG, JPG, DOCX, TXT, CSV and others are supported)
-   - **URL**: Import content directly from a web address
-4. Select or drag and drop your files into the upload area
-5. Click **Finish** to begin the ingestion process
+## Step 2: Ingest Your Data
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
-  src="/images/sources-demo.png"
-  alt="Sources demo"
+  src="/images/empty-source-list.png"
+  alt="Sources page"
   loading="lazy"
 />
 
-During processing, Graphor will automatically:
-- Extract text using advanced OCR for images and scanned documents
-- Identify document structure and metadata
-- Prepare your content for chunking in the pipeline
+Graphor supports ingesting data from multiple sources. Navigate to **Sources** in the left sidebar to get started.
 
-You can monitor the ingestion progress on the Sources dashboard.
+### Upload Local Files
 
-After upload, you can click on any file to:
-- Customize the parsing method and configure element classification to improve document structure recognition
-- Preview the extracted content before pipeline processing
+Upload documents directly from your computer. You have two options:
+
+**Option 1: Drag and drop directly**
+- Simply drag and drop your files anywhere on the Sources page
+
+**Option 2: Use the upload interface**
+1. Click **Add** to open the upload interface
+2. Select **Local files**
+3. Select your files or drag and drop them into the upload area
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
-  src="/images/parsing-demo.png"
-  alt="Parsing demo"
+  src="/images/local-files-upload.png"
+  alt="Local files upload"
   loading="lazy"
 />
 
-## Step three: Create a RAG pipeline
+**Supported formats include:**
 
-Now let's create a RAG flow to process your documents and build an intelligent question-answering system.
+| Category | Formats |
+|----------|---------|
+| **Documents** | PDF, DOC, DOCX, ODT, PPT, PPTX, HTML, TXT |
+| **Tabular** | CSV, TSV, XLS, XLSX |
+| **Images** | PNG, JPG, JPEG, TIFF, BMP, HEIC |
+| **Video** | MP4, MOV, AVI, MKV, WebM |
+| **Audio** | MP3, WAV, M4A, OGG, FLAC |
+| **Markdown** | MD |
 
-1. In the left sidebar, click **Flows** to navigate to the Flows dashboard
-2. Click **New flow** to start creating your pipeline
-3. Enter a descriptive name for your flow (e.g., "DocumentQA")
-4. Click **Create** to open the visual flow builder
+### Import from URL
 
-You'll see the visual flow builder interface with components that can be connected to form your RAG pipeline:
+Ingest content directly from web pages:
 
-- **Dataset**: Select the documents you uploaded in the previous step
-- **Chunking**: Configure how your documents are segmented for optimal retrieval
-- **Retrieval**: Define how relevant information is searched and ranked
-- **Testset**: Create evaluation scenarios with ground-truth answers
-- **Questions**: Define sample queries to test your pipeline
-- **LLM**: Connect to language models for generating responses
-- **Evaluation**: Measure the quality and accuracy of your pipeline
-- **Response**: View the final output of your RAG system
+1. Click **Add** and select **Web page**
+2. Enter the web address you want to ingest
+3. Optionally enable **Crawl URLs** to capture linked pages
+4. Click **Finish** to start processing
+
+This is perfect for ingesting documentation sites, blog posts, or any public web content.
+
+### Import GitHub Repository
+
+Process code and documentation from GitHub:
+
+1. Click **Add Sources** and select **GitHub**
+2. Enter the repository URL (e.g., `https://github.com/owner/repo`)
+3. Click **Finish** to begin ingestion
+
+Graphor will automatically process README files, documentation, and code files from the repository.
+
+### Import YouTube Video
+
+Extract and process transcripts from YouTube:
+
+1. Click **Add** and select **YouTube**
+2. Paste the YouTube video URL
+3. Click **Finish** to extract the transcript
+
+This allows you to make video content searchable and queryable.
+
+---
+
+After adding sources, you can monitor the ingestion progress on the Sources dashboard. Each source shows its current status: **Waiting**, **Uploading**, **Processing**, **Processed**, **Not parsed**, or **Failed**.
+
+## Step 3: Parse & Process Documents
+
+When you upload a source, Graphor automatically applies the **Fast** parsing method — optimized for speed with heuristic classification for text documents, transcription for videos/audio, and fast scraping for web pages.
+
+For more complex documents, you can manually apply advanced parsing methods:
+
+| Method | Best For |
+|--------|----------|
+| **Fast** | Quick processing of simple text documents (applied by default) |
+| **Hi-Res** | Complex layouts and mixed content with OCR |
+| **Hi-Res FT** | Specialized document types requiring highest accuracy |
+| **MAI** | Manuscript and handwritten documents |
+| **Graphor** | Complex layouts, multi-page tables, diagrams, and images with rich annotations |
+
+To apply a different parsing method:
+
+1. Click on a processed file from the Sources list to access Source details
+2. Review the extracted content in the **Results** tab
+3. Select a different **parsing method** from the **Settings** tab
+4. Click **Parse** to apply the new method
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
-  src="/images/blank-flow-demo.png"
-  alt="Blank flow demo"
+  src="/images/source-parsing-details.png"
+  alt="Source parsing details"
   loading="lazy"
 />
 
-The flow builder uses a drag-and-drop interface where you can connect these components to create your custom RAG pipeline.
+The parsing **Results** view shows:
+- **Page-by-page preview** of extracted content
+- **Element types** identified in each section
+- **Markdown output** ready for downstream processing
 
-## Step four: Configure pipeline components
+## Step 4: Extract Structured Data
 
-Now let's build your RAG pipeline by adding and connecting the essential components:
+Transform your documents into structured data using **LLM-powered extraction**. This is perfect for extracting specific information like names, dates, prices, or any custom fields.
 
-1. Add the **Dataset** component
-   - Drag the Dataset component from the sidebar onto the canvas
-   - Double-click on the component to open its configuration panel
-   - Select the sources you imported earlier from the files menu
-   - Close the configuration panel
-   - This component provides your documents to the pipeline
+1. Select a processed document from Sources to access Source details
+2. Navigate to the **Extraction** tab (located at the top center of the page)
+3. Add optional **instructions** to guide the extraction
+4. Define your output schema by adding fields:
+   - **Field name**: The key for extracted data (e.g., `product_name`)
+   - **Field type**: Text, Number, Boolean, or Array
+   - **Description**: Help the LLM understand what to extract
+5. Click **Extract** to run the extraction
 
-2. Add the **Chunking** component
-   - Drag the Chunking component onto the canvas
-   - Connect the output of the Dataset component to the input of the Chunking component
-   - Double-click to configure with these recommended settings:
-     - **Embedding / Indexer**: text-embedding-3-small (provides semantic understanding)
-     - **Elements to remove**: None (or select elements to exclude)
-     - **Splitter**: Smart chunking (maintains semantic coherence)
-     - **Chunk Size**: 5000 (adjust based on your document complexity)
-   - Close the configuration panel
-   - This component divides your documents into smaller pieces for efficient retrieval
+**Example for invoice extraction:**
 
-3. Add the **Retrieval** component
-   - Drag the Retrieval component onto the canvas
-   - Connect the output of the Chunking component to the input of the Retrieval
-   - Double-click to configure:
-     - **Search Type**: Similarity (recommended for semantic relevance)
-     - **Top K**: 5 (number of chunks to retrieve)
-     - **Score Threshold**: 0.5 (minimum relevance score)
-   - Close the configuration panel
-   - This component searches your chunked documents for relevant information
+*Instructions:*
+> Extract all invoice information from the document. If multiple invoices are present, extract each one as a separate item. Use USD for currency values and convert dates to YYYY-MM-DD format.
 
-4. Add the **Response** component
-   - Drag the Response component onto the canvas
-   - Connect the output of the Retrieval component to the input of the Response
-   - This component formats and displays the final output of your pipeline
+*Schema:*
+
+| Field Name | Type | Description |
+|------------|------|-------------|
+| `invoice_number` | Text | The unique invoice identifier |
+| `date` | Text | Invoice date in YYYY-MM-DD format |
+| `total_amount` | Number | Total amount due in USD |
+| `line_items` | Text | List of products/services with quantities and prices |
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
-  src="/images/simple-flow-demo.png"
-  alt="Simple flow demo"
+  src="/images/source-extraction-details.png"
+  alt="Source extraction details"
   loading="lazy"
 />
 
-After configuring each component, you can test individual nodes by:
-- Double-clicking the component to open its configuration panel
-- Clicking **Update results** to see the component's output based on current settings
-- Examining the processed data to verify it meets your expectations
+The extraction **Results** view shows:
+- **Extracted data table** with all items found in your document
+- **Page references** indicating which pages each piece of data came from
+- **Export options** to download results as JSON or CSV
 
-**Important Note**: To fully simulate a flow with retrieval nodes, you must add either:
-- A **Question** node: For testing individual queries
-- A **Testset** node: For batch testing multiple questions
+## Step 5: Chat with Your Documents
 
-These input nodes provide the questions that drive the retrieval process in your RAG pipeline.
+Once your data is ingested, you can immediately start asking questions using the **Document Chat** feature. Graphor provides two chat options:
 
-## Step five: Deploy your RAG pipeline
+### Chat with All Sources
 
-After building and testing your flow, it's time to deploy it for production use. Deployment makes your RAG pipeline accessible via API and MCP ([Model Context Protocol](https://modelcontextprotocol.io/)), allowing integration with applications, websites, or other systems.
+On the **Sources** page, click the **Chat** button in the top-right corner to chat with all your ingested documents at once. This is useful when you want to:
+- Search across your entire knowledge base
+- Find information without knowing which document contains it
+- Compare information from multiple sources
 
-To deploy your pipeline:
+### Chat with a Specific Document
 
-1. Click on the **Deploy new revision** button in the top-right corner of the flow builder
-2. In the deployment modal, add a detailed **Tool description for MCP Server**:
-   - This description helps LLMs understand when and how to use your flow
-   - Write a clear, concise explanation of what questions your flow can answer
-   - Example: "This tool answers questions about technical documentation and product specifications"
-3. Under **Traffic Configuration**:
-   - Select the checkbox to display this revision immediately
-   - This sets 100% of traffic to use this revision, replacing any existing traffic splits
-4. Click **Create** to deploy the revision
+On the **Source details** page (after clicking on a specific file), click the **Chat** button in the top-right corner to chat only with that document. This is useful when you want to:
+- Focus your questions on a single document
+- Avoid noise from other sources
+- Deep-dive into a specific file's content
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
-  src="/images/new-revision-demo.png"
-  alt="New revision demo"
+  src="/images/chat-details.png"
+  alt="Source extraction details"
   loading="lazy"
 />
 
-Congratulations! Your pipeline is now online.
+---
 
-## Final step: Connect to your flow
+**Example questions:**
+- "What are the main topics covered in this document?"
+- "Summarize the key findings from the report"
+- "What is the total revenue mentioned?"
 
-Click the **Connect to flow** button to view integration options:
-   - **REST API**: Direct HTTP endpoint for custom applications
-   - **MCP Server**: Model Context Protocol integration for LLM tools
+The chat maintains **conversational memory**, so you can ask follow-up questions without losing context:
 
-Your RAG pipeline is now ready for production use with real users and data!
+> **You:** What products are mentioned in the catalog?
+> 
+> **Sources:** The catalog mentions Product A, Product B, and Product C...
+> 
+> **You:** Which one has the highest price?
+> 
+> **Sources:** Based on the catalog, Product B has the highest price at $299...
 
-You can test your online pipeline by clicking on the chat button at the bottom right corner of the Graphor interface. This built-in chat interface allows you to:
-- Send questions directly to your deployed flow
-- View retrieved context from your documents
-- Experience the pipeline from an end-user perspective
-- Verify that your deployment is working correctly
+## Next Steps
 
-## Next steps
-
-Congratulations! You've built and tested your first RAG pipeline with Graphor. Here's what you can explore next:
+Congratulations! You've successfully ingested data, processed documents, extracted structured information, and chatted with your content. Here's what you can explore next:
 
 <CardGroup cols={2}>
   <Card
-    title="Integrate Workflow"
-    icon="plug"
-    href="guides/integrate-workflow"
+    title="Build a RAG Pipeline"
+    icon="diagram-project"
+    href="guides/retrieval"
   >
-    Connect your RAG systems to applications via REST API and MCP Server integration
+    Create end-to-end retrieval-augmented generation pipelines with visual flow builder
   </Card>
   <Card
-    title="Data Ingestion"
+    title="Data Ingestion Guide"
     icon="file-lines"
     href="guides/data-ingestion"
   >
-    Transform unstructured documents into processable data using advanced OCR and classification
+    Deep dive into advanced ingestion options, parsing methods, and OCR configuration
   </Card>
   <Card
-    title="Chunking"
+    title="Chunking Strategies"
     icon="file-dashed-line"
     href="guides/chunking"
   >
-    Optimize document segmentation with intelligent chunking for maximum retrieval relevance
+    Optimize document segmentation for better retrieval performance
   </Card>
   <Card
-    title="Evaluation"
-    icon="square-poll-vertical"
-    href="guides/evaluation"
+    title="Integrate via API"
+    icon="plug"
+    href="guides/integrate-workflow"
   >
-    Measure and improve your RAG pipeline performance with comprehensive metrics
+    Connect your data to applications via REST API and MCP Server
   </Card>
 </CardGroup>
