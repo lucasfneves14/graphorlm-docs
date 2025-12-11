@@ -1,0 +1,280 @@
+---
+title: 'Raptor RAG'
+description: 'Build hierarchical document trees with automatic summarization for richer, multi-level retrieval'
+---
+
+The Raptor RAG node builds a hierarchical tree of documents by organizing them into multiple levels through clustering and automatic summarization. Lower levels contain the original document chunks, while upper levels contain summaries that capture main themes. During search, the node navigates through the tree combining detailed information and general context for more comprehensive answers.
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/raptor-rag-overview.png"
+  alt="Raptor RAG node overview"
+  loading="lazy"
+/>
+
+## Overview
+
+Raptor RAG (Recursive Abstractive Processing for Tree-Organized Retrieval) creates a multi-level representation of your documents:
+
+1. **Level 0 (Leaves)** — Original document chunks with full detail
+2. **Higher Levels** — Progressively summarized clusters of related content
+3. **Tree Navigation** — Searches traverse from summaries down to specific details
+
+This hierarchical approach provides:
+- **Better context** — Summaries capture themes that individual chunks might miss
+- **Multi-granularity retrieval** — Combines high-level understanding with specific details
+- **Improved coherence** — Related information is grouped together through clustering
+
+## When to Use Raptor RAG
+
+**Choose Raptor RAG when:**
+- Documents cover multiple related topics that benefit from summarization
+- Questions require both high-level understanding and specific details
+- You need to understand relationships between document sections
+- Document collections are large and benefit from hierarchical organization
+
+**Consider alternatives when:**
+- Documents are simple and don't need hierarchical summarization
+- You need faster processing (Raptor RAG requires more computation)
+- Questions only need specific facts without broader context
+
+## Configuration Options
+
+Double-click the Raptor RAG node to open settings:
+
+<img
+  className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
+  src="/images/raptor-rag-settings.png"
+  alt="Raptor RAG settings"
+  loading="lazy"
+/>
+
+### Top K
+
+Number of results to return per query (1-100).
+
+| Value | Use Case |
+|-------|----------|
+| 3-5 | Focused answers with key information |
+| 6-10 | Balanced coverage for most questions |
+| 10+ | Comprehensive retrieval for complex topics |
+
+### Max Level
+
+Maximum depth of the hierarchical tree (1-10).
+
+| Value | Description |
+|-------|-------------|
+| 2-3 | Shallow tree, faster processing, less summarization |
+| 4-5 | Balanced depth for most document collections |
+| 6+ | Deep tree for large collections with many sub-topics |
+
+<Note>
+Higher max levels require more processing time as the system must cluster and summarize at each level.
+</Note>
+
+### Add Metadata
+
+When enabled, includes document metadata (file name, page number, etc.) in the chunk content. This helps the LLM understand the source context when generating responses.
+
+### Add Page Annotation
+
+Includes page-level annotations in chunk content. **Only works with documents parsed using the Graphor method.**
+
+### Add Document Annotation
+
+Includes document-level annotations in chunk content. **Only works with documents parsed using the Graphor method.**
+
+<Tip>
+Enable annotations when your documents were parsed with the **Graphor** method to leverage rich structural information in retrieval.
+</Tip>
+
+## How Raptor RAG Works
+
+### Tree Building Phase
+
+1. **Chunking** — Documents are split into chunks (Level 0)
+2. **Embedding** — Each chunk is converted to a vector
+3. **Clustering** — Similar chunks are grouped together
+4. **Summarization** — Each cluster is summarized by an LLM
+5. **Repeat** — Summaries become the next level, process repeats up to Max Level
+
+### Retrieval Phase
+
+1. **Query** — User question is embedded
+2. **Top-down Search** — Starts at the highest level (summaries)
+3. **Tree Traversal** — Follows relevant branches down to leaf chunks
+4. **Result Combination** — Combines information from all relevant levels
+
+## Pipeline Connections
+
+### Input Nodes
+
+| Source Node | Purpose |
+|-------------|---------|
+| **Dataset** | Provides documents for tree building |
+| **Question** | Single query for testing |
+| **Testset** | Multiple queries for evaluation |
+
+### Output Nodes
+
+| Target Node | Purpose |
+|-------------|---------|
+| **Reranking** | LLM-based reordering of results |
+| **LLM** | Generate natural language responses |
+| **Analysis** | Evaluate retrieval quality |
+| **Response** | Output results directly |
+
+## Pipeline Examples
+
+### Basic Raptor RAG Pipeline
+
+```
+Dataset → Raptor RAG → LLM → Response
+              ↑
+           Question
+```
+
+Best for: Multi-topic documents requiring hierarchical understanding.
+
+### Raptor RAG with Reranking
+
+```
+Dataset → Raptor RAG → Reranking → LLM → Response
+              ↑
+           Testset
+```
+
+Best for: Maximum precision with LLM-based result reordering.
+
+### Evaluation Pipeline
+
+| Node | Connection |
+|------|------------|
+| Dataset | → Raptor RAG |
+| Testset | → Raptor RAG |
+| Raptor RAG | → Analysis |
+
+Best for: Measuring retrieval quality with ground-truth answers.
+
+## Viewing Results
+
+After running the pipeline (click **Update Results**):
+
+1. Go to the **Results** tab
+2. View retrieved documents organized by question
+3. Each result shows:
+   - **Content** — Combined text from multiple tree levels
+   - **Score** — Relevance score
+   - **Level information** — Which tree levels contributed to the result
+
+### Understanding Multi-Level Results
+
+Results from Raptor RAG combine information from different tree levels:
+
+- **High-level summaries** provide thematic context
+- **Leaf-level chunks** provide specific details
+- **Combined text** is formatted to show which level each part came from
+
+## Comparison with Other RAG Nodes
+
+| Feature | Raptor RAG | Smart RAG | Graph RAG | Agentic RAG |
+|---------|------------|-----------|-----------|-------------|
+| Hierarchical structure | ✅ Tree levels | ❌ Flat | ✅ Knowledge graph | ❌ Flat |
+| Automatic summarization | ✅ Per cluster | ❌ No | ❌ No | ❌ No |
+| Processing time | Slower | Fast | Slower | Fast |
+| Best for | Multi-topic docs | General use | Entity relationships | Adaptive queries |
+| Configuration | Top K, Max Level | Top K, annotations | Top K, annotations | None |
+
+## Best Practices
+
+### Document Preparation
+
+1. **Use quality parsing** — Better parsing leads to better chunking and summarization
+2. **Consider document size** — Very large documents may benefit from higher Max Level
+3. **Related content** — Raptor RAG works best when documents have related sub-topics
+
+### Configuration Tips
+
+1. **Start with defaults** — Max Level 3, Top K 5 works for most cases
+2. **Increase Max Level** for larger document collections
+3. **Enable annotations** if documents were parsed with Graphor method
+4. **Test with representative questions** to validate tree structure
+
+### Performance Optimization
+
+1. **Reduce Max Level** if processing is too slow
+2. **Limit dataset size** during initial testing
+3. **Use Testset** for systematic evaluation before deployment
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="circle-exclamation" title="No results showing">
+    If Raptor RAG returns no results:
+    - Verify a Question or Testset node is connected
+    - Check that Dataset contains processed documents
+    - Ensure documents have status "Processed"
+    - Wait for tree building to complete (may take longer than other RAG types)
+  </Accordion>
+  <Accordion icon="clock" title="Very slow processing">
+    Tree building requires clustering and LLM summarization at each level:
+    - Reduce Max Level for faster processing
+    - Reduce number of documents in Dataset
+    - Consider Smart RAG for faster alternatives
+    - Processing time scales with document volume and Max Level
+  </Accordion>
+  <Accordion icon="triangle-exclamation" title="Poor quality summaries">
+    If summaries don't capture document themes well:
+    - Check that documents are properly parsed
+    - Verify document content is coherent and well-structured
+    - Consider using documents with clearer topic organization
+  </Accordion>
+  <Accordion icon="layer-group" title="Too few levels in tree">
+    If the tree has fewer levels than Max Level:
+    - This is normal when document volume is small
+    - Clustering stops when clusters become too small
+    - Add more documents or reduce Max Level expectation
+  </Accordion>
+  <Accordion icon="file-circle-xmark" title="Annotations not working">
+    If page/document annotations don't appear:
+    - Verify documents were parsed with **Graphor** method
+    - Enable the corresponding checkbox in settings
+    - Reprocess documents with Graphor if needed
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Smart RAG"
+    icon="bolt"
+    href="/guides/smart-rag"
+  >
+    Simpler RAG without hierarchical summarization
+  </Card>
+  <Card
+    title="Graph RAG"
+    icon="diagram-project"
+    href="/guides/graph-rag"
+  >
+    Knowledge graph-enhanced retrieval
+  </Card>
+  <Card
+    title="Reranking"
+    icon="arrow-up-wide-short"
+    href="/guides/reranking"
+  >
+    Add LLM-based reranking for better results
+  </Card>
+  <Card
+    title="Evaluation"
+    icon="square-poll-vertical"
+    href="/guides/evaluation"
+  >
+    Measure retrieval quality with metrics
+  </Card>
+</CardGroup>
+
+
