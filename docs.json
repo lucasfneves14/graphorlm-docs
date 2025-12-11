@@ -26,7 +26,7 @@
             ]
           },
           {
-            "group": "Data",
+            "group": "Data Options",
             "pages": [
               "guides/data-ingestion",
               "guides/data-extraction",
@@ -34,7 +34,7 @@
             ]
           },
           {
-            "group": "RAG",
+            "group": "RAG Pipelines",
             "pages": [
               "guides/rag-quickstart",
               "guides/dataset",
