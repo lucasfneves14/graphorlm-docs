@@ -84,7 +84,8 @@
                 ]
               },
               "api-reference/extract-api",
-              "api-reference/chat-api"
+              "api-reference/chat-api",
+              "api-reference/prebuilt-rag-api"
             ]
           },
           {

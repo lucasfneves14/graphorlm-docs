@@ -1,0 +1,375 @@
+---
+title: 'Prebuilt RAG API'
+description: 'Retrieve relevant document chunks using semantic search with Google File Search'
+---
+
+## Overview
+
+The Prebuilt RAG API allows you to retrieve relevant document chunks from your ingested documents using semantic search. This API uses Google File Search with grounding to find the most relevant content based on your query, making it ideal for building custom RAG (Retrieval-Augmented Generation) applications.
+
+## Endpoint
+
+```
+POST https://sources.graphorlm.com/prebuilt-rag
+```
+
+## Authentication
+
+Include your API token in the Authorization header:
+
+```
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+## Request
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+| `Content-Type` | `application/json` | Yes |
+
+### Body Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `query` | string | Yes | The search query to retrieve relevant chunks |
+| `file_name` | string | No | Restrict retrieval to a specific document by file name |
+
+### Example Request
+
+```bash
+curl -X POST "https://sources.graphorlm.com/prebuilt-rag" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "What are the payment terms?"
+  }'
+```
+
+### Example with Specific Document
+
+```bash
+curl -X POST "https://sources.graphorlm.com/prebuilt-rag" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "What is the total amount due?",
+    "file_name": "invoice-2024.pdf"
+  }'
+```
+
+## Response
+
+### Success Response (200 OK)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `query` | string | The original search query |
+| `chunks` | array | List of retrieved document chunks |
+| `total` | integer | Total number of chunks retrieved |
+
+### Chunk Object
+
+Each chunk in the `chunks` array contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `text` | string | The text content of the chunk |
+| `file_name` | string | The source file name |
+| `page_number` | integer | The page number where the chunk was found |
+| `score` | float | The relevance score of the chunk (higher is more relevant) |
+| `metadata` | object | Additional metadata for the chunk |
+
+### Example Response
+
+```json
+{
+  "query": "What are the payment terms?",
+  "chunks": [
+    {
+      "text": "Payment Terms: Net 30 days from invoice date. Late payments will incur a 1.5% monthly interest charge. All payments must be made in USD via wire transfer or check.",
+      "file_name": "contract-2024.pdf",
+      "page_number": 5,
+      "score": 0.95,
+      "metadata": {
+        "file_name": "contract-2024.pdf",
+        "page_number": 5
+      }
+    },
+    {
+      "text": "The Client agrees to pay all invoices within thirty (30) days of receipt. Failure to pay within the specified period may result in suspension of services.",
+      "file_name": "contract-2024.pdf",
+      "page_number": 12,
+      "score": 0.87,
+      "metadata": {
+        "file_name": "contract-2024.pdf",
+        "page_number": 12
+      }
+    }
+  ],
+  "total": 2
+}
+```
+
+### Error Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 400 | Bad Request - Invalid parameters |
+| 401 | Unauthorized - Invalid or missing API token |
+| 404 | Not Found - Specified file not found |
+| 500 | Internal Server Error |
+
+## Usage Examples
+
+### Python
+
+```python
+import requests
+
+url = "https://sources.graphorlm.com/prebuilt-rag"
+headers = {
+    "Authorization": "Bearer YOUR_API_TOKEN",
+    "Content-Type": "application/json"
+}
+
+# Basic retrieval
+response = requests.post(url, headers=headers, json={
+    "query": "What are the key contract terms?"
+})
+
+data = response.json()
+print(f"Found {data['total']} relevant chunks")
+
+for chunk in data["chunks"]:
+    print(f"\n--- {chunk['file_name']} (page {chunk['page_number']}) ---")
+    print(chunk["text"])
+    print(f"Relevance: {chunk['score']:.2f}")
+```
+
+### Python with Custom LLM Integration
+
+```python
+import requests
+from openai import OpenAI
+
+# Step 1: Retrieve relevant chunks
+def retrieve_chunks(query, file_name=None):
+    url = "https://sources.graphorlm.com/prebuilt-rag"
+    headers = {
+        "Authorization": "Bearer YOUR_API_TOKEN",
+        "Content-Type": "application/json"
+    }
+    payload = {"query": query}
+    if file_name:
+        payload["file_name"] = file_name
+    
+    response = requests.post(url, headers=headers, json=payload)
+    return response.json()
+
+# Step 2: Build context from chunks
+def build_context(chunks):
+    context = ""
+    for chunk in chunks["chunks"]:
+        context += f"\n[Source: {chunk['file_name']}, Page {chunk['page_number']}]\n"
+        context += chunk["text"] + "\n"
+    return context
+
+# Step 3: Generate answer with your preferred LLM
+def generate_answer(question, context):
+    client = OpenAI()
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "Answer questions based on the provided context."},
+            {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {question}"}
+        ]
+    )
+    return response.choices[0].message.content
+
+# Usage
+question = "What are the payment terms?"
+chunks = retrieve_chunks(question)
+context = build_context(chunks)
+answer = generate_answer(question, context)
+print(answer)
+```
+
+### JavaScript
+
+```javascript
+const API_URL = "https://sources.graphorlm.com/prebuilt-rag";
+const API_TOKEN = "YOUR_API_TOKEN";
+
+async function retrieveChunks(query, fileName = null) {
+  const payload = { query };
+  if (fileName) {
+    payload.file_name = fileName;
+  }
+
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${API_TOKEN}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+  
+  return response.json();
+}
+
+// Usage
+const result = await retrieveChunks("What products are mentioned?");
+console.log(`Found ${result.total} relevant chunks`);
+
+result.chunks.forEach(chunk => {
+  console.log(`\n--- ${chunk.file_name} (page ${chunk.page_number}) ---`);
+  console.log(chunk.text);
+  console.log(`Relevance: ${chunk.score}`);
+});
+```
+
+### JavaScript with Custom LLM Integration
+
+```javascript
+const API_URL = "https://sources.graphorlm.com/prebuilt-rag";
+const API_TOKEN = "YOUR_API_TOKEN";
+
+async function retrieveChunks(query, fileName = null) {
+  const payload = { query };
+  if (fileName) payload.file_name = fileName;
+
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${API_TOKEN}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+  
+  return response.json();
+}
+
+function buildContext(chunks) {
+  return chunks.chunks.map(chunk => 
+    `[Source: ${chunk.file_name}, Page ${chunk.page_number}]\n${chunk.text}`
+  ).join("\n\n");
+}
+
+async function generateAnswer(question, context) {
+  // Use your preferred LLM API (OpenAI, Anthropic, etc.)
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${OPENAI_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: "gpt-4",
+      messages: [
+        { role: "system", content: "Answer questions based on the provided context." },
+        { role: "user", content: `Context:\n${context}\n\nQuestion: ${question}` }
+      ]
+    })
+  });
+  
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+
+// Full RAG pipeline
+async function askQuestion(question, fileName = null) {
+  const chunks = await retrieveChunks(question, fileName);
+  const context = buildContext(chunks);
+  const answer = await generateAnswer(question, context);
+  return { answer, sources: chunks.chunks };
+}
+
+// Usage
+const result = await askQuestion("What are the payment terms?");
+console.log(result.answer);
+console.log("Sources:", result.sources.map(s => s.file_name));
+```
+
+## Use Cases
+
+### Custom RAG Applications
+
+Use this API to build custom RAG pipelines with your preferred LLM:
+
+1. **Retrieve** relevant chunks using semantic search
+2. **Build context** from the retrieved chunks
+3. **Generate** answers using any LLM (OpenAI, Anthropic, Google, etc.)
+
+### Document Search
+
+Build document search interfaces that show relevant excerpts:
+
+1. Query for relevant content
+2. Display chunks with file names and page numbers
+3. Allow users to navigate to source documents
+
+### Knowledge Base Q&A
+
+Create custom Q&A systems with full control over:
+
+- Prompt engineering
+- Response formatting
+- Source citations
+- Multi-step reasoning
+
+## Best Practices
+
+1. **Be specific in queries** — Clear, specific queries return more relevant chunks
+2. **Use file_name for focused search** — Restrict to a specific document when you know the source
+3. **Check relevance scores** — Higher scores indicate better matches; consider filtering low-score chunks
+4. **Include source citations** — Use file_name and page_number to cite sources in your responses
+5. **Combine with LLM** — Use retrieved chunks as context for LLM-generated answers
+
+## Comparison with Chat API
+
+| Feature | Prebuilt RAG API | Chat API |
+|---------|------------------|----------|
+| Returns | Raw document chunks | Generated answer |
+| LLM Integration | Bring your own | Built-in |
+| Conversation Memory | No | Yes |
+| Customization | Full control | Limited |
+| Use Case | Custom RAG pipelines | Quick Q&A |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card
+    title="Chat API"
+    icon="comments"
+    href="/api-reference/chat-api"
+  >
+    Get AI-generated answers with built-in LLM
+  </Card>
+  <Card
+    title="Data Ingestion"
+    icon="file-import"
+    href="/guides/data-ingestion"
+  >
+    Improve parsing quality for better retrieval results
+  </Card>
+  <Card
+    title="Extraction API"
+    icon="table"
+    href="/api-reference/extract-api"
+  >
+    Extract structured data from documents
+  </Card>
+  <Card
+    title="RAG Quickstart"
+    icon="bolt"
+    href="/guides/rag-quickstart"
+  >
+    Build your first RAG pipeline with Graphor
+  </Card>
+</CardGroup>
+
