@@ -174,7 +174,7 @@ curl -X POST "https://sources.graphorlm.com/ask-sources" \
     "question": "What are the main findings in this report?",
     "conversation_id": null,
     "reset": false,
-    "file_name": null
+    "file_names": null
   }'
 ```
 
@@ -185,7 +185,7 @@ curl -X POST "https://sources.graphorlm.com/ask-sources" \
 | `question` | string | Your question in natural language |
 | `conversation_id` | string (optional) | ID to continue a previous conversation |
 | `reset` | boolean | Set to `true` to start a fresh conversation |
-| `file_name` | string (optional) | Restrict search to a specific document |
+| `file_names` | string[] (optional) | Restrict search to specific documents |
 
 ### Response
 

@@ -37,7 +37,7 @@ Authorization: Bearer YOUR_API_TOKEN
 | `question` | string | Yes | The question to ask about your documents |
 | `conversation_id` | string | No | Conversation identifier to maintain memory context across questions |
 | `reset` | boolean | No | When `true`, starts a new conversation and ignores previous history. Default: `false` |
-| `file_name` | string | No | Restrict search to a specific document by file name |
+| `file_names` | string[] | No | Restrict search to specific documents by file name |
 
 ### Example Request
 
@@ -73,7 +73,7 @@ curl -X POST "https://sources.graphorlm.com/ask-sources" \
   }'
 ```
 
-### Example with Specific Document
+### Example with Specific Documents
 
 ```bash
 curl -X POST "https://sources.graphorlm.com/ask-sources" \
@@ -81,7 +81,7 @@ curl -X POST "https://sources.graphorlm.com/ask-sources" \
   -H "Content-Type: application/json" \
   -d '{
     "question": "What is the total amount due?",
-    "file_name": "invoice-2024.pdf"
+    "file_names": ["invoice-2024.pdf", "invoice-2023.pdf"]
   }'
 ```
 
@@ -148,18 +148,23 @@ print(response.json()["answer"])
 const API_URL = "https://sources.graphorlm.com/ask-sources";
 const API_TOKEN = "YOUR_API_TOKEN";
 
-async function askQuestion(question, conversationId = null, fileName = null) {
+async function askQuestion(question, conversationId = null, fileNames = null) {
+  const payload = {
+    question,
+    conversation_id: conversationId
+  };
+
+  if (fileNames && fileNames.length) {
+    payload.file_names = fileNames;
+  }
+
   const response = await fetch(API_URL, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${API_TOKEN}`,
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({
-      question,
-      conversation_id: conversationId,
-      file_name: fileName
-    })
+    body: JSON.stringify(payload)
   });
   
   return response.json();
@@ -181,7 +186,7 @@ console.log(followUp.answer);
 
 1. **Use conversation memory** — Pass `conversation_id` for follow-up questions to maintain context
 2. **Be specific** — Clear, specific questions get better answers
-3. **Scope when needed** — Use `file_name` to focus on a specific document
+3. **Scope when needed** — Use `file_names` to focus on specific documents
 4. **Reset when changing topics** — Set `reset: true` when switching to unrelated questions
 
 ## Related

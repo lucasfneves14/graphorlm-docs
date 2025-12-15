@@ -35,7 +35,7 @@ Authorization: Bearer YOUR_API_TOKEN
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `query` | string | Yes | The search query to retrieve relevant chunks |
-| `file_name` | string | No | Restrict retrieval to a specific document by file name |
+| `file_names` | string[] | No | Restrict retrieval to specific documents by file name |
 
 ### Example Request
 
@@ -48,7 +48,7 @@ curl -X POST "https://sources.graphorlm.com/prebuilt-rag" \
   }'
 ```
 
-### Example with Specific Document
+### Example with Specific Documents
 
 ```bash
 curl -X POST "https://sources.graphorlm.com/prebuilt-rag" \
@@ -56,7 +56,7 @@ curl -X POST "https://sources.graphorlm.com/prebuilt-rag" \
   -H "Content-Type: application/json" \
   -d '{
     "query": "What is the total amount due?",
-    "file_name": "invoice-2024.pdf"
+    "file_names": ["invoice-2024.pdf", "invoice-2023.pdf"]
   }'
 ```
 
@@ -156,15 +156,15 @@ import requests
 from openai import OpenAI
 
 # Step 1: Retrieve relevant chunks
-def retrieve_chunks(query, file_name=None):
+def retrieve_chunks(query, file_names=None):
     url = "https://sources.graphorlm.com/prebuilt-rag"
     headers = {
         "Authorization": "Bearer YOUR_API_TOKEN",
         "Content-Type": "application/json"
     }
     payload = {"query": query}
-    if file_name:
-        payload["file_name"] = file_name
+    if file_names:
+        payload["file_names"] = file_names
     
     response = requests.post(url, headers=headers, json=payload)
     return response.json()
@@ -203,10 +203,10 @@ print(answer)
 const API_URL = "https://sources.graphorlm.com/prebuilt-rag";
 const API_TOKEN = "YOUR_API_TOKEN";
 
-async function retrieveChunks(query, fileName = null) {
+async function retrieveChunks(query, fileNames = null) {
   const payload = { query };
-  if (fileName) {
-    payload.file_name = fileName;
+  if (fileNames && fileNames.length) {
+    payload.file_names = fileNames;
   }
 
   const response = await fetch(API_URL, {
@@ -238,9 +238,9 @@ result.chunks.forEach(chunk => {
 const API_URL = "https://sources.graphorlm.com/prebuilt-rag";
 const API_TOKEN = "YOUR_API_TOKEN";
 
-async function retrieveChunks(query, fileName = null) {
+async function retrieveChunks(query, fileNames = null) {
   const payload = { query };
-  if (fileName) payload.file_name = fileName;
+  if (fileNames && fileNames.length) payload.file_names = fileNames;
 
   const response = await fetch(API_URL, {
     method: "POST",
@@ -282,8 +282,8 @@ async function generateAnswer(question, context) {
 }
 
 // Full RAG pipeline
-async function askQuestion(question, fileName = null) {
-  const chunks = await retrieveChunks(question, fileName);
+async function askQuestion(question, fileNames = null) {
+  const chunks = await retrieveChunks(question, fileNames);
   const context = buildContext(chunks);
   const answer = await generateAnswer(question, context);
   return { answer, sources: chunks.chunks };
@@ -325,7 +325,7 @@ Create custom Q&A systems with full control over:
 ## Best Practices
 
 1. **Be specific in queries** — Clear, specific queries return more relevant chunks
-2. **Use file_name for focused search** — Restrict to a specific document when you know the source
+2. **Use file_names for focused search** — Restrict to specific documents when you know the source
 3. **Check relevance scores** — Higher scores indicate better matches; consider filtering low-score chunks
 4. **Include source citations** — Use file_name and page_number to cite sources in your responses
 5. **Combine with LLM** — Use retrieved chunks as context for LLM-generated answers
