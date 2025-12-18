@@ -138,27 +138,27 @@ Graphor offers five parsing methods to optimize document processing based on you
 - Scraper for GitHub repositories
 - **Fastest processing option** (applied by default)
 
-### Hi-Res
+### Balanced
 
 - OCR with Hi-Res model for structure recognition
 - Improved accuracy on complex layouts and mixed content
 - Better recognition of document structure and components
 
-### Hi-Res FT
+### Accurate
 
 - OCR with fine-tuned model
 - Highest layout/structure accuracy
 - Optimized for specialized document types
 
-### MAI
+### VLM
 
 - Our best text-first parsing with high-quality output
-- Excellent for **complex layouts, manuscript, and handwritten documents**
+- Excellent for **manuscripts and handwritten documents**
 - No bounding boxes (no layout coordinates)
 - Performs page, document, and image annotations
 - Best-in-class text parsing quality
 
-### Graphor
+### Agentic
 
 - Our highest parsing setting for complex layouts
 - Multi-page tables, diagrams, and images support
@@ -189,10 +189,10 @@ Processing time varies based on the parsing method and document complexity:
 | Method | Typical Processing Time | Best For |
 |--------|------------------------|----------|
 | **Fast** | Seconds | Simple text documents, quick iteration |
-| **Hi-Res** | 10-30 seconds per page | Complex layouts requiring OCR |
-| **Hi-Res FT** | 15-45 seconds per page | Specialized documents needing highest accuracy |
-| **MAI** | 5-15 seconds per page | Text-heavy documents, manuscripts |
-| **Graphor** | 30-60+ seconds per page | Complex multi-page tables, diagrams |
+| **Balanced** | 10-30 seconds per page | Complex layouts requiring OCR |
+| **Accurate** | 15-45 seconds per page | Specialized documents needing highest accuracy |
+| **VLM** | 5-15 seconds per page | Text-heavy documents, manuscripts |
+| **Agentic** | 30-60+ seconds per page | Complex multi-page tables, diagrams |
 
 **Note**: Actual processing times depend on document size, complexity, and current system load.
 
@@ -233,7 +233,7 @@ Each version displays:
 - **Job ID** — Unique identifier for the parsing job
 - **Status** — Completed, Failed, or Processing
 - **Duration** — How long the parsing took
-- **Parsing method** — Which method was used (Fast, Hi-Res, etc.)
+- **Parsing method** — Which method was used (Fast, Balanced, etc.)
 - **Timestamp** — When the parsing was executed
 
 Version management features:
@@ -416,10 +416,10 @@ To optimize data ingestion results:
 ### Processing Method Selection
 
 - **Fast**: Use for simple text documents and fastest processing (applied by default)
-- **Hi-Res**: Ideal for complex layouts and mixed content types with OCR
-- **Hi-Res FT**: Best for specialized document types requiring highest layout accuracy
-- **MAI**: Prefer for complex layouts, manuscript/handwritten documents, or when you need best text quality without bounding boxes
-- **Graphor**: Use for complex layouts, multi-page tables, diagrams, and images requiring rich annotations
+- **Balanced**: Ideal for complex layouts and mixed content types with OCR
+- **Accurate**: Best for specialized document types requiring highest layout accuracy
+- **VLM**: Prefer for manuscript/handwritten documents, or when you need best text quality without bounding boxes
+- **Agentic**: Use for complex layouts, multi-page tables, diagrams, and images requiring rich annotations
 
 ## Troubleshooting
 
@@ -428,28 +428,28 @@ Common issues and solutions:
 <AccordionGroup>
   <Accordion icon="file-excel" title="Poor OCR quality">
     For low-quality scanned documents, try:
-    - Using Hi-Res, Hi-Res FT, or Graphor methods instead of Fast
+    - Using Balanced, Accurate, or Agentic methods instead of Fast
     - Breaking large documents into smaller files
     - Improving document quality before upload if possible
-    - Consider MAI for best text parsing when you don't need layout coordinates
+    - Consider VLM for best text parsing when you don't need layout coordinates
   </Accordion>
   <Accordion icon="table" title="Table extraction problems">
     If tables aren't being properly recognized:
-    - Use Hi-Res, Hi-Res FT, or Graphor method for better table detection
-    - Graphor is best for multi-page tables
+    - Use Balanced, Accurate, or Agentic method for better table detection
+    - Agentic is best for multi-page tables
     - Convert complex tables to simpler formats before upload
   </Accordion>
   <Accordion icon="language" title="Multi-language document issues">
     For documents with multiple languages:
     - Process different language sections as separate documents
-    - Use Hi-Res, Hi-Res FT, or Graphor method which has better multi-language support
-    - MAI provides strong text parsing for multilingual content without layout metadata
+    - Use Balanced, Accurate, or Agentic method which has better multi-language support
+    - VLM provides strong text parsing for multilingual content without layout metadata
   </Accordion>
   <Accordion icon="gauge" title="Slow processing time">
     If processing is taking too long:
     - Use Fast method for simple documents
-    - Prefer MAI when you don't need layout coordinates
-    - Avoid Hi-Res FT or Graphor unless you need their advanced features
+    - Prefer VLM when you don't need layout coordinates
+    - Avoid Accurate or Agentic unless you need their advanced features
   </Accordion>
   <Accordion icon="github" title="GitHub repository access issues">
     If you're having trouble importing from GitHub:

@@ -63,7 +63,7 @@ The request must be sent as JSON with the following fields:
     - Balances processing speed and accuracy
   </Accordion>
   
-  <Accordion icon="brain" title="Hi-Res">
+  <Accordion icon="brain" title="Balanced">
     **Best for**: Complex documents with varied layouts
     
     - OCR-based text extraction
@@ -72,7 +72,7 @@ The request must be sent as JSON with the following fields:
     - Enhanced accuracy for complex layouts
   </Accordion>
   
-  <Accordion icon="sparkles" title="Hi-Res FT">
+  <Accordion icon="sparkles" title="Accurate">
     **Best for**: Premium accuracy, specialized documents
     
     - OCR-based text extraction
@@ -82,20 +82,21 @@ The request must be sent as JSON with the following fields:
     - **Note**: Premium feature
   </Accordion>
   
-  <Accordion icon="robot" title="Graphor">
-    **Best for**: Custom processing workflows
+  <Accordion icon="robot" title="Agentic">
+    **Best for**: Complex layouts, multi-page tables, diagrams, and images
     
-    - Specialized processing method
-    - Custom document analysis pipeline
+    - Our highest parsing setting for complex layouts
+    - Rich annotations for images and complex elements
+    - Uses agentic processing for enhanced understanding
     - Advanced document understanding capabilities
   </Accordion>
   
-  <Accordion icon="bars" title="MAI">
-    **Best for**: Fast text-focused processing without layout metadata
+  <Accordion icon="bars" title="VLM">
+    **Best for**: Text-first parsing, manuscripts, and handwritten documents
     
-    - Model-assisted partitioning focused on textual content
+    - Our best text-first parsing with high-quality output
     - Does not output bounding boxes or page layout (no bbox)
-    - Lightweight and faster when you only need clean text and element types
+    - Best for MANUSCRIPT and HANDWRITTEN documents
     - Performs page annotation (page-level labels and context)
     - Performs document annotation (document-level labels and summaries)
     - Performs image annotation when images are present in the document
@@ -109,12 +110,12 @@ Use these values for the `partition_method` field when calling the endpoint:
 
 | Method | partition_method |
 |--------|------------------|
-| Basic | basic |
-| OCR | ocr |
-| Hi-Res | hi_res |
-| Hi-Res FT | hi_res_ft |
-| GraphorLM | graphorlm |
-| MAI | mai |
+| Fast | basic |
+| OCR (deprecated) | ocr |
+| Balanced | hi_res |
+| Accurate | hi_res_ft |
+| Agentic | graphorlm |
+| VLM | mai |
 
 ## Processing Method Selection Guide
 
@@ -122,12 +123,11 @@ Use these values for the `partition_method` field when calling the endpoint:
 
 | Method | Speed | Text Parsing | Element Classification | Bounding Boxes | Best Use Cases | OCR |
 |--------|-------|--------------|------------------------|----------------|----------------|-----|
-| **Basic** | ⚡⚡⚡ | ⭐⭐ | ⭐⭐ | ✅ (limited) | Simple text files, testing | ❌ |
-| **OCR** | ⚡⚡ | ⭐⭐⭐ | ⭐⭐ | ✅ (images) | Scanned documents, images | ✅ |
-| **Hi-Res** | ⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ | Complex layouts, mixed content | ✅ |
-| **Hi-Res FT** | ⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ | Premium accuracy needed | ✅ |
-| **Graphor** | ⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ | Custom workflows | ✅ |
-| **MAI** | ⚡⚡⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ❌ | Text precision without layout metadata | ✅ |
+| **Fast** | ⚡⚡⚡ | ⭐⭐ | ⭐⭐ | ✅ (limited) | Simple text files, testing | ❌ |
+| **Balanced** | ⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ | Complex layouts, mixed content | ✅ |
+| **Accurate** | ⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ | Premium accuracy needed | ✅ |
+| **VLM** | ⚡⚡⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ❌ | Manuscripts, handwritten documents | ✅ |
+| **Agentic** | ⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ | Complex layouts, multi-page tables, diagrams | ✅ |
 
 ## Request Example
 
@@ -139,7 +139,7 @@ Use these values for the `partition_method` field when calling the endpoint:
 ```
 
 <Warning>
-Processing can take several minutes depending on document size, complexity, and the selected processing method. Advanced methods like Hi-Res, Hi-Res FT, Graphor and MAI typically require more time for analysis.
+Processing can take several minutes depending on document size, complexity, and the selected processing method. Advanced methods like Balanced, Accurate, VLM and Agentic typically require more time for analysis.
 </Warning>
 
 ## Response Format
@@ -385,7 +385,7 @@ try {
     
     **Cause**: Unsupported or invalid partition method
     
-    **Solution**: Use one of: basic, ocr, hi_res, hi_res_ft, graphorlm, mai
+    **Solution**: Use one of: basic, hi_res, hi_res_ft, graphorlm, mai
   </Accordion>
 </AccordionGroup>
 
@@ -396,34 +396,35 @@ try {
     **Symptoms**: Missing text, garbled characters, incomplete content
     
     **Recommended methods**: 
-    - OCR for scanned documents
-    - Hi-Res or Hi-Res FT for complex layouts
-    - MAI for text-only documents when bounding boxes are not required
+    - Balanced or Accurate for complex layouts
+    - VLM for text-only documents when bounding boxes are not required
   </Accordion>
   
   <Accordion icon="table" title="Table detection issues">
     **Symptoms**: Tables not properly recognized, merged cells, structure lost
     
     **Recommended methods**:
-    - Hi-Res for better table detection
-    - Hi-Res FT for complex table structures
+    - Balanced for better table detection
+    - Accurate for complex table structures
+    - Agentic for multi-page tables
   </Accordion>
   
   <Accordion icon="image" title="Image and figure handling">
     **Symptoms**: Missing captions, poor figure recognition
     
     **Recommended methods**:
-    - Hi-Res for figure detection
-    - Hi-Res FT for comprehensive image analysis
+    - Balanced for figure detection
+    - Accurate for comprehensive image analysis
+    - Agentic for rich image annotations
   </Accordion>
   
   <Accordion icon="list" title="Document structure problems">
     **Symptoms**: Headers/footers mixed with content, poor section detection
     
     **Recommended methods**:
-    - Hi-Res for structure recognition
-    - Hi-Res FT for complex document hierarchies
-    - Graphor for enhanced semantic structure and relationships
+    - Balanced for structure recognition
+    - Accurate for complex document hierarchies
+    - Agentic for enhanced semantic structure and relationships
   </Accordion>
 </AccordionGroup>
 
@@ -431,8 +432,8 @@ try {
 
 ### Processing Strategy
 
-- **Start with Basic**: For testing and simple documents
-- **Upgrade gradually**: Move to OCR → Hi-Res → Hi-Res FT -> Graphor -> MAI based on needs
+- **Start with Fast**: For testing and simple documents
+- **Upgrade gradually**: Move to Balanced → Accurate → VLM → Agentic based on needs
 - **Monitor results**: Use document preview to evaluate processing quality
 - **Consider efficiency vs. quality**: Advanced methods take longer but provide better results
 
@@ -458,7 +459,7 @@ After processing, evaluate the results by:
 ```python
 def improve_processing_quality(api_token, file_name):
     """Automatically upgrade processing method for better quality."""
-    methods = ['basic', 'ocr', 'hi_res', 'hi_res_ft', 'graphorlm', 'mai']
+    methods = ['basic', 'hi_res', 'hi_res_ft', 'mai', 'graphorlm']
     
     for method in methods:
         try:
@@ -617,9 +618,10 @@ results = process_with_progress('grlm_your_token', processing_queue)
     **Causes**: Method not suitable for document type, or complex layout
     
     **Solutions**:
-    - Upgrade to Hi-Res or Hi-Res FT method
+    - Upgrade to Balanced or Accurate method
+    - Use VLM for manuscripts and handwritten documents
+    - Use Agentic for complex layouts with tables and diagrams
     - Ensure document quality is good
-    - Consider pre-processing the document
     - Review processing results in the dashboard
   </Accordion>
 </AccordionGroup>

@@ -100,10 +100,10 @@ The quality of your RAG pipeline starts with parsing quality:
 | Parsing Method | Impact on Dataset |
 |----------------|-------------------|
 | **Fast** | Basic element classification, suitable for simple documents |
-| **Hi-Res** | Better structure recognition, improved element boundaries |
-| **Hi-Res FT** | Highest accuracy for specialized documents |
-| **MAI** | Best text quality for complex layouts, manuscripts |
-| **Graphor** | Rich annotations for tables, diagrams, images |
+| **Balanced** | Better structure recognition, improved element boundaries |
+| **Accurate** | Highest accuracy for specialized documents |
+| **VLM** | Best text quality for manuscripts, handwritten documents |
+| **Agentic** | Rich annotations for tables, diagrams, images |
 
 <Tip>
 If you're not getting good results from your RAG pipeline, try reprocessing your source documents with a more advanced parsing method before adjusting other pipeline settings.
@@ -187,7 +187,7 @@ The Dataset provides source documents for testing retrieval quality against grou
   <Accordion icon="triangle-exclamation" title="Poor quality elements">
     If elements appear incorrectly classified or fragmented:
     - Review the source document's parsing results
-    - Use a more advanced parsing method (Hi-Res, MAI, or Graphor)
+    - Use a more advanced parsing method (Balanced, VLM, or Agentic)
     - Check if element types are being properly identified
   </Accordion>
   <Accordion icon="clock" title="Slow pipeline performance">

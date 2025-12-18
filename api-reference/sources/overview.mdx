@@ -125,7 +125,7 @@ Graphor offers multiple processing methods, selectable via the [Process Source](
     - Balances speed and accuracy
   </Accordion>
   
-  <Accordion icon="brain" title="Hi-Res Method">
+  <Accordion icon="brain" title="Balanced Method">
     **Speed**: ⚡ **Accuracy**: ⭐⭐⭐⭐
     
     - AI-powered document structure recognition
@@ -134,7 +134,7 @@ Graphor offers multiple processing methods, selectable via the [Process Source](
     - Recommended for complex documents
   </Accordion>
   
-  <Accordion icon="sparkles" title="Hi-Res FT Method">
+  <Accordion icon="sparkles" title="Accurate Method">
     **Speed**: ⚡ **Accuracy**: ⭐⭐⭐⭐⭐
     
     - Premium fine-tuned AI models
@@ -143,20 +143,21 @@ Graphor offers multiple processing methods, selectable via the [Process Source](
     - Best-in-class text extraction
   </Accordion>
   
-  <Accordion icon="project-diagram" title="Graphor Method">
-    **Speed**: ⚡ **Accuracy**: ⭐⭐⭐⭐
+  <Accordion icon="project-diagram" title="Agentic Method">
+    **Speed**: ⚡ **Accuracy**: ⭐⭐⭐⭐⭐
     
-    - Advanced graph-based RAG partitioning method
-    - Utilizes knowledge graph structures for content organization
-    - Optimized for complex document relationships and semantic understanding
+    - Our highest parsing setting for complex layouts
+    - Multi-page tables, diagrams, and images support
+    - Rich annotations for images and complex elements
+    - Uses agentic processing for enhanced understanding
   </Accordion>
   
-  <Accordion icon="bars" title="MAI Method">
+  <Accordion icon="bars" title="VLM Method">
     **Speed**: ⚡⚡⚡ **Accuracy**: ⭐⭐⭐⭐⭐
     
-    - Model-assisted, text-focused partitioning
+    - Our best text-first parsing with high-quality output
     - No bounding boxes or page layout metadata (no bbox)
-    - Ideal when you only need clean text and element types
+    - Best for manuscripts and handwritten documents
     - Performs page annotation (page-level labels and context)
     - Performs document annotation (document-level labels and summaries)
     - Performs image annotation when images are present in the document
@@ -207,19 +208,19 @@ graph LR
 
 ```mermaid
 graph LR
-    A[Upload with Basic] --> B[Review Results]
+    A[Upload with Fast] --> B[Review Results]
     B --> C{Quality Good?}
     C -->|Yes| D[Use Document]
-    C -->|No| E[Reprocess with Hi-Res]
+    C -->|No| E[Reprocess with Balanced]
     E --> F[Review Again]
     F --> G{Better?}
     G -->|Yes| D
-    G -->|No| H[Try Graphor Method]
+    G -->|No| H[Try Agentic Method]
 ```
 
-1. Start with Basic method for speed
+1. Start with Fast method for speed
 2. Review extraction quality
-3. Upgrade to Hi-Res or Hi-Res FT if needed
+3. Upgrade to Balanced or Accurate if needed
 4. Use best results in your application
 
 ### Document Lifecycle Management
@@ -257,13 +258,13 @@ The Sources API supports a wide range of document formats:
 
 | File Type | Recommended Method | Notes |
 |-----------|-------------------|-------|
-| Clean PDFs | Basic, OCR, or MAI | Fast processing for digital PDFs; use MAI for text-only without layout |
-| Scanned PDFs | OCR or Hi-Res | OCR needed for text extraction |
-| Complex Documents | Hi-Res or Hi-Res FT | Better structure recognition; consider Graphor for semantic relationships |
-| Images with Text | OCR or Hi-Res | Requires OCR for text extraction |
-| Spreadsheets | Basic or Hi-Res | Hi-Res better for complex tables |
-| Presentations | Hi-Res or Hi-Res FT | Better slide layout recognition |
-| Multi-source RAG | MAI | Page and document annotations help unify heterogeneous sources |
+| Clean PDFs | Fast or VLM | Fast processing for digital PDFs; use VLM for text-only without layout |
+| Scanned PDFs | Balanced | OCR needed for text extraction |
+| Complex Documents | Balanced or Accurate | Better structure recognition; consider Agentic for semantic relationships |
+| Images with Text | Balanced | Requires OCR for text extraction |
+| Spreadsheets | Fast or Balanced | Balanced better for complex tables |
+| Presentations | Balanced or Accurate | Better slide layout recognition |
+| Multi-source RAG | VLM | Page and document annotations help unify heterogeneous sources |
 
 ## Rate Limits and Best Practices
 
@@ -289,13 +290,12 @@ The Sources API supports a wide range of document formats:
   
   <Accordion icon="gears" title="Processing Strategy">
     **Method Selection**:
-    - Start with Basic for testing and simple documents
-    - Use OCR for scanned documents and images
-    - Choose Hi-Res for complex layouts and tables
-    - Reserve Hi-Res FT for premium accuracy needs
-    - Prefer MAI when you don't need bounding boxes/layout metadata and want speed with top text parsing
-    - Use Graphor for enhanced semantic relationships and graph-based organization
-    - For multi-source RAG across heterogeneous sources, prefer MAI because it provides page and document annotations
+    - Start with Fast for testing and simple documents
+    - Choose Balanced for complex layouts and tables
+    - Reserve Accurate for premium accuracy needs
+    - Prefer VLM for manuscripts, handwritten documents, or when you need best text quality without bounding boxes
+    - Use Agentic for complex layouts, multi-page tables, diagrams, and images with rich annotations
+    - For multi-source RAG across heterogeneous sources, prefer VLM because it provides page and document annotations
     
     **Quality Monitoring**:
     - Review processing results in Graphor dashboard
@@ -501,7 +501,7 @@ if status == 'completed':
         upload_result['file_name'], 
         "hi_res"
     )
-    print(f"Reprocessed with Hi-Res: {process_result['partition_method']}")
+    print(f"Reprocessed with Balanced: {process_result['partition_method']}")
 ```
 
 ### Document Quality Assessment Pipeline

@@ -108,7 +108,7 @@ Enable metadata when the LLM needs context about where information comes from (e
 When enabled, includes page-level annotations in chunk content.
 
 <Note>
-Only available for files processed with the **Graphor** parsing method.
+Only available for files processed with the **Agentic** parsing method.
 </Note>
 
 ### Add Document Annotation
@@ -116,7 +116,7 @@ Only available for files processed with the **Graphor** parsing method.
 When enabled, includes document-level annotations in chunk content.
 
 <Note>
-Only available for files processed with the **Graphor** parsing method.
+Only available for files processed with the **Agentic** parsing method.
 </Note>
 
 ## Built-in Configuration
@@ -217,7 +217,7 @@ Toggle **JSON** to see the raw result structure:
 2. **Use Testsets** — Evaluate performance with multiple questions before deployment
 3. **Consider Reranking** — Add Reranking node for improved precision
 4. **Check document parsing** — Ensure documents are parsed with appropriate methods for best chunking results
-5. **Enable annotations** — Use page/document annotations for Graphor-parsed documents
+5. **Enable annotations** — Use page/document annotations for Agentic-parsed documents
 
 ## Troubleshooting
 
@@ -244,7 +244,7 @@ Toggle **JSON** to see the raw result structure:
   </Accordion>
   <Accordion icon="triangle-exclamation" title="Annotations not appearing">
     If page/document annotations don't show:
-    - Verify documents were parsed with **Graphor** method
+    - Verify documents were parsed with **Agentic** method
     - Enable the corresponding checkbox in settings
     - Reprocess documents if needed
   </Accordion>
