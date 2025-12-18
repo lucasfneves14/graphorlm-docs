@@ -38,6 +38,7 @@ Authorization: Bearer YOUR_API_TOKEN
 | `conversation_id` | string | No | Conversation identifier to maintain memory context across questions |
 | `reset` | boolean | No | When `true`, starts a new conversation and ignores previous history. Default: `false` |
 | `file_names` | string[] | No | Restrict search to specific documents by file name |
+| `output_schema` | object (JSON Schema) | No | Optional JSON Schema to request a structured output. When provided, the API returns validated structured data in `structured_output` and the raw JSON-text candidate in `raw_json`. |
 
 ### Example Request
 
@@ -85,13 +86,42 @@ curl -X POST "https://sources.graphorlm.com/ask-sources" \
   }'
 ```
 
+### Example with Structured Output (JSON Schema)
+
+When you pass `output_schema`, the API will attempt to return a schema-conformant JSON object/array in `structured_output`.
+
+Notes/constraints:
+- Supported schemas must be **simplified JSON Schema**
+- Unions must be only with `null` (e.g. `["string", "null"]`)
+- Complex constructs like `oneOf`/`anyOf`/`allOf`/`$ref` are not supported
+
+```bash
+curl -X POST "https://sources.graphorlm.com/ask-sources" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Extract the invoice number and total amount due.",
+    "file_names": ["invoice-2024.pdf"],
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "invoice_number": { "type": ["string", "null"] },
+        "total_amount_due": { "type": ["number", "null"] },
+        "currency": { "type": ["string", "null"] }
+      }
+    }
+  }'
+```
+
 ## Response
 
 ### Success Response (200 OK)
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `answer` | string | The answer to your question, grounded in document content |
+| `answer` | string | The answer to your question. When `output_schema` is provided, this will be a short status message and the structured data will be in `structured_output` (and the raw JSON-text candidate in `raw_json`). |
+| `structured_output` | any | Optional structured output validated against the requested `output_schema`. Present only when `output_schema` is provided. |
+| `raw_json` | string | Optional raw JSON-text produced by the model before validation/correction. Present only when `output_schema` is provided. |
 | `conversation_id` | string | Conversation identifier for follow-up questions |
 
 ### Example Response
@@ -103,6 +133,21 @@ curl -X POST "https://sources.graphorlm.com/ask-sources" \
 }
 ```
 
+### Example Response (Structured Output)
+
+```json
+{
+  "answer": "Structured output generated.",
+  "structured_output": {
+    "invoice_number": "INV-2024-001",
+    "total_amount_due": 1299.5,
+    "currency": "USD"
+  },
+  "raw_json": "{\n  \"invoice_number\": \"INV-2024-001\",\n  \"total_amount_due\": 1299.50,\n  \"currency\": \"USD\"\n}",
+  "conversation_id": "conv_abc123"
+}
+```
+
 ### Error Responses
 
 | Status Code | Description |
@@ -110,6 +155,7 @@ curl -X POST "https://sources.graphorlm.com/ask-sources" \
 | 400 | Bad Request - Invalid parameters |
 | 401 | Unauthorized - Invalid or missing API token |
 | 404 | Not Found - Specified file not found |
+| 422 | Unprocessable Entity - Invalid `output_schema` or structured output validation failed |
 | 500 | Internal Server Error |
 
 ## Usage Examples
@@ -148,7 +194,12 @@ print(response.json()["answer"])
 const API_URL = "https://sources.graphorlm.com/ask-sources";
 const API_TOKEN = "YOUR_API_TOKEN";
 
-async function askQuestion(question, conversationId = null, fileNames = null) {
+async function askQuestion(
+  question,
+  conversationId = null,
+  fileNames = null,
+  outputSchema = null
+) {
   const payload = {
     question,
     conversation_id: conversationId
@@ -156,6 +207,10 @@ async function askQuestion(question, conversationId = null, fileNames = null) {
 
   if (fileNames && fileNames.length) {
     payload.file_names = fileNames;
+  }
+
+  if (outputSchema) {
+    payload.output_schema = outputSchema;
   }
 
   const response = await fetch(API_URL, {
@@ -187,7 +242,8 @@ console.log(followUp.answer);
 1. **Use conversation memory** — Pass `conversation_id` for follow-up questions to maintain context
 2. **Be specific** — Clear, specific questions get better answers
 3. **Scope when needed** — Use `file_names` to focus on specific documents
-4. **Reset when changing topics** — Set `reset: true` when switching to unrelated questions
+4. **Use structured output when integrating** — Provide `output_schema` to get JSON you can reliably parse in code
+5. **Reset when changing topics** — Set `reset: true` when switching to unrelated questions
 
 ## Related
 
