@@ -80,8 +80,8 @@
                   "api-reference/sources/list-elements"
                 ]
               },
-              "api-reference/extract-api",
               "api-reference/chat-api",
+              "api-reference/extract-api",
               "api-reference/prebuilt-rag-api"
             ]
           },
