@@ -1,5 +1,5 @@
 ---
-title: 'Ingestion API Overview'
+title: 'Overview'
 description: 'Complete guide to managing documents in Graphor via the REST API'
 ---
 
@@ -22,19 +22,19 @@ The Sources API consists of seven main endpoints that provide complete document 
 
 <CardGroup cols={2}>
   <Card
-    title="Upload Source"
+    title="Upload Sources"
     icon="arrow-up-from-bracket"
     href="/api-reference/sources/upload"
   >
     **POST** `https://sources.graphorlm.com/upload`
     
-    Upload documents from your local system to Graphor for processing
+    Upload sources to Graphor (files, web pages via URL, and GitHub repositories)
   </Card>
   
   <Card
     title="Upload Source from URL"
     icon="link"
-    href="/api-reference/sources/upload-url"
+    href="/api-reference/sources/upload#upload-from-url"
   >
     **POST** `https://sources.graphorlm.com/upload-url-source`
     
@@ -44,7 +44,7 @@ The Sources API consists of seven main endpoints that provide complete document 
   <Card
     title="Upload Source from GitHub"
     icon="code-branch"
-    href="/api-reference/sources/upload-github"
+    href="/api-reference/sources/upload#upload-from-github"
   >
     **POST** `https://sources.graphorlm.com/upload-github-source`
     

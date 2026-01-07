@@ -75,8 +75,6 @@
                 "pages": [
                   "api-reference/sources/overview",
                   "api-reference/sources/upload",
-                  "api-reference/sources/upload-url",
-                  "api-reference/sources/upload-github",
                   "api-reference/sources/process",
                   "api-reference/sources/list",
                   "api-reference/sources/delete",
