@@ -1,9 +1,12 @@
 ---
 title: 'API Overview'
-description: 'Data ingestion-focused overview of the Graphor REST API (Sources API)'
+description: 'Overview of the Graphor Public REST APIs: Sources and Chat'
 ---
 
-This page is a **data ingestion-first** overview of the Graphor REST API. If your goal is to bring data into Graphor (files, URLs, GitHub repos, YouTube), process it, and retrieve structured elements for downstream RAG, start here.
+This page provides a comprehensive overview of the Graphor public REST APIs. It covers the full lifecycle:
+
+1.  **Data Ingestion (Sources API)**: Bring data in, process it, and retrieve structured elements.
+2.  **Document Chat (Chat API)**: Ask questions about your ingested documents using natural language.
 
 ## Data Ingestion (Sources API)
 
@@ -47,6 +50,20 @@ The Sources API covers the full ingestion lifecycle:
   </Card>
 </CardGroup>
 
+## Document Chat (Chat API)
+
+Once your data is ingested, use the Chat API to ask questions:
+
+<CardGroup cols={1}>
+  <Card
+    title="Chat with Documents"
+    icon="comments"
+    href="/api-reference/chat-api"
+  >
+    Ask natural language questions about your documents with conversational memory and structured outputs
+  </Card>
+</CardGroup>
+
 ## What “Data Ingestion” includes
 
 - **Upload**: create a new source (file / URL / GitHub / YouTube)
@@ -81,6 +98,11 @@ Graphor API endpoints follow consistent URL patterns based on their scope and pu
 ### Sources (Data Ingestion)
 ```
 https://sources.graphorlm.com      # Source management
+```
+
+### Chat
+```
+https://sources.graphorlm.com/ask-sources    # Document Chat
 ```
 
 ### Related (after ingestion)
@@ -124,7 +146,7 @@ All API responses follow consistent JSON structures with appropriate HTTP status
 
 ## Complete Workflow Example
 
-Here’s the ingestion “happy path”: **upload → process → list → elements**.
+Here’s the full "happy path": **upload → process → list → elements → chat**.
 
 ### 1. Upload a source
 
@@ -187,12 +209,30 @@ const elements = await elementsResponse.json();
 console.log('Elements:', elements.length);
 ```
 
+### 5. Ask Questions (Chat)
+
+```javascript
+const chatResponse = await fetch('https://sources.graphorlm.com/ask-sources', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    question: "What are the main topics in this document?",
+    file_names: [file_name] // Optional: Scope to this specific file
+  })
+});
+const answer = await chatResponse.json();
+console.log('Answer:', answer.answer);
+```
+
 ## Integration Patterns
 
 ### Minimal Sources (Ingestion) Client
 
 ```javascript
-class GraphorSourcesClient {
+class GraphorClient {
   constructor(apiToken) {
     this.apiToken = apiToken;
     this.headers = {
@@ -249,28 +289,37 @@ class GraphorSourcesClient {
     });
     return await response.json();
   }
+
+  async ask(question, fileNames = []) {
+    const response = await fetch('https://sources.graphorlm.com/ask-sources', {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify({ 
+        question, 
+        file_names: fileNames 
+      })
+    });
+    return await response.json();
+  }
 }
 
 // Usage example
-const client = new GraphorSourcesClient('YOUR_API_TOKEN');
+const client = new GraphorClient('YOUR_API_TOKEN');
 
-// Ingestion workflow
-async function ingestDocument() {
+// Ingestion + Chat workflow
+async function ingestAndChat() {
   try {
-    // 1. Upload and process a document
+    // 1. Upload and process
     const file = document.getElementById('fileInput').files[0];
-    const uploadResult = await client.uploadSource(file, file.name);
-    console.log('Upload successful:', uploadResult);
-
+    await client.uploadSource(file, file.name);
     await client.processSource(file.name, 'hi_res');
-    console.log('Processing initiated');
     
-    // 2. Retrieve structured elements (after processing completes)
-    const elements = await client.listElements(file.name);
-    console.log('Elements:', elements.length);
+    // 2. Chat with the document
+    const result = await client.ask("Summarize this document", [file.name]);
+    console.log('Answer:', result.answer);
 
   } catch (error) {
-    console.error('Ingestion failed:', error);
+    console.error('Error:', error);
   }
 }
 ```
@@ -335,28 +384,39 @@ class GraphorLMAPI:
         response = requests.delete(url, headers=self.headers, json=payload)
         response.raise_for_status()
         return response.json()
+    
+    # Chat API
+    def ask(self, question: str, file_names: Optional[List[str]] = None) -> Dict[str, Any]:
+        """Ask a question about documents"""
+        url = "https://sources.graphorlm.com/ask-sources"
+        payload = {"question": question}
+        if file_names:
+            payload["file_names"] = file_names
+            
+        response = requests.post(url, headers=self.headers, json=payload)
+        response.raise_for_status()
+        return response.json()
 
 # Usage
 api = GraphorLMAPI(os.getenv("GRAPHORLM_API_TOKEN"))
 
-# Ingestion workflow
-def ingest_documents(documents: List[str]):
+# Ingestion and Chat workflow
+def ingest_and_chat(documents: List[str]):
     try:
-        print("🚀 Ingesting documents...")
-        
-        # Upload and process documents
+        # 1. Ingest
         for doc_path in documents:
-            print(f"📄 Processing {doc_path}")
-            upload_result = api.upload_source(doc_path)
-            file_name = upload_result['file_name']
-            
+            api.upload_source(doc_path)
+            file_name = os.path.basename(doc_path)
             api.process_source(file_name, 'hi_res')
-            print(f"✅ {file_name} processed")
+            
+            # 2. Chat
+            answer = api.ask("What is this document about?", [file_name])
+            print(f"Answer for {file_name}: {answer['answer']}")
         
         return True
         
     except Exception as e:
-        print(f"❌ Ingestion failed: {e}")
+        print(f"Failed: {e}")
         return False
 ```
 
@@ -448,7 +508,7 @@ Ingest documents as they’re created/updated in your CMS:
 ```javascript
 class ContentSearchAPI {
   constructor(apiToken, flowName) {
-    this.client = new GraphorSourcesClient(apiToken);
+    this.client = new GraphorClient(apiToken);
   }
 
   async ingestDocument(file, partitionMethod = 'hi_res') {
