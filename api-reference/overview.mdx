@@ -9,19 +9,8 @@ The Graphor REST API provides comprehensive programmatic access to all platform 
 
 Graphor's REST API is organized around two main resource types that mirror the platform's core functionality:
 
-### **Sources API** - Document Management
+### **Data API** - Sources Management
 Handle document ingestion, processing, and lifecycle management.
-
-### **Flows API** - Pipeline Management  
-Control RAG pipeline deployment, execution, and comprehensive node configuration (datasets, chunking, retrieval, reranking, advanced RAG, and LLM nodes).
-
-## Available Endpoints
-
-The API provides complete coverage of Graphor's capabilities through organized endpoint groups:
-
-### Sources Management
-
-Manage your document library with full CRUD operations:
 
 <CardGroup cols={2}>
   <Card
@@ -61,9 +50,8 @@ Manage your document library with full CRUD operations:
   </Card>
 </CardGroup>
 
-### Flow Management
-
-Control RAG pipelines from configuration to execution with comprehensive node management:
+### **RAG Pipelines API** - Pipeline Management  
+Control RAG pipeline deployment, simulation and execution.
 
 <CardGroup cols={2}>
   <Card
@@ -96,9 +84,8 @@ Control RAG pipelines from configuration to execution with comprehensive node ma
   </Card>
 </CardGroup>
 
-### Node Management
-
-Specialized endpoints for managing all types of flow nodes:
+### **RAG Pipeline Nodes API** - Pipeline Nodes Management  
+Comprehensive pipeline nodes configuration (datasets, chunking, retrieval, reranking, advanced RAG, and LLM nodes).
 
 <CardGroup cols={2}>
   <Card
