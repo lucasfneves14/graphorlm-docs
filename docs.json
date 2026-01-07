@@ -21,7 +21,8 @@
             "group": "Get Started",
             "pages": [
               "introduction",
-              "quickstart"
+              "quickstart",
+              "api-reference/overview"
             ]
           },
           {
