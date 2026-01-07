@@ -323,66 +323,6 @@ curl -X POST https://sources.graphorlm.com/elements \
   }'
 ```
 
-### PHP
-
-```php
-<?php
-function listElements($apiToken, $fileName, $options = []) {
-    $url = "https://sources.graphorlm.com/elements";
-    
-    $payload = [
-        "file_name" => $fileName,
-        "page" => $options['page'] ?? 1,
-        "page_size" => $options['page_size'] ?? 20,
-        "filter" => $options['filter'] ?? (object)[]
-    ];
-    
-    $headers = [
-        "Authorization: Bearer " . $apiToken,
-        "Content-Type: application/json"
-    ];
-    
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    if ($httpCode === 200) {
-        return json_decode($response, true);
-    } else {
-        throw new Exception("Failed to list elements. HTTP code: " . $httpCode);
-    }
-}
-
-// Usage - Get all elements excluding footers
-try {
-    $elements = listElements("grlm_your_api_token_here", "document.pdf", [
-        'page' => 1,
-        'page_size' => 25,
-        'filter' => [
-            'elementsToRemove' => ['Footer', 'PageNumber']
-        ]
-    ]);
-    
-    echo "Found " . $elements['total'] . " elements\n";
-    
-    foreach ($elements['items'] as $element) {
-        echo $element['metadata']['element_type'] . ": " . 
-             substr($element['page_content'], 0, 50) . "...\n";
-    }
-} catch (Exception $e) {
-    echo "Error: " . $e->getMessage() . "\n";
-}
-?>
-```
-
 ## Error Responses
 
 ### Common Error Codes

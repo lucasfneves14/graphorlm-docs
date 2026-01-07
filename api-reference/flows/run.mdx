@@ -199,60 +199,6 @@ curl -X POST https://my-rag-pipeline.flows.graphorlm.com \
   }'
 ```
 
-### PHP
-
-```php
-<?php
-function runFlow($flowName, $query, $apiToken, $page = 1, $pageSize = 10) {
-    $url = "https://{$flowName}.flows.graphorlm.com";
-    
-    $data = [
-        'query' => $query,
-        'page' => $page,
-        'page_size' => $pageSize
-    ];
-    
-    $options = [
-        'http' => [
-            'header' => [
-                "Authorization: Bearer {$apiToken}",
-                "Content-Type: application/json"
-            ],
-            'method' => 'POST',
-            'content' => json_encode($data)
-        ]
-    ];
-    
-    $context = stream_context_create($options);
-    $result = file_get_contents($url, false, $context);
-    
-    if ($result === FALSE) {
-        throw new Exception('Failed to execute flow');
-    }
-    
-    return json_decode($result, true);
-}
-
-// Usage
-try {
-    $result = runFlow(
-        'my-rag-pipeline',
-        'What is machine learning?',
-        'YOUR_API_TOKEN'
-    );
-    
-    echo "Found {$result['total']} results\n";
-    foreach ($result['items'] as $item) {
-        echo "Content: {$item['page_content']}\n";
-        echo "Source: " . ($item['metadata']['source'] ?? 'Unknown') . "\n";
-        echo "---\n";
-    }
-} catch (Exception $e) {
-    echo "Error: " . $e->getMessage() . "\n";
-}
-?>
-```
-
 ## Error Responses
 
 ### Common Error Codes

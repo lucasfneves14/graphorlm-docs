@@ -207,50 +207,6 @@ curl -X POST https://sources.graphorlm.com/upload \
   -F "file=@document.pdf"
 ```
 
-### PHP
-
-```php
-<?php
-function uploadDocument($apiToken, $filePath) {
-    $url = "https://sources.graphorlm.com/upload";
-    
-    $headers = [
-        "Authorization: Bearer " . $apiToken
-    ];
-    
-    $postData = [
-        'file' => new CURLFile($filePath)
-    ];
-    
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 300);
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    if ($httpCode === 200) {
-        return json_decode($response, true);
-    } else {
-        throw new Exception("Upload failed with HTTP code: " . $httpCode);
-    }
-}
-
-// Usage
-try {
-    $result = uploadDocument("grlm_your_api_token_here", "document.pdf");
-    echo "Document uploaded: " . $result['file_name'] . "\n";
-} catch (Exception $e) {
-    echo "Error: " . $e->getMessage() . "\n";
-}
-?>
-```
-
 ### Error Responses
 
 ### Common Error Codes

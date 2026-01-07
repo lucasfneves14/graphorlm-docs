@@ -266,57 +266,6 @@ curl -X POST https://sources.graphorlm.com/process \
   }'
 ```
 
-### PHP
-
-```php
-<?php
-function processDocument($apiToken, $fileName, $partitionMethod) {
-    $url = "https://sources.graphorlm.com/process";
-    
-    $headers = [
-        "Authorization: Bearer " . $apiToken,
-        "Content-Type: application/json"
-    ];
-    
-    $payload = json_encode([
-        'file_name' => $fileName,
-        'partition_method' => $partitionMethod
-    ]);
-    
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 300); // 5 minutes
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    if ($httpCode === 200) {
-        return json_decode($response, true);
-    } else {
-        throw new Exception("Processing failed with HTTP code: " . $httpCode);
-    }
-}
-
-// Usage
-try {
-    $result = processDocument(
-        "grlm_your_api_token_here", 
-        "document.pdf", 
-        "hi_res"
-    );
-    echo "Document processed: " . $result['file_name'] . "\n";
-    echo "Method used: " . $result['partition_method'] . "\n";
-} catch (Exception $e) {
-    echo "Error: " . $e->getMessage() . "\n";
-}
-?>
-```
-
 ## Error Responses
 
 ### Common Error Codes
