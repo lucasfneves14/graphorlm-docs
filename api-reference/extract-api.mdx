@@ -34,7 +34,7 @@ Authorization: Bearer YOUR_API_TOKEN
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `file_name` | string | Yes | The name of the file to extract from |
+| `file_names` | array | Yes | List of file names to extract from |
 | `user_instruction` | string | Yes | Natural language instructions to guide the extraction |
 | `output_schema` | object | Yes | JSON Schema defining the structure of the extracted data |
 
@@ -49,7 +49,7 @@ curl -X POST "https://sources.graphorlm.com/run-extraction" \
   -H "Authorization: Bearer YOUR_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "file_name": "invoice-2024.pdf",
+    "file_names": ["invoice-2024.pdf"],
     "user_instruction": "Extract all invoice information. Use YYYY-MM-DD format for dates.",
     "output_schema": {
       "type": "object",
@@ -83,7 +83,7 @@ curl -X POST "https://sources.graphorlm.com/run-extraction" \
   -H "Authorization: Bearer YOUR_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "file_name": "invoice-2024.pdf",
+    "file_names": ["invoice-2024.pdf"],
     "user_instruction": "Extract invoice with line items and address details.",
     "output_schema": {
       "type": "object",
@@ -132,8 +132,7 @@ curl -X POST "https://sources.graphorlm.com/run-extraction" \
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `file_name` | string | The file name of the source |
-| `build_id` | string | The parsing version used for extraction |
+| `file_names` | array | List of file names used for extraction |
 | `structured_output` | object | Extracted data matching your schema |
 | `raw_json` | string | Raw JSON-text produced by the model before validation/correction |
 
@@ -141,8 +140,7 @@ curl -X POST "https://sources.graphorlm.com/run-extraction" \
 
 ```json
 {
-  "file_name": "invoice-2024.pdf",
-  "build_id": "build_xyz789",
+  "file_names": ["invoice-2024.pdf"],
   "structured_output": {
     "invoice_number": "INV-2024-001",
     "invoice_date": "2024-01-15",
@@ -159,8 +157,7 @@ When using `object` and `array` types in your schema:
 
 ```json
 {
-  "file_name": "invoice-2024.pdf",
-  "build_id": "build_xyz789",
+  "file_names": ["invoice-2024.pdf"],
   "structured_output": {
     "invoice_number": "INV-2024-001",
     "billing_address": {
@@ -203,7 +200,7 @@ When using `object` and `array` types in your schema:
 
 ```json
 {
-  "file_name": "invoice.pdf",
+  "file_names": ["invoice.pdf"],
   "user_instruction": "Extract all invoice details. Convert amounts to numbers without currency symbols.",
   "output_schema": {
     "type": "object",
@@ -226,7 +223,7 @@ When using `object` and `array` types in your schema:
 
 ```json
 {
-  "file_name": "contract.pdf",
+  "file_names": ["contract.pdf"],
   "user_instruction": "Extract key contract terms with all parties and obligations.",
   "output_schema": {
     "type": "object",
@@ -266,7 +263,7 @@ When using `object` and `array` types in your schema:
 
 ```json
 {
-  "file_name": "resume.pdf",
+  "file_names": ["resume.pdf"],
   "user_instruction": "Extract complete candidate information including work history and education.",
   "output_schema": {
     "type": "object",
@@ -315,7 +312,7 @@ When using `object` and `array` types in your schema:
 
 ```json
 {
-  "file_name": "catalog.pdf",
+  "file_names": ["catalog.pdf"],
   "user_instruction": "Extract all products with their specifications and variants.",
   "output_schema": {
     "type": "object",
@@ -371,7 +368,7 @@ headers = {
 
 # Basic extraction
 payload = {
-    "file_name": "invoice.pdf",
+    "file_names": ["invoice.pdf"],
     "user_instruction": "Extract invoice information. Use YYYY-MM-DD for dates.",
     "output_schema": {
         "type": "object",
@@ -406,7 +403,7 @@ headers = {
 
 # Extraction with nested objects and arrays
 payload = {
-    "file_name": "invoice.pdf",
+    "file_names": ["invoice.pdf"],
     "user_instruction": "Extract invoice with line items and address.",
     "output_schema": {
         "type": "object",
@@ -455,7 +452,7 @@ for line in output["line_items"]:
 const API_URL = "https://sources.graphorlm.com/run-extraction";
 const API_TOKEN = "YOUR_API_TOKEN";
 
-async function extractData(fileName, instruction, schema) {
+async function extractData(fileNames, instruction, schema) {
   const response = await fetch(API_URL, {
     method: "POST",
     headers: {
@@ -463,7 +460,7 @@ async function extractData(fileName, instruction, schema) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      file_name: fileName,
+      file_names: fileNames,
       user_instruction: instruction,
       output_schema: schema
     })
@@ -474,7 +471,7 @@ async function extractData(fileName, instruction, schema) {
 
 // Basic usage
 const result = await extractData(
-  "invoice.pdf",
+  ["invoice.pdf"],
   "Extract invoice details",
   {
     type: "object",
@@ -539,7 +536,7 @@ const response = await fetch(API_URL, {
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
-    file_name: "invoice.pdf",
+    file_names: ["invoice.pdf"],
     user_instruction: "Extract invoice with all details",
     output_schema: schema
   })
