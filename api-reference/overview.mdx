@@ -125,12 +125,6 @@ https://sources.graphorlm.com/ask-sources    # Document Chat
 https://sources.graphorlm.com/run-extraction # Data Extraction
 ```
 
-### Related (after ingestion)
-```
-https://flows.graphorlm.com                              # Flows listing and global operations
-https://{flow_name}.flows.graphorlm.com                   # Flow execution
-```
-
 ## Response Formats
 
 All API responses follow consistent JSON structures with appropriate HTTP status codes:
@@ -641,18 +635,18 @@ The Graphor API follows semantic versioning principles:
 
 <CardGroup cols={2}>
   <Card
+    title="Contact Support"
+    icon="envelope"
+    href="mailto:support@graphorlm.com"
+  >
+    Direct support for technical questions and issues
+  </Card>
+  <Card
     title="API Tokens Guide"
     icon="key"
     href="/guides/api-tokens"
   >
     Learn how to generate and manage authentication tokens
-  </Card>
-  <Card
-    title="Integration Guide"
-    icon="plug"
-    href="/guides/integrate-workflow"
-  >
-    Advanced patterns for production integrations
   </Card>
   <Card
     title="Data Ingestion"
@@ -662,11 +656,11 @@ The Graphor API follows semantic versioning principles:
     Best practices for document upload and processing
   </Card>
   <Card
-    title="Contact Support"
-    icon="envelope"
-    href="mailto:support@graphorlm.com"
+    title="Flows Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
   >
-    Direct support for technical questions and issues
+    Master comprehensive RAG pipeline and node management
   </Card>
 </CardGroup>
 
@@ -689,6 +683,13 @@ Ready to start building with Graphor APIs? Choose your path:
     href="/api-reference/sources/upload"
   >
     Start by ingesting documents from files, URLs, GitHub, and YouTube
+  </Card>
+  <Card
+    title="Chat with Documents"
+    icon="comments"
+    href="/api-reference/chat-api"
+  >
+    Ask natural language questions about your documents with conversational memory and structured outputs
   </Card>
   <Card
     title="API Tokens"
