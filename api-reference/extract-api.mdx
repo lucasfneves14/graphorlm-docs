@@ -1,11 +1,11 @@
 ---
 title: 'Extraction API'
-description: 'Extract structured data from documents using custom schemas'
+description: 'Extract structured data from documents using JSON Schema'
 ---
 
 ## Overview
 
-The Data Extraction API allows you to extract structured information from your documents using custom schemas and natural language instructions. The extraction uses the active parsing version of the specified document.
+The Data Extraction API allows you to extract structured information from your documents using standard JSON Schema and natural language instructions. The extraction uses the active parsing version of the specified document.
 
 ## Endpoint
 
@@ -36,19 +36,11 @@ Authorization: Bearer YOUR_API_TOKEN
 |-----------|------|----------|-------------|
 | `file_name` | string | Yes | The name of the file to extract from |
 | `user_instruction` | string | Yes | Natural language instructions to guide the extraction |
-| `output_schema_fields` | array | Yes | List of field definitions for the extraction schema |
+| `output_schema` | object | Yes | JSON Schema defining the structure of the extracted data |
 
-### Schema Field Object
+### Output Schema
 
-Each field in `output_schema_fields` has the following properties:
-
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| `key` | string | Yes | Field name in the output (use snake_case) |
-| `type` | string | Yes | Data type: `string`, `number`, `date`, `boolean`, `object`, or `array` |
-| `description` | string | Yes | Description of what to extract |
-| `nested_fields` | array | No | Required for `object` type or `array` with `items_type: "object"`. Defines nested field structure |
-| `items_type` | string | No | Required for `array` type. Type of array items: `string`, `number`, `date`, `boolean`, or `object` |
+The `output_schema` parameter accepts a standard [JSON Schema](https://json-schema.org/) object. This is the same format used by the [Chat API](/api-reference/chat-api) for structured outputs.
 
 ### Example Request
 
@@ -59,32 +51,32 @@ curl -X POST "https://sources.graphorlm.com/run-extraction" \
   -d '{
     "file_name": "invoice-2024.pdf",
     "user_instruction": "Extract all invoice information. Use YYYY-MM-DD format for dates.",
-    "output_schema_fields": [
-      {
-        "key": "invoice_number",
-        "type": "string",
-        "description": "The unique invoice identifier"
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "invoice_number": {
+          "type": "string",
+          "description": "The unique invoice identifier"
+        },
+        "invoice_date": {
+          "type": "string",
+          "description": "Invoice date in YYYY-MM-DD format"
+        },
+        "total_amount": {
+          "type": "number",
+          "description": "Total amount due"
+        },
+        "vendor_name": {
+          "type": "string",
+          "description": "Name of the company issuing the invoice"
+        }
       },
-      {
-        "key": "invoice_date",
-        "type": "date",
-        "description": "Invoice date in YYYY-MM-DD format"
-      },
-      {
-        "key": "total_amount",
-        "type": "number",
-        "description": "Total amount due"
-      },
-      {
-        "key": "vendor_name",
-        "type": "string",
-        "description": "Name of the company issuing the invoice"
-      }
-    ]
+      "required": ["invoice_number", "total_amount"]
+    }
   }'
 ```
 
-### Example Request with Object and Array Types
+### Example Request with Nested Objects and Arrays
 
 ```bash
 curl -X POST "https://sources.graphorlm.com/run-extraction" \
@@ -93,42 +85,44 @@ curl -X POST "https://sources.graphorlm.com/run-extraction" \
   -d '{
     "file_name": "invoice-2024.pdf",
     "user_instruction": "Extract invoice with line items and address details.",
-    "output_schema_fields": [
-      {
-        "key": "invoice_number",
-        "type": "string",
-        "description": "The unique invoice identifier"
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "invoice_number": {
+          "type": "string",
+          "description": "The unique invoice identifier"
+        },
+        "billing_address": {
+          "type": "object",
+          "description": "Billing address details",
+          "properties": {
+            "street": { "type": "string", "description": "Street address" },
+            "city": { "type": "string", "description": "City name" },
+            "zip_code": { "type": "string", "description": "Postal code" },
+            "country": { "type": "string", "description": "Country name" }
+          }
+        },
+        "tags": {
+          "type": "array",
+          "description": "Invoice tags or categories",
+          "items": { "type": "string" }
+        },
+        "line_items": {
+          "type": "array",
+          "description": "Invoice line items",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": { "type": "string", "description": "Item description" },
+              "quantity": { "type": "number", "description": "Item quantity" },
+              "unit_price": { "type": "number", "description": "Price per unit" },
+              "total": { "type": "number", "description": "Line item total" }
+            }
+          }
+        }
       },
-      {
-        "key": "billing_address",
-        "type": "object",
-        "description": "Billing address details",
-        "nested_fields": [
-          { "key": "street", "type": "string", "description": "Street address" },
-          { "key": "city", "type": "string", "description": "City name" },
-          { "key": "zip_code", "type": "string", "description": "Postal code" },
-          { "key": "country", "type": "string", "description": "Country name" }
-        ]
-      },
-      {
-        "key": "tags",
-        "type": "array",
-        "description": "Invoice tags or categories",
-        "items_type": "string"
-      },
-      {
-        "key": "line_items",
-        "type": "array",
-        "description": "Invoice line items",
-        "items_type": "object",
-        "nested_fields": [
-          { "key": "description", "type": "string", "description": "Item description" },
-          { "key": "quantity", "type": "number", "description": "Item quantity" },
-          { "key": "unit_price", "type": "number", "description": "Price per unit" },
-          { "key": "total", "type": "number", "description": "Line item total" }
-        ]
-      }
-    ]
+      "required": ["invoice_number"]
+    }
   }'
 ```
 
@@ -140,16 +134,8 @@ curl -X POST "https://sources.graphorlm.com/run-extraction" \
 |-------|------|-------------|
 | `file_name` | string | The file name of the source |
 | `build_id` | string | The parsing version used for extraction |
-| `extracted_items` | array | List of extracted items with page references |
-
-### Extracted Item Object
-
-Each item in `extracted_items` contains:
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `output` | object | Extracted data matching your schema fields |
-| `page_numbers` | array | List of page numbers where the data was found |
+| `structured_output` | object | Extracted data matching your schema |
+| `raw_json` | string | Raw JSON-text produced by the model before validation/correction |
 
 ### Example Response
 
@@ -157,46 +143,13 @@ Each item in `extracted_items` contains:
 {
   "file_name": "invoice-2024.pdf",
   "build_id": "build_xyz789",
-  "extracted_items": [
-    {
-      "output": {
-        "invoice_number": "INV-2024-001",
-        "invoice_date": "2024-01-15",
-        "total_amount": 1250.00,
-        "vendor_name": "Acme Corporation"
-      },
-      "page_numbers": [1]
-    }
-  ]
-}
-```
-
-### Multiple Items Response
-
-When a document contains multiple extractable entities:
-
-```json
-{
-  "file_name": "product-catalog.pdf",
-  "build_id": "build_abc456",
-  "extracted_items": [
-    {
-      "output": {
-        "product_name": "Widget Pro",
-        "price": 49.99,
-        "in_stock": true
-      },
-      "page_numbers": [2, 3]
-    },
-    {
-      "output": {
-        "product_name": "Widget Basic",
-        "price": 29.99,
-        "in_stock": true
-      },
-      "page_numbers": [4]
-    }
-  ]
+  "structured_output": {
+    "invoice_number": "INV-2024-001",
+    "invoice_date": "2024-01-15",
+    "total_amount": 1250.00,
+    "vendor_name": "Acme Corporation"
+  },
+  "raw_json": "{\"invoice_number\": \"INV-2024-001\", \"invoice_date\": \"2024-01-15\", \"total_amount\": 1250.00, \"vendor_name\": \"Acme Corporation\"}"
 }
 ```
 
@@ -208,37 +161,32 @@ When using `object` and `array` types in your schema:
 {
   "file_name": "invoice-2024.pdf",
   "build_id": "build_xyz789",
-  "extracted_items": [
-    {
-      "output": {
-        "invoice_number": "INV-2024-001",
-        "billing_address": {
-          "street": "123 Main Street",
-          "city": "New York",
-          "zip_code": "10001",
-          "country": "USA"
-        },
-        "tags": ["urgent", "corporate", "Q1-2024"],
-        "line_items": [
-          {
-            "description": "Professional Services",
-            "quantity": 10,
-            "unit_price": 100.00,
-            "total": 1000.00
-          },
-          {
-            "description": "Software License",
-            "quantity": 1,
-            "unit_price": 250.00,
-            "total": 250.00
-          }
-        ]
+  "structured_output": {
+    "invoice_number": "INV-2024-001",
+    "billing_address": {
+      "street": "123 Main Street",
+      "city": "New York",
+      "zip_code": "10001",
+      "country": "USA"
+    },
+    "tags": ["urgent", "corporate", "Q1-2024"],
+    "line_items": [
+      {
+        "description": "Professional Services",
+        "quantity": 10,
+        "unit_price": 100.00,
+        "total": 1000.00
       },
-      "page_numbers": [1, 2]
-    }
-  ]
+      {
+        "description": "Software License",
+        "quantity": 1,
+        "unit_price": 250.00,
+        "total": 250.00
+      }
+    ]
+  },
+  "raw_json": "{...}"
 }
-```
 
 ### Error Responses
 
@@ -257,16 +205,20 @@ When using `object` and `array` types in your schema:
 {
   "file_name": "invoice.pdf",
   "user_instruction": "Extract all invoice details. Convert amounts to numbers without currency symbols.",
-  "output_schema_fields": [
-    { "key": "invoice_number", "type": "string", "description": "Unique invoice identifier" },
-    { "key": "invoice_date", "type": "date", "description": "Invoice date (YYYY-MM-DD)" },
-    { "key": "due_date", "type": "date", "description": "Payment due date (YYYY-MM-DD)" },
-    { "key": "vendor_name", "type": "string", "description": "Company issuing the invoice" },
-    { "key": "customer_name", "type": "string", "description": "Customer being billed" },
-    { "key": "subtotal", "type": "number", "description": "Subtotal before tax" },
-    { "key": "tax_amount", "type": "number", "description": "Tax amount" },
-    { "key": "total_amount", "type": "number", "description": "Total amount due" }
-  ]
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "invoice_number": { "type": "string", "description": "Unique invoice identifier" },
+      "invoice_date": { "type": "string", "description": "Invoice date (YYYY-MM-DD)" },
+      "due_date": { "type": "string", "description": "Payment due date (YYYY-MM-DD)" },
+      "vendor_name": { "type": "string", "description": "Company issuing the invoice" },
+      "customer_name": { "type": "string", "description": "Customer being billed" },
+      "subtotal": { "type": "number", "description": "Subtotal before tax" },
+      "tax_amount": { "type": "number", "description": "Tax amount" },
+      "total_amount": { "type": "number", "description": "Total amount due" }
+    },
+    "required": ["invoice_number", "total_amount"]
+  }
 }
 ```
 
@@ -276,33 +228,37 @@ When using `object` and `array` types in your schema:
 {
   "file_name": "contract.pdf",
   "user_instruction": "Extract key contract terms with all parties and obligations.",
-  "output_schema_fields": [
-    { "key": "contract_title", "type": "string", "description": "Title or name of the contract" },
-    { "key": "effective_date", "type": "date", "description": "When the contract becomes effective" },
-    { "key": "termination_date", "type": "date", "description": "When the contract ends" },
-    { "key": "auto_renewal", "type": "boolean", "description": "Whether contract auto-renews" },
-    {
-      "key": "parties",
-      "type": "array",
-      "description": "All parties involved in the contract",
-      "items_type": "object",
-      "nested_fields": [
-        { "key": "name", "type": "string", "description": "Party name" },
-        { "key": "role", "type": "string", "description": "Role (e.g., Licensor, Licensee)" },
-        { "key": "address", "type": "string", "description": "Party address" }
-      ]
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "contract_title": { "type": "string", "description": "Title or name of the contract" },
+      "effective_date": { "type": "string", "description": "When the contract becomes effective" },
+      "termination_date": { "type": "string", "description": "When the contract ends" },
+      "auto_renewal": { "type": "boolean", "description": "Whether contract auto-renews" },
+      "parties": {
+        "type": "array",
+        "description": "All parties involved in the contract",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string", "description": "Party name" },
+            "role": { "type": "string", "description": "Role (e.g., Licensor, Licensee)" },
+            "address": { "type": "string", "description": "Party address" }
+          }
+        }
+      },
+      "key_terms": {
+        "type": "object",
+        "description": "Key contract terms and conditions",
+        "properties": {
+          "payment_terms": { "type": "string", "description": "Payment conditions" },
+          "liability_cap": { "type": "number", "description": "Maximum liability amount" },
+          "notice_period_days": { "type": "number", "description": "Notice period in days" }
+        }
+      }
     },
-    {
-      "key": "key_terms",
-      "type": "object",
-      "description": "Key contract terms and conditions",
-      "nested_fields": [
-        { "key": "payment_terms", "type": "string", "description": "Payment conditions" },
-        { "key": "liability_cap", "type": "number", "description": "Maximum liability amount" },
-        { "key": "notice_period_days", "type": "number", "description": "Notice period in days" }
-      ]
-    }
-  ]
+    "required": ["contract_title", "parties"]
+  }
 }
 ```
 
@@ -312,41 +268,46 @@ When using `object` and `array` types in your schema:
 {
   "file_name": "resume.pdf",
   "user_instruction": "Extract complete candidate information including work history and education.",
-  "output_schema_fields": [
-    { "key": "full_name", "type": "string", "description": "Candidate's full name" },
-    { "key": "email", "type": "string", "description": "Email address" },
-    { "key": "phone", "type": "string", "description": "Phone number" },
-    { "key": "years_experience", "type": "number", "description": "Total years of experience" },
-    {
-      "key": "skills",
-      "type": "array",
-      "description": "List of technical and soft skills",
-      "items_type": "string"
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "full_name": { "type": "string", "description": "Candidate's full name" },
+      "email": { "type": "string", "description": "Email address" },
+      "phone": { "type": "string", "description": "Phone number" },
+      "years_experience": { "type": "number", "description": "Total years of experience" },
+      "skills": {
+        "type": "array",
+        "description": "List of technical and soft skills",
+        "items": { "type": "string" }
+      },
+      "work_experience": {
+        "type": "array",
+        "description": "Work history",
+        "items": {
+          "type": "object",
+          "properties": {
+            "company": { "type": "string", "description": "Company name" },
+            "title": { "type": "string", "description": "Job title" },
+            "start_date": { "type": "string", "description": "Start date" },
+            "end_date": { "type": "string", "description": "End date (or current)" }
+          }
+        }
+      },
+      "education": {
+        "type": "array",
+        "description": "Educational background",
+        "items": {
+          "type": "object",
+          "properties": {
+            "institution": { "type": "string", "description": "School or university name" },
+            "degree": { "type": "string", "description": "Degree obtained" },
+            "graduation_year": { "type": "number", "description": "Year of graduation" }
+          }
+        }
+      }
     },
-    {
-      "key": "work_experience",
-      "type": "array",
-      "description": "Work history",
-      "items_type": "object",
-      "nested_fields": [
-        { "key": "company", "type": "string", "description": "Company name" },
-        { "key": "title", "type": "string", "description": "Job title" },
-        { "key": "start_date", "type": "date", "description": "Start date" },
-        { "key": "end_date", "type": "date", "description": "End date (or current)" }
-      ]
-    },
-    {
-      "key": "education",
-      "type": "array",
-      "description": "Educational background",
-      "items_type": "object",
-      "nested_fields": [
-        { "key": "institution", "type": "string", "description": "School or university name" },
-        { "key": "degree", "type": "string", "description": "Degree obtained" },
-        { "key": "graduation_year", "type": "number", "description": "Year of graduation" }
-      ]
-    }
-  ]
+    "required": ["full_name"]
+  }
 }
 ```
 
@@ -356,39 +317,42 @@ When using `object` and `array` types in your schema:
 {
   "file_name": "catalog.pdf",
   "user_instruction": "Extract all products with their specifications and variants.",
-  "output_schema_fields": [
-    { "key": "product_name", "type": "string", "description": "Product name" },
-    { "key": "sku", "type": "string", "description": "Product SKU" },
-    { "key": "base_price", "type": "number", "description": "Base price" },
-    { "key": "in_stock", "type": "boolean", "description": "Whether product is in stock" },
-    {
-      "key": "specifications",
-      "type": "object",
-      "description": "Product specifications",
-      "nested_fields": [
-        { "key": "weight", "type": "number", "description": "Weight in kg" },
-        { "key": "dimensions", "type": "string", "description": "Dimensions (LxWxH)" },
-        { "key": "material", "type": "string", "description": "Main material" }
-      ]
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "product_name": { "type": "string", "description": "Product name" },
+      "sku": { "type": "string", "description": "Product SKU" },
+      "base_price": { "type": "number", "description": "Base price" },
+      "in_stock": { "type": "boolean", "description": "Whether product is in stock" },
+      "specifications": {
+        "type": "object",
+        "description": "Product specifications",
+        "properties": {
+          "weight": { "type": "number", "description": "Weight in kg" },
+          "dimensions": { "type": "string", "description": "Dimensions (LxWxH)" },
+          "material": { "type": "string", "description": "Main material" }
+        }
+      },
+      "categories": {
+        "type": "array",
+        "description": "Product categories",
+        "items": { "type": "string" }
+      },
+      "variants": {
+        "type": "array",
+        "description": "Product variants",
+        "items": {
+          "type": "object",
+          "properties": {
+            "color": { "type": "string", "description": "Variant color" },
+            "size": { "type": "string", "description": "Variant size" },
+            "price_modifier": { "type": "number", "description": "Price adjustment" }
+          }
+        }
+      }
     },
-    {
-      "key": "categories",
-      "type": "array",
-      "description": "Product categories",
-      "items_type": "string"
-    },
-    {
-      "key": "variants",
-      "type": "array",
-      "description": "Product variants",
-      "items_type": "object",
-      "nested_fields": [
-        { "key": "color", "type": "string", "description": "Variant color" },
-        { "key": "size", "type": "string", "description": "Variant size" },
-        { "key": "price_modifier", "type": "number", "description": "Price adjustment" }
-      ]
-    }
-  ]
+    "required": ["product_name", "sku"]
+  }
 }
 ```
 
@@ -409,23 +373,27 @@ headers = {
 payload = {
     "file_name": "invoice.pdf",
     "user_instruction": "Extract invoice information. Use YYYY-MM-DD for dates.",
-    "output_schema_fields": [
-        {"key": "invoice_number", "type": "string", "description": "Invoice ID"},
-        {"key": "total_amount", "type": "number", "description": "Total due"},
-        {"key": "invoice_date", "type": "date", "description": "Invoice date"}
-    ]
+    "output_schema": {
+        "type": "object",
+        "properties": {
+            "invoice_number": {"type": "string", "description": "Invoice ID"},
+            "total_amount": {"type": "number", "description": "Total due"},
+            "invoice_date": {"type": "string", "description": "Invoice date"}
+        },
+        "required": ["invoice_number", "total_amount"]
+    }
 }
 
 response = requests.post(url, headers=headers, json=payload)
 data = response.json()
 
-for item in data["extracted_items"]:
-    print(f"Invoice: {item['output']['invoice_number']}")
-    print(f"Amount: ${item['output']['total_amount']}")
-    print(f"Found on pages: {item['page_numbers']}")
+output = data["structured_output"]
+print(f"Invoice: {output['invoice_number']}")
+print(f"Amount: ${output['total_amount']}")
+print(f"Date: {output['invoice_date']}")
 ```
 
-### Python with Object and Array Types
+### Python with Nested Objects and Arrays
 
 ```python
 import requests
@@ -440,42 +408,45 @@ headers = {
 payload = {
     "file_name": "invoice.pdf",
     "user_instruction": "Extract invoice with line items and address.",
-    "output_schema_fields": [
-        {"key": "invoice_number", "type": "string", "description": "Invoice ID"},
-        {
-            "key": "billing_address",
-            "type": "object",
-            "description": "Billing address",
-            "nested_fields": [
-                {"key": "street", "type": "string", "description": "Street"},
-                {"key": "city", "type": "string", "description": "City"},
-                {"key": "country", "type": "string", "description": "Country"}
-            ]
+    "output_schema": {
+        "type": "object",
+        "properties": {
+            "invoice_number": {"type": "string", "description": "Invoice ID"},
+            "billing_address": {
+                "type": "object",
+                "description": "Billing address",
+                "properties": {
+                    "street": {"type": "string", "description": "Street"},
+                    "city": {"type": "string", "description": "City"},
+                    "country": {"type": "string", "description": "Country"}
+                }
+            },
+            "line_items": {
+                "type": "array",
+                "description": "Invoice line items",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "description": {"type": "string", "description": "Item description"},
+                        "quantity": {"type": "number", "description": "Quantity"},
+                        "price": {"type": "number", "description": "Unit price"}
+                    }
+                }
+            }
         },
-        {
-            "key": "line_items",
-            "type": "array",
-            "description": "Invoice line items",
-            "items_type": "object",
-            "nested_fields": [
-                {"key": "description", "type": "string", "description": "Item description"},
-                {"key": "quantity", "type": "number", "description": "Quantity"},
-                {"key": "price", "type": "number", "description": "Unit price"}
-            ]
-        }
-    ]
+        "required": ["invoice_number"]
+    }
 }
 
 response = requests.post(url, headers=headers, json=payload)
 data = response.json()
 
-for item in data["extracted_items"]:
-    output = item["output"]
-    print(f"Invoice: {output['invoice_number']}")
-    print(f"City: {output['billing_address']['city']}")
-    print("Line Items:")
-    for line in output["line_items"]:
-        print(f"  - {line['description']}: {line['quantity']} x ${line['price']}")
+output = data["structured_output"]
+print(f"Invoice: {output['invoice_number']}")
+print(f"City: {output['billing_address']['city']}")
+print("Line Items:")
+for line in output["line_items"]:
+    print(f"  - {line['description']}: {line['quantity']} x ${line['price']}")
 ```
 
 ### JavaScript
@@ -494,7 +465,7 @@ async function extractData(fileName, instruction, schema) {
     body: JSON.stringify({
       file_name: fileName,
       user_instruction: instruction,
-      output_schema_fields: schema
+      output_schema: schema
     })
   });
   
@@ -505,55 +476,61 @@ async function extractData(fileName, instruction, schema) {
 const result = await extractData(
   "invoice.pdf",
   "Extract invoice details",
-  [
-    { key: "invoice_number", type: "string", description: "Invoice ID" },
-    { key: "total_amount", type: "number", description: "Total due" }
-  ]
+  {
+    type: "object",
+    properties: {
+      invoice_number: { type: "string", description: "Invoice ID" },
+      total_amount: { type: "number", description: "Total due" }
+    },
+    required: ["invoice_number", "total_amount"]
+  }
 );
 
-result.extracted_items.forEach(item => {
-  console.log(item.output);
-  console.log(`Pages: ${item.page_numbers.join(", ")}`);
-});
+const { structured_output } = result;
+console.log(`Invoice: ${structured_output.invoice_number}`);
+console.log(`Amount: $${structured_output.total_amount}`);
 ```
 
-### JavaScript with Object and Array Types
+### JavaScript with Nested Objects and Arrays
 
 ```javascript
 const API_URL = "https://sources.graphorlm.com/run-extraction";
 const API_TOKEN = "YOUR_API_TOKEN";
 
 // Extraction with nested objects and arrays
-const schema = [
-  { key: "invoice_number", type: "string", description: "Invoice ID" },
-  {
-    key: "billing_address",
-    type: "object",
-    description: "Billing address",
-    nested_fields: [
-      { key: "street", type: "string", description: "Street" },
-      { key: "city", type: "string", description: "City" },
-      { key: "country", type: "string", description: "Country" }
-    ]
+const schema = {
+  type: "object",
+  properties: {
+    invoice_number: { type: "string", description: "Invoice ID" },
+    billing_address: {
+      type: "object",
+      description: "Billing address",
+      properties: {
+        street: { type: "string", description: "Street" },
+        city: { type: "string", description: "City" },
+        country: { type: "string", description: "Country" }
+      }
+    },
+    tags: {
+      type: "array",
+      description: "Invoice tags",
+      items: { type: "string" }
+    },
+    line_items: {
+      type: "array",
+      description: "Invoice line items",
+      items: {
+        type: "object",
+        properties: {
+          description: { type: "string", description: "Item description" },
+          quantity: { type: "number", description: "Quantity" },
+          price: { type: "number", description: "Unit price" }
+        }
+      }
+    }
   },
-  {
-    key: "tags",
-    type: "array",
-    description: "Invoice tags",
-    items_type: "string"
-  },
-  {
-    key: "line_items",
-    type: "array",
-    description: "Invoice line items",
-    items_type: "object",
-    nested_fields: [
-      { key: "description", type: "string", description: "Item description" },
-      { key: "quantity", type: "number", description: "Quantity" },
-      { key: "price", type: "number", description: "Unit price" }
-    ]
-  }
-];
+  required: ["invoice_number"]
+};
 
 const response = await fetch(API_URL, {
   method: "POST",
@@ -564,37 +541,35 @@ const response = await fetch(API_URL, {
   body: JSON.stringify({
     file_name: "invoice.pdf",
     user_instruction: "Extract invoice with all details",
-    output_schema_fields: schema
+    output_schema: schema
   })
 });
 
 const data = await response.json();
 
-data.extracted_items.forEach(item => {
-  const { invoice_number, billing_address, tags, line_items } = item.output;
-  
-  console.log(`Invoice: ${invoice_number}`);
-  console.log(`Address: ${billing_address.street}, ${billing_address.city}`);
-  console.log(`Tags: ${tags.join(", ")}`);
-  
-  console.log("Line Items:");
-  line_items.forEach(line => {
-    console.log(`  - ${line.description}: ${line.quantity} x $${line.price}`);
-  });
+const { invoice_number, billing_address, tags, line_items } = data.structured_output;
+
+console.log(`Invoice: ${invoice_number}`);
+console.log(`Address: ${billing_address.street}, ${billing_address.city}`);
+console.log(`Tags: ${tags.join(", ")}`);
+
+console.log("Line Items:");
+line_items.forEach(line => {
+  console.log(`  - ${line.description}: ${line.quantity} x $${line.price}`);
 });
 ```
 
 ## Best Practices
 
-1. **Be specific in descriptions** — Detailed field descriptions improve extraction accuracy
-2. **Use appropriate types** — Match field types to expected data (number for amounts, date for dates)
-3. **Provide clear instructions** — Guide the extraction with format preferences and edge cases
-4. **Handle multiple items** — Design your schema for documents that may contain multiple entities
-5. **Check page references** — Use `page_numbers` to verify extraction accuracy
-6. **Use objects for structured data** — Group related fields using `object` type (e.g., address with street, city, zip)
-7. **Use arrays for lists** — Extract repeating items using `array` type with appropriate `items_type`
-8. **Keep nesting shallow** — Avoid deeply nested structures for better extraction accuracy
-9. **Use primitive arrays when possible** — For simple lists (tags, categories), use `items_type: "string"` instead of objects
+1. **Use standard JSON Schema** — The API accepts any valid JSON Schema, giving you full flexibility
+2. **Be specific in descriptions** — Detailed property descriptions improve extraction accuracy
+3. **Use appropriate types** — Match property types to expected data (`number` for amounts, `string` for dates)
+4. **Provide clear instructions** — Guide the extraction with format preferences and edge cases
+5. **Use objects for structured data** — Group related fields using nested objects (e.g., address with street, city, zip)
+6. **Use arrays for lists** — Extract repeating items using arrays with appropriate item schemas
+7. **Keep nesting shallow** — Avoid deeply nested structures for better extraction accuracy
+8. **Define required fields** — Use the `required` array to specify mandatory properties
+9. **Use raw_json for debugging** — The `raw_json` field contains the model's raw output before validation
 
 ## Related
 
@@ -614,4 +589,3 @@ data.extracted_items.forEach(item => {
     Improve parsing quality for better extraction results
   </Card>
 </CardGroup>
-
