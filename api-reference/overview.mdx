@@ -7,6 +7,7 @@ This page provides a comprehensive overview of the Graphor public REST APIs. It 
 
 1.  **Data Ingestion (Sources API)**: Bring data in, process it, and retrieve structured elements.
 2.  **Document Chat (Chat API)**: Ask questions about your ingested documents using natural language.
+3.  **Data Extraction (Extract API)**: Extract specific structured data from documents using custom schemas.
 
 ## Data Ingestion (Sources API)
 
@@ -64,6 +65,20 @@ Once your data is ingested, use the Chat API to ask questions:
   </Card>
 </CardGroup>
 
+## Data Extraction (Extract API)
+
+Extract specific structured data from your documents using schemas:
+
+<CardGroup cols={1}>
+  <Card
+    title="Extract Structured Data"
+    icon="table"
+    href="/api-reference/extract-api"
+  >
+    Extract structured information from documents using custom schemas and natural language instructions
+  </Card>
+</CardGroup>
+
 ## What “Data Ingestion” includes
 
 - **Upload**: create a new source (file / URL / GitHub / YouTube)
@@ -103,6 +118,11 @@ https://sources.graphorlm.com      # Source management
 ### Chat
 ```
 https://sources.graphorlm.com/ask-sources    # Document Chat
+```
+
+### Extraction
+```
+https://sources.graphorlm.com/run-extraction # Data Extraction
 ```
 
 ### Related (after ingestion)
@@ -146,7 +166,7 @@ All API responses follow consistent JSON structures with appropriate HTTP status
 
 ## Complete Workflow Example
 
-Here’s the full "happy path": **upload → process → list → elements → chat**.
+Here’s the full "happy path": **upload → process → list → elements → chat/extract**.
 
 ### 1. Upload a source
 
@@ -227,6 +247,28 @@ const answer = await chatResponse.json();
 console.log('Answer:', answer.answer);
 ```
 
+### 6. Extract Data (Extraction)
+
+```javascript
+const extractResponse = await fetch('https://sources.graphorlm.com/run-extraction', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    file_name: file_name,
+    user_instruction: "Extract the invoice number and total amount.",
+    output_schema_fields: [
+      { key: "invoice_number", type: "string", description: "Invoice ID" },
+      { key: "total_amount", type: "number", description: "Total due" }
+    ]
+  })
+});
+const extractedData = await extractResponse.json();
+console.log('Extracted:', extractedData.extracted_items[0].output);
+```
+
 ## Integration Patterns
 
 ### Minimal Sources (Ingestion) Client
@@ -301,13 +343,26 @@ class GraphorClient {
     });
     return await response.json();
   }
+
+  async extract(fileName, instruction, schema) {
+    const response = await fetch('https://sources.graphorlm.com/run-extraction', {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify({
+        file_name: fileName,
+        user_instruction: instruction,
+        output_schema_fields: schema
+      })
+    });
+    return await response.json();
+  }
 }
 
 // Usage example
 const client = new GraphorClient('YOUR_API_TOKEN');
 
-// Ingestion + Chat workflow
-async function ingestAndChat() {
+// Ingestion + Chat + Extraction workflow
+async function ingestAndAnalyze() {
   try {
     // 1. Upload and process
     const file = document.getElementById('fileInput').files[0];
@@ -315,8 +370,16 @@ async function ingestAndChat() {
     await client.processSource(file.name, 'hi_res');
     
     // 2. Chat with the document
-    const result = await client.ask("Summarize this document", [file.name]);
-    console.log('Answer:', result.answer);
+    const chatResult = await client.ask("Summarize this document", [file.name]);
+    console.log('Chat Answer:', chatResult.answer);
+
+    // 3. Extract structured data
+    const extractResult = await client.extract(
+      file.name,
+      "Extract key values",
+      [{ key: "summary", type: "string", description: "Document summary" }]
+    );
+    console.log('Extraction:', extractResult.extracted_items);
 
   } catch (error) {
     console.error('Error:', error);
@@ -397,11 +460,24 @@ class GraphorLMAPI:
         response.raise_for_status()
         return response.json()
 
+    # Extraction API
+    def extract(self, file_name: str, instruction: str, schema: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Extract structured data from a document"""
+        url = "https://sources.graphorlm.com/run-extraction"
+        payload = {
+            "file_name": file_name,
+            "user_instruction": instruction,
+            "output_schema_fields": schema
+        }
+        response = requests.post(url, headers=self.headers, json=payload)
+        response.raise_for_status()
+        return response.json()
+
 # Usage
 api = GraphorLMAPI(os.getenv("GRAPHORLM_API_TOKEN"))
 
-# Ingestion and Chat workflow
-def ingest_and_chat(documents: List[str]):
+# Ingestion, Chat, and Extraction workflow
+def analyze_documents(documents: List[str]):
     try:
         # 1. Ingest
         for doc_path in documents:
@@ -410,8 +486,13 @@ def ingest_and_chat(documents: List[str]):
             api.process_source(file_name, 'hi_res')
             
             # 2. Chat
-            answer = api.ask("What is this document about?", [file_name])
-            print(f"Answer for {file_name}: {answer['answer']}")
+            chat_answer = api.ask("What is this document about?", [file_name])
+            print(f"Chat Answer for {file_name}: {chat_answer['answer']}")
+
+            # 3. Extract
+            schema = [{"key": "summary", "type": "string", "description": "Short summary"}]
+            extract_result = api.extract(file_name, "Summarize the document", schema)
+            print(f"Extraction for {file_name}: {extract_result['extracted_items']}")
         
         return True
         
