@@ -45,22 +45,13 @@ The request must be sent as JSON with the following fields:
 ### Available Processing Methods
 
 <AccordionGroup>
-  <Accordion icon="gauge-simple" title="Basic">
+  <Accordion icon="gauge-simple" title="Fast">
     **Best for**: Simple text documents, quick processing
     
     - Fast processing with heuristic classification
     - No OCR processing
     - Suitable for plain text files and well-structured documents
     - Recommended for testing and development
-  </Accordion>
-  
-  <Accordion icon="eye" title="OCR">
-    **Best for**: Scanned documents, images with text
-    
-    - Utilizes OCR for text extraction and parsing
-    - Heuristic-based document element classification
-    - Ideal for scanned PDFs and image files
-    - Balances processing speed and accuracy
   </Accordion>
   
   <Accordion icon="brain" title="Balanced">
@@ -81,16 +72,6 @@ The request must be sent as JSON with the following fields:
     - Optimized for specialized and complex document types
     - **Note**: Premium feature
   </Accordion>
-  
-  <Accordion icon="robot" title="Agentic">
-    **Best for**: Complex layouts, multi-page tables, diagrams, and images
-    
-    - Our highest parsing setting for complex layouts
-    - Rich annotations for images and complex elements
-    - Uses agentic processing for enhanced understanding
-    - Advanced document understanding capabilities
-  </Accordion>
-  
   <Accordion icon="bars" title="VLM">
     **Best for**: Text-first parsing, manuscripts, and handwritten documents
     
@@ -102,6 +83,14 @@ The request must be sent as JSON with the following fields:
     - Performs image annotation when images are present in the document
     - Best-in-class text parsing quality; element classification is limited
   </Accordion>
+  <Accordion icon="robot" title="Agentic">
+    **Best for**: Complex layouts, multi-page tables, diagrams, and images
+    
+    - Our highest parsing setting for complex layouts
+    - Rich annotations for images and complex elements
+    - Uses agentic processing for enhanced understanding
+    - Advanced document understanding capabilities
+  </Accordion>
 </AccordionGroup>
 
 ### `partition_method` values
@@ -111,11 +100,10 @@ Use these values for the `partition_method` field when calling the endpoint:
 | Method | partition_method |
 |--------|------------------|
 | Fast | basic |
-| OCR (deprecated) | ocr |
 | Balanced | hi_res |
 | Accurate | hi_res_ft |
-| Agentic | graphorlm |
 | VLM | mai |
+| Agentic | graphorlm |
 
 ## Processing Method Selection Guide
 
@@ -525,7 +513,7 @@ def process_with_progress(api_token: str, files_and_methods: List[Dict]):
 processing_queue = [
     {'file_name': 'document1.pdf', 'method': 'hi_res'},
     {'file_name': 'document2.pdf', 'method': 'hi_res_ft'},
-    {'file_name': 'document3.pdf', 'method': 'ocr'}
+    {'file_name': 'document3.pdf', 'method': 'mai'}
 ]
 
 results = process_with_progress('grlm_your_token', processing_queue)
@@ -595,17 +583,17 @@ After successfully processing your documents:
     Learn more about document processing methods and optimization
   </Card>
   <Card
-    title="Chunking"
-    icon="file-dashed-line"
-    href="/guides/chunking"
-  >
-    Optimize document segmentation after processing for better retrieval
-  </Card>
-  <Card
     title="Upload Source"
     icon="arrow-up-from-bracket"
     href="/api-reference/sources/upload"
   >
     Upload new documents to your project
+  </Card>
+  <Card
+    title="Delete Source"
+    icon="trash"
+    href="/api-reference/sources/delete"
+  >
+    Remove documents that are no longer needed from your project
   </Card>
 </CardGroup>
