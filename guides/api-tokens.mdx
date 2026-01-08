@@ -40,49 +40,6 @@ To revoke a token that is no longer needed or may be compromised:
 
 Once revoked, a token cannot be restored. Any services using the token will immediately lose access to your Graphor resources.
 
-## Using API Tokens
-
-API tokens are used in different ways depending on your integration method:
-
-### REST API
-
-For REST API integrations, include your token as a Bearer token in the Authorization header:
-
-```javascript
-fetch("https://{flow_name}.flows.graphorlm.com", {
-  method: "POST",
-  headers: {
-    "Authorization": "Bearer YOUR_API_TOKEN",
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    query: "your search query"
-  })
-})
-```
-
-### MCP Server
-
-For MCP Server integrations, include your token in the environment configuration:
-
-```json
-{
-  "mcpServers": {
-    "your-mcp-server-name": {
-      "command": "uvx",
-      "args": [
-        "--refresh",
-        "mcp-proxy",
-        "https://{flow_name}.flows.graphorlm.com/mcp/sse"
-      ],
-      "env": {
-        "API_ACCESS_TOKEN": "YOUR_API_TOKEN"
-      }
-    }
-  }
-}
-```
-
 ## Token Security Best Practices
 
 API tokens provide access to your Graphor resources, so it's important to handle them securely:
@@ -133,31 +90,31 @@ After setting up your API tokens, explore:
 
 <CardGroup cols={2}>
   <Card
-    title="Integrate Workflow"
-    icon="plug"
-    href="/guides/integrate-workflow"
+    title="Upload Source"
+    icon="upload"
+    href="/api-reference/sources/upload"
   >
-    Connect your RAG pipeline to applications and AI assistants
+    Start by ingesting documents from files, URLs, GitHub, and YouTube
   </Card>
   <Card
-    title="Retrieval"
-    icon="magnifying-glass"
-    href="/guides/retrieval"
+    title="Chat with Documents"
+    icon="comments"
+    href="/api-reference/chat-api"
   >
-    Optimize information retrieval for your connected applications
+    Ask natural language questions about your documents with conversational memory and structured outputs
   </Card>
   <Card
-    title="Evaluation"
-    icon="square-poll-vertical"
-    href="/guides/evaluation"
+    title="Extract Structured Data"
+    icon="table"
+    href="/api-reference/extract-api"
   >
-    Measure your RAG pipeline's performance
+    Extract structured information from documents using custom schemas and natural language instructions
   </Card>
   <Card
-    title="LLM Integration"
-    icon="brain"
-    href="/guides/llm"
+    title="RAG Pipelines Overview"
+    icon="diagram-project"
+    href="/api-reference/flows/overview"
   >
-    Connect language models to your workflow
+    Master comprehensive RAG pipeline and node management
   </Card>
 </CardGroup>
