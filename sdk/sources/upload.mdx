@@ -13,7 +13,7 @@ This page documents how to upload content to your Graphor project using the **Py
     
     Upload local files (PDF, DOCX, images, audio, video, etc.)
   </Card>
-  <Card title="Upload from URL" icon="link" href="#upload-from-url">
+  <Card title="Upload Web Page" icon="link" href="#upload-from-url">
     **`client.sources.upload_url()`**
     
     Scrape and ingest a public web page by URL
@@ -263,7 +263,7 @@ except graphor.APIStatusError as e:
     print(f"API error (status {e.status_code}): {e}")
 ```
 
-## Upload from URL
+## Upload Web Page
 
 Ingest content by scraping a public web page.
 
@@ -301,7 +301,7 @@ client.sources.upload_url(
 
 ### Code Examples
 
-#### Basic URL Upload
+#### Basic Web Page Upload
 
 ```python
 from graphor import Graphor
@@ -317,7 +317,7 @@ print(f"Ingested: {source.file_name}")
 print(f"Status: {source.status}")
 ```
 
-#### Upload with URL Crawling
+#### Upload with Web Page Crawling
 
 ```python
 from graphor import Graphor
@@ -333,7 +333,7 @@ source = client.sources.upload_url(
 print(f"Ingested: {source.file_name}")
 ```
 
-#### Async URL Upload
+#### Async Web Page Upload
 
 ```python
 import asyncio
