@@ -1,0 +1,826 @@
+---
+title: 'Delete Source'
+description: 'Remove documents from your project using the Graphor Python SDK'
+---
+
+The `delete` method allows you to permanently remove documents from your Graphor project. This method provides a secure way to clean up your document collection, automatically updating related flows and removing all associated data including partition nodes and metadata.
+
+## Method Overview
+
+<CardGroup cols={2}>
+  <Card title="Sync Method" icon="code">
+    **`client.sources.delete()`**
+  </Card>
+  <Card title="Async Method" icon="code">
+    **`await client.sources.delete()`**
+  </Card>
+</CardGroup>
+
+## Method Signature
+
+```python
+client.sources.delete(
+    file_name: str,              # Required
+    timeout: float | None = None
+) -> SourceDeleteResponse
+```
+
+## Parameters
+
+| Parameter | Type | Description | Required |
+|-----------|------|-------------|----------|
+| `file_name` | `str` | Name of the file to delete (case-sensitive) | ✅ Yes |
+| `timeout` | `float` | Request timeout in seconds | No |
+
+## Important Considerations
+
+<AccordionGroup>
+  <Accordion icon="warning" title="Permanent Deletion">
+    **Warning**: This operation is irreversible
+    
+    - All document content and metadata will be permanently removed
+    - Associated partition nodes and embeddings will be deleted
+    - Flows using this document will be automatically updated
+    - No backup or recovery options are available
+  </Accordion>
+  
+  <Accordion icon="file-text" title="File Name Requirements">
+    **Exact match required**
+    
+    - File names are case-sensitive
+    - Must match the exact name from upload or list methods
+    - Include the full filename with extension
+    - Use `client.sources.list()` to verify file names
+  </Accordion>
+  
+  <Accordion icon="warning" title="Flow Impact">
+    **Automatic flow updates**
+    
+    - Dataset nodes using this document will be updated automatically
+    - Successor nodes in affected flows will be marked as outdated
+    - Flow execution may be impacted until nodes are reconfigured
+    - Multiple flows can be affected by a single deletion
+  </Accordion>
+</AccordionGroup>
+
+## Response Object
+
+The method returns a `SourceDeleteResponse` object:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `status` | `str` | Deletion result (typically "success") |
+| `message` | `str` | Human-readable confirmation message |
+| `file_name` | `str` | Name of the deleted file |
+| `project_id` | `str` | UUID of the project the file was removed from |
+| `project_name` | `str` | Name of the project |
+
+## Code Examples
+
+### Basic Usage
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Delete a document
+result = client.sources.delete(
+    file_name="document.pdf"
+)
+
+print(f"Status: {result.status}")
+print(f"Message: {result.message}")
+print(f"Deleted: {result.file_name}")
+print(f"Project: {result.project_name}")
+```
+
+### Async Usage
+
+```python
+import asyncio
+from graphor import AsyncGraphor
+
+async def delete_document(file_name: str):
+    client = AsyncGraphor()
+    
+    result = await client.sources.delete(file_name=file_name)
+    
+    print(f"Deleted: {result.file_name}")
+    print(f"Status: {result.status}")
+    
+    return result
+
+asyncio.run(delete_document("document.pdf"))
+```
+
+### Delete with Verification
+
+Always verify the file exists before deletion:
+
+```python
+from graphor import Graphor
+import graphor
+
+client = Graphor()
+
+def safe_delete(file_name: str) -> bool:
+    """Safely delete a document with verification."""
+    
+    # First, check if the file exists
+    sources = client.sources.list()
+    available_files = [s.file_name for s in sources]
+    
+    if file_name not in available_files:
+        print(f"❌ File '{file_name}' not found in project")
+        print(f"Available files: {available_files[:5]}...")  # Show first 5
+        return False
+    
+    # Find and display file info
+    file_info = next(s for s in sources if s.file_name == file_name)
+    print(f"File to delete: {file_info.file_name}")
+    print(f"  Size: {file_info.file_size:,} bytes")
+    print(f"  Type: {file_info.file_type}")
+    print(f"  Status: {file_info.status}")
+    
+    # Confirm deletion
+    confirm = input("\nProceed with deletion? (yes/no): ")
+    if confirm.lower() != "yes":
+        print("❌ Deletion cancelled")
+        return False
+    
+    # Perform deletion
+    try:
+        result = client.sources.delete(file_name=file_name)
+        print(f"✅ {result.message}")
+        return True
+    except graphor.APIStatusError as e:
+        print(f"❌ Deletion failed: {e}")
+        return False
+
+# Usage
+safe_delete("old_document.pdf")
+```
+
+### Delete with Confirmation Prompt
+
+```python
+from graphor import Graphor
+import graphor
+
+client = Graphor()
+
+def delete_with_confirmation(file_name: str):
+    """Delete a document with a safety confirmation."""
+    print(f"⚠️  WARNING: This will permanently delete '{file_name}'")
+    print("This action cannot be undone!")
+    
+    confirmation = input("Type 'DELETE' to confirm: ")
+    
+    if confirmation != "DELETE":
+        print("❌ Deletion cancelled")
+        return None
+    
+    try:
+        result = client.sources.delete(file_name=file_name)
+        print(f"✅ Document '{file_name}' deleted successfully")
+        return result
+    except graphor.NotFoundError:
+        print(f"❌ File '{file_name}' not found")
+        return None
+    except graphor.APIStatusError as e:
+        print(f"❌ Error deleting document: {e}")
+        return None
+
+# Usage
+result = delete_with_confirmation("document.pdf")
+```
+
+### Error Handling
+
+```python
+import graphor
+from graphor import Graphor
+
+client = Graphor()
+
+try:
+    result = client.sources.delete(file_name="document.pdf")
+    print(f"✅ Deleted: {result.file_name}")
+    
+except graphor.NotFoundError as e:
+    print(f"File not found: {e}")
+    
+except graphor.BadRequestError as e:
+    print(f"Invalid request: {e}")
+    
+except graphor.AuthenticationError as e:
+    print(f"Invalid API key: {e}")
+    
+except graphor.PermissionDeniedError as e:
+    print(f"Access denied: {e}")
+    
+except graphor.RateLimitError as e:
+    print(f"Rate limit exceeded. Please wait and retry: {e}")
+    
+except graphor.APIConnectionError as e:
+    print(f"Connection error: {e}")
+    
+except graphor.APIStatusError as e:
+    print(f"API error (status {e.status_code}): {e}")
+```
+
+## Advanced Examples
+
+### Batch Deletion
+
+Delete multiple files with safety checks:
+
+```python
+from graphor import Graphor
+import graphor
+import time
+
+client = Graphor()
+
+def batch_delete(file_names: list[str], confirm: bool = True) -> dict:
+    """Delete multiple files with comprehensive checks."""
+    
+    # Verify all files exist
+    print("🔍 Verifying files exist before deletion...")
+    sources = client.sources.list()
+    available_files = {s.file_name: s for s in sources}
+    
+    # Check for missing files
+    missing = [f for f in file_names if f not in available_files]
+    if missing:
+        print(f"❌ Files not found: {missing}")
+        return {"error": f"Missing files: {missing}"}
+    
+    # Show summary
+    total_size = sum(available_files[f].file_size for f in file_names)
+    total_size_mb = total_size / (1024 * 1024)
+    
+    print(f"\n📋 Deletion Summary:")
+    print(f"  Files to delete: {len(file_names)}")
+    print(f"  Total size: {total_size_mb:.2f} MB")
+    
+    for file_name in file_names:
+        info = available_files[file_name]
+        print(f"  - {file_name} ({info.file_type}, {info.status})")
+    
+    # Confirm deletion
+    if confirm:
+        confirmation = input(f"\n⚠️  Delete {len(file_names)} files permanently? (type 'DELETE'): ")
+        if confirmation != "DELETE":
+            print("❌ Batch deletion cancelled")
+            return {"cancelled": True}
+    
+    # Perform deletions
+    results = {"successful": [], "failed": []}
+    
+    for i, file_name in enumerate(file_names, 1):
+        print(f"\n[{i}/{len(file_names)}] Deleting {file_name}...")
+        
+        try:
+            result = client.sources.delete(file_name=file_name)
+            results["successful"].append({
+                "file_name": file_name,
+                "message": result.message
+            })
+            print(f"  ✅ Deleted successfully")
+            
+        except graphor.APIStatusError as e:
+            results["failed"].append({
+                "file_name": file_name,
+                "error": str(e)
+            })
+            print(f"  ❌ Failed: {e}")
+        
+        # Small delay between deletions
+        if i < len(file_names):
+            time.sleep(0.5)
+    
+    # Final summary
+    print(f"\n🏁 Batch deletion complete:")
+    print(f"  ✅ Successful: {len(results['successful'])}")
+    print(f"  ❌ Failed: {len(results['failed'])}")
+    
+    return results
+
+# Usage
+files_to_delete = ["old_doc1.pdf", "temp_file.txt", "archive.docx"]
+results = batch_delete(files_to_delete)
+```
+
+### Async Batch Deletion
+
+Delete multiple files concurrently:
+
+```python
+import asyncio
+from graphor import AsyncGraphor
+import graphor
+
+async def delete_single(client: AsyncGraphor, file_name: str) -> dict:
+    """Delete a single file and return result."""
+    try:
+        result = await client.sources.delete(file_name=file_name)
+        return {"file_name": file_name, "status": "success", "message": result.message}
+    except graphor.APIStatusError as e:
+        return {"file_name": file_name, "status": "failed", "error": str(e)}
+
+async def batch_delete_async(file_names: list[str], max_concurrent: int = 3):
+    """Delete multiple files with controlled concurrency."""
+    client = AsyncGraphor()
+    
+    # Use semaphore to limit concurrent deletions
+    semaphore = asyncio.Semaphore(max_concurrent)
+    
+    async def delete_with_semaphore(file_name: str):
+        async with semaphore:
+            print(f"Deleting: {file_name}")
+            result = await delete_single(client, file_name)
+            status_icon = "✅" if result["status"] == "success" else "❌"
+            print(f"{status_icon} {file_name}: {result['status']}")
+            return result
+    
+    tasks = [delete_with_semaphore(f) for f in file_names]
+    results = await asyncio.gather(*tasks)
+    
+    successful = [r for r in results if r["status"] == "success"]
+    failed = [r for r in results if r["status"] == "failed"]
+    
+    print(f"\nSummary: {len(successful)} successful, {len(failed)} failed")
+    return results
+
+# Usage
+files = ["doc1.pdf", "doc2.pdf", "doc3.pdf"]
+results = asyncio.run(batch_delete_async(files, max_concurrent=2))
+```
+
+### Cleanup Failed Sources
+
+Automatically clean up sources that failed processing:
+
+```python
+from graphor import Graphor
+import graphor
+
+client = Graphor()
+
+def cleanup_failed_sources(confirm: bool = True) -> dict:
+    """Find and delete all failed sources."""
+    
+    # Get all sources
+    print("🔍 Finding failed sources...")
+    sources = client.sources.list()
+    
+    # Filter failed sources
+    failed_sources = [s for s in sources if s.status == "Failed"]
+    
+    if not failed_sources:
+        print("✅ No failed sources found")
+        return {"deleted": 0}
+    
+    print(f"📋 Found {len(failed_sources)} failed sources:")
+    for source in failed_sources:
+        print(f"  - {source.file_name} ({source.file_type})")
+    
+    # Confirm deletion
+    if confirm:
+        confirmation = input(f"\n⚠️  Delete all {len(failed_sources)} failed sources? (yes/no): ")
+        if confirmation.lower() != "yes":
+            print("❌ Cleanup cancelled")
+            return {"cancelled": True}
+    
+    # Delete failed sources
+    deleted = []
+    errors = []
+    
+    for source in failed_sources:
+        try:
+            client.sources.delete(file_name=source.file_name)
+            deleted.append(source.file_name)
+            print(f"✅ Deleted: {source.file_name}")
+        except graphor.APIStatusError as e:
+            errors.append({"file_name": source.file_name, "error": str(e)})
+            print(f"❌ Failed to delete {source.file_name}: {e}")
+    
+    print(f"\n🏁 Cleanup complete: {len(deleted)} deleted, {len(errors)} errors")
+    return {"deleted": deleted, "errors": errors}
+
+# Usage
+cleanup_failed_sources()
+```
+
+### Document Lifecycle Manager
+
+A complete class for managing document lifecycle:
+
+```python
+from graphor import Graphor
+import graphor
+from dataclasses import dataclass
+from typing import Optional
+
+@dataclass
+class DeletionResult:
+    success: bool
+    file_name: str
+    message: str
+    error: Optional[str] = None
+
+class DocumentManager:
+    def __init__(self, api_key: Optional[str] = None):
+        self.client = Graphor(api_key=api_key) if api_key else Graphor()
+    
+    def list_sources(self):
+        """Get all sources."""
+        return self.client.sources.list()
+    
+    def find_source(self, file_name: str):
+        """Find a source by name."""
+        sources = self.list_sources()
+        for source in sources:
+            if source.file_name == file_name:
+                return source
+        return None
+    
+    def delete(self, file_name: str, verify: bool = True) -> DeletionResult:
+        """Delete a source with optional verification."""
+        
+        # Verify file exists
+        if verify:
+            source = self.find_source(file_name)
+            if not source:
+                return DeletionResult(
+                    success=False,
+                    file_name=file_name,
+                    message="File not found",
+                    error="NotFoundError"
+                )
+        
+        # Perform deletion
+        try:
+            result = self.client.sources.delete(file_name=file_name)
+            return DeletionResult(
+                success=True,
+                file_name=result.file_name,
+                message=result.message
+            )
+        except graphor.NotFoundError as e:
+            return DeletionResult(
+                success=False,
+                file_name=file_name,
+                message="File not found",
+                error=str(e)
+            )
+        except graphor.APIStatusError as e:
+            return DeletionResult(
+                success=False,
+                file_name=file_name,
+                message=f"API error: {e.status_code}",
+                error=str(e)
+            )
+    
+    def delete_by_type(self, file_type: str, confirm: bool = True) -> list[DeletionResult]:
+        """Delete all sources of a specific type."""
+        sources = self.list_sources()
+        targets = [s for s in sources if s.file_type == file_type]
+        
+        if not targets:
+            print(f"No sources with type '{file_type}' found")
+            return []
+        
+        print(f"Found {len(targets)} sources with type '{file_type}':")
+        for source in targets:
+            print(f"  - {source.file_name}")
+        
+        if confirm:
+            confirmation = input(f"\nDelete all {len(targets)} {file_type} files? (yes/no): ")
+            if confirmation.lower() != "yes":
+                print("Cancelled")
+                return []
+        
+        results = []
+        for source in targets:
+            result = self.delete(source.file_name, verify=False)
+            results.append(result)
+            status = "✅" if result.success else "❌"
+            print(f"{status} {source.file_name}: {result.message}")
+        
+        return results
+    
+    def delete_by_status(self, status: str, confirm: bool = True) -> list[DeletionResult]:
+        """Delete all sources with a specific status."""
+        sources = self.list_sources()
+        targets = [s for s in sources if s.status == status]
+        
+        if not targets:
+            print(f"No sources with status '{status}' found")
+            return []
+        
+        print(f"Found {len(targets)} sources with status '{status}':")
+        for source in targets:
+            print(f"  - {source.file_name}")
+        
+        if confirm:
+            confirmation = input(f"\nDelete all {len(targets)} {status} sources? (yes/no): ")
+            if confirmation.lower() != "yes":
+                print("Cancelled")
+                return []
+        
+        results = []
+        for source in targets:
+            result = self.delete(source.file_name, verify=False)
+            results.append(result)
+            status_icon = "✅" if result.success else "❌"
+            print(f"{status_icon} {source.file_name}: {result.message}")
+        
+        return results
+
+# Usage
+manager = DocumentManager()
+
+# Delete a single file
+result = manager.delete("old_document.pdf")
+print(f"Deleted: {result.success}")
+
+# Delete all PDFs
+results = manager.delete_by_type("pdf")
+
+# Delete all failed sources
+results = manager.delete_by_status("Failed")
+```
+
+### Archival Tool with Dry Run
+
+Test deletions before executing them:
+
+```python
+from graphor import Graphor
+import graphor
+from typing import Optional
+
+client = Graphor()
+
+def archive_sources(
+    file_types: Optional[list[str]] = None,
+    statuses: Optional[list[str]] = None,
+    min_size_mb: Optional[float] = None,
+    max_size_mb: Optional[float] = None,
+    dry_run: bool = True
+) -> dict:
+    """
+    Archive sources based on criteria.
+    Use dry_run=True to see what would be deleted without actually deleting.
+    """
+    
+    print("🔍 Analyzing sources for archival...")
+    sources = client.sources.list()
+    
+    # Apply filters
+    candidates = []
+    for source in sources:
+        # File type filter
+        if file_types and source.file_type not in file_types:
+            continue
+        
+        # Status filter
+        if statuses and source.status not in statuses:
+            continue
+        
+        # Size filters
+        size_mb = source.file_size / (1024 * 1024)
+        if min_size_mb and size_mb < min_size_mb:
+            continue
+        if max_size_mb and size_mb > max_size_mb:
+            continue
+        
+        candidates.append(source)
+    
+    if not candidates:
+        print("No sources match the criteria")
+        return {"candidates": 0}
+    
+    # Show summary
+    total_size = sum(s.file_size for s in candidates)
+    total_size_mb = total_size / (1024 * 1024)
+    
+    print(f"\n📋 Found {len(candidates)} sources matching criteria:")
+    for source in candidates:
+        size_mb = source.file_size / (1024 * 1024)
+        print(f"  - {source.file_name} ({source.file_type}, {size_mb:.1f}MB, {source.status})")
+    
+    print(f"\nTotal size to be freed: {total_size_mb:.1f}MB")
+    
+    if dry_run:
+        print("\n🔬 DRY RUN - No files will be deleted")
+        print("Set dry_run=False to perform actual deletion")
+        return {
+            "dry_run": True,
+            "candidates": len(candidates),
+            "total_size_mb": total_size_mb,
+            "files": [s.file_name for s in candidates]
+        }
+    
+    # Confirm and delete
+    confirmation = input(f"\n⚠️  Delete {len(candidates)} sources permanently? (type 'DELETE'): ")
+    if confirmation != "DELETE":
+        print("❌ Archival cancelled")
+        return {"cancelled": True}
+    
+    deleted = []
+    failed = []
+    
+    for source in candidates:
+        try:
+            client.sources.delete(file_name=source.file_name)
+            deleted.append(source.file_name)
+            print(f"✅ Archived: {source.file_name}")
+        except graphor.APIStatusError as e:
+            failed.append({"file_name": source.file_name, "error": str(e)})
+            print(f"❌ Failed: {source.file_name} - {e}")
+    
+    return {
+        "deleted": deleted,
+        "failed": failed,
+        "total_deleted": len(deleted),
+        "size_freed_mb": sum(
+            s.file_size for s in candidates if s.file_name in deleted
+        ) / (1024 * 1024)
+    }
+
+# Usage examples
+
+# Dry run: see what would be deleted
+archive_sources(
+    file_types=["tmp", "test"],
+    dry_run=True
+)
+
+# Archive all failed sources (dry run first)
+archive_sources(
+    statuses=["Failed"],
+    dry_run=True
+)
+
+# Archive large files over 50MB (dry run)
+archive_sources(
+    min_size_mb=50,
+    dry_run=True
+)
+
+# Actually delete failed sources
+archive_sources(
+    statuses=["Failed"],
+    dry_run=False  # This will delete!
+)
+```
+
+## Error Reference
+
+| Error Type | Status Code | Description |
+|------------|-------------|-------------|
+| `BadRequestError` | 400 | Invalid request format or missing file name |
+| `AuthenticationError` | 401 | Invalid or missing API key |
+| `PermissionDeniedError` | 403 | Access denied to the specified project |
+| `NotFoundError` | 404 | File not found in the project |
+| `RateLimitError` | 429 | Too many requests, please retry after waiting |
+| `InternalServerError` | ≥500 | Server-side error during deletion |
+| `APIConnectionError` | N/A | Network connectivity issues |
+| `APITimeoutError` | N/A | Request timed out |
+
+## Best Practices
+
+### Pre-Deletion Verification
+
+Always verify files exist before deletion:
+
+```python
+# Verify file exists before deleting
+sources = client.sources.list()
+file_names = [s.file_name for s in sources]
+
+if "document.pdf" in file_names:
+    client.sources.delete(file_name="document.pdf")
+else:
+    print("File not found")
+```
+
+### Safety Measures
+
+- **Implement confirmation prompts** in interactive applications
+- **Log all deletion operations** for audit trails
+- **Use dry_run patterns** to preview deletions before executing
+- **Test with non-production data** when implementing deletion features
+
+### Error Handling
+
+- **Implement retry logic** for transient network errors (not for 404/403 errors)
+- **Validate file names** before making deletion requests
+- **Handle batch operations** carefully to avoid partial failures
+
+```python
+# Retry logic for transient errors
+from graphor import Graphor
+import graphor
+
+client = Graphor(max_retries=3)  # Automatic retries for transient errors
+
+try:
+    result = client.sources.delete(file_name="document.pdf")
+except graphor.NotFoundError:
+    # Don't retry - file doesn't exist
+    pass
+except graphor.APIConnectionError:
+    # Already retried by SDK
+    pass
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="file-xmark" title="File not found errors">
+    **Causes**: File doesn't exist, wrong name, or already deleted
+    
+    **Solutions**:
+    - Use `client.sources.list()` to verify exact file names
+    - Check for case sensitivity (file names are case-sensitive)
+    - Verify you're using the correct project/API key
+    
+    ```python
+    # List all files to find the correct name
+    sources = client.sources.list()
+    for s in sources:
+        print(s.file_name)
+    ```
+  </Accordion>
+  
+  <Accordion icon="key" title="Authentication failures">
+    **Causes**: Invalid token, token revoked, or wrong project access
+    
+    **Solutions**:
+    - Verify API key format (should start with "grlm_")
+    - Check token status in the Graphor dashboard
+    - Ensure token has delete permissions for the project
+  </Accordion>
+  
+  <Accordion icon="clock" title="Deletion timeouts">
+    **Causes**: Large files, complex cleanup operations, or server load
+    
+    **Solutions**:
+    - Increase request timeout
+    
+    ```python
+    client = Graphor(timeout=120.0)
+    # Or per-request
+    client.with_options(timeout=120.0).sources.delete(file_name="large_doc.pdf")
+    ```
+  </Accordion>
+  
+  <Accordion icon="flow-chart" title="Flow synchronization issues">
+    **Causes**: Flows updating asynchronously after deletion
+    
+    **Solutions**:
+    - Allow time for flow updates to propagate
+    - Refresh flow data in your application
+    - Reconfigure affected flows manually if needed
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After successfully deleting your documents:
+
+<CardGroup cols={2}>
+  <Card
+    title="List Sources"
+    icon="list"
+    href="/sdk/sources/list"
+  >
+    Verify the deletion and view remaining documents in your project
+  </Card>
+  <Card
+    title="Upload Source"
+    icon="arrow-up-from-bracket"
+    href="/sdk/sources/upload"
+  >
+    Add new documents to replace the deleted ones
+  </Card>
+  <Card
+    title="Parse Source"
+    icon="gears"
+    href="/sdk/sources/process"
+  >
+    Reprocess remaining documents with different methods
+  </Card>
+  <Card
+    title="List Parse Results"
+    icon="file-dashed-line"
+    href="/sdk/sources/list-elements"
+  >
+    Retrieve structured elements from your documents
+  </Card>
+</CardGroup>

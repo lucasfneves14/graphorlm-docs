@@ -1,0 +1,666 @@
+---
+title: 'Parse Source'
+description: 'Reprocess uploaded documents with different parsing methods using the Graphor Python SDK'
+---
+
+The `parse` method allows you to reprocess previously uploaded documents using different parsing and classification methods. This enables you to optimize document processing for better text extraction, structure recognition, and retrieval performance without re-uploading the file.
+
+## Method Overview
+
+<CardGroup cols={2}>
+  <Card title="Sync Method" icon="code">
+    **`client.sources.parse()`**
+  </Card>
+  <Card title="Async Method" icon="code">
+    **`await client.sources.parse()`**
+  </Card>
+</CardGroup>
+
+## Method Signature
+
+```python
+client.sources.parse(
+    file_name: str,                      # Required
+    partition_method: PartitionMethod,   # Optional
+    timeout: float | None = None
+) -> PublicSource
+```
+
+## Parameters
+
+| Parameter | Type | Description | Required |
+|-----------|------|-------------|----------|
+| `file_name` | `str` | Name of the previously uploaded file to reprocess | ✅ Yes |
+| `partition_method` | `PartitionMethod` | Processing method to use (see available methods below) | No |
+| `timeout` | `float` | Request timeout in seconds | No |
+
+### Available Processing Methods
+
+The `PartitionMethod` type accepts the following literal values:
+
+<AccordionGroup>
+  <Accordion icon="gauge-simple" title="Fast (basic)">
+    **Value**: `"basic"`
+    
+    **Best for**: Simple text documents, quick processing
+    
+    - Fast processing with heuristic classification
+    - No OCR processing
+    - Suitable for plain text files and well-structured documents
+    - Recommended for testing and development
+  </Accordion>
+  
+  <Accordion icon="brain" title="Balanced (hi_res)">
+    **Value**: `"hi_res"`
+    
+    **Best for**: Complex documents with varied layouts
+    
+    - OCR-based text extraction
+    - AI-powered document structure classification using Hi-Res model
+    - Better recognition of tables, figures, and document elements
+    - Enhanced accuracy for complex layouts
+  </Accordion>
+  
+  <Accordion icon="sparkles" title="Accurate (hi_res_ft)">
+    **Value**: `"hi_res_ft"`
+    
+    **Best for**: Premium accuracy, specialized documents
+    
+    - OCR-based text extraction
+    - Fine-tuned AI model for document classification
+    - Highest accuracy for document structure recognition
+    - Optimized for specialized and complex document types
+    - **Note**: Premium feature
+  </Accordion>
+  
+  <Accordion icon="bars" title="VLM (mai)">
+    **Value**: `"mai"`
+    
+    **Best for**: Text-first parsing, manuscripts, and handwritten documents
+    
+    - Our best text-first parsing with high-quality output
+    - Does not output bounding boxes or page layout (no bbox)
+    - Best for MANUSCRIPT and HANDWRITTEN documents
+    - Performs page annotation (page-level labels and context)
+    - Performs document annotation (document-level labels and summaries)
+    - Performs image annotation when images are present in the document
+    - Best-in-class text parsing quality; element classification is limited
+  </Accordion>
+  
+  <Accordion icon="robot" title="Agentic (graphorlm)">
+    **Value**: `"graphorlm"`
+    
+    **Best for**: Complex layouts, multi-page tables, diagrams, and images
+    
+    - Our highest parsing setting for complex layouts
+    - Rich annotations for images and complex elements
+    - Uses agentic processing for enhanced understanding
+    - Advanced document understanding capabilities
+  </Accordion>
+</AccordionGroup>
+
+### Method Reference
+
+| Method | `partition_method` Value |
+|--------|--------------------------|
+| Fast | `"basic"` |
+| Balanced | `"hi_res"` |
+| Accurate | `"hi_res_ft"` |
+| VLM | `"mai"` |
+| Agentic | `"graphorlm"` |
+
+## Processing Method Comparison
+
+| Method | Speed | Text Parsing | Element Classification | Bounding Boxes | Best Use Cases | OCR |
+|--------|-------|--------------|------------------------|----------------|----------------|-----|
+| **Fast** | ⚡⚡⚡ | ⭐⭐ | ⭐⭐ | ✅ (limited) | Simple text files, testing | ❌ |
+| **Balanced** | ⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ | Complex layouts, mixed content | ✅ |
+| **Accurate** | ⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ | Premium accuracy needed | ✅ |
+| **VLM** | ⚡⚡⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ❌ | Manuscripts, handwritten documents | ✅ |
+| **Agentic** | ⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ | Complex layouts, multi-page tables, diagrams | ✅ |
+
+## Response Object
+
+The method returns a `PublicSource` object with the following properties:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `status` | `str` | Processing result (typically "success") |
+| `message` | `str` | Human-readable success message |
+| `file_name` | `str` | Name of the processed file |
+| `file_size` | `int` | Size of the file in bytes |
+| `file_type` | `str` | File extension/type |
+| `file_source` | `str` | Source type of the original file |
+| `project_id` | `str` | UUID of the project containing the file |
+| `project_name` | `str` | Name of the project |
+| `partition_method` | `str \| None` | Processing method that was applied |
+
+## Code Examples
+
+### Basic Usage
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Reprocess a document with the Balanced method
+source = client.sources.parse(
+    file_name="document.pdf",
+    partition_method="hi_res"
+)
+
+print(f"Processed: {source.file_name}")
+print(f"Method: {source.partition_method}")
+print(f"Status: {source.status}")
+```
+
+### Using Different Methods
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Fast processing for simple documents
+source = client.sources.parse(
+    file_name="simple-text.txt",
+    partition_method="basic"
+)
+
+# Balanced for complex layouts
+source = client.sources.parse(
+    file_name="report.pdf",
+    partition_method="hi_res"
+)
+
+# Accurate for premium quality
+source = client.sources.parse(
+    file_name="legal-contract.pdf",
+    partition_method="hi_res_ft"
+)
+
+# VLM for handwritten documents
+source = client.sources.parse(
+    file_name="handwritten-notes.pdf",
+    partition_method="mai"
+)
+
+# Agentic for complex diagrams and tables
+source = client.sources.parse(
+    file_name="technical-manual.pdf",
+    partition_method="graphorlm"
+)
+```
+
+### Async Usage
+
+```python
+import asyncio
+from graphor import AsyncGraphor
+
+async def process_document(file_name: str, method: str):
+    client = AsyncGraphor()
+    
+    source = await client.sources.parse(
+        file_name=file_name,
+        partition_method=method
+    )
+    
+    print(f"Processed: {source.file_name}")
+    print(f"Method: {source.partition_method}")
+    
+    return source
+
+# Run the async function
+asyncio.run(process_document("document.pdf", "hi_res"))
+```
+
+### With Extended Timeout
+
+Processing complex documents can take several minutes. Configure appropriate timeouts:
+
+```python
+from graphor import Graphor
+
+# Configure default timeout for all requests
+client = Graphor(timeout=300.0)  # 5 minutes
+
+source = client.sources.parse(
+    file_name="large-document.pdf",
+    partition_method="graphorlm"
+)
+
+# Or per-request timeout
+source = client.with_options(timeout=600.0).sources.parse(
+    file_name="very-large-document.pdf",
+    partition_method="hi_res_ft"
+)
+```
+
+<Warning>
+  Processing can take several minutes depending on document size, complexity, and the selected processing method. Advanced methods like Balanced, Accurate, VLM and Agentic typically require more time for analysis.
+</Warning>
+
+### Error Handling
+
+```python
+import graphor
+from graphor import Graphor
+
+client = Graphor()
+
+try:
+    source = client.sources.parse(
+        file_name="document.pdf",
+        partition_method="hi_res"
+    )
+    print(f"Processing successful: {source.file_name}")
+    
+except graphor.NotFoundError as e:
+    print(f"File not found: {e}")
+    
+except graphor.BadRequestError as e:
+    print(f"Invalid request (check partition_method): {e}")
+    
+except graphor.AuthenticationError as e:
+    print(f"Invalid API key: {e}")
+    
+except graphor.RateLimitError as e:
+    print(f"Rate limit exceeded. Please wait and retry: {e}")
+    
+except graphor.InternalServerError as e:
+    print(f"Processing failed on server: {e}")
+    
+except graphor.APIConnectionError as e:
+    print(f"Connection error: {e}")
+    
+except graphor.APITimeoutError as e:
+    print(f"Request timed out. Try increasing timeout: {e}")
+```
+
+## Advanced Examples
+
+### Automatic Quality Improvement
+
+Progressively try more advanced processing methods until quality is satisfactory:
+
+```python
+from graphor import Graphor
+import graphor
+
+client = Graphor(timeout=300.0)
+
+def improve_processing_quality(file_name: str):
+    """Automatically upgrade processing method for better quality."""
+    methods = ["basic", "hi_res", "hi_res_ft", "mai", "graphorlm"]
+    
+    for method in methods:
+        try:
+            print(f"Trying {method} method...")
+            source = client.sources.parse(
+                file_name=file_name,
+                partition_method=method
+            )
+            
+            # Add your quality assessment logic here
+            if assess_quality(source):
+                print(f"✅ Success with {method} method")
+                return source
+            else:
+                print(f"⚠️ Quality insufficient with {method}, trying next...")
+                
+        except graphor.APIStatusError as e:
+            print(f"❌ Failed with {method}: {e}")
+            continue
+    
+    raise Exception("All processing methods failed or produced insufficient quality")
+
+def assess_quality(source) -> bool:
+    """Add your quality assessment logic here."""
+    # Example: check if processing was successful
+    return source.status == "success"
+
+# Usage
+try:
+    result = improve_processing_quality("complex-document.pdf")
+    print(f"Final result: {result.partition_method}")
+except Exception as e:
+    print(f"Error: {e}")
+```
+
+### Batch Reprocessing
+
+Reprocess multiple files with the same method:
+
+```python
+from graphor import Graphor
+import graphor
+import time
+
+client = Graphor(timeout=300.0)
+
+def batch_reprocess(file_names: list[str], method: str):
+    """Reprocess multiple files with the same method."""
+    results = []
+    failed = []
+    
+    for file_name in file_names:
+        try:
+            print(f"Processing {file_name} with {method}...")
+            source = client.sources.parse(
+                file_name=file_name,
+                partition_method=method
+            )
+            results.append(source)
+            print(f"✅ {file_name} processed successfully")
+            
+            # Small delay between requests
+            time.sleep(1.0)
+            
+        except graphor.APIStatusError as e:
+            print(f"❌ Failed to process {file_name}: {e}")
+            failed.append({"file_name": file_name, "error": str(e)})
+    
+    print(f"\nSummary: {len(results)} successful, {len(failed)} failed")
+    return results, failed
+
+# Usage
+files = ["doc1.pdf", "doc2.pdf", "doc3.pdf"]
+successful, failed = batch_reprocess(files, "hi_res")
+```
+
+### Async Batch Processing
+
+Process multiple files concurrently for better performance:
+
+```python
+import asyncio
+from graphor import AsyncGraphor
+import graphor
+
+async def process_single(client: AsyncGraphor, file_name: str, method: str):
+    """Process a single file."""
+    try:
+        source = await client.sources.parse(
+            file_name=file_name,
+            partition_method=method
+        )
+        return {"file_name": file_name, "status": "success", "source": source}
+    except graphor.APIStatusError as e:
+        return {"file_name": file_name, "status": "failed", "error": str(e)}
+
+async def batch_reprocess_async(file_names: list[str], method: str, max_concurrent: int = 3):
+    """Reprocess multiple files with controlled concurrency."""
+    client = AsyncGraphor(timeout=300.0)
+    
+    # Use semaphore to limit concurrent requests
+    semaphore = asyncio.Semaphore(max_concurrent)
+    
+    async def process_with_semaphore(file_name: str):
+        async with semaphore:
+            print(f"Processing {file_name}...")
+            result = await process_single(client, file_name, method)
+            status_icon = "✅" if result["status"] == "success" else "❌"
+            print(f"{status_icon} {file_name}: {result['status']}")
+            return result
+    
+    tasks = [process_with_semaphore(f) for f in file_names]
+    results = await asyncio.gather(*tasks)
+    
+    successful = [r for r in results if r["status"] == "success"]
+    failed = [r for r in results if r["status"] == "failed"]
+    
+    print(f"\nSummary: {len(successful)} successful, {len(failed)} failed")
+    return results
+
+# Usage
+files = ["doc1.pdf", "doc2.pdf", "doc3.pdf", "doc4.pdf", "doc5.pdf"]
+results = asyncio.run(batch_reprocess_async(files, "hi_res", max_concurrent=3))
+```
+
+### Processing with Progress Tracking
+
+```python
+from graphor import Graphor
+import graphor
+import time
+from typing import TypedDict
+
+class ProcessingTask(TypedDict):
+    file_name: str
+    method: str
+
+client = Graphor(timeout=300.0)
+
+def process_with_progress(tasks: list[ProcessingTask]):
+    """Process multiple files with progress tracking."""
+    total = len(tasks)
+    completed = 0
+    results = []
+    
+    print(f"Starting batch processing of {total} files...\n")
+    
+    for task in tasks:
+        file_name = task["file_name"]
+        method = task["method"]
+        
+        try:
+            print(f"[{completed + 1}/{total}] Processing {file_name} with {method}...")
+            start_time = time.time()
+            
+            source = client.sources.parse(
+                file_name=file_name,
+                partition_method=method
+            )
+            
+            duration = time.time() - start_time
+            completed += 1
+            
+            results.append({
+                "file_name": file_name,
+                "method": method,
+                "status": "success",
+                "duration": duration,
+                "source": source
+            })
+            
+            print(f"✅ Completed {file_name} in {duration:.1f}s")
+            
+        except graphor.APIStatusError as e:
+            completed += 1
+            results.append({
+                "file_name": file_name,
+                "method": method,
+                "status": "failed",
+                "error": str(e)
+            })
+            print(f"❌ Failed {file_name}: {e}")
+        
+        # Progress update
+        progress = (completed / total) * 100
+        print(f"Progress: {progress:.1f}% ({completed}/{total})\n")
+        
+        # Small delay between requests
+        time.sleep(0.5)
+    
+    return results
+
+# Usage
+processing_queue = [
+    {"file_name": "document1.pdf", "method": "hi_res"},
+    {"file_name": "document2.pdf", "method": "hi_res_ft"},
+    {"file_name": "document3.pdf", "method": "mai"}
+]
+
+results = process_with_progress(processing_queue)
+
+# Print final summary
+successful = [r for r in results if r["status"] == "success"]
+failed = [r for r in results if r["status"] == "failed"]
+print(f"\n{'='*50}")
+print(f"Final Summary: {len(successful)} successful, {len(failed)} failed")
+```
+
+## When to Reprocess
+
+<AccordionGroup>
+  <Accordion icon="eye" title="Poor text extraction">
+    **Symptoms**: Missing text, garbled characters, incomplete content
+    
+    **Recommended methods**: 
+    - `"hi_res"` or `"hi_res_ft"` for complex layouts
+    - `"mai"` for text-only documents when bounding boxes are not required
+  </Accordion>
+  
+  <Accordion icon="table" title="Table detection issues">
+    **Symptoms**: Tables not properly recognized, merged cells, structure lost
+    
+    **Recommended methods**:
+    - `"hi_res"` for better table detection
+    - `"hi_res_ft"` for complex table structures
+    - `"graphorlm"` for multi-page tables
+  </Accordion>
+  
+  <Accordion icon="image" title="Image and figure handling">
+    **Symptoms**: Missing captions, poor figure recognition
+    
+    **Recommended methods**:
+    - `"hi_res"` for figure detection
+    - `"hi_res_ft"` for comprehensive image analysis
+    - `"graphorlm"` for rich image annotations
+  </Accordion>
+  
+  <Accordion icon="list" title="Document structure problems">
+    **Symptoms**: Headers/footers mixed with content, poor section detection
+    
+    **Recommended methods**:
+    - `"hi_res"` for structure recognition
+    - `"hi_res_ft"` for complex document hierarchies
+    - `"graphorlm"` for enhanced semantic structure and relationships
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+### Processing Strategy
+
+- **Start with Fast (`"basic"`)**: For testing and simple documents
+- **Upgrade gradually**: Move to `"hi_res"` → `"hi_res_ft"` → `"mai"` → `"graphorlm"` based on needs
+- **Monitor results**: Use document preview to evaluate processing quality
+- **Consider efficiency vs. quality**: Advanced methods take longer but provide better results
+
+### Performance Optimization
+
+- **Batch processing**: Process multiple files sequentially rather than simultaneously
+- **Method selection**: Choose the appropriate method for your document types
+- **Timeout handling**: Allow sufficient time for complex processing methods (5+ minutes)
+- **Error recovery**: Implement retry logic for transient failures
+
+### Quality Assessment
+
+After processing, evaluate the results by:
+- Checking text extraction completeness
+- Verifying table and figure recognition
+- Reviewing document structure classification
+- Testing retrieval quality in your RAG pipeline
+
+## Error Reference
+
+| Error Type | Status Code | Description |
+|------------|-------------|-------------|
+| `BadRequestError` | 400 | Invalid request format or partition method |
+| `AuthenticationError` | 401 | Invalid or missing API key |
+| `PermissionDeniedError` | 403 | Access denied to the specified project |
+| `NotFoundError` | 404 | File not found in the project |
+| `RateLimitError` | 429 | Too many requests, please retry after waiting |
+| `InternalServerError` | ≥500 | Processing failure or server error |
+| `APIConnectionError` | N/A | Network connectivity issues |
+| `APITimeoutError` | N/A | Request timed out |
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="clock" title="Processing timeouts">
+    **Causes**: Large files, complex documents, or heavy server load
+    
+    **Solutions**:
+    - Increase request timeout (5+ minutes recommended)
+    - Try a simpler processing method first
+    - Process during off-peak hours
+    
+    ```python
+    client = Graphor(timeout=600.0)  # 10 minutes
+    ```
+  </Accordion>
+  
+  <Accordion icon="file-xmark" title="File not found errors">
+    **Causes**: Incorrect file name, file deleted, or wrong project
+    
+    **Solutions**:
+    - Verify exact file name (case-sensitive)
+    - Use `client.sources.list()` to check available files
+    - Ensure you're using the correct API key for the project
+    
+    ```python
+    # List all sources to find the correct file name
+    sources = client.sources.list()
+    for source in sources:
+        print(source.file_name)
+    ```
+  </Accordion>
+  
+  <Accordion icon="exclamation-triangle" title="Processing failures">
+    **Causes**: Corrupted files, unsupported content, or method incompatibility
+    
+    **Solutions**:
+    - Try a different processing method
+    - Check file integrity
+    - Re-upload the file if necessary using `client.sources.upload()`
+  </Accordion>
+  
+  <Accordion icon="gauge" title="Poor processing quality">
+    **Causes**: Method not suitable for document type, or complex layout
+    
+    **Solutions**:
+    - Upgrade to `"hi_res"` or `"hi_res_ft"` method
+    - Use `"mai"` for manuscripts and handwritten documents
+    - Use `"graphorlm"` for complex layouts with tables and diagrams
+    - Ensure document quality is good
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After successfully processing your documents:
+
+<CardGroup cols={2}>
+  <Card
+    title="List Sources"
+    icon="list"
+    href="/sdk/sources/list"
+  >
+    View all your processed documents and their current status
+  </Card>
+  <Card
+    title="Upload Source"
+    icon="arrow-up-from-bracket"
+    href="/sdk/sources/upload"
+  >
+    Upload new documents to your project
+  </Card>
+  <Card
+    title="List Parse Results"
+    icon="file-dashed-line"
+    href="/sdk/sources/list-elements"
+  >
+    Retrieve structured elements from processed documents
+  </Card>
+  <Card
+    title="Delete Source"
+    icon="trash"
+    href="/sdk/sources/delete"
+  >
+    Remove documents that are no longer needed from your project
+  </Card>
+</CardGroup>

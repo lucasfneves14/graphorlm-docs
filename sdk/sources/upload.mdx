@@ -1,0 +1,679 @@
+---
+title: 'Upload Sources'
+description: 'Upload sources (files, web pages, GitHub, YouTube) to your project using the Graphor Python SDK'
+---
+
+This page documents how to upload content to your Graphor project using the **Python SDK** — whether that content is a **local file**, a **public web page URL**, a **public GitHub repository**, or a **public YouTube video**.
+
+## Available Methods
+
+<CardGroup cols={2}>
+  <Card title="Upload a File" icon="arrow-up-from-bracket" href="#upload-a-file">
+    **`client.sources.upload()`**
+    
+    Upload local files (PDF, DOCX, images, audio, video, etc.)
+  </Card>
+  <Card title="Upload from URL" icon="link" href="#upload-from-url">
+    **`client.sources.upload_url()`**
+    
+    Scrape and ingest a public web page by URL
+  </Card>
+  <Card title="Upload from GitHub" icon="code-branch" href="#upload-from-github">
+    **`client.sources.upload_github()`**
+    
+    Ingest content from a public GitHub repository
+  </Card>
+  <Card title="Upload from YouTube" icon="video" href="#upload-from-youtube">
+    **`client.sources.upload_youtube()`**
+    
+    Ingest content from a public YouTube video URL
+  </Card>
+</CardGroup>
+
+## Installation
+
+Install the Graphor SDK from PyPI:
+
+```bash
+pip install graphor
+```
+
+<Note>
+  Python 3.9 or higher is required.
+</Note>
+
+## Authentication
+
+All SDK methods require authentication using an API key. You can provide your API key in two ways:
+
+### Environment Variable (Recommended)
+
+Set the `GRAPHOR_API_KEY` environment variable:
+
+```bash
+export GRAPHOR_API_KEY="grlm_your_api_key_here"
+```
+
+Then initialize the client without any arguments:
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+```
+
+### Direct Initialization
+
+Pass the API key directly to the client:
+
+```python
+from graphor import Graphor
+
+client = Graphor(api_key="grlm_your_api_key_here")
+```
+
+<Warning>
+  Never hardcode API keys in your source code. Use environment variables or a secrets manager.
+</Warning>
+
+<Note>
+  Learn how to create and manage API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Upload a File
+
+Upload a local file to your Graphor project for processing.
+
+### Method Signature
+
+```python
+client.sources.upload(
+    file: FileTypes,  # Required
+    timeout: float | None = None
+) -> PublicSource
+```
+
+### Parameters
+
+| Parameter | Type | Description | Required |
+|-----------|------|-------------|----------|
+| `file` | `FileTypes` | The file to upload. Accepts `bytes`, `Path`, or tuple `(filename, contents, media_type)` | ✅ Yes |
+| `timeout` | `float` | Request timeout in seconds (default: 60) | No |
+
+### File Requirements
+
+<AccordionGroup>
+  <Accordion icon="file-text" title="Supported File Types">
+    Graphor supports a wide range of document formats:
+    
+    **Documents**: PDF, DOC, DOCX, ODT, TXT, TEXT, MD, HTML, HTM
+    
+    **Presentations**: PPT, PPTX
+    
+    **Spreadsheets**: CSV, TSV, XLS, XLSX
+    
+    **Images**: PNG, JPG, JPEG, TIFF, BMP, HEIC
+    
+    **Audio**: MP3, WAV, M4A, OGG, FLAC
+    
+    **Video**: MP4, MOV, AVI, MKV, WEBM
+  </Accordion>
+  
+  <Accordion icon="weight-scale" title="File Size Limits">
+    **Maximum file size**: 100MB per file
+    
+    For larger files, consider:
+    - Compressing the file if possible
+    - Splitting large documents into smaller sections
+    - Using file optimization tools before upload
+  </Accordion>
+</AccordionGroup>
+
+### Response Object
+
+The method returns a `PublicSource` object with the following properties:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `status` | `str` | Processing status (`New`, `Processing`, `Completed`, `Failed`) |
+| `message` | `str` | Human-readable success message |
+| `file_name` | `str` | Name of the uploaded file |
+| `file_size` | `int` | Size of the file in bytes |
+| `file_type` | `str` | File extension/type |
+| `file_source` | `str` | Source type (`local file`) |
+| `project_id` | `str` | UUID of the target project |
+| `project_name` | `str` | Name of the target project |
+| `partition_method` | `str \| None` | Document processing method used |
+
+### Code Examples
+
+#### Upload from File Path
+
+```python
+from pathlib import Path
+from graphor import Graphor
+
+client = Graphor()
+
+# Upload using a Path object
+source = client.sources.upload(
+    file=Path("./document.pdf")
+)
+
+print(f"Uploaded: {source.file_name}")
+print(f"Status: {source.status}")
+print(f"Project ID: {source.project_id}")
+```
+
+#### Upload from Bytes
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Read file content as bytes
+with open("document.pdf", "rb") as f:
+    file_content = f.read()
+
+# Upload raw bytes with filename tuple
+source = client.sources.upload(
+    file=("document.pdf", file_content, "application/pdf")
+)
+
+print(f"Uploaded: {source.file_name}")
+```
+
+#### Async Upload
+
+```python
+import asyncio
+from pathlib import Path
+from graphor import AsyncGraphor
+
+async def upload_document():
+    client = AsyncGraphor()
+    
+    source = await client.sources.upload(
+        file=Path("./document.pdf")
+    )
+    
+    print(f"Uploaded: {source.file_name}")
+    print(f"Status: {source.status}")
+    
+    return source
+
+# Run the async function
+asyncio.run(upload_document())
+```
+
+#### Batch Upload
+
+```python
+from pathlib import Path
+from graphor import Graphor
+
+client = Graphor()
+
+def batch_upload(directory: str):
+    """Upload all supported documents from a directory."""
+    supported_extensions = {'.pdf', '.doc', '.docx', '.txt', '.md', '.html'}
+    uploaded_files = []
+    failed_files = []
+    
+    for file_path in Path(directory).iterdir():
+        if file_path.suffix.lower() in supported_extensions:
+            try:
+                source = client.sources.upload(file=file_path)
+                uploaded_files.append(source.file_name)
+                print(f"✅ Uploaded: {file_path.name}")
+            except Exception as e:
+                failed_files.append((file_path.name, str(e)))
+                print(f"❌ Failed: {file_path.name} - {e}")
+    
+    print(f"\nSummary: {len(uploaded_files)} uploaded, {len(failed_files)} failed")
+    return uploaded_files, failed_files
+
+# Usage
+uploaded, failed = batch_upload("./documents/")
+```
+
+### Error Handling
+
+```python
+import graphor
+from graphor import Graphor
+
+client = Graphor()
+
+try:
+    source = client.sources.upload(
+        file=Path("./document.pdf")
+    )
+    print(f"Upload successful: {source.file_name}")
+except graphor.BadRequestError as e:
+    print(f"Invalid file type or request: {e}")
+except graphor.AuthenticationError as e:
+    print(f"Invalid API key: {e}")
+except graphor.RateLimitError as e:
+    print(f"Rate limit exceeded. Please wait and retry: {e}")
+except graphor.APIConnectionError as e:
+    print(f"Connection error: {e}")
+except graphor.APIStatusError as e:
+    print(f"API error (status {e.status_code}): {e}")
+```
+
+## Upload from URL
+
+Ingest content by scraping a public web page.
+
+### Method Signature
+
+```python
+client.sources.upload_url(
+    url: str,               # Required
+    crawl_urls: bool = False,
+    timeout: float | None = None
+) -> PublicSource
+```
+
+### Parameters
+
+| Parameter | Type | Description | Required |
+|-----------|------|-------------|----------|
+| `url` | `str` | The URL of the web page to scrape | ✅ Yes |
+| `crawl_urls` | `bool` | Whether to crawl and ingest links from the given URL (default: `False`) | No |
+| `timeout` | `float` | Request timeout in seconds | No |
+
+### URL Requirements
+
+<AccordionGroup>
+  <Accordion icon="link" title="Supported URL types">
+    - Public web pages
+    - Pages that render primary content server-side and are reachable without interaction
+  </Accordion>
+  
+  <Accordion icon="shield" title="Access requirements">
+    - The URL must be publicly reachable over HTTPS
+    - Authentication-protected pages are not supported
+  </Accordion>
+</AccordionGroup>
+
+### Code Examples
+
+#### Basic URL Upload
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Scrape a single web page
+source = client.sources.upload_url(
+    url="https://example.com/article"
+)
+
+print(f"Ingested: {source.file_name}")
+print(f"Status: {source.status}")
+```
+
+#### Upload with URL Crawling
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Scrape a page and follow links
+source = client.sources.upload_url(
+    url="https://example.com/documentation",
+    crawl_urls=True
+)
+
+print(f"Ingested: {source.file_name}")
+```
+
+#### Async URL Upload
+
+```python
+import asyncio
+from graphor import AsyncGraphor
+
+async def ingest_webpage(url: str):
+    client = AsyncGraphor()
+    
+    source = await client.sources.upload_url(
+        url=url,
+        crawl_urls=False
+    )
+    
+    print(f"Ingested: {source.file_name}")
+    return source
+
+asyncio.run(ingest_webpage("https://example.com"))
+```
+
+### Error Handling
+
+```python
+import graphor
+from graphor import Graphor
+
+client = Graphor()
+
+try:
+    source = client.sources.upload_url(
+        url="https://example.com/article"
+    )
+    print(f"URL ingested: {source.file_name}")
+except graphor.BadRequestError as e:
+    print(f"Invalid URL: {e}")
+except graphor.APIStatusError as e:
+    print(f"Failed to process URL (status {e.status_code}): {e}")
+```
+
+## Upload from GitHub
+
+Ingest content from a public GitHub repository.
+
+### Method Signature
+
+```python
+client.sources.upload_github(
+    url: str,              # Required
+    timeout: float | None = None
+) -> PublicSource
+```
+
+### Parameters
+
+| Parameter | Type | Description | Required |
+|-----------|------|-------------|----------|
+| `url` | `str` | The GitHub repository URL (e.g., `https://github.com/org/repo`) | ✅ Yes |
+| `timeout` | `float` | Request timeout in seconds | No |
+
+### Repository Requirements
+
+<AccordionGroup>
+  <Accordion icon="link" title="Supported URLs">
+    - Public GitHub repositories
+    - HTTPS URLs (`https://github.com/...`)
+  </Accordion>
+  
+  <Accordion icon="shield" title="Access requirements">
+    - Only public repositories are supported
+    - Private repository ingestion is not supported
+  </Accordion>
+</AccordionGroup>
+
+### Code Examples
+
+#### Basic GitHub Upload
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Ingest a public GitHub repository
+source = client.sources.upload_github(
+    url="https://github.com/organization/repository"
+)
+
+print(f"Ingested: {source.file_name}")
+print(f"Status: {source.status}")
+print(f"Project: {source.project_name}")
+```
+
+#### Async GitHub Upload
+
+```python
+import asyncio
+from graphor import AsyncGraphor
+
+async def ingest_github_repo(repo_url: str):
+    client = AsyncGraphor()
+    
+    source = await client.sources.upload_github(url=repo_url)
+    
+    print(f"Repository ingested: {source.file_name}")
+    return source
+
+asyncio.run(ingest_github_repo("https://github.com/org/repo"))
+```
+
+### Error Handling
+
+```python
+import graphor
+from graphor import Graphor
+
+client = Graphor()
+
+try:
+    source = client.sources.upload_github(
+        url="https://github.com/org/repo"
+    )
+    print(f"GitHub repo ingested: {source.file_name}")
+except graphor.BadRequestError as e:
+    print(f"Invalid GitHub URL: {e}")
+except graphor.NotFoundError as e:
+    print(f"Repository not found or not accessible: {e}")
+except graphor.APIStatusError as e:
+    print(f"Failed to process repository (status {e.status_code}): {e}")
+```
+
+## Upload from YouTube
+
+Ingest content from a public YouTube video.
+
+### Method Signature
+
+```python
+client.sources.upload_youtube(
+    url: str,              # Required
+    timeout: float | None = None
+) -> PublicSource
+```
+
+### Parameters
+
+| Parameter | Type | Description | Required |
+|-----------|------|-------------|----------|
+| `url` | `str` | The YouTube video URL (e.g., `https://www.youtube.com/watch?v=...`) | ✅ Yes |
+| `timeout` | `float` | Request timeout in seconds | No |
+
+### Video Requirements
+
+<AccordionGroup>
+  <Accordion icon="link" title="Supported URLs">
+    - Public YouTube video URLs (HTTPS)
+    - Standard watch URLs (`https://www.youtube.com/watch?v=VIDEO_ID`)
+  </Accordion>
+  
+  <Accordion icon="shield" title="Access requirements">
+    - The video must be publicly accessible
+    - Private or access-restricted videos are not supported
+  </Accordion>
+</AccordionGroup>
+
+### Code Examples
+
+#### Basic YouTube Upload
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Ingest a YouTube video
+source = client.sources.upload_youtube(
+    url="https://www.youtube.com/watch?v=VIDEO_ID"
+)
+
+print(f"Ingested: {source.file_name}")
+print(f"Status: {source.status}")
+```
+
+#### Async YouTube Upload
+
+```python
+import asyncio
+from graphor import AsyncGraphor
+
+async def ingest_youtube_video(video_url: str):
+    client = AsyncGraphor()
+    
+    source = await client.sources.upload_youtube(url=video_url)
+    
+    print(f"Video ingested: {source.file_name}")
+    return source
+
+asyncio.run(ingest_youtube_video("https://www.youtube.com/watch?v=VIDEO_ID"))
+```
+
+### Error Handling
+
+```python
+import graphor
+from graphor import Graphor
+
+client = Graphor()
+
+try:
+    source = client.sources.upload_youtube(
+        url="https://www.youtube.com/watch?v=VIDEO_ID"
+    )
+    print(f"YouTube video ingested: {source.file_name}")
+except graphor.BadRequestError as e:
+    print(f"Invalid YouTube URL: {e}")
+except graphor.NotFoundError as e:
+    print(f"Video not found or not accessible: {e}")
+except graphor.APIStatusError as e:
+    print(f"Failed to process video (status {e.status_code}): {e}")
+```
+
+## Advanced Configuration
+
+### Custom Timeout
+
+For large files or slow connections, you can increase the timeout:
+
+```python
+from graphor import Graphor
+
+client = Graphor(
+    timeout=300.0  # 5 minutes
+)
+
+# Or per-request
+source = client.with_options(timeout=300.0).sources.upload(
+    file=Path("./large-document.pdf")
+)
+```
+
+### Retry Configuration
+
+Configure automatic retries for transient errors:
+
+```python
+from graphor import Graphor
+
+client = Graphor(
+    max_retries=5  # Default is 2
+)
+
+# Or per-request
+source = client.with_options(max_retries=5).sources.upload(
+    file=Path("./document.pdf")
+)
+```
+
+### Accessing Raw Response
+
+Access headers and other response metadata:
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+response = client.sources.with_raw_response.upload(
+    file=Path("./document.pdf")
+)
+
+print(f"Headers: {response.headers}")
+source = response.parse()  # Get the PublicSource object
+print(f"Uploaded: {source.file_name}")
+```
+
+### Using aiohttp for Better Concurrency
+
+For high-concurrency async operations:
+
+```python
+import asyncio
+from graphor import AsyncGraphor, DefaultAioHttpClient
+
+async def upload_many_files(file_paths: list):
+    async with AsyncGraphor(
+        http_client=DefaultAioHttpClient()
+    ) as client:
+        tasks = [
+            client.sources.upload(file=path)
+            for path in file_paths
+        ]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        return results
+
+# Install aiohttp first: pip install graphor[aiohttp]
+```
+
+## Error Reference
+
+| Error Type | Status Code | Description |
+|------------|-------------|-------------|
+| `BadRequestError` | 400 | Invalid file type, missing filename, or malformed request |
+| `AuthenticationError` | 401 | Invalid or missing API key |
+| `PermissionDeniedError` | 403 | Access denied to the specified project |
+| `NotFoundError` | 404 | Project or source not found |
+| `RateLimitError` | 429 | Too many requests, please retry after waiting |
+| `InternalServerError` | ≥500 | Server-side processing error |
+| `APIConnectionError` | N/A | Network connectivity issues |
+| `APITimeoutError` | N/A | Request timed out |
+
+## Next Steps
+
+After successfully uploading your documents:
+
+<CardGroup cols={2}>
+  <Card
+    title="Parse Source"
+    icon="gears"
+    href="/sdk/sources/process"
+  >
+    Reprocess documents with different parsing methods for optimal results
+  </Card>
+  <Card
+    title="List Sources"
+    icon="list"
+    href="/sdk/sources/list"
+  >
+    Retrieve information about all uploaded documents in your project
+  </Card>
+  <Card
+    title="List Parse Results"
+    icon="file-dashed-line"
+    href="/sdk/sources/list-elements"
+  >
+    Retrieve structured elements and partitions from processed documents
+  </Card>
+  <Card
+    title="Delete Source"
+    icon="trash"
+    href="/sdk/sources/delete"
+  >
+    Remove documents that are no longer needed from your project
+  </Card>
+</CardGroup>
+

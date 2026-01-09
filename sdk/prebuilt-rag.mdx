@@ -1,0 +1,800 @@
+---
+title: 'Prebuilt RAG'
+description: 'Retrieve relevant document chunks using semantic search with the Graphor Python SDK'
+---
+
+The `retrieve_chunks` method allows you to retrieve relevant document chunks from your ingested documents using semantic search. It returns the most relevant content for your query, making it ideal for building custom RAG (Retrieval-Augmented Generation) applications with your preferred LLM.
+
+## Method Overview
+
+<CardGroup cols={2}>
+  <Card title="Sync Method" icon="code">
+    **`client.sources.retrieve_chunks()`**
+  </Card>
+  <Card title="Async Method" icon="code">
+    **`await client.sources.retrieve_chunks()`**
+  </Card>
+</CardGroup>
+
+## Method Signature
+
+```python
+client.sources.retrieve_chunks(
+    query: str,                              # Required
+    file_names: list[str] | None = None,     # Optional
+    timeout: float | None = None
+) -> SourceRetrieveChunksResponse
+```
+
+## Parameters
+
+| Parameter | Type | Description | Required |
+|-----------|------|-------------|----------|
+| `query` | `str` | The search query to retrieve relevant chunks | ✅ Yes |
+| `file_names` | `list[str] \| None` | Restrict retrieval to specific documents by file name | No |
+| `timeout` | `float` | Request timeout in seconds | No |
+
+## Response Object
+
+The method returns a `SourceRetrieveChunksResponse` object with the following properties:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `query` | `str` | The original search query |
+| `total` | `int` | Total number of chunks retrieved |
+| `chunks` | `list[Chunk] \| None` | List of retrieved document chunks |
+
+### Chunk Object
+
+Each chunk in the `chunks` list contains:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `text` | `str` | The text content of the chunk |
+| `file_name` | `str \| None` | The source file name |
+| `page_number` | `int \| None` | The page number where the chunk was found |
+| `score` | `float \| None` | The relevance score of the chunk (higher is more relevant) |
+| `metadata` | `dict[str, object] \| None` | Additional metadata for the chunk |
+
+## Code Examples
+
+### Basic Retrieval
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Retrieve relevant chunks for a query
+result = client.sources.retrieve_chunks(
+    query="What are the payment terms?"
+)
+
+print(f"Found {result.total} relevant chunks")
+
+for chunk in result.chunks:
+    print(f"\n--- {chunk.file_name} (page {chunk.page_number}) ---")
+    print(chunk.text)
+    print(f"Relevance: {chunk.score:.2f}")
+```
+
+### Retrieval from Specific Documents
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Restrict retrieval to specific files
+result = client.sources.retrieve_chunks(
+    query="What is the total amount due?",
+    file_names=["invoice-2024.pdf", "invoice-2023.pdf"]
+)
+
+print(f"Found {result.total} chunks from specified files")
+
+for chunk in result.chunks:
+    print(f"[{chunk.file_name}] {chunk.text[:100]}...")
+```
+
+### Async Retrieval
+
+```python
+import asyncio
+from graphor import AsyncGraphor
+
+async def search_documents(query: str):
+    client = AsyncGraphor()
+    
+    result = await client.sources.retrieve_chunks(
+        query=query
+    )
+    
+    print(f"Found {result.total} relevant chunks")
+    return result.chunks
+
+# Run the async function
+chunks = asyncio.run(search_documents("What are the key contract terms?"))
+```
+
+### Error Handling
+
+```python
+import graphor
+from graphor import Graphor
+
+client = Graphor()
+
+try:
+    result = client.sources.retrieve_chunks(
+        query="What are the payment terms?"
+    )
+    print(f"Found {result.total} chunks")
+    
+except graphor.BadRequestError as e:
+    print(f"Invalid request: {e}")
+    
+except graphor.AuthenticationError as e:
+    print(f"Invalid API key: {e}")
+    
+except graphor.NotFoundError as e:
+    print(f"File not found: {e}")
+    
+except graphor.RateLimitError as e:
+    print(f"Rate limit exceeded. Please wait and retry: {e}")
+    
+except graphor.APIConnectionError as e:
+    print(f"Connection error: {e}")
+    
+except graphor.APITimeoutError as e:
+    print(f"Request timed out: {e}")
+```
+
+## Building Custom RAG Pipelines
+
+The prebuilt RAG method is designed to give you full control over your RAG pipeline. Here's how to integrate it with your preferred LLM.
+
+### With OpenAI
+
+```python
+from graphor import Graphor
+from openai import OpenAI
+
+graphor_client = Graphor()
+openai_client = OpenAI()
+
+def retrieve_chunks(query: str, file_names: list[str] | None = None):
+    """Step 1: Retrieve relevant chunks using semantic search."""
+    result = graphor_client.sources.retrieve_chunks(
+        query=query,
+        file_names=file_names
+    )
+    return result.chunks
+
+def build_context(chunks) -> str:
+    """Step 2: Build context from retrieved chunks."""
+    context = ""
+    for chunk in chunks:
+        context += f"\n[Source: {chunk.file_name}, Page {chunk.page_number}]\n"
+        context += chunk.text + "\n"
+    return context
+
+def generate_answer(question: str, context: str) -> str:
+    """Step 3: Generate answer with OpenAI."""
+    response = openai_client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {
+                "role": "system", 
+                "content": "Answer questions based on the provided context. Cite sources when possible."
+            },
+            {
+                "role": "user", 
+                "content": f"Context:\n{context}\n\nQuestion: {question}"
+            }
+        ]
+    )
+    return response.choices[0].message.content
+
+def ask_question(question: str, file_names: list[str] | None = None) -> dict:
+    """Complete RAG pipeline."""
+    chunks = retrieve_chunks(question, file_names)
+    context = build_context(chunks)
+    answer = generate_answer(question, context)
+    
+    return {
+        "answer": answer,
+        "sources": [
+            {"file": c.file_name, "page": c.page_number, "score": c.score}
+            for c in chunks
+        ]
+    }
+
+# Usage
+result = ask_question("What are the payment terms?")
+print(result["answer"])
+print("Sources:", result["sources"])
+```
+
+### With Anthropic Claude
+
+```python
+from graphor import Graphor
+import anthropic
+
+graphor_client = Graphor()
+claude_client = anthropic.Anthropic()
+
+def rag_with_claude(question: str, file_names: list[str] | None = None) -> str:
+    """RAG pipeline using Claude."""
+    # Retrieve chunks
+    result = graphor_client.sources.retrieve_chunks(
+        query=question,
+        file_names=file_names
+    )
+    
+    # Build context
+    context = "\n\n".join([
+        f"[{chunk.file_name}, Page {chunk.page_number}]\n{chunk.text}"
+        for chunk in result.chunks
+    ])
+    
+    # Generate answer with Claude
+    message = claude_client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": f"""Based on the following context, answer the question.
+
+Context:
+{context}
+
+Question: {question}
+
+Please cite sources when answering."""
+            }
+        ]
+    )
+    
+    return message.content[0].text
+
+# Usage
+answer = rag_with_claude("What are the contract obligations?")
+print(answer)
+```
+
+### With Google Gemini
+
+```python
+from graphor import Graphor
+import google.generativeai as genai
+
+graphor_client = Graphor()
+genai.configure(api_key="YOUR_GOOGLE_API_KEY")
+model = genai.GenerativeModel("gemini-pro")
+
+def rag_with_gemini(question: str, file_names: list[str] | None = None) -> str:
+    """RAG pipeline using Google Gemini."""
+    # Retrieve chunks
+    result = graphor_client.sources.retrieve_chunks(
+        query=question,
+        file_names=file_names
+    )
+    
+    # Build context
+    context = "\n\n".join([
+        f"[Source: {chunk.file_name}, Page {chunk.page_number}]\n{chunk.text}"
+        for chunk in result.chunks
+    ])
+    
+    # Generate answer with Gemini
+    prompt = f"""Based on the following context, answer the question.
+
+Context:
+{context}
+
+Question: {question}
+
+Please provide a clear answer and cite the sources."""
+
+    response = model.generate_content(prompt)
+    return response.text
+
+# Usage
+answer = rag_with_gemini("What products are mentioned in the catalog?")
+print(answer)
+```
+
+## Advanced Examples
+
+### Document Search Interface
+
+Build a document search that shows relevant excerpts:
+
+```python
+from graphor import Graphor
+from dataclasses import dataclass
+
+@dataclass
+class SearchResult:
+    text: str
+    file_name: str
+    page_number: int
+    score: float
+    highlight: str  # Text with query highlighted
+
+class DocumentSearcher:
+    def __init__(self, api_key: str | None = None):
+        self.client = Graphor(api_key=api_key) if api_key else Graphor()
+    
+    def search(
+        self, 
+        query: str, 
+        file_names: list[str] | None = None,
+        min_score: float = 0.0,
+        max_results: int = 10
+    ) -> list[SearchResult]:
+        """Search documents and return formatted results."""
+        result = self.client.sources.retrieve_chunks(
+            query=query,
+            file_names=file_names
+        )
+        
+        results = []
+        for chunk in result.chunks or []:
+            # Filter by minimum score
+            if chunk.score and chunk.score < min_score:
+                continue
+            
+            # Highlight query terms in text
+            highlight = self._highlight_text(chunk.text, query)
+            
+            results.append(SearchResult(
+                text=chunk.text,
+                file_name=chunk.file_name or "Unknown",
+                page_number=chunk.page_number or 0,
+                score=chunk.score or 0.0,
+                highlight=highlight
+            ))
+            
+            if len(results) >= max_results:
+                break
+        
+        return results
+    
+    def _highlight_text(self, text: str, query: str) -> str:
+        """Simple highlighting of query terms."""
+        words = query.lower().split()
+        highlighted = text
+        for word in words:
+            # Case-insensitive replacement with markdown bold
+            import re
+            pattern = re.compile(re.escape(word), re.IGNORECASE)
+            highlighted = pattern.sub(f"**{word}**", highlighted)
+        return highlighted
+
+# Usage
+searcher = DocumentSearcher()
+
+results = searcher.search(
+    query="payment terms",
+    min_score=0.7,
+    max_results=5
+)
+
+for result in results:
+    print(f"\n📄 {result.file_name} (Page {result.page_number})")
+    print(f"Score: {result.score:.2f}")
+    print(f"Text: {result.text[:200]}...")
+```
+
+### Async Batch Search
+
+Search multiple queries efficiently with async:
+
+```python
+import asyncio
+from graphor import AsyncGraphor
+
+async def search_single(client: AsyncGraphor, query: str):
+    """Search for a single query."""
+    result = await client.sources.retrieve_chunks(query=query)
+    return {
+        "query": query,
+        "total": result.total,
+        "top_chunk": result.chunks[0].text if result.chunks else None
+    }
+
+async def batch_search(queries: list[str], max_concurrent: int = 5):
+    """Search multiple queries with controlled concurrency."""
+    client = AsyncGraphor()
+    semaphore = asyncio.Semaphore(max_concurrent)
+    
+    async def search_with_semaphore(query: str):
+        async with semaphore:
+            return await search_single(client, query)
+    
+    tasks = [search_with_semaphore(q) for q in queries]
+    results = await asyncio.gather(*tasks)
+    
+    return results
+
+# Usage
+queries = [
+    "What are the payment terms?",
+    "What is the contract duration?",
+    "Who are the parties involved?",
+    "What are the termination conditions?"
+]
+
+results = asyncio.run(batch_search(queries))
+
+for result in results:
+    print(f"Query: {result['query']}")
+    print(f"Found: {result['total']} chunks")
+    print(f"Top result: {result['top_chunk'][:100] if result['top_chunk'] else 'None'}...")
+    print("---")
+```
+
+### RAG with Source Citations
+
+Build a RAG system that properly cites sources:
+
+```python
+from graphor import Graphor
+from dataclasses import dataclass
+from typing import Any
+
+@dataclass
+class Citation:
+    file_name: str
+    page_number: int
+    text_snippet: str
+
+@dataclass
+class RAGResponse:
+    answer: str
+    citations: list[Citation]
+    confidence: float
+
+class CitedRAG:
+    def __init__(self, llm_client: Any):
+        self.graphor = Graphor()
+        self.llm = llm_client  # Your LLM client (OpenAI, Anthropic, etc.)
+    
+    def ask(
+        self, 
+        question: str, 
+        file_names: list[str] | None = None
+    ) -> RAGResponse:
+        """Ask a question with proper source citations."""
+        # Retrieve relevant chunks
+        result = self.graphor.sources.retrieve_chunks(
+            query=question,
+            file_names=file_names
+        )
+        
+        if not result.chunks:
+            return RAGResponse(
+                answer="I couldn't find relevant information to answer this question.",
+                citations=[],
+                confidence=0.0
+            )
+        
+        # Build numbered context for citation
+        context_parts = []
+        citations = []
+        
+        for i, chunk in enumerate(result.chunks, 1):
+            context_parts.append(f"[{i}] {chunk.text}")
+            citations.append(Citation(
+                file_name=chunk.file_name or "Unknown",
+                page_number=chunk.page_number or 0,
+                text_snippet=chunk.text[:100] + "..."
+            ))
+        
+        context = "\n\n".join(context_parts)
+        
+        # Generate answer with citation instructions
+        prompt = f"""Based on the following numbered sources, answer the question.
+When citing information, use the source number in brackets like [1], [2], etc.
+
+Sources:
+{context}
+
+Question: {question}
+
+Answer with citations:"""
+
+        # Use your LLM to generate the answer
+        # This example assumes an OpenAI-compatible interface
+        answer = self._generate_with_llm(prompt)
+        
+        # Calculate confidence based on top chunk scores
+        avg_score = sum(c.score or 0 for c in result.chunks) / len(result.chunks)
+        
+        return RAGResponse(
+            answer=answer,
+            citations=citations,
+            confidence=avg_score
+        )
+    
+    def _generate_with_llm(self, prompt: str) -> str:
+        """Generate response with your LLM. Implement based on your LLM client."""
+        # Example with OpenAI:
+        response = self.llm.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return response.choices[0].message.content
+
+# Usage
+from openai import OpenAI
+
+rag = CitedRAG(llm_client=OpenAI())
+response = rag.ask("What are the payment terms?")
+
+print(f"Answer: {response.answer}")
+print(f"\nConfidence: {response.confidence:.2%}")
+print(f"\nCitations:")
+for i, citation in enumerate(response.citations, 1):
+    print(f"  [{i}] {citation.file_name}, Page {citation.page_number}")
+```
+
+### Multi-Step Reasoning
+
+Build a system that retrieves, reasons, and retrieves again if needed:
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+def multi_step_rag(question: str, max_steps: int = 3) -> dict:
+    """Multi-step RAG with iterative retrieval."""
+    all_chunks = []
+    queries_used = [question]
+    
+    for step in range(max_steps):
+        # Retrieve chunks for current query
+        current_query = queries_used[-1]
+        result = client.sources.retrieve_chunks(query=current_query)
+        
+        if not result.chunks:
+            break
+        
+        all_chunks.extend(result.chunks)
+        
+        # Analyze if we need more information (simplified logic)
+        # In practice, you'd use an LLM to determine follow-up queries
+        if len(all_chunks) >= 5 or step == max_steps - 1:
+            break
+        
+        # Generate follow-up query based on what we found
+        # This is a simplified example; use your LLM for better follow-ups
+        follow_up = generate_follow_up_query(question, all_chunks)
+        if follow_up and follow_up not in queries_used:
+            queries_used.append(follow_up)
+        else:
+            break
+    
+    return {
+        "chunks": all_chunks,
+        "queries_used": queries_used,
+        "steps": len(queries_used)
+    }
+
+def generate_follow_up_query(original_question: str, chunks: list) -> str | None:
+    """Generate a follow-up query. Use your LLM for better results."""
+    # Simplified example - in practice, use an LLM
+    if "payment" in original_question.lower():
+        return "invoice due date late fees"
+    return None
+
+# Usage
+result = multi_step_rag("What are the payment terms and penalties?")
+print(f"Used {result['steps']} retrieval steps")
+print(f"Queries: {result['queries_used']}")
+print(f"Total chunks: {len(result['chunks'])}")
+```
+
+## Use Cases
+
+### Custom RAG Applications
+
+Use this method to build custom RAG pipelines with your preferred LLM:
+
+1. **Retrieve** — Get relevant chunks using semantic search
+2. **Build context** — Format chunks for your LLM prompt
+3. **Generate** — Create answers using any LLM (OpenAI, Anthropic, Google, etc.)
+
+### Document Search
+
+Build document search interfaces that show relevant excerpts:
+
+1. Query for relevant content
+2. Display chunks with file names and page numbers
+3. Allow users to navigate to source documents
+
+### Knowledge Base Q&A
+
+Create custom Q&A systems with full control over:
+
+- Prompt engineering
+- Response formatting
+- Source citations
+- Multi-step reasoning
+
+## Comparison with Chat SDK
+
+| Feature | `retrieve_chunks()` | `ask()` |
+|---------|---------------------|---------|
+| Returns | Raw document chunks | Generated answer |
+| LLM Integration | Bring your own | Built-in |
+| Conversation Memory | No | Yes (with `conversation_id`) |
+| Customization | Full control | Limited |
+| Use Case | Custom RAG pipelines | Quick Q&A |
+
+<Note>
+  Use `retrieve_chunks()` when you need full control over your RAG pipeline. Use `ask()` for quick Q&A with built-in answer generation.
+</Note>
+
+## Best Practices
+
+### Query Optimization
+
+1. **Be specific** — Clear, specific queries return more relevant chunks
+2. **Use natural language** — Write queries as you would ask a person
+3. **Include key terms** — Include important keywords from the domain
+
+### Filtering and Scoring
+
+1. **Use `file_names`** — Restrict to specific documents when you know the source
+2. **Filter by score** — Consider filtering chunks with low relevance scores
+3. **Limit results** — Process only the top N most relevant chunks
+
+```python
+# Example: Filter low-score chunks
+result = client.sources.retrieve_chunks(query="payment terms")
+
+# Only use chunks with high relevance
+high_quality_chunks = [
+    chunk for chunk in result.chunks 
+    if chunk.score and chunk.score > 0.7
+]
+```
+
+### Context Building
+
+1. **Include metadata** — Add file names and page numbers to your context
+2. **Order by relevance** — Put highest-scoring chunks first
+3. **Limit context size** — Don't exceed your LLM's context window
+
+```python
+# Example: Build context with metadata
+def build_context(chunks, max_chunks: int = 5) -> str:
+    # Sort by score (highest first)
+    sorted_chunks = sorted(
+        chunks, 
+        key=lambda c: c.score or 0, 
+        reverse=True
+    )[:max_chunks]
+    
+    context_parts = []
+    for chunk in sorted_chunks:
+        source = f"[{chunk.file_name}, Page {chunk.page_number}]"
+        context_parts.append(f"{source}\n{chunk.text}")
+    
+    return "\n\n".join(context_parts)
+```
+
+### Error Handling
+
+1. **Handle empty results** — Check if chunks were returned
+2. **Implement retries** — Use the SDK's built-in retry mechanism
+3. **Set timeouts** — Configure appropriate timeouts for your use case
+
+```python
+# Configure retries and timeout
+client = Graphor(max_retries=3, timeout=60.0)
+
+# Check for empty results
+result = client.sources.retrieve_chunks(query="...")
+if not result.chunks:
+    print("No relevant chunks found")
+```
+
+## Error Reference
+
+| Error Type | Status Code | Description |
+|------------|-------------|-------------|
+| `BadRequestError` | 400 | Invalid parameters |
+| `AuthenticationError` | 401 | Invalid or missing API key |
+| `PermissionDeniedError` | 403 | Access denied to the project |
+| `NotFoundError` | 404 | Specified file not found |
+| `RateLimitError` | 429 | Too many requests, please retry after waiting |
+| `InternalServerError` | ≥500 | Server-side error |
+| `APIConnectionError` | N/A | Network connectivity issues |
+| `APITimeoutError` | N/A | Request timed out |
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="magnifying-glass" title="No results returned">
+    **Causes**: Query too specific, no matching content, or files not processed
+    
+    **Solutions**:
+    - Try a broader, more general query
+    - Verify files have been uploaded and processed
+    - Remove `file_names` filter to search all documents
+    - Check document processing status with `client.sources.list()`
+  </Accordion>
+  
+  <Accordion icon="star" title="Low relevance scores">
+    **Causes**: Query doesn't match document content well
+    
+    **Solutions**:
+    - Rephrase the query using terms from your documents
+    - Be more specific about what you're looking for
+    - Check if documents contain the information you need
+  </Accordion>
+  
+  <Accordion icon="file-xmark" title="File not found errors">
+    **Causes**: Incorrect file name or file not in project
+    
+    **Solutions**:
+    - Verify exact file names (case-sensitive)
+    - Use `client.sources.list()` to see available files
+    - Ensure files have been successfully processed
+  </Accordion>
+  
+  <Accordion icon="clock" title="Slow response times">
+    **Causes**: Large document corpus or complex queries
+    
+    **Solutions**:
+    - Use `file_names` to limit search scope
+    - Increase timeout value
+    - Process queries in batches if needed
+    
+    ```python
+    client = Graphor(timeout=120.0)  # 2 minutes
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After mastering document retrieval:
+
+<CardGroup cols={2}>
+  <Card
+    title="Chat with Documents"
+    icon="comments"
+    href="/sdk/chat"
+  >
+    Use built-in LLM for quick Q&A without custom integration
+  </Card>
+  <Card
+    title="Extract Structured Data"
+    icon="table"
+    href="/sdk/extract"
+  >
+    Extract structured data from documents using JSON Schema
+  </Card>
+  <Card
+    title="Upload Documents"
+    icon="arrow-up-from-bracket"
+    href="/sdk/sources/upload"
+  >
+    Add more documents to your knowledge base
+  </Card>
+  <Card
+    title="RAG Quickstart Guide"
+    icon="bolt"
+    href="/guides/rag-quickstart"
+  >
+    Learn best practices for building RAG applications
+  </Card>
+</CardGroup>

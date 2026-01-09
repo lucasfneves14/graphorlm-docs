@@ -1,0 +1,908 @@
+---
+title: 'Data Extraction'
+description: 'Extract structured data from documents using JSON Schema with the Graphor Python SDK'
+---
+
+The `extract` method allows you to extract structured information from your documents using standard JSON Schema and natural language instructions. This is ideal for document processing pipelines that need to convert unstructured documents into structured data.
+
+## Method Overview
+
+<CardGroup cols={2}>
+  <Card title="Sync Method" icon="code">
+    **`client.sources.extract()`**
+  </Card>
+  <Card title="Async Method" icon="code">
+    **`await client.sources.extract()`**
+  </Card>
+</CardGroup>
+
+## Method Signature
+
+```python
+client.sources.extract(
+    file_names: list[str],           # Required
+    output_schema: dict[str, object], # Required
+    user_instruction: str,            # Required
+    timeout: float | None = None
+) -> SourceExtractResponse
+```
+
+## Parameters
+
+| Parameter | Type | Description | Required |
+|-----------|------|-------------|----------|
+| `file_names` | `list[str]` | List of file names to extract data from | ✅ Yes |
+| `output_schema` | `dict[str, object]` | JSON Schema defining the structure of the extracted data | ✅ Yes |
+| `user_instruction` | `str` | Natural language instructions to guide the extraction | ✅ Yes |
+| `timeout` | `float` | Request timeout in seconds | No |
+
+### Output Schema
+
+The `output_schema` parameter accepts a standard [JSON Schema](https://json-schema.org/) object. This defines the structure of the data you want to extract from your documents.
+
+<AccordionGroup>
+  <Accordion icon="check" title="Supported Schema Features">
+    - **Basic types**: `string`, `number`, `integer`, `boolean`
+    - **Object types**: Nested objects with `properties`
+    - **Array types**: Lists with `items` schema
+    - **Null unions**: `["string", "null"]` for optional fields
+    - **Required fields**: Specify mandatory properties with `required` array
+    - **Descriptions**: Help the model understand what to extract
+  </Accordion>
+  
+  <Accordion icon="xmark" title="Unsupported Schema Features">
+    - `oneOf`, `anyOf`, `allOf` combinators
+    - `$ref` references
+    - Complex regex patterns
+    - External schema references
+  </Accordion>
+</AccordionGroup>
+
+## Response Object
+
+The method returns a `SourceExtractResponse` object with the following properties:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `file_names` | `list[str]` | List of file names used for extraction |
+| `structured_output` | `dict[str, object] \| None` | Extracted data matching your schema |
+| `raw_json` | `str \| None` | Raw JSON text produced by the model before validation/correction |
+
+## Code Examples
+
+### Basic Extraction
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Extract invoice data
+result = client.sources.extract(
+    file_names=["invoice-2024.pdf"],
+    user_instruction="Extract all invoice information. Use YYYY-MM-DD format for dates.",
+    output_schema={
+        "type": "object",
+        "properties": {
+            "invoice_number": {
+                "type": "string",
+                "description": "The unique invoice identifier"
+            },
+            "invoice_date": {
+                "type": "string",
+                "description": "Invoice date in YYYY-MM-DD format"
+            },
+            "total_amount": {
+                "type": "number",
+                "description": "Total amount due"
+            },
+            "vendor_name": {
+                "type": "string",
+                "description": "Name of the company issuing the invoice"
+            }
+        },
+        "required": ["invoice_number", "total_amount"]
+    }
+)
+
+# Access extracted data
+output = result.structured_output
+print(f"Invoice: {output['invoice_number']}")
+print(f"Amount: ${output['total_amount']}")
+print(f"Date: {output['invoice_date']}")
+```
+
+### Extraction with Nested Objects and Arrays
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Extract invoice with line items and address
+result = client.sources.extract(
+    file_names=["invoice-2024.pdf"],
+    user_instruction="Extract invoice with line items and address details.",
+    output_schema={
+        "type": "object",
+        "properties": {
+            "invoice_number": {
+                "type": "string",
+                "description": "The unique invoice identifier"
+            },
+            "billing_address": {
+                "type": "object",
+                "description": "Billing address details",
+                "properties": {
+                    "street": {"type": "string", "description": "Street address"},
+                    "city": {"type": "string", "description": "City name"},
+                    "zip_code": {"type": "string", "description": "Postal code"},
+                    "country": {"type": "string", "description": "Country name"}
+                }
+            },
+            "tags": {
+                "type": "array",
+                "description": "Invoice tags or categories",
+                "items": {"type": "string"}
+            },
+            "line_items": {
+                "type": "array",
+                "description": "Invoice line items",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "description": {"type": "string", "description": "Item description"},
+                        "quantity": {"type": "number", "description": "Item quantity"},
+                        "unit_price": {"type": "number", "description": "Price per unit"},
+                        "total": {"type": "number", "description": "Line item total"}
+                    }
+                }
+            }
+        },
+        "required": ["invoice_number"]
+    }
+)
+
+output = result.structured_output
+print(f"Invoice: {output['invoice_number']}")
+print(f"City: {output['billing_address']['city']}")
+print(f"Tags: {', '.join(output['tags'])}")
+
+print("Line Items:")
+for item in output["line_items"]:
+    print(f"  - {item['description']}: {item['quantity']} x ${item['unit_price']}")
+```
+
+### Async Extraction
+
+```python
+import asyncio
+from graphor import AsyncGraphor
+
+async def extract_invoice_data(file_name: str):
+    client = AsyncGraphor()
+    
+    result = await client.sources.extract(
+        file_names=[file_name],
+        user_instruction="Extract invoice details.",
+        output_schema={
+            "type": "object",
+            "properties": {
+                "invoice_number": {"type": "string", "description": "Invoice ID"},
+                "total_amount": {"type": "number", "description": "Total due"},
+                "invoice_date": {"type": "string", "description": "Invoice date"}
+            },
+            "required": ["invoice_number", "total_amount"]
+        }
+    )
+    
+    return result.structured_output
+
+# Run the async function
+data = asyncio.run(extract_invoice_data("invoice.pdf"))
+print(f"Invoice: {data['invoice_number']}")
+```
+
+### Multi-File Extraction
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Extract data from multiple related files
+result = client.sources.extract(
+    file_names=["contract-part1.pdf", "contract-part2.pdf"],
+    user_instruction="Extract key contract terms from both documents.",
+    output_schema={
+        "type": "object",
+        "properties": {
+            "contract_title": {"type": "string", "description": "Title of the contract"},
+            "effective_date": {"type": "string", "description": "Contract start date"},
+            "termination_date": {"type": "string", "description": "Contract end date"},
+            "parties": {
+                "type": "array",
+                "description": "Parties involved in the contract",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "Party name"},
+                        "role": {"type": "string", "description": "Role (e.g., Licensor, Licensee)"}
+                    }
+                }
+            }
+        },
+        "required": ["contract_title", "parties"]
+    }
+)
+
+print(f"Contract: {result.structured_output['contract_title']}")
+print(f"Files processed: {result.file_names}")
+```
+
+### Error Handling
+
+```python
+import graphor
+from graphor import Graphor
+
+client = Graphor()
+
+try:
+    result = client.sources.extract(
+        file_names=["document.pdf"],
+        user_instruction="Extract data from the document.",
+        output_schema={
+            "type": "object",
+            "properties": {
+                "title": {"type": "string", "description": "Document title"}
+            }
+        }
+    )
+    print(f"Extracted: {result.structured_output}")
+    
+except graphor.NotFoundError as e:
+    print(f"File not found: {e}")
+    
+except graphor.BadRequestError as e:
+    print(f"Invalid schema or request: {e}")
+    
+except graphor.AuthenticationError as e:
+    print(f"Invalid API key: {e}")
+    
+except graphor.RateLimitError as e:
+    print(f"Rate limit exceeded. Please wait and retry: {e}")
+    
+except graphor.InternalServerError as e:
+    print(f"Server error: {e}")
+    
+except graphor.APIConnectionError as e:
+    print(f"Connection error: {e}")
+    
+except graphor.APITimeoutError as e:
+    print(f"Request timed out: {e}")
+```
+
+## Schema Examples
+
+### Invoice Extraction
+
+```python
+invoice_schema = {
+    "type": "object",
+    "properties": {
+        "invoice_number": {"type": "string", "description": "Unique invoice identifier"},
+        "invoice_date": {"type": "string", "description": "Invoice date (YYYY-MM-DD)"},
+        "due_date": {"type": "string", "description": "Payment due date (YYYY-MM-DD)"},
+        "vendor_name": {"type": "string", "description": "Company issuing the invoice"},
+        "customer_name": {"type": "string", "description": "Customer being billed"},
+        "subtotal": {"type": "number", "description": "Subtotal before tax"},
+        "tax_amount": {"type": "number", "description": "Tax amount"},
+        "total_amount": {"type": "number", "description": "Total amount due"}
+    },
+    "required": ["invoice_number", "total_amount"]
+}
+
+result = client.sources.extract(
+    file_names=["invoice.pdf"],
+    user_instruction="Extract all invoice details. Convert amounts to numbers without currency symbols.",
+    output_schema=invoice_schema
+)
+```
+
+### Contract Analysis
+
+```python
+contract_schema = {
+    "type": "object",
+    "properties": {
+        "contract_title": {"type": "string", "description": "Title or name of the contract"},
+        "effective_date": {"type": "string", "description": "When the contract becomes effective"},
+        "termination_date": {"type": "string", "description": "When the contract ends"},
+        "auto_renewal": {"type": "boolean", "description": "Whether contract auto-renews"},
+        "parties": {
+            "type": "array",
+            "description": "All parties involved in the contract",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "Party name"},
+                    "role": {"type": "string", "description": "Role (e.g., Licensor, Licensee)"},
+                    "address": {"type": "string", "description": "Party address"}
+                }
+            }
+        },
+        "key_terms": {
+            "type": "object",
+            "description": "Key contract terms and conditions",
+            "properties": {
+                "payment_terms": {"type": "string", "description": "Payment conditions"},
+                "liability_cap": {"type": "number", "description": "Maximum liability amount"},
+                "notice_period_days": {"type": "integer", "description": "Notice period in days"}
+            }
+        }
+    },
+    "required": ["contract_title", "parties"]
+}
+
+result = client.sources.extract(
+    file_names=["contract.pdf"],
+    user_instruction="Extract key contract terms with all parties and obligations.",
+    output_schema=contract_schema
+)
+```
+
+### Resume Parsing
+
+```python
+resume_schema = {
+    "type": "object",
+    "properties": {
+        "full_name": {"type": "string", "description": "Candidate's full name"},
+        "email": {"type": "string", "description": "Email address"},
+        "phone": {"type": "string", "description": "Phone number"},
+        "years_experience": {"type": "number", "description": "Total years of experience"},
+        "skills": {
+            "type": "array",
+            "description": "List of technical and soft skills",
+            "items": {"type": "string"}
+        },
+        "work_experience": {
+            "type": "array",
+            "description": "Work history",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "company": {"type": "string", "description": "Company name"},
+                    "title": {"type": "string", "description": "Job title"},
+                    "start_date": {"type": "string", "description": "Start date"},
+                    "end_date": {"type": "string", "description": "End date (or 'current')"}
+                }
+            }
+        },
+        "education": {
+            "type": "array",
+            "description": "Educational background",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "institution": {"type": "string", "description": "School or university name"},
+                    "degree": {"type": "string", "description": "Degree obtained"},
+                    "graduation_year": {"type": "integer", "description": "Year of graduation"}
+                }
+            }
+        }
+    },
+    "required": ["full_name"]
+}
+
+result = client.sources.extract(
+    file_names=["resume.pdf"],
+    user_instruction="Extract complete candidate information including work history and education.",
+    output_schema=resume_schema
+)
+```
+
+### Product Catalog
+
+```python
+product_schema = {
+    "type": "object",
+    "properties": {
+        "product_name": {"type": "string", "description": "Product name"},
+        "sku": {"type": "string", "description": "Product SKU"},
+        "base_price": {"type": "number", "description": "Base price"},
+        "in_stock": {"type": "boolean", "description": "Whether product is in stock"},
+        "specifications": {
+            "type": "object",
+            "description": "Product specifications",
+            "properties": {
+                "weight": {"type": "number", "description": "Weight in kg"},
+                "dimensions": {"type": "string", "description": "Dimensions (LxWxH)"},
+                "material": {"type": "string", "description": "Main material"}
+            }
+        },
+        "categories": {
+            "type": "array",
+            "description": "Product categories",
+            "items": {"type": "string"}
+        },
+        "variants": {
+            "type": "array",
+            "description": "Product variants",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "color": {"type": "string", "description": "Variant color"},
+                    "size": {"type": "string", "description": "Variant size"},
+                    "price_modifier": {"type": "number", "description": "Price adjustment"}
+                }
+            }
+        }
+    },
+    "required": ["product_name", "sku"]
+}
+
+result = client.sources.extract(
+    file_names=["catalog.pdf"],
+    user_instruction="Extract all products with their specifications and variants.",
+    output_schema=product_schema
+)
+```
+
+## Advanced Examples
+
+### Document Extraction Pipeline
+
+Build a complete extraction pipeline for processing multiple documents:
+
+```python
+from graphor import Graphor
+import graphor
+from typing import Any
+from dataclasses import dataclass
+
+@dataclass
+class ExtractionResult:
+    file_name: str
+    data: dict[str, Any] | None
+    error: str | None = None
+
+class DocumentExtractor:
+    def __init__(self, api_key: str | None = None):
+        self.client = Graphor(api_key=api_key) if api_key else Graphor()
+    
+    def extract_invoices(self, file_names: list[str]) -> list[ExtractionResult]:
+        """Extract invoice data from multiple files."""
+        results = []
+        
+        invoice_schema = {
+            "type": "object",
+            "properties": {
+                "invoice_number": {"type": "string", "description": "Invoice ID"},
+                "vendor_name": {"type": "string", "description": "Vendor name"},
+                "total_amount": {"type": "number", "description": "Total amount"},
+                "invoice_date": {"type": "string", "description": "Date (YYYY-MM-DD)"},
+                "line_items": {
+                    "type": "array",
+                    "description": "Line items",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "description": {"type": "string"},
+                            "quantity": {"type": "number"},
+                            "amount": {"type": "number"}
+                        }
+                    }
+                }
+            },
+            "required": ["invoice_number", "total_amount"]
+        }
+        
+        for file_name in file_names:
+            try:
+                result = self.client.sources.extract(
+                    file_names=[file_name],
+                    user_instruction="Extract invoice information. Use YYYY-MM-DD for dates.",
+                    output_schema=invoice_schema
+                )
+                results.append(ExtractionResult(
+                    file_name=file_name,
+                    data=result.structured_output
+                ))
+                print(f"✅ Extracted: {file_name}")
+                
+            except graphor.APIStatusError as e:
+                results.append(ExtractionResult(
+                    file_name=file_name,
+                    data=None,
+                    error=str(e)
+                ))
+                print(f"❌ Failed: {file_name} - {e}")
+        
+        return results
+    
+    def extract_with_custom_schema(
+        self, 
+        file_names: list[str], 
+        schema: dict, 
+        instruction: str
+    ) -> dict[str, Any] | None:
+        """Extract data using a custom schema."""
+        try:
+            result = self.client.sources.extract(
+                file_names=file_names,
+                user_instruction=instruction,
+                output_schema=schema
+            )
+            return result.structured_output
+        except graphor.APIStatusError as e:
+            print(f"Extraction error: {e}")
+            return None
+
+# Usage
+extractor = DocumentExtractor()
+
+# Process multiple invoices
+invoices = extractor.extract_invoices([
+    "invoice-001.pdf",
+    "invoice-002.pdf",
+    "invoice-003.pdf"
+])
+
+# Calculate totals
+total = sum(
+    inv.data["total_amount"] 
+    for inv in invoices 
+    if inv.data is not None
+)
+print(f"Total amount: ${total:,.2f}")
+```
+
+### Async Batch Extraction
+
+Process many documents efficiently with async:
+
+```python
+import asyncio
+from graphor import AsyncGraphor
+import graphor
+
+async def extract_single(
+    client: AsyncGraphor, 
+    file_name: str, 
+    schema: dict, 
+    instruction: str
+):
+    """Extract data from a single file."""
+    try:
+        result = await client.sources.extract(
+            file_names=[file_name],
+            user_instruction=instruction,
+            output_schema=schema
+        )
+        return {
+            "file_name": file_name,
+            "status": "success",
+            "data": result.structured_output
+        }
+    except graphor.APIStatusError as e:
+        return {
+            "file_name": file_name,
+            "status": "failed",
+            "error": str(e)
+        }
+
+async def batch_extract(
+    file_names: list[str], 
+    schema: dict, 
+    instruction: str,
+    max_concurrent: int = 3
+):
+    """Extract data from multiple files with controlled concurrency."""
+    client = AsyncGraphor(timeout=120.0)
+    
+    # Use semaphore to limit concurrent requests
+    semaphore = asyncio.Semaphore(max_concurrent)
+    
+    async def extract_with_semaphore(file_name: str):
+        async with semaphore:
+            print(f"Processing: {file_name}...")
+            result = await extract_single(client, file_name, schema, instruction)
+            status_icon = "✅" if result["status"] == "success" else "❌"
+            print(f"{status_icon} {file_name}: {result['status']}")
+            return result
+    
+    tasks = [extract_with_semaphore(f) for f in file_names]
+    results = await asyncio.gather(*tasks)
+    
+    successful = [r for r in results if r["status"] == "success"]
+    failed = [r for r in results if r["status"] == "failed"]
+    
+    print(f"\nSummary: {len(successful)} successful, {len(failed)} failed")
+    return results
+
+# Usage
+schema = {
+    "type": "object",
+    "properties": {
+        "title": {"type": "string", "description": "Document title"},
+        "summary": {"type": "string", "description": "Brief summary"}
+    }
+}
+
+files = ["doc1.pdf", "doc2.pdf", "doc3.pdf", "doc4.pdf", "doc5.pdf"]
+results = asyncio.run(batch_extract(
+    files, 
+    schema, 
+    "Extract the title and summary from this document.",
+    max_concurrent=3
+))
+```
+
+### Extraction with Validation
+
+Add validation to ensure extracted data meets your requirements:
+
+```python
+from graphor import Graphor
+import graphor
+from typing import Any
+
+class ValidatedExtractor:
+    def __init__(self):
+        self.client = Graphor()
+    
+    def extract_and_validate(
+        self,
+        file_names: list[str],
+        schema: dict,
+        instruction: str,
+        validators: dict[str, callable] | None = None
+    ) -> dict[str, Any]:
+        """Extract data and validate the results."""
+        result = self.client.sources.extract(
+            file_names=file_names,
+            user_instruction=instruction,
+            output_schema=schema
+        )
+        
+        data = result.structured_output
+        
+        if validators and data:
+            validation_errors = []
+            
+            for field, validator in validators.items():
+                if field in data:
+                    try:
+                        if not validator(data[field]):
+                            validation_errors.append(f"Validation failed for '{field}'")
+                    except Exception as e:
+                        validation_errors.append(f"Validator error for '{field}': {e}")
+            
+            if validation_errors:
+                return {
+                    "success": False,
+                    "data": data,
+                    "errors": validation_errors
+                }
+        
+        return {
+            "success": True,
+            "data": data,
+            "errors": []
+        }
+
+# Usage
+extractor = ValidatedExtractor()
+
+# Define validators
+validators = {
+    "invoice_number": lambda x: x and len(x) > 0,
+    "total_amount": lambda x: x and x > 0,
+    "invoice_date": lambda x: x and len(x) == 10,  # YYYY-MM-DD format
+}
+
+result = extractor.extract_and_validate(
+    file_names=["invoice.pdf"],
+    schema={
+        "type": "object",
+        "properties": {
+            "invoice_number": {"type": "string", "description": "Invoice ID"},
+            "total_amount": {"type": "number", "description": "Total amount"},
+            "invoice_date": {"type": "string", "description": "Date YYYY-MM-DD"}
+        },
+        "required": ["invoice_number", "total_amount"]
+    },
+    instruction="Extract invoice details. Use YYYY-MM-DD for dates.",
+    validators=validators
+)
+
+if result["success"]:
+    print(f"Valid extraction: {result['data']}")
+else:
+    print(f"Validation errors: {result['errors']}")
+```
+
+### Debugging with Raw JSON
+
+Use the `raw_json` field to debug extraction issues:
+
+```python
+from graphor import Graphor
+import json
+
+client = Graphor()
+
+result = client.sources.extract(
+    file_names=["document.pdf"],
+    user_instruction="Extract document information.",
+    output_schema={
+        "type": "object",
+        "properties": {
+            "title": {"type": "string", "description": "Document title"},
+            "author": {"type": "string", "description": "Author name"}
+        }
+    }
+)
+
+# Compare raw vs structured output
+print("Raw JSON from model:")
+print(result.raw_json)
+
+print("\nStructured output (validated):")
+print(json.dumps(result.structured_output, indent=2))
+
+# Check for differences (useful for debugging)
+if result.raw_json:
+    raw_parsed = json.loads(result.raw_json)
+    if raw_parsed != result.structured_output:
+        print("\n⚠️ Note: Structured output differs from raw JSON (post-validation)")
+```
+
+## Best Practices
+
+### Schema Design
+
+1. **Use clear descriptions**: Detailed property descriptions improve extraction accuracy
+2. **Match types to data**: Use `number` for amounts, `string` for dates, `boolean` for flags
+3. **Keep nesting shallow**: Avoid deeply nested structures (2-3 levels maximum)
+4. **Define required fields**: Use the `required` array to specify mandatory properties
+5. **Use arrays for lists**: Extract repeating items using arrays with item schemas
+
+### Instruction Writing
+
+1. **Be specific**: Include format preferences (e.g., "Use YYYY-MM-DD for dates")
+2. **Handle edge cases**: Specify what to do for missing data (e.g., "Use null if not found")
+3. **Provide context**: Explain what the document contains and what you need
+4. **Avoid ambiguity**: Use clear, unambiguous language
+
+### Performance
+
+1. **Batch related files**: Process related documents together for context
+2. **Use appropriate timeouts**: Extraction can take time for complex documents
+3. **Implement retries**: Handle transient errors with the SDK's retry mechanism
+4. **Cache results**: Store extraction results to avoid reprocessing
+
+```python
+# Configure retries for reliability
+client = Graphor(max_retries=3, timeout=120.0)
+
+# Or per-request
+result = client.with_options(max_retries=5, timeout=180.0).sources.extract(
+    file_names=["large-document.pdf"],
+    user_instruction="Extract all data.",
+    output_schema=schema
+)
+```
+
+## Error Reference
+
+| Error Type | Status Code | Description |
+|------------|-------------|-------------|
+| `BadRequestError` | 400 | Invalid parameters or malformed schema |
+| `AuthenticationError` | 401 | Invalid or missing API key |
+| `PermissionDeniedError` | 403 | Access denied to the specified project |
+| `NotFoundError` | 404 | File not found or no parsing history |
+| `RateLimitError` | 429 | Too many requests, please retry after waiting |
+| `InternalServerError` | ≥500 | Server-side processing error |
+| `APIConnectionError` | N/A | Network connectivity issues |
+| `APITimeoutError` | N/A | Request timed out |
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="file-xmark" title="File not found errors">
+    **Causes**: File doesn't exist, hasn't been processed, or wrong file name
+    
+    **Solutions**:
+    - Verify the exact file name (case-sensitive)
+    - Ensure the file has been uploaded and processed
+    - Use `client.sources.list()` to check available files
+    
+    ```python
+    # List all sources to find correct file names
+    sources = client.sources.list()
+    for source in sources:
+        if source.status == "Completed":
+            print(source.file_name)
+    ```
+  </Accordion>
+  
+  <Accordion icon="code" title="Invalid schema errors">
+    **Causes**: Malformed JSON Schema or unsupported features
+    
+    **Solutions**:
+    - Validate your schema against JSON Schema spec
+    - Avoid unsupported features (`$ref`, `oneOf`, `anyOf`)
+    - Ensure all `type` values are valid
+    - Check that `properties` is an object, not an array
+  </Accordion>
+  
+  <Accordion icon="clock" title="Timeout errors">
+    **Causes**: Large documents, complex schemas, or server load
+    
+    **Solutions**:
+    - Increase the timeout value
+    - Simplify the schema (fewer fields, shallower nesting)
+    - Process smaller document batches
+    
+    ```python
+    client = Graphor(timeout=180.0)  # 3 minutes
+    ```
+  </Accordion>
+  
+  <Accordion icon="magnifying-glass" title="Missing or incorrect data">
+    **Causes**: Vague instructions, poor document quality, or inappropriate schema
+    
+    **Solutions**:
+    - Make instructions more specific
+    - Reprocess the document with a better partition method
+    - Add more context in property descriptions
+    - Check the `raw_json` field for debugging
+  </Accordion>
+  
+  <Accordion icon="exclamation-triangle" title="Partial extraction">
+    **Causes**: Document doesn't contain all expected information
+    
+    **Solutions**:
+    - Make non-essential fields optional (remove from `required`)
+    - Use null unions: `"type": ["string", "null"]`
+    - Add instructions for handling missing data
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After extracting data from your documents:
+
+<CardGroup cols={2}>
+  <Card
+    title="Upload Source"
+    icon="arrow-up-from-bracket"
+    href="/sdk/sources/upload"
+  >
+    Upload new documents for extraction
+  </Card>
+  <Card
+    title="Parse Source"
+    icon="gears"
+    href="/sdk/sources/process"
+  >
+    Reprocess documents for better extraction quality
+  </Card>
+  <Card
+    title="Chat with Documents"
+    icon="comments"
+    href="/sdk/chat"
+  >
+    Ask questions about your documents
+  </Card>
+  <Card
+    title="Data Extraction Guide"
+    icon="table"
+    href="/guides/data-extraction"
+  >
+    Learn schema design and extraction best practices
+  </Card>
+</CardGroup>

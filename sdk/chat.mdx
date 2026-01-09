@@ -1,0 +1,677 @@
+---
+title: 'Chat API'
+description: 'Ask questions about your documents using the Graphor Python SDK'
+---
+
+The `ask` method allows you to ask questions about your ingested documents and receive answers grounded in your content. The SDK supports conversational memory, enabling follow-up questions that maintain context.
+
+## Method Overview
+
+<CardGroup cols={2}>
+  <Card title="Sync Method" icon="code">
+    **`client.sources.ask()`**
+  </Card>
+  <Card title="Async Method" icon="code">
+    **`await client.sources.ask()`**
+  </Card>
+</CardGroup>
+
+## Method Signature
+
+```python
+client.sources.ask(
+    question: str,                            # Required
+    conversation_id: str | None = None,
+    reset: bool | None = None,
+    file_names: list[str] | None = None,
+    output_schema: dict | None = None,
+    timeout: float | None = None
+) -> SourceAskResponse
+```
+
+## Parameters
+
+| Parameter | Type | Description | Required |
+|-----------|------|-------------|----------|
+| `question` | `str` | The question to ask about your documents | ✅ Yes |
+| `conversation_id` | `str` | Conversation identifier to maintain memory context across questions | No |
+| `reset` | `bool` | When `True`, starts a new conversation and ignores previous history | No |
+| `file_names` | `list[str]` | Restrict search to specific documents by file name | No |
+| `output_schema` | `dict` | JSON Schema to request structured output (see below) | No |
+| `timeout` | `float` | Request timeout in seconds | No |
+
+## Response Object
+
+The method returns a `SourceAskResponse` object:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `answer` | `str` | The answer to your question. When `output_schema` is provided, this will be a short status message. |
+| `conversation_id` | `str \| None` | Conversation identifier for follow-up questions |
+| `structured_output` | `dict \| None` | Structured output validated against the requested `output_schema`. Present only when `output_schema` is provided. |
+| `raw_json` | `str \| None` | Raw JSON-text produced by the model before validation. Present only when `output_schema` is provided. |
+
+## Code Examples
+
+### Basic Question
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Ask a simple question
+response = client.sources.ask(
+    question="What are the main findings in this report?"
+)
+
+print(f"Answer: {response.answer}")
+print(f"Conversation ID: {response.conversation_id}")
+```
+
+### Conversation with Memory
+
+Use `conversation_id` to maintain context across multiple questions:
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# First question
+response = client.sources.ask(
+    question="What products are mentioned in the catalog?"
+)
+
+print(f"Answer: {response.answer}")
+
+# Follow-up question using conversation memory
+follow_up = client.sources.ask(
+    question="Which one is the most expensive?",
+    conversation_id=response.conversation_id
+)
+
+print(f"Follow-up: {follow_up.answer}")
+
+# Another follow-up
+another = client.sources.ask(
+    question="What are its specifications?",
+    conversation_id=response.conversation_id
+)
+
+print(f"Answer: {another.answer}")
+```
+
+### Reset Conversation
+
+Start fresh by using the `reset` parameter:
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Start a conversation
+response = client.sources.ask(
+    question="What is the company's revenue?"
+)
+
+# Switch to a new topic - reset the conversation
+new_response = client.sources.ask(
+    question="What are the safety guidelines?",
+    conversation_id=response.conversation_id,
+    reset=True  # Ignores previous conversation history
+)
+
+print(f"Answer: {new_response.answer}")
+```
+
+### Filter by Specific Documents
+
+Restrict the search to specific files:
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Ask about specific documents only
+response = client.sources.ask(
+    question="What is the total amount due?",
+    file_names=["invoice-2024.pdf", "invoice-2023.pdf"]
+)
+
+print(f"Answer: {response.answer}")
+```
+
+### Structured Output with JSON Schema
+
+Request structured data by providing an `output_schema`:
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Define the output schema
+invoice_schema = {
+    "type": "object",
+    "properties": {
+        "invoice_number": {"type": ["string", "null"]},
+        "total_amount_due": {"type": ["number", "null"]},
+        "currency": {"type": ["string", "null"]},
+        "due_date": {"type": ["string", "null"]}
+    }
+}
+
+# Ask with structured output
+response = client.sources.ask(
+    question="Extract the invoice number, total amount, currency, and due date.",
+    file_names=["invoice-2024.pdf"],
+    output_schema=invoice_schema
+)
+
+# Access the structured data
+if response.structured_output:
+    data = response.structured_output
+    print(f"Invoice: {data.get('invoice_number')}")
+    print(f"Amount: {data.get('total_amount_due')} {data.get('currency')}")
+    print(f"Due: {data.get('due_date')}")
+
+# Raw JSON is also available
+print(f"Raw JSON: {response.raw_json}")
+```
+
+### Extract Array of Items
+
+Extract multiple items with a schema:
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Schema for extracting a list of products
+products_schema = {
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "name": {"type": "string"},
+            "price": {"type": ["number", "null"]},
+            "quantity": {"type": ["integer", "null"]}
+        }
+    }
+}
+
+response = client.sources.ask(
+    question="Extract all products with their prices and quantities from the order.",
+    file_names=["order.pdf"],
+    output_schema=products_schema
+)
+
+if response.structured_output:
+    products = response.structured_output
+    for product in products:
+        print(f"- {product['name']}: ${product.get('price', 'N/A')} x {product.get('quantity', 'N/A')}")
+```
+
+### Async Usage
+
+```python
+import asyncio
+from graphor import AsyncGraphor
+
+async def ask_questions():
+    client = AsyncGraphor()
+    
+    # Ask a question
+    response = await client.sources.ask(
+        question="What are the key terms in this contract?"
+    )
+    
+    print(f"Answer: {response.answer}")
+    
+    # Follow-up
+    follow_up = await client.sources.ask(
+        question="When does it expire?",
+        conversation_id=response.conversation_id
+    )
+    
+    print(f"Follow-up: {follow_up.answer}")
+
+asyncio.run(ask_questions())
+```
+
+### Error Handling
+
+```python
+import graphor
+from graphor import Graphor
+
+client = Graphor()
+
+try:
+    response = client.sources.ask(
+        question="What is the summary of this document?"
+    )
+    print(f"Answer: {response.answer}")
+    
+except graphor.BadRequestError as e:
+    print(f"Invalid request: {e}")
+    
+except graphor.AuthenticationError as e:
+    print(f"Invalid API key: {e}")
+    
+except graphor.NotFoundError as e:
+    print(f"Document not found: {e}")
+    
+except graphor.UnprocessableEntityError as e:
+    print(f"Invalid output_schema or structured output validation failed: {e}")
+    
+except graphor.RateLimitError as e:
+    print(f"Rate limit exceeded: {e}")
+    
+except graphor.APIConnectionError as e:
+    print(f"Connection error: {e}")
+    
+except graphor.APIStatusError as e:
+    print(f"API error (status {e.status_code}): {e}")
+```
+
+## Advanced Examples
+
+### Chatbot Class
+
+Build a conversational chatbot:
+
+```python
+from graphor import Graphor
+import graphor
+
+class DocumentChatbot:
+    def __init__(self, api_key: str | None = None):
+        self.client = Graphor(api_key=api_key) if api_key else Graphor()
+        self.conversation_id = None
+        self.history = []
+    
+    def ask(self, question: str, file_names: list[str] | None = None) -> str:
+        """Ask a question and maintain conversation history."""
+        try:
+            response = self.client.sources.ask(
+                question=question,
+                conversation_id=self.conversation_id,
+                file_names=file_names
+            )
+            
+            # Update conversation ID
+            self.conversation_id = response.conversation_id
+            
+            # Store in history
+            self.history.append({
+                "question": question,
+                "answer": response.answer
+            })
+            
+            return response.answer
+            
+        except graphor.APIStatusError as e:
+            return f"Error: {e}"
+    
+    def reset(self):
+        """Start a new conversation."""
+        self.conversation_id = None
+        self.history = []
+    
+    def get_history(self) -> list[dict]:
+        """Get conversation history."""
+        return self.history.copy()
+
+# Usage
+chatbot = DocumentChatbot()
+
+# Have a conversation
+print(chatbot.ask("What products are available?"))
+print(chatbot.ask("Tell me more about the first one"))
+print(chatbot.ask("What's its price?"))
+
+# View history
+for entry in chatbot.get_history():
+    print(f"Q: {entry['question']}")
+    print(f"A: {entry['answer'][:100]}...")
+    print()
+
+# Reset for a new topic
+chatbot.reset()
+print(chatbot.ask("What are the shipping options?"))
+```
+
+### Multi-Document Q&A
+
+Ask questions across multiple documents:
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+def compare_documents(file_names: list[str], question: str) -> str:
+    """Ask a comparative question across multiple documents."""
+    response = client.sources.ask(
+        question=question,
+        file_names=file_names
+    )
+    return response.answer
+
+# Compare financial reports
+answer = compare_documents(
+    file_names=["report-2023.pdf", "report-2024.pdf"],
+    question="How did revenue change between 2023 and 2024?"
+)
+print(answer)
+```
+
+### Structured Data Extraction Pipeline
+
+Extract structured data from multiple documents:
+
+```python
+from graphor import Graphor
+import graphor
+from typing import Any
+
+client = Graphor()
+
+def extract_structured_data(
+    file_names: list[str],
+    question: str,
+    schema: dict
+) -> list[dict[str, Any]]:
+    """Extract structured data from multiple documents."""
+    results = []
+    
+    for file_name in file_names:
+        try:
+            response = client.sources.ask(
+                question=question,
+                file_names=[file_name],
+                output_schema=schema
+            )
+            
+            if response.structured_output:
+                results.append({
+                    "file": file_name,
+                    "data": response.structured_output,
+                    "success": True
+                })
+            else:
+                results.append({
+                    "file": file_name,
+                    "data": None,
+                    "success": False,
+                    "error": "No structured output returned"
+                })
+                
+        except graphor.APIStatusError as e:
+            results.append({
+                "file": file_name,
+                "data": None,
+                "success": False,
+                "error": str(e)
+            })
+    
+    return results
+
+# Extract invoice data from multiple invoices
+invoice_schema = {
+    "type": "object",
+    "properties": {
+        "invoice_number": {"type": ["string", "null"]},
+        "vendor": {"type": ["string", "null"]},
+        "total": {"type": ["number", "null"]},
+        "date": {"type": ["string", "null"]}
+    }
+}
+
+invoices = ["invoice1.pdf", "invoice2.pdf", "invoice3.pdf"]
+results = extract_structured_data(
+    file_names=invoices,
+    question="Extract the invoice number, vendor name, total amount, and date.",
+    schema=invoice_schema
+)
+
+for result in results:
+    if result["success"]:
+        data = result["data"]
+        print(f"✅ {result['file']}: #{data.get('invoice_number')} - ${data.get('total')}")
+    else:
+        print(f"❌ {result['file']}: {result['error']}")
+```
+
+### Async Parallel Questions
+
+Ask multiple questions in parallel:
+
+```python
+import asyncio
+from graphor import AsyncGraphor
+
+async def ask_parallel_questions(questions: list[str]):
+    """Ask multiple questions in parallel."""
+    client = AsyncGraphor()
+    
+    tasks = [
+        client.sources.ask(question=q)
+        for q in questions
+    ]
+    
+    responses = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    results = []
+    for question, response in zip(questions, responses):
+        if isinstance(response, Exception):
+            results.append({"question": question, "error": str(response)})
+        else:
+            results.append({"question": question, "answer": response.answer})
+    
+    return results
+
+# Usage
+questions = [
+    "What is the total revenue?",
+    "Who are the main competitors?",
+    "What are the key risks?"
+]
+
+results = asyncio.run(ask_parallel_questions(questions))
+
+for result in results:
+    print(f"Q: {result['question']}")
+    if "answer" in result:
+        print(f"A: {result['answer'][:200]}...")
+    else:
+        print(f"Error: {result['error']}")
+    print()
+```
+
+### Interactive Q&A Session
+
+Build an interactive command-line Q&A:
+
+```python
+from graphor import Graphor
+import graphor
+
+def interactive_qa():
+    """Interactive Q&A session with documents."""
+    client = Graphor()
+    conversation_id = None
+    
+    print("Document Q&A Session")
+    print("Type 'quit' to exit, 'reset' to start a new conversation")
+    print("-" * 50)
+    
+    while True:
+        question = input("\nYou: ").strip()
+        
+        if question.lower() == "quit":
+            print("Goodbye!")
+            break
+        
+        if question.lower() == "reset":
+            conversation_id = None
+            print("Conversation reset.")
+            continue
+        
+        if not question:
+            continue
+        
+        try:
+            response = client.sources.ask(
+                question=question,
+                conversation_id=conversation_id
+            )
+            
+            conversation_id = response.conversation_id
+            print(f"\nAssistant: {response.answer}")
+            
+        except graphor.APIStatusError as e:
+            print(f"\nError: {e}")
+
+# Run interactive session
+# interactive_qa()
+```
+
+## Output Schema Guidelines
+
+When using `output_schema`, follow these guidelines:
+
+### Supported Schema Features
+
+- Basic types: `string`, `number`, `integer`, `boolean`, `null`
+- Objects with `properties`
+- Arrays with `items`
+- Union with `null` only: `["string", "null"]`
+
+### Unsupported Features
+
+- `oneOf`, `anyOf`, `allOf`
+- `$ref` references
+- Complex unions beyond `null`
+
+### Schema Examples
+
+```python
+# Simple object
+person_schema = {
+    "type": "object",
+    "properties": {
+        "name": {"type": "string"},
+        "age": {"type": ["integer", "null"]},
+        "email": {"type": ["string", "null"]}
+    }
+}
+
+# Array of objects
+items_schema = {
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "item": {"type": "string"},
+            "quantity": {"type": "integer"},
+            "price": {"type": "number"}
+        }
+    }
+}
+
+# Nested objects
+order_schema = {
+    "type": "object",
+    "properties": {
+        "order_id": {"type": "string"},
+        "customer": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "address": {"type": ["string", "null"]}
+            }
+        },
+        "total": {"type": "number"}
+    }
+}
+```
+
+## Error Reference
+
+| Error Type | Status Code | Description |
+|------------|-------------|-------------|
+| `BadRequestError` | 400 | Invalid parameters or request format |
+| `AuthenticationError` | 401 | Invalid or missing API key |
+| `NotFoundError` | 404 | Specified file not found |
+| `UnprocessableEntityError` | 422 | Invalid `output_schema` or structured output validation failed |
+| `RateLimitError` | 429 | Too many requests, please retry after waiting |
+| `InternalServerError` | ≥500 | Server-side error |
+| `APIConnectionError` | N/A | Network connectivity issues |
+| `APITimeoutError` | N/A | Request timed out |
+
+## Best Practices
+
+1. **Use conversation memory** — Pass `conversation_id` for follow-up questions to maintain context
+
+2. **Be specific** — Clear, specific questions get better answers
+
+3. **Scope when needed** — Use `file_names` to focus on specific documents for faster, more accurate responses
+
+4. **Use structured output for integration** — Provide `output_schema` to get JSON you can reliably parse in code
+
+5. **Reset when changing topics** — Set `reset=True` when switching to unrelated questions
+
+6. **Handle errors gracefully** — Implement proper error handling for production applications
+
+```python
+# Good: Specific question with context
+response = client.sources.ask(
+    question="What was the total revenue for Q4 2024 compared to Q4 2023?",
+    file_names=["annual-report-2024.pdf"]
+)
+
+# Good: Follow-up with conversation memory
+follow_up = client.sources.ask(
+    question="What were the main drivers of this change?",
+    conversation_id=response.conversation_id
+)
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Document Chat Guide"
+    icon="comments"
+    href="/guides/document-chat"
+  >
+    Learn best practices for chatting with your documents
+  </Card>
+  <Card
+    title="Extract API"
+    icon="file-export"
+    href="/sdk/extract"
+  >
+    Extract structured data from documents
+  </Card>
+  <Card
+    title="Upload Sources"
+    icon="arrow-up-from-bracket"
+    href="/sdk/sources/upload"
+  >
+    Upload documents to chat with
+  </Card>
+  <Card
+    title="Prebuilt RAG"
+    icon="magnifying-glass"
+    href="/sdk/prebuilt-rag"
+  >
+    Retrieve relevant chunks from your documents
+  </Card>
+</CardGroup>

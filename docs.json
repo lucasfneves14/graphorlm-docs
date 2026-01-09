@@ -169,6 +169,35 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "SDK",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "sdk/overview"
+            ]
+          },
+          {
+            "group": "Data SDK Options",
+            "pages": [
+              {
+                "group": "Ingestion SDK",
+                "pages": [
+                  "sdk/sources/upload",
+                  "sdk/sources/process",
+                  "sdk/sources/list",
+                  "sdk/sources/delete",
+                  "sdk/sources/list-elements"
+                ]
+              },
+              "sdk/chat",
+              "sdk/extract",
+              "sdk/prebuilt-rag"
+            ]
+          }
+        ]
       }
     ]
   },
