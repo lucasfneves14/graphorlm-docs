@@ -202,7 +202,7 @@
             "group": "Data SDK Options",
             "pages": [
               {
-                "group": "Ingestion SDK",
+                "group": "Ingestion",
                 "pages": [
                   "sdk/sources/upload",
                   "sdk/sources/process",
