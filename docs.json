@@ -13,6 +13,23 @@
   },
   "favicon": "/favicon.png",
   "navigation": {
+    "anchors": [
+      {
+        "anchor": "Homepage",
+        "icon": "globe",
+        "href": "https://graphorlm.com"
+      },
+      {
+        "anchor": "App",
+        "icon": "rocket",
+        "href": "https://app.graphorlm.com"
+      },
+      {
+        "anchor": "Support",
+        "icon": "envelope",
+        "href": "mailto:support@graphorlm.com"
+      }
+    ],
     "tabs": [
       {
         "tab": "Documentation",
