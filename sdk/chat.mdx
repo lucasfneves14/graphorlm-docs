@@ -23,7 +23,8 @@ client.sources.ask(
     question: str,                            # Required
     conversation_id: str | None = None,
     reset: bool | None = None,
-    file_names: list[str] | None = None,
+    file_ids: list[str] | None = None,
+    file_names: list[str] | None = None,      # Deprecated
     output_schema: dict | None = None,
     thinking_level: str | None = None,
     timeout: float | None = None
@@ -37,7 +38,8 @@ client.sources.ask(
 | `question` | `str` | The question to ask about your documents | ✅ Yes |
 | `conversation_id` | `str` | Conversation identifier to maintain memory context across questions | No |
 | `reset` | `bool` | When `True`, starts a new conversation and ignores previous history | No |
-| `file_names` | `list[str]` | Restrict search to specific documents by file name | No |
+| `file_ids` | `list[str]` | Restrict search to specific documents by file ID (preferred) | No |
+| `file_names` | `list[str]` | Restrict search to specific documents by file name (deprecated, use `file_ids`) | No |
 | `output_schema` | `dict` | JSON Schema to request structured output (see below) | No |
 | `thinking_level` | `str` | Controls model and thinking configuration: `"fast"`, `"balanced"` (default), `"accurate"` | No |
 | `timeout` | `float` | Request timeout in seconds | No |
@@ -140,14 +142,22 @@ print(f"Answer: {new_response.answer}")
 
 ### Filter by Specific Documents
 
-Restrict the search to specific files:
+Restrict the search to specific files using `file_ids` (preferred):
 
 ```python
 from graphor import Graphor
 
 client = Graphor()
 
-# Ask about specific documents only
+# Ask about specific documents using file_ids (preferred)
+response = client.sources.ask(
+    question="What is the total amount due?",
+    file_ids=["file_abc123", "file_def456"]
+)
+
+print(f"Answer: {response.answer}")
+
+# Or using file_names (deprecated)
 response = client.sources.ask(
     question="What is the total amount due?",
     file_names=["invoice-2024.pdf", "invoice-2023.pdf"]

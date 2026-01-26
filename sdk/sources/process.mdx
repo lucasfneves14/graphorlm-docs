@@ -20,7 +20,8 @@ The `parse` method allows you to reprocess previously uploaded documents using d
 
 ```python
 client.sources.parse(
-    file_name: str,                      # Required
+    file_id: str | None = None,          # Preferred
+    file_name: str | None = None,        # Deprecated
     partition_method: PartitionMethod,   # Optional
     timeout: float | None = None
 ) -> PublicSource
@@ -30,9 +31,14 @@ client.sources.parse(
 
 | Parameter | Type | Description | Required |
 |-----------|------|-------------|----------|
-| `file_name` | `str` | Name of the previously uploaded file to reprocess | ✅ Yes |
+| `file_id` | `str` | Unique identifier for the source (preferred) | No* |
+| `file_name` | `str` | Name of the previously uploaded file to reprocess (deprecated, use `file_id`) | No* |
 | `partition_method` | `PartitionMethod` | Processing method to use (see available methods below) | No |
 | `timeout` | `float` | Request timeout in seconds | No |
+
+<Note>
+*At least one of `file_id` or `file_name` must be provided. `file_id` is preferred.
+</Note>
 
 ### Available Processing Methods
 

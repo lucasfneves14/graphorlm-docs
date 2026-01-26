@@ -20,7 +20,8 @@ The `load_elements` method allows you to retrieve detailed information about doc
 
 ```python
 client.sources.load_elements(
-    file_name: str,                    # Required
+    file_id: str | None = None,        # Preferred
+    file_name: str | None = None,      # Deprecated
     page: int | None = None,
     page_size: int | None = None,
     filter: Filter | None = None,
@@ -32,11 +33,16 @@ client.sources.load_elements(
 
 | Parameter | Type | Description | Required |
 |-----------|------|-------------|----------|
-| `file_name` | `str` | Name of the source file to retrieve elements from | ✅ Yes |
+| `file_id` | `str` | Unique identifier for the source (preferred) | No* |
+| `file_name` | `str` | Name of the source file to retrieve elements from (deprecated, use `file_id`) | No* |
 | `page` | `int` | Page number for pagination (starts from 1) | No |
 | `page_size` | `int` | Number of elements to return per page | No |
 | `filter` | `Filter` | Filter criteria to refine element selection | No |
 | `timeout` | `float` | Request timeout in seconds | No |
+
+<Note>
+*At least one of `file_id` or `file_name` must be provided. `file_id` is preferred.
+</Note>
 
 ### Filter Parameters
 

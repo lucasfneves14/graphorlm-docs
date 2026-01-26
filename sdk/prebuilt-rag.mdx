@@ -21,7 +21,8 @@ The `retrieve_chunks` method allows you to retrieve relevant document chunks fro
 ```python
 client.sources.retrieve_chunks(
     query: str,                              # Required
-    file_names: list[str] | None = None,     # Optional
+    file_ids: list[str] | None = None,       # Preferred
+    file_names: list[str] | None = None,     # Deprecated
     timeout: float | None = None
 ) -> SourceRetrieveChunksResponse
 ```
@@ -31,7 +32,8 @@ client.sources.retrieve_chunks(
 | Parameter | Type | Description | Required |
 |-----------|------|-------------|----------|
 | `query` | `str` | The search query to retrieve relevant chunks | ✅ Yes |
-| `file_names` | `list[str] \| None` | Restrict retrieval to specific documents by file name | No |
+| `file_ids` | `list[str] \| None` | Restrict retrieval to specific documents by file ID (preferred) | No |
+| `file_names` | `list[str] \| None` | Restrict retrieval to specific documents by file name (deprecated, use `file_ids`) | No |
 | `timeout` | `float` | Request timeout in seconds | No |
 
 ## Response Object
@@ -51,6 +53,7 @@ Each chunk in the `chunks` list contains:
 | Property | Type | Description |
 |----------|------|-------------|
 | `text` | `str` | The text content of the chunk |
+| `file_id` | `str \| None` | The unique identifier of the source file |
 | `file_name` | `str \| None` | The source file name |
 | `page_number` | `int \| None` | The page number where the chunk was found |
 | `score` | `float \| None` | The relevance score of the chunk (higher is more relevant) |
@@ -78,14 +81,33 @@ for chunk in result.chunks:
     print(f"Relevance: {chunk.score:.2f}")
 ```
 
-### Retrieval from Specific Documents
+### Retrieval from Specific Documents (using file_ids)
 
 ```python
 from graphor import Graphor
 
 client = Graphor()
 
-# Restrict retrieval to specific files
+# Restrict retrieval to specific files using file_ids (preferred)
+result = client.sources.retrieve_chunks(
+    query="What is the total amount due?",
+    file_ids=["file_abc123", "file_def456"]
+)
+
+print(f"Found {result.total} chunks from specified files")
+
+for chunk in result.chunks:
+    print(f"[{chunk.file_id}] {chunk.text[:100]}...")
+```
+
+### Retrieval from Specific Documents (using file_names - deprecated)
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Restrict retrieval to specific files using file_names (deprecated)
 result = client.sources.retrieve_chunks(
     query="What is the total amount due?",
     file_names=["invoice-2024.pdf", "invoice-2023.pdf"]

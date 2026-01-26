@@ -35,11 +35,16 @@ This endpoint requires authentication using an API token. You must include your 
 
 ### Request Body
 
-The request must be sent as JSON with the following field:
+The request must be sent as JSON with at least one of the following fields:
 
 | Field | Type | Description | Required |
 |-------|------|-------------|----------|
-| `file_name` | string | Name of the file to delete (case-sensitive) | ✅ Yes |
+| `file_id` | string | Unique identifier for the source (preferred) | No* |
+| `file_name` | string | Name of the file to delete (deprecated, use `file_id`) | No* |
+
+<Note>
+*At least one of `file_id` or `file_name` must be provided. `file_id` is preferred.
+</Note>
 
 ### Important Considerations
 
@@ -76,6 +81,14 @@ The request must be sent as JSON with the following field:
 
 ```json
 {
+  "file_id": "file_abc123"
+}
+```
+
+Or using file_name (deprecated):
+
+```json
+{
   "file_name": "document.pdf"
 }
 ```
@@ -88,6 +101,7 @@ The request must be sent as JSON with the following field:
 {
   "status": "success",
   "message": "Source deleted successfully",
+  "file_id": "file_abc123",
   "file_name": "document.pdf",
   "project_id": "550e8400-e29b-41d4-a716-446655440000",
   "project_name": "My Project"
@@ -100,6 +114,7 @@ The request must be sent as JSON with the following field:
 |-------|------|-------------|
 | `status` | string | Deletion result (typically "success") |
 | `message` | string | Human-readable confirmation message |
+| `file_id` | string | Unique identifier for the deleted source |
 | `file_name` | string | Name of the deleted file |
 | `project_id` | string | UUID of the project the file was removed from |
 | `project_name` | string | Name of the project |

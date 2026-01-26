@@ -35,7 +35,8 @@ Authorization: Bearer YOUR_API_TOKEN
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `query` | string | Yes | The search query to retrieve relevant chunks |
-| `file_names` | string[] | No | Restrict retrieval to specific documents by file name |
+| `file_ids` | string[] | No | Restrict retrieval to specific documents by file ID (preferred) |
+| `file_names` | string[] | No | Restrict retrieval to specific documents by file name (deprecated, use `file_ids`) |
 
 ### Example Request
 
@@ -48,7 +49,19 @@ curl -X POST "https://sources.graphorlm.com/prebuilt-rag" \
   }'
 ```
 
-### Example with Specific Documents
+### Example with Specific Documents (using file_ids)
+
+```bash
+curl -X POST "https://sources.graphorlm.com/prebuilt-rag" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "What is the total amount due?",
+    "file_ids": ["file_abc123", "file_def456"]
+  }'
+```
+
+### Example with Specific Documents (using file_names - deprecated)
 
 ```bash
 curl -X POST "https://sources.graphorlm.com/prebuilt-rag" \
@@ -77,6 +90,7 @@ Each chunk in the `chunks` array contains:
 | Field | Type | Description |
 |-------|------|-------------|
 | `text` | string | The text content of the chunk |
+| `file_id` | string | The unique identifier of the source file |
 | `file_name` | string | The source file name |
 | `page_number` | integer | The page number where the chunk was found |
 | `score` | float | The relevance score of the chunk (higher is more relevant) |
@@ -90,20 +104,24 @@ Each chunk in the `chunks` array contains:
   "chunks": [
     {
       "text": "Payment Terms: Net 30 days from invoice date. Late payments will incur a 1.5% monthly interest charge. All payments must be made in USD via wire transfer or check.",
+      "file_id": "file_abc123",
       "file_name": "contract-2024.pdf",
       "page_number": 5,
       "score": 0.95,
       "metadata": {
+        "file_id": "file_abc123",
         "file_name": "contract-2024.pdf",
         "page_number": 5
       }
     },
     {
       "text": "The Client agrees to pay all invoices within thirty (30) days of receipt. Failure to pay within the specified period may result in suspension of services.",
+      "file_id": "file_abc123",
       "file_name": "contract-2024.pdf",
       "page_number": 12,
       "score": 0.87,
       "metadata": {
+        "file_id": "file_abc123",
         "file_name": "contract-2024.pdf",
         "page_number": 12
       }

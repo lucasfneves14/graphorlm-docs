@@ -20,7 +20,8 @@ The `delete` method allows you to permanently remove documents from your Graphor
 
 ```python
 client.sources.delete(
-    file_name: str,              # Required
+    file_id: str | None = None,  # Preferred
+    file_name: str | None = None, # Deprecated
     timeout: float | None = None
 ) -> SourceDeleteResponse
 ```
@@ -29,8 +30,13 @@ client.sources.delete(
 
 | Parameter | Type | Description | Required |
 |-----------|------|-------------|----------|
-| `file_name` | `str` | Name of the file to delete (case-sensitive) | ✅ Yes |
+| `file_id` | `str` | Unique identifier for the source (preferred) | No* |
+| `file_name` | `str` | Name of the file to delete (deprecated, use `file_id`) | No* |
 | `timeout` | `float` | Request timeout in seconds | No |
+
+<Note>
+*At least one of `file_id` or `file_name` must be provided. `file_id` is preferred.
+</Note>
 
 ## Important Considerations
 
@@ -71,6 +77,7 @@ The method returns a `SourceDeleteResponse` object:
 |----------|------|-------------|
 | `status` | `str` | Deletion result (typically "success") |
 | `message` | `str` | Human-readable confirmation message |
+| `file_id` | `str \| None` | Unique identifier for the deleted source |
 | `file_name` | `str` | Name of the deleted file |
 | `project_id` | `str` | UUID of the project the file was removed from |
 | `project_name` | `str` | Name of the project |

@@ -20,23 +20,33 @@ The `extract` method allows you to extract structured information from your docu
 
 ```python
 client.sources.extract(
-    file_names: list[str],           # Required
-    output_schema: dict[str, object], # Required
-    user_instruction: str,            # Required
+    file_ids: list[str] | None = None,        # Preferred
+    file_names: list[str] | None = None,      # Deprecated
+    output_schema: dict[str, object],         # Required
+    user_instruction: str,                    # Required
     thinking_level: str | None = None,
     timeout: float | None = None
 ) -> SourceExtractResponse
 ```
 
+<Note>
+At least one of `file_ids` or `file_names` must be provided. `file_ids` is preferred.
+</Note>
+
 ## Parameters
 
 | Parameter | Type | Description | Required |
 |-----------|------|-------------|----------|
-| `file_names` | `list[str]` | List of file names to extract data from | ✅ Yes |
+| `file_ids` | `list[str]` | List of file IDs to extract data from (preferred) | No* |
+| `file_names` | `list[str]` | List of file names to extract data from (deprecated, use `file_ids`) | No* |
 | `output_schema` | `dict[str, object]` | JSON Schema defining the structure of the extracted data | ✅ Yes |
 | `user_instruction` | `str` | Natural language instructions to guide the extraction | ✅ Yes |
 | `thinking_level` | `str` | Controls model and thinking configuration: `"fast"`, `"balanced"` (default), `"accurate"` | No |
 | `timeout` | `float` | Request timeout in seconds | No |
+
+<Note>
+*At least one of `file_ids` or `file_names` must be provided. `file_ids` is preferred.
+</Note>
 
 ### Thinking Level
 
@@ -76,6 +86,7 @@ The method returns a `SourceExtractResponse` object with the following propertie
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `file_ids` | `list[str] \| None` | List of file IDs used for extraction |
 | `file_names` | `list[str]` | List of file names used for extraction |
 | `structured_output` | `dict[str, object] \| None` | Extracted data matching your schema |
 | `raw_json` | `str \| None` | Raw JSON text produced by the model before validation/correction |
@@ -89,9 +100,9 @@ from graphor import Graphor
 
 client = Graphor()
 
-# Extract invoice data
+# Extract invoice data using file_ids (preferred)
 result = client.sources.extract(
-    file_names=["invoice-2024.pdf"],
+    file_ids=["file_abc123"],
     user_instruction="Extract all invoice information. Use YYYY-MM-DD format for dates.",
     output_schema={
         "type": "object",
@@ -122,6 +133,36 @@ output = result.structured_output
 print(f"Invoice: {output['invoice_number']}")
 print(f"Amount: ${output['total_amount']}")
 print(f"Date: {output['invoice_date']}")
+```
+
+### Basic Extraction (using file_names - deprecated)
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Extract invoice data using file_names (deprecated)
+result = client.sources.extract(
+    file_names=["invoice-2024.pdf"],
+    user_instruction="Extract all invoice information. Use YYYY-MM-DD format for dates.",
+    output_schema={
+        "type": "object",
+        "properties": {
+            "invoice_number": {
+                "type": "string",
+                "description": "The unique invoice identifier"
+            },
+            "total_amount": {
+                "type": "number",
+                "description": "Total amount due"
+            }
+        },
+        "required": ["invoice_number", "total_amount"]
+    }
+)
+
+print(f"Invoice: {result.structured_output['invoice_number']}")
 ```
 
 ### Using Thinking Level

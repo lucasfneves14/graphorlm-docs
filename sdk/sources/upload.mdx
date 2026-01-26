@@ -137,6 +137,7 @@ The method returns a `PublicSource` object with the following properties:
 |----------|------|-------------|
 | `status` | `str` | Processing status (`New`, `Processing`, `Completed`, `Failed`) |
 | `message` | `str` | Human-readable success message |
+| `file_id` | `str \| None` | Unique identifier for the source (use this for subsequent API calls) |
 | `file_name` | `str` | Name of the uploaded file |
 | `file_size` | `int` | Size of the file in bytes |
 | `file_type` | `str` | File extension/type |

@@ -47,6 +47,7 @@ The endpoint returns an array of source objects with comprehensive information a
   {
     "status": "New",
     "message": "Source uploaded, awaiting processing",
+    "file_id": "file_abc123",
     "file_name": "document.pdf",
     "file_size": 2048576,
     "file_type": "pdf",
@@ -58,6 +59,7 @@ The endpoint returns an array of source objects with comprehensive information a
   {
     "status": "Completed",
     "message": "Source processed successfully",
+    "file_id": "file_def456",
     "file_name": "presentation.pptx",
     "file_size": 1024000,
     "file_type": "pptx",
@@ -69,6 +71,7 @@ The endpoint returns an array of source objects with comprehensive information a
   {
     "status": "Processing",
     "message": "Source is being processed",
+    "file_id": "file_ghi789",
     "file_name": "webpage-content",
     "file_size": 0,
     "file_type": "pdf",
@@ -86,6 +89,7 @@ The endpoint returns an array of source objects with comprehensive information a
 |-------|------|-------------|
 | `status` | string | Current processing status (see status values below) |
 | `message` | string | Human-readable status description |
+| `file_id` | string | Unique identifier for the source (use this for subsequent API calls) |
 | `file_name` | string | Name of the source file or identifier |
 | `file_size` | integer | Size of the file in bytes (0 for URLs) |
 | `file_type` | string | File extension or type |

@@ -39,6 +39,21 @@ The endpoint requires a JSON payload with the following structure:
 
 ```json
 {
+  "file_id": "file_abc123",
+  "page": 1,
+  "page_size": 10,
+  "filter": {
+    "type": "Title",
+    "page_numbers": [1, 2, 3],
+    "elementsToRemove": ["PageNumber", "Footer"]
+  }
+}
+```
+
+Or using file_name (deprecated):
+
+```json
+{
   "file_name": "document.pdf",
   "page": 1,
   "page_size": 10,
@@ -54,10 +69,15 @@ The endpoint requires a JSON payload with the following structure:
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `file_name` | string | ✅ Yes | Name of the source file to retrieve elements from |
+| `file_id` | string | No* | Unique identifier for the source (preferred) |
+| `file_name` | string | No* | Name of the source file to retrieve elements from (deprecated, use `file_id`) |
 | `page` | integer | ❌ No | Page number for pagination (starts from 1) |
 | `page_size` | integer | ❌ No | Number of elements to return per page |
 | `filter` | object | ❌ No | Filter criteria to refine element selection |
+
+<Note>
+*At least one of `file_id` or `file_name` must be provided. `file_id` is preferred.
+</Note>
 
 ### Filter Parameters
 

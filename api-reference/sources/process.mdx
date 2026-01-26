@@ -39,8 +39,13 @@ The request must be sent as JSON with the following fields:
 
 | Field | Type | Description | Required |
 |-------|------|-------------|----------|
-| `file_name` | string | Name of the previously uploaded file to reprocess | ✅ Yes |
+| `file_id` | string | Unique identifier for the source (preferred) | No* |
+| `file_name` | string | Name of the previously uploaded file to reprocess (deprecated, use `file_id`) | No* |
 | `partition_method` | string | Processing method to use (see available methods below) | ✅ Yes |
+
+<Note>
+*At least one of `file_id` or `file_name` must be provided. `file_id` is preferred.
+</Note>
 
 ### Available Processing Methods
 
@@ -121,6 +126,15 @@ Use these values for the `partition_method` field when calling the endpoint:
 
 ```json
 {
+  "file_id": "file_abc123",
+  "partition_method": "hi_res"
+}
+```
+
+Or using file_name (deprecated):
+
+```json
+{
   "file_name": "document.pdf",
   "partition_method": "hi_res"
 }
@@ -138,6 +152,7 @@ Processing can take several minutes depending on document size, complexity, and 
 {
   "status": "success",
   "message": "Source processed successfully",
+  "file_id": "file_abc123",
   "file_name": "document.pdf",
   "file_size": 2048576,
   "file_type": "pdf",
@@ -154,6 +169,7 @@ Processing can take several minutes depending on document size, complexity, and 
 |-------|------|-------------|
 | `status` | string | Processing result (typically "success") |
 | `message` | string | Human-readable success message |
+| `file_id` | string | Unique identifier for the source |
 | `file_name` | string | Name of the processed file |
 | `file_size` | integer | Size of the file in bytes |
 | `file_type` | string | File extension/type |

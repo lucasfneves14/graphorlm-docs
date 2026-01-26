@@ -34,10 +34,15 @@ Authorization: Bearer YOUR_API_TOKEN
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `file_names` | array | Yes | List of file names to extract from |
+| `file_ids` | string[] | No* | List of file IDs to extract from (preferred) |
+| `file_names` | string[] | No* | List of file names to extract from (deprecated, use `file_ids`) |
 | `user_instruction` | string | Yes | Natural language instructions to guide the extraction |
 | `output_schema` | object | Yes | JSON Schema defining the structure of the extracted data |
 | `thinking_level` | string | No | Controls model and thinking configuration. Values: `"fast"`, `"balanced"` (default), `"accurate"`. See [Thinking Level](#thinking-level) for details. |
+
+<Note>
+*At least one of `file_ids` or `file_names` must be provided. `file_ids` is preferred.
+</Note>
 
 ### Output Schema
 
@@ -53,7 +58,41 @@ The `thinking_level` parameter controls the model and thinking configuration use
 | `"balanced"` | Default. Uses a more capable model with low thinking. Good balance between quality and speed. |
 | `"accurate"` | Uses a more capable model with high thinking. Best for complex extractions requiring deep reasoning. |
 
-### Example Request
+### Example Request (using file_ids)
+
+```bash
+curl -X POST "https://sources.graphorlm.com/run-extraction" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "file_ids": ["file_abc123"],
+    "user_instruction": "Extract all invoice information. Use YYYY-MM-DD format for dates.",
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "invoice_number": {
+          "type": "string",
+          "description": "The unique invoice identifier"
+        },
+        "invoice_date": {
+          "type": "string",
+          "description": "Invoice date in YYYY-MM-DD format"
+        },
+        "total_amount": {
+          "type": "number",
+          "description": "Total amount due"
+        },
+        "vendor_name": {
+          "type": "string",
+          "description": "Name of the company issuing the invoice"
+        }
+      },
+      "required": ["invoice_number", "total_amount"]
+    }
+  }'
+```
+
+### Example Request (using file_names - deprecated)
 
 ```bash
 curl -X POST "https://sources.graphorlm.com/run-extraction" \
@@ -172,6 +211,7 @@ curl -X POST "https://sources.graphorlm.com/run-extraction" \
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `file_ids` | array | List of file IDs used for extraction |
 | `file_names` | array | List of file names used for extraction |
 | `structured_output` | object | Extracted data matching your schema |
 | `raw_json` | string | Raw JSON-text produced by the model before validation/correction |
@@ -180,6 +220,7 @@ curl -X POST "https://sources.graphorlm.com/run-extraction" \
 
 ```json
 {
+  "file_ids": ["file_abc123"],
   "file_names": ["invoice-2024.pdf"],
   "structured_output": {
     "invoice_number": "INV-2024-001",

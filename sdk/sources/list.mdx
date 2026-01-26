@@ -42,6 +42,7 @@ The method returns a `list[PublicSource]` — a list of `PublicSource` objects w
 |----------|------|-------------|
 | `status` | `str` | Current processing status (see status values below) |
 | `message` | `str` | Human-readable status description |
+| `file_id` | `str \| None` | Unique identifier for the source (use this for subsequent API calls) |
 | `file_name` | `str` | Name of the source file or identifier |
 | `file_size` | `int` | Size of the file in bytes (0 for URLs) |
 | `file_type` | `str` | File extension or type |

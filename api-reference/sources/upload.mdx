@@ -115,6 +115,7 @@ The request must be sent as `multipart/form-data` with the following field:
 {
   "status": "New",
   "message": "File document.pdf processed successfully",
+  "file_id": "file_abc123",
   "file_name": "document.pdf",
   "file_size": 2048576,
   "file_type": "pdf",
@@ -131,6 +132,7 @@ The request must be sent as `multipart/form-data` with the following field:
 |-------|------|-------------|
 | `status` | string | Processing status (`New`, `Processing`, `Completed`, `Failed`) |
 | `message` | string | Human-readable success message |
+| `file_id` | string | Unique identifier for the source (use this for subsequent API calls) |
 | `file_name` | string | Name of the uploaded file |
 | `file_size` | integer | Size of the file in bytes |
 | `file_type` | string | File extension/type |
@@ -471,6 +473,7 @@ Send a JSON body with the following fields:
 {
   "status": "Processing",
   "message": "Source processed successfully",
+  "file_id": "file_abc123",
   "file_name": "https://example.com/",
   "file_size": 0,
   "file_type": "",
@@ -487,6 +490,7 @@ Send a JSON body with the following fields:
 |-------|------|-------------|
 | `status` | string | Processing status (`New`, `Processing`, `Completed`, `Failed`, etc.) |
 | `message` | string | Human-readable status message |
+| `file_id` | string | Unique identifier for the source (use this for subsequent API calls) |
 | `file_name` | string | Name or URL for the ingested source |
 | `file_size` | integer | Size in bytes (0 for URL-based initial record) |
 | `file_type` | string | Detected type when applicable |
@@ -670,6 +674,7 @@ Send a JSON body with the following field:
 {
   "status": "Processing",
   "message": "Source processed successfully",
+  "file_id": "file_abc123",
   "file_name": "https://github.com/org/repo",
   "file_size": 0,
   "file_type": "",
@@ -686,6 +691,7 @@ Send a JSON body with the following field:
 |-------|------|-------------|
 | `status` | string | Processing status (`New`, `Processing`, `Completed`, `Failed`, etc.) |
 | `message` | string | Human-readable status message |
+| `file_id` | string | Unique identifier for the source (use this for subsequent API calls) |
 | `file_name` | string | The repository URL |
 | `file_size` | integer | Size in bytes (0 for initial GitHub record) |
 | `file_type` | string | Detected file type (when applicable) |
@@ -863,6 +869,7 @@ Send a JSON body with the following field:
 {
   "status": "Processing",
   "message": "Source processed successfully",
+  "file_id": "file_abc123",
   "file_name": "https://www.youtube.com/watch?v=VIDEO_ID",
   "file_size": 0,
   "file_type": "",
@@ -879,6 +886,7 @@ Send a JSON body with the following field:
 |-------|------|-------------|
 | `status` | string | Processing status (`New`, `Processing`, `Completed`, `Failed`, etc.) |
 | `message` | string | Human-readable status message |
+| `file_id` | string | Unique identifier for the source (use this for subsequent API calls) |
 | `file_name` | string | The video URL (echoed back) |
 | `file_size` | integer | Size in bytes (0 for URL-based initial record) |
 | `file_type` | string | Detected type (when applicable) |
