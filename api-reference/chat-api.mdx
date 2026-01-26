@@ -39,6 +39,17 @@ Authorization: Bearer YOUR_API_TOKEN
 | `reset` | boolean | No | When `true`, starts a new conversation and ignores previous history. Default: `false` |
 | `file_names` | string[] | No | Restrict search to specific documents by file name |
 | `output_schema` | object (JSON Schema) | No | Optional JSON Schema to request a structured output. When provided, the API returns validated structured data in `structured_output` and the raw JSON-text candidate in `raw_json`. |
+| `thinking_level` | string | No | Controls model and thinking configuration. Values: `"fast"`, `"balanced"` (default), `"accurate"`. See [Thinking Level](#thinking-level) for details. |
+
+### Thinking Level
+
+The `thinking_level` parameter controls the model and thinking configuration used for answering questions:
+
+| Value | Description |
+|-------|-------------|
+| `"fast"` | Uses a faster model without extended thinking. Best for simple questions where speed is prioritized. |
+| `"balanced"` | Default. Uses a more capable model with low thinking. Good balance between quality and speed. |
+| `"accurate"` | Uses a more capable model with high thinking. Best for complex questions requiring deep reasoning. |
 
 ### Example Request
 
@@ -83,6 +94,19 @@ curl -X POST "https://sources.graphorlm.com/ask-sources" \
   -d '{
     "question": "What is the total amount due?",
     "file_names": ["invoice-2024.pdf", "invoice-2023.pdf"]
+  }'
+```
+
+### Example with Thinking Level
+
+```bash
+curl -X POST "https://sources.graphorlm.com/ask-sources" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Analyze the legal implications of the termination clause",
+    "file_names": ["contract.pdf"],
+    "thinking_level": "accurate"
   }'
 ```
 

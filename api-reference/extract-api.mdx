@@ -37,10 +37,21 @@ Authorization: Bearer YOUR_API_TOKEN
 | `file_names` | array | Yes | List of file names to extract from |
 | `user_instruction` | string | Yes | Natural language instructions to guide the extraction |
 | `output_schema` | object | Yes | JSON Schema defining the structure of the extracted data |
+| `thinking_level` | string | No | Controls model and thinking configuration. Values: `"fast"`, `"balanced"` (default), `"accurate"`. See [Thinking Level](#thinking-level) for details. |
 
 ### Output Schema
 
 The `output_schema` parameter accepts a standard [JSON Schema](https://json-schema.org/) object. This is the same format used by the [Chat API](/api-reference/chat-api) for structured outputs.
+
+### Thinking Level
+
+The `thinking_level` parameter controls the model and thinking configuration used for extraction:
+
+| Value | Description |
+|-------|-------------|
+| `"fast"` | Uses a faster model without extended thinking. Best for simple extractions where speed is prioritized. |
+| `"balanced"` | Default. Uses a more capable model with low thinking. Good balance between quality and speed. |
+| `"accurate"` | Uses a more capable model with high thinking. Best for complex extractions requiring deep reasoning. |
 
 ### Example Request
 
@@ -72,6 +83,35 @@ curl -X POST "https://sources.graphorlm.com/run-extraction" \
         }
       },
       "required": ["invoice_number", "total_amount"]
+    }
+  }'
+```
+
+### Example Request with Thinking Level
+
+```bash
+curl -X POST "https://sources.graphorlm.com/run-extraction" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "file_names": ["complex-contract.pdf"],
+    "user_instruction": "Extract all legal clauses with their implications.",
+    "thinking_level": "accurate",
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "clauses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "content": { "type": "string" },
+              "implications": { "type": "string" }
+            }
+          }
+        }
+      }
     }
   }'
 ```

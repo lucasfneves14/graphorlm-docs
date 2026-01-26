@@ -78,7 +78,7 @@ The request must be sent as `multipart/form-data` with the following field:
   <Accordion icon="file-text" title="Supported File Types">
     Graphor supports a wide range of document formats:
     
-    **Documents**: PDF, DOC, DOCX, ODT, TXT, TEXT, MD, HTML, HTM
+    **Documents**: PDF, DOC, DOCX, TXT, TEXT, MD, HTML, HTM
     
     **Presentations**: PPT, PPTX
     
@@ -239,7 +239,7 @@ curl -X POST https://sources.graphorlm.com/upload \
   <Accordion icon="file-xmark" title="Unsupported File Type (400)">
     ```json
     {
-      "detail": "File type '.xyz' is not supported. Allowed types: .pdf, .md, .png, .jpg, .jpeg, .tiff, .bmp, .heic, .csv, .tsv, .xls, .xlsx, .odt, .ppt, .pptx, .doc, .docx, .html, .htm, .txt, .text, .mp3, .wav, .m4a, .ogg, .flac, .mp4, .mov, .avi, .mkv, .webm"
+      "detail": "File type '.xyz' is not supported. Allowed types: .pdf, .md, .png, .jpg, .jpeg, .tiff, .bmp, .heic, .csv, .tsv, .xls, .xlsx, .ppt, .pptx, .doc, .docx, .html, .htm, .txt, .text, .mp3, .wav, .m4a, .ogg, .flac, .mp4, .mov, .avi, .mkv, .webm"
     }
     ```
   </Accordion>

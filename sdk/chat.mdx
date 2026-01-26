@@ -25,6 +25,7 @@ client.sources.ask(
     reset: bool | None = None,
     file_names: list[str] | None = None,
     output_schema: dict | None = None,
+    thinking_level: str | None = None,
     timeout: float | None = None
 ) -> SourceAskResponse
 ```
@@ -38,7 +39,18 @@ client.sources.ask(
 | `reset` | `bool` | When `True`, starts a new conversation and ignores previous history | No |
 | `file_names` | `list[str]` | Restrict search to specific documents by file name | No |
 | `output_schema` | `dict` | JSON Schema to request structured output (see below) | No |
+| `thinking_level` | `str` | Controls model and thinking configuration: `"fast"`, `"balanced"` (default), `"accurate"` | No |
 | `timeout` | `float` | Request timeout in seconds | No |
+
+### Thinking Level
+
+The `thinking_level` parameter controls the model and thinking configuration used for answering questions:
+
+| Value | Description |
+|-------|-------------|
+| `"fast"` | Uses a faster model without extended thinking. Best for simple questions where speed is prioritized. |
+| `"balanced"` | Default. Uses a more capable model with low thinking. Good balance between quality and speed. |
+| `"accurate"` | Uses a more capable model with high thinking. Best for complex questions requiring deep reasoning. |
 
 ## Response Object
 
@@ -142,6 +154,33 @@ response = client.sources.ask(
 )
 
 print(f"Answer: {response.answer}")
+```
+
+### Using Thinking Level
+
+Control the model's reasoning depth with `thinking_level`:
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Fast mode for simple questions
+response = client.sources.ask(
+    question="What is the document title?",
+    thinking_level="fast"
+)
+
+print(f"Answer: {response.answer}")
+
+# Accurate mode for complex analysis
+response = client.sources.ask(
+    question="Analyze the legal implications of the termination clause and identify potential risks.",
+    file_names=["contract.pdf"],
+    thinking_level="accurate"
+)
+
+print(f"Analysis: {response.answer}")
 ```
 
 ### Structured Output with JSON Schema
