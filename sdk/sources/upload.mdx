@@ -88,7 +88,8 @@ Upload a local file to your Graphor project for processing.
 
 ```python
 client.sources.upload(
-    file: FileTypes,  # Required
+    file: FileTypes,                              # Required
+    partition_method: PartitionMethod | None = None,  # Optional
     timeout: float | None = None
 ) -> PublicSource
 ```
@@ -98,7 +99,24 @@ client.sources.upload(
 | Parameter | Type | Description | Required |
 |-----------|------|-------------|----------|
 | `file` | `FileTypes` | The file to upload. Accepts `bytes`, `Path`, or tuple `(filename, contents, media_type)` | ✅ Yes |
+| `partition_method` | `PartitionMethod` | Processing method to use (see [Partition Methods](#partition-methods) below) | No |
 | `timeout` | `float` | Request timeout in seconds (default: 60) | No |
+
+### Partition Methods
+
+When provided, the `partition_method` parameter allows you to process/parse the document immediately during upload. If not provided, the system uses the default method.
+
+| Value | Name | Description |
+|-------|------|-------------|
+| `"basic"` | Fast | Fast processing with heuristic classification. No OCR. |
+| `"hi_res"` | Balanced | OCR-based extraction with AI-powered structure classification. |
+| `"hi_res_ft"` | Accurate | Fine-tuned AI model for highest accuracy (Premium). |
+| `"mai"` | VLM | Best text-first parsing for manuscripts and handwritten documents. |
+| `"graphorlm"` | Agentic | Highest parsing setting for complex layouts, multi-page tables, and diagrams. |
+
+<Note>
+For more details about processing methods, see the [Parse Source](/sdk/sources/process) documentation.
+</Note>
 
 ### File Requirements
 
@@ -162,8 +180,28 @@ source = client.sources.upload(
 )
 
 print(f"Uploaded: {source.file_name}")
+print(f"File ID: {source.file_id}")
 print(f"Status: {source.status}")
 print(f"Project ID: {source.project_id}")
+```
+
+#### Upload with Partition Method
+
+```python
+from pathlib import Path
+from graphor import Graphor
+
+client = Graphor()
+
+# Upload and process with a specific partition method
+source = client.sources.upload(
+    file=Path("./document.pdf"),
+    partition_method="hi_res"  # Use Balanced processing
+)
+
+print(f"Uploaded: {source.file_name}")
+print(f"File ID: {source.file_id}")
+print(f"Partition Method: {source.partition_method}")
 ```
 
 #### Upload from Bytes
@@ -272,8 +310,9 @@ Ingest content by scraping a public web page.
 
 ```python
 client.sources.upload_url(
-    url: str,               # Required
+    url: str,                                     # Required
     crawl_urls: bool = False,
+    partition_method: PartitionMethod | None = None,  # Optional
     timeout: float | None = None
 ) -> PublicSource
 ```
@@ -284,6 +323,7 @@ client.sources.upload_url(
 |-----------|------|-------------|----------|
 | `url` | `str` | The URL of the web page to scrape | ✅ Yes |
 | `crawl_urls` | `bool` | Whether to crawl and ingest links from the given URL (default: `False`) | No |
+| `partition_method` | `PartitionMethod` | Processing method to use (see [Partition Methods](#partition-methods) above) | No |
 | `timeout` | `float` | Request timeout in seconds | No |
 
 ### URL Requirements
@@ -332,6 +372,24 @@ source = client.sources.upload_url(
 )
 
 print(f"Ingested: {source.file_name}")
+```
+
+#### Upload with Partition Method
+
+```python
+from graphor import Graphor
+
+client = Graphor()
+
+# Scrape a web page with a specific processing method
+source = client.sources.upload_url(
+    url="https://example.com/article",
+    partition_method="hi_res"  # Use Balanced processing
+)
+
+print(f"Ingested: {source.file_name}")
+print(f"File ID: {source.file_id}")
+print(f"Partition Method: {source.partition_method}")
 ```
 
 #### Async Web Page Upload

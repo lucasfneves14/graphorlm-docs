@@ -66,11 +66,28 @@ Uses the same API token authentication described in [Authentication](#authentica
 
 ### Request Body
 
-The request must be sent as `multipart/form-data` with the following field:
+The request must be sent as `multipart/form-data` with the following fields:
 
 | Field | Type | Description | Required |
 |-------|------|-------------|----------|
 | `file` | File | The document file to upload | ✅ Yes |
+| `partition_method` | string | Processing method to use (see [Partition Methods](#partition-methods) below) | No |
+
+### Partition Methods
+
+When provided, the `partition_method` parameter allows you to process/parse the document immediately during upload. If not provided, the system uses the default method.
+
+| Value | Name | Description |
+|-------|------|-------------|
+| `basic` | Fast | Fast processing with heuristic classification. No OCR. |
+| `hi_res` | Balanced | OCR-based extraction with AI-powered structure classification. |
+| `hi_res_ft` | Accurate | Fine-tuned AI model for highest accuracy (Premium). |
+| `mai` | VLM | Best text-first parsing for manuscripts and handwritten documents. |
+| `graphorlm` | Agentic | Highest parsing setting for complex layouts, multi-page tables, and diagrams. |
+
+<Note>
+For more details about processing methods, see the [Process Source](/api-reference/sources/process) documentation.
+</Note>
 
 ### File Requirements
 
@@ -212,6 +229,15 @@ except requests.exceptions.RequestException as e:
 curl -X POST https://sources.graphorlm.com/upload \
   -H "Authorization: Bearer grlm_your_api_token_here" \
   -F "file=@document.pdf"
+```
+
+### cURL with Partition Method
+
+```bash
+curl -X POST https://sources.graphorlm.com/upload \
+  -H "Authorization: Bearer grlm_your_api_token_here" \
+  -F "file=@document.pdf" \
+  -F "partition_method=hi_res"
 ```
 
 ### Error Responses
@@ -446,6 +472,7 @@ Send a JSON body with the following fields:
 |-------|------|-------------|----------|
 | `url` | string | The URL of the web page to scrape | ✅ Yes |
 | `crawlUrls` | boolean | Whether to crawl and ingest links from the given URL | No (default: `false`) |
+| `partition_method` | string | Processing method to use (see [Partition Methods](#partition-methods) above) | No |
 
 #### URL Requirements
 
