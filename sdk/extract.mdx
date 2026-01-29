@@ -41,7 +41,7 @@ At least one of `file_ids` or `file_names` must be provided. `file_ids` is prefe
 | `file_names` | `list[str]` | List of file names to extract data from (deprecated, use `file_ids`) | No* |
 | `output_schema` | `dict[str, object]` | JSON Schema defining the structure of the extracted data | ✅ Yes |
 | `user_instruction` | `str` | Natural language instructions to guide the extraction | ✅ Yes |
-| `thinking_level` | `str` | Controls model and thinking configuration: `"fast"`, `"balanced"` (default), `"accurate"` | No |
+| `thinking_level` | `str` | Controls model and thinking configuration: `"fast"`, `"balanced"`, `"accurate"` (default) | No |
 | `timeout` | `float` | Request timeout in seconds | No |
 
 <Note>
@@ -55,8 +55,8 @@ The `thinking_level` parameter controls the model and thinking configuration use
 | Value | Description |
 |-------|-------------|
 | `"fast"` | Uses a faster model without extended thinking. Best for simple extractions where speed is prioritized. |
-| `"balanced"` | Default. Uses a more capable model with low thinking. Good balance between quality and speed. |
-| `"accurate"` | Uses a more capable model with high thinking. Best for complex extractions requiring deep reasoning. |
+| `"balanced"` | Uses a more capable model with low thinking. Good balance between quality and speed. |
+| `"accurate"` | Default. Uses a more capable model with high thinking. Best for complex extractions requiring deep reasoning. |
 
 ### Output Schema
 

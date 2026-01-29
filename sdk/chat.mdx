@@ -41,7 +41,7 @@ client.sources.ask(
 | `file_ids` | `list[str]` | Restrict search to specific documents by file ID (preferred) | No |
 | `file_names` | `list[str]` | Restrict search to specific documents by file name (deprecated, use `file_ids`) | No |
 | `output_schema` | `dict` | JSON Schema to request structured output (see below) | No |
-| `thinking_level` | `str` | Controls model and thinking configuration: `"fast"`, `"balanced"` (default), `"accurate"` | No |
+| `thinking_level` | `str` | Controls model and thinking configuration: `"fast"`, `"balanced"`, `"accurate"` (default) | No |
 | `timeout` | `float` | Request timeout in seconds | No |
 
 ### Thinking Level
@@ -51,8 +51,8 @@ The `thinking_level` parameter controls the model and thinking configuration use
 | Value | Description |
 |-------|-------------|
 | `"fast"` | Uses a faster model without extended thinking. Best for simple questions where speed is prioritized. |
-| `"balanced"` | Default. Uses a more capable model with low thinking. Good balance between quality and speed. |
-| `"accurate"` | Uses a more capable model with high thinking. Best for complex questions requiring deep reasoning. |
+| `"balanced"` | Uses a more capable model with low thinking. Good balance between quality and speed. |
+| `"accurate"` | Default. Uses a more capable model with high thinking. Best for complex questions requiring deep reasoning. |
 
 ## Response Object
 

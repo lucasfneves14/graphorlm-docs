@@ -38,7 +38,7 @@ Authorization: Bearer YOUR_API_TOKEN
 | `file_names` | string[] | No* | List of file names to extract from (deprecated, use `file_ids`) |
 | `user_instruction` | string | Yes | Natural language instructions to guide the extraction |
 | `output_schema` | object | Yes | JSON Schema defining the structure of the extracted data |
-| `thinking_level` | string | No | Controls model and thinking configuration. Values: `"fast"`, `"balanced"` (default), `"accurate"`. See [Thinking Level](#thinking-level) for details. |
+| `thinking_level` | string | No | Controls model and thinking configuration. Values: `"fast"`, `"balanced"`, `"accurate"` (default). See [Thinking Level](#thinking-level) for details. |
 
 <Note>
 *At least one of `file_ids` or `file_names` must be provided. `file_ids` is preferred.
@@ -55,8 +55,8 @@ The `thinking_level` parameter controls the model and thinking configuration use
 | Value | Description |
 |-------|-------------|
 | `"fast"` | Uses a faster model without extended thinking. Best for simple extractions where speed is prioritized. |
-| `"balanced"` | Default. Uses a more capable model with low thinking. Good balance between quality and speed. |
-| `"accurate"` | Uses a more capable model with high thinking. Best for complex extractions requiring deep reasoning. |
+| `"balanced"` | Uses a more capable model with low thinking. Good balance between quality and speed. |
+| `"accurate"` | Default. Uses a more capable model with high thinking. Best for complex extractions requiring deep reasoning. |
 
 ### Example Request (using file_ids)
 
