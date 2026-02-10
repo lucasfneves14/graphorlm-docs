@@ -50,10 +50,7 @@
           {
             "group": "Developers",
             "pages": [
-              {
-                "page": "API Overview",
-                "href": "/api-reference/overview"
-              }
+              "/api-reference/overview"
             ]
           },
           {
