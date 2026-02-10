@@ -38,6 +38,7 @@
     "tabs": [
       {
         "tab": "Documentation",
+        "href": "/introduction",
         "groups": [
           {
             "group": "Get Started",
