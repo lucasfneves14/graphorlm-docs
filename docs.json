@@ -42,8 +42,14 @@
           {
             "group": "Get Started",
             "pages": [
-              "introduction",
-              "quickstart",
+              {
+                "page": "Introduction",
+                "href": "/introduction"
+              },
+              {
+                "page": "Quickstart",
+                "href": "/quickstart"
+              },
               {
                 "page": "API Overview",
                 "href": "/api-reference/overview"
