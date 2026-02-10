@@ -41,7 +41,8 @@
             "pages": [
               "introduction",
               "quickstart",
-              "api-overview"
+              "api-overview",
+              "sdk/overview"
             ]
           },
           {
