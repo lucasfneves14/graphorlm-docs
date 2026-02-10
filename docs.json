@@ -48,6 +48,15 @@
             ]
           },
           {
+            "group": "Developers",
+            "pages": [
+              {
+                "page": "API Overview",
+                "href": "/api-reference/overview"
+              }
+            ]
+          },
+          {
             "group": "Data Options",
             "pages": [
               "guides/data-ingestion",
