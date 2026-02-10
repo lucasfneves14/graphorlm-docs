@@ -52,7 +52,8 @@
             "pages": [
               "api-overview",
               "sdk-overview",
-              "mcp-server"
+              "mcp-server",
+              "skills"
             ]
           },
           {

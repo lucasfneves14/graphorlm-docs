@@ -1,0 +1,319 @@
+---
+title: 'Agent Skills'
+description: 'Give AI coding agents deep Graphor expertise with the Graphor Skills plugin for Claude Code and 27+ agent tools'
+---
+
+**Graphor Skills** is a plugin that gives AI coding agents — such as Claude Code, Cursor, VS Code, GitHub Copilot, Gemini CLI, and more — deep domain expertise for working with Graphor. It bundles **MCP server connectivity** and **SDK coding knowledge** so your agent can upload, process, and query documents through natural language.
+
+<Card
+  title="GitHub Repository"
+  icon="github"
+  href="https://github.com/synapseops/graphor-skills"
+>
+  View the source code, installation instructions, and skill definitions.
+</Card>
+
+## What's Included
+
+The plugin bundles three skills and an MCP server configuration:
+
+<CardGroup cols={2}>
+  <Card title="graphor-workflow" icon="diagram-project">
+    **Core skill** — teaches the agent the upload, process, query workflow using MCP tools. Auto-activates when relevant.
+  </Card>
+  <Card title="graphor-ts-sdk" icon="js">
+    **TypeScript SDK patterns** — activates when writing TypeScript/JavaScript code with the `graphor` npm package.
+  </Card>
+  <Card title="graphor-py-sdk" icon="python">
+    **Python SDK patterns** — activates when writing Python code with the `graphor` PyPI package.
+  </Card>
+  <Card title=".mcp.json" icon="plug">
+    **MCP Server config** — auto-configures the `graphor-mcp` server for direct API access.
+  </Card>
+</CardGroup>
+
+## How It Works
+
+The plugin follows the [Agent Skills](https://github.com/anthropics/agent-skills) open standard. When installed, the skills provide your agent with:
+
+1. **Contextual knowledge** — The agent learns Graphor's core workflow (upload, process, query), API patterns, and best practices automatically.
+2. **MCP server access** — The bundled `.mcp.json` configuration connects the agent to the Graphor MCP Server, giving it direct access to the API.
+3. **SDK coding assistance** — When writing code that uses the Graphor SDK, the agent gets language-specific patterns, method signatures, error handling, and type safety guidance.
+
+<Note>
+  Skills activate automatically based on context — you don't need to explicitly load them. The workflow skill activates when you mention Graphor documents, and the SDK skills activate when writing code that imports `graphor`.
+</Note>
+
+## Installation
+
+### Claude Code — Plugin Marketplace (Recommended)
+
+The quickest way to install:
+
+```bash
+/plugin marketplace add synapseops/graphor-skills
+/plugin install graphor@graphor-skills
+```
+
+Set your API key when prompted:
+
+```bash
+export GRAPHOR_API_KEY="grlm_your_api_key_here"
+```
+
+<Warning>
+  Add the export to your `~/.bashrc`, `~/.zshrc`, or equivalent so it persists across sessions.
+</Warning>
+
+### Project-Level Installation (Team-Wide)
+
+Copy the skills into your project's `.claude/skills/` directory so the entire team benefits:
+
+```bash
+cp -r plugin/skills/* your-project/.claude/skills/
+```
+
+### Personal Installation (All Projects)
+
+Copy the skills to your personal Claude directory:
+
+```bash
+cp -r plugin/skills/* ~/.claude/skills/
+```
+
+### Other Agent Tools
+
+Since the skills follow the Agent Skills open standard, they are portable across **27+ agent tools** including:
+
+- Claude Code
+- Cursor
+- VS Code
+- GitHub Copilot
+- Gemini CLI
+- And more
+
+Consult your agent tool's documentation for how to install Agent Skills plugins.
+
+## Skills Reference
+
+### graphor-workflow
+
+The primary skill. It teaches the agent the complete Graphor workflow and activates automatically when you mention document operations.
+
+**Activation**: Auto-activates when the agent detects tasks related to uploading, processing, or querying documents in Graphor.
+
+**Core workflow**:
+
+```
+Upload → Process → Query
+```
+
+The skill enforces the three-step workflow:
+
+1. **Upload** a source — returns status `"New"`
+2. **Process** the source by calling parse — triggers async processing (`"New"` → `"Processing"` → `"Completed"`)
+3. **Query** the source (ask, extract, or retrieve chunks) — only works after status is `"Completed"`
+
+<Warning>
+  Upload alone does **not** start processing. You must explicitly call parse after upload.
+</Warning>
+
+**Included rules**:
+
+| Rule | Description |
+|------|-------------|
+| `upload-sources` | Upload files, URLs, GitHub repos, or YouTube videos |
+| `async-processing` | Process documents and poll for completion status |
+| `ask-sources` | Ask questions about documents with conversational Q&A |
+| `extraction` | Extract structured data using JSON Schema |
+| `retrieve-chunks` | Retrieve chunks for custom RAG pipelines |
+| `manage-sources` | List, inspect, or delete documents |
+
+**Universal rules the agent follows**:
+
+1. Uses MCP tools for all non-upload operations (parse, ask, extract, list, delete)
+2. Uses `file_ids` over `file_names` (deprecated) — stores `file_id` from upload responses
+3. Always processes after upload
+4. Always checks status is `"Completed"` before querying
+
+### graphor-ts-sdk
+
+Background knowledge skill for writing TypeScript/JavaScript code with the Graphor SDK.
+
+**Activation**: Activates when writing TypeScript/JavaScript code that imports or uses the `graphor` npm package.
+
+**Covers**:
+- Client setup and initialization
+- All SDK methods (`upload`, `uploadURL`, `uploadGitHub`, `uploadYoutube`, `parse`, `list`, `delete`, `loadElements`, `ask`, `extract`, `retrieveChunks`)
+- File upload patterns (`fs.createReadStream`, `toFile` helper)
+- Error handling (`Graphor.BadRequestError`, `Graphor.NotFoundError`, etc.)
+- Type safety and TypeScript interfaces
+
+### graphor-py-sdk
+
+Background knowledge skill for writing Python code with the Graphor SDK.
+
+**Activation**: Activates when writing Python code that imports or uses the `graphor` PyPI package.
+
+**Covers**:
+- Sync (`Graphor`) and async (`AsyncGraphor`) clients
+- All SDK methods (`upload`, `upload_url`, `upload_github`, `upload_youtube`, `parse`, `list`, `delete`, `load_elements`, `ask`, `extract`, `retrieve_chunks`)
+- File upload patterns (`Path`, bytes, tuples)
+- Error handling (`graphor.BadRequestError`, `graphor.NotFoundError`, etc.)
+- Configuration (retries, timeouts, aiohttp)
+
+## Authentication
+
+All skills require a valid Graphor API key. Set it as an environment variable:
+
+```bash
+export GRAPHOR_API_KEY="grlm_your_api_key_here"
+```
+
+The bundled `.mcp.json` uses `${GRAPHOR_API_KEY}` expansion to read this value automatically.
+
+<Note>
+  If MCP operations return authentication errors, the key is not set correctly. Run `export GRAPHOR_API_KEY="grlm_..."` and restart your agent tool.
+</Note>
+
+<Note>
+  Learn how to create and manage API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Example Usage
+
+Once installed, just talk to your agent naturally:
+
+<AccordionGroup>
+  <Accordion icon="arrow-up-from-bracket" title="Upload and summarize a document">
+    **You say**: *"Upload https://example.com/report to Graphor and summarize it"*
+    
+    **Agent will**:
+    1. Upload the URL via MCP
+    2. Call parse to start processing
+    3. Poll until status is `"Completed"`
+    4. Ask the document for a summary
+  </Accordion>
+  
+  <Accordion icon="table" title="Extract structured data">
+    **You say**: *"Extract all invoice numbers and amounts from invoice.pdf in Graphor"*
+    
+    **Agent will**:
+    1. Look up the file in your project
+    2. Use the extract method with a JSON Schema
+    3. Return structured data
+  </Accordion>
+  
+  <Accordion icon="code" title="Write SDK code">
+    **You say**: *"Write a Python script that uploads all PDFs in a folder to Graphor and extracts their titles"*
+    
+    **Agent will**:
+    1. Activate the `graphor-py-sdk` skill
+    2. Write idiomatic Python using `Graphor()`, `upload()`, `parse()`, and `extract()`
+    3. Include proper error handling and async processing
+  </Accordion>
+  
+  <Accordion icon="magnifying-glass" title="Build a RAG pipeline">
+    **You say**: *"Retrieve the most relevant chunks about payment terms from my contract"*
+    
+    **Agent will**:
+    1. Use `retrieveChunks` via MCP
+    2. Return chunks with file names, page numbers, and relevance scores
+  </Accordion>
+</AccordionGroup>
+
+## Repository Structure
+
+```
+graphor-skills/
+├── .claude-plugin/
+│   └── marketplace.json           # Marketplace catalog
+├── plugin/                        # The Graphor plugin
+│   ├── .claude-plugin/
+│   │   └── plugin.json            # Plugin metadata
+│   ├── .mcp.json                  # MCP server config
+│   └── skills/
+│       ├── graphor-workflow/      # MCP workflow (hub + 6 rules)
+│       │   ├── references/
+│       │   ├── rules/
+│       │   └── SKILL.md
+│       ├── graphor-ts-sdk/        # TypeScript SDK patterns
+│       └── graphor-py-sdk/        # Python SDK patterns
+├── LICENSE
+└── README.md
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="key" title="Authentication errors from MCP">
+    **Causes**: `GRAPHOR_API_KEY` environment variable not set or incorrect
+    
+    **Solutions**:
+    - Run `export GRAPHOR_API_KEY="grlm_your_api_key_here"` in your terminal
+    - Add it to `~/.bashrc` or `~/.zshrc` for persistence
+    - Restart your agent tool after setting the variable
+    - Verify the key starts with `grlm_`
+  </Accordion>
+  
+  <Accordion icon="plug" title="MCP server not connecting">
+    **Causes**: Node.js not installed, npx not available, or plugin not installed correctly
+    
+    **Solutions**:
+    - Verify Node.js 20+ is installed: `node --version`
+    - Re-install the plugin: `/plugin install graphor@graphor-skills`
+    - Check that `.mcp.json` exists in the plugin directory
+    - Try running the MCP server manually: `npx -y graphor-mcp`
+  </Accordion>
+  
+  <Accordion icon="file-circle-xmark" title="Local file uploads failing">
+    **Causes**: The MCP server sandbox cannot access local files
+    
+    **Solutions**:
+    - The workflow skill automatically uses `curl` via Bash for local file uploads
+    - For URL, GitHub, and YouTube uploads, MCP tools work directly
+    - Ensure your `GRAPHOR_API_KEY` is available in the shell environment
+  </Accordion>
+  
+  <Accordion icon="robot" title="Agent not using Graphor skills">
+    **Causes**: Skills not installed or not activated
+    
+    **Solutions**:
+    - Verify installation: `/plugin list` should show `graphor`
+    - Be explicit in your prompt: mention "Graphor" or "documents"
+    - Check that skill files exist in `.claude/skills/` or the plugin directory
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="MCP Server"
+    icon="server"
+    href="/mcp-server"
+  >
+    Learn more about the Graphor MCP Server that powers the skills
+  </Card>
+  <Card
+    title="SDK Overview"
+    icon="book"
+    href="/sdk/overview"
+  >
+    Explore the full SDK documentation for Python and TypeScript
+  </Card>
+  <Card
+    title="Upload Sources"
+    icon="arrow-up-from-bracket"
+    href="/sdk/sources/upload"
+  >
+    Detailed guide on uploading documents, URLs, GitHub repos, and videos
+  </Card>
+  <Card
+    title="Data Extraction"
+    icon="table"
+    href="/sdk/extract"
+  >
+    Extract structured data from documents with JSON Schema
+  </Card>
+</CardGroup>
