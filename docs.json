@@ -12,6 +12,9 @@
     "strict": true
   },
   "favicon": "/favicon.png",
+  "interaction": {
+    "drilldown": false
+  },
   "navigation": {
     "global": {
       "anchors": [
@@ -41,8 +44,14 @@
             "pages": [
               "introduction",
               "quickstart",
-              "api-overview",
-              "sdk/overview"
+              {
+                "page": "API Overview",
+                "href": "/api-reference/overview"
+              },
+              {
+                "page": "SDK Overview",
+                "href": "/sdk/overview"
+              }
             ]
           },
           {
