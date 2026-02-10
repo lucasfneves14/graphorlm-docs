@@ -1,46 +1,85 @@
 ---
 title: 'Upload Sources'
-description: 'Upload sources (files, web pages, GitHub, YouTube) to your project using the Graphor Python SDK'
+description: 'Upload sources (files, web pages, GitHub, YouTube) to your project using the Graphor SDK'
 ---
 
-This page documents how to upload content to your Graphor project using the **Python SDK** — whether that content is a **local file**, a **public web page URL**, a **public GitHub repository**, or a **public YouTube video**.
+This page documents how to upload content to your Graphor project — whether that content is a **local file**, a **public web page URL**, a **public GitHub repository**, or a **public YouTube video**.
 
 ## Available Methods
 
-<CardGroup cols={2}>
-  <Card title="Upload a File" icon="arrow-up-from-bracket" href="#upload-a-file">
-    **`client.sources.upload()`**
-    
-    Upload local files (PDF, DOCX, images, audio, video, etc.)
-  </Card>
-  <Card title="Upload Web Page" icon="link" href="#upload-from-url">
-    **`client.sources.upload_url()`**
-    
-    Scrape and ingest a public web page by URL
-  </Card>
-  <Card title="Upload from GitHub" icon="code-branch" href="#upload-from-github">
-    **`client.sources.upload_github()`**
-    
-    Ingest content from a public GitHub repository
-  </Card>
-  <Card title="Upload from YouTube" icon="video" href="#upload-from-youtube">
-    **`client.sources.upload_youtube()`**
-    
-    Ingest content from a public YouTube video URL
-  </Card>
-</CardGroup>
+<Tabs>
+  <Tab title="Python">
+    <CardGroup cols={2}>
+      <Card title="Upload a File" icon="arrow-up-from-bracket" href="#upload-a-file">
+        **`client.sources.upload()`**
+        
+        Upload local files (PDF, DOCX, images, audio, video, etc.)
+      </Card>
+      <Card title="Upload Web Page" icon="link" href="#upload-from-url">
+        **`client.sources.upload_url()`**
+        
+        Scrape and ingest a public web page by URL
+      </Card>
+      <Card title="Upload from GitHub" icon="code-branch" href="#upload-from-github">
+        **`client.sources.upload_github()`**
+        
+        Ingest content from a public GitHub repository
+      </Card>
+      <Card title="Upload from YouTube" icon="video" href="#upload-from-youtube">
+        **`client.sources.upload_youtube()`**
+        
+        Ingest content from a public YouTube video URL
+      </Card>
+    </CardGroup>
+  </Tab>
+  <Tab title="TypeScript">
+    <CardGroup cols={2}>
+      <Card title="Upload a File" icon="arrow-up-from-bracket" href="#upload-a-file">
+        **`client.sources.upload()`**
+        
+        Upload local files (PDF, DOCX, images, audio, video, etc.)
+      </Card>
+      <Card title="Upload Web Page" icon="link" href="#upload-from-url">
+        **`client.sources.uploadURL()`**
+        
+        Scrape and ingest a public web page by URL
+      </Card>
+      <Card title="Upload from GitHub" icon="code-branch" href="#upload-from-github">
+        **`client.sources.uploadGitHub()`**
+        
+        Ingest content from a public GitHub repository
+      </Card>
+      <Card title="Upload from YouTube" icon="video" href="#upload-from-youtube">
+        **`client.sources.uploadYoutube()`**
+        
+        Ingest content from a public YouTube video URL
+      </Card>
+    </CardGroup>
+  </Tab>
+</Tabs>
 
 ## Installation
 
-Install the Graphor SDK from PyPI:
+<Tabs>
+  <Tab title="Python">
+    ```bash
+    pip install graphor
+    ```
 
-```bash
-pip install graphor
-```
+    <Note>
+      Python 3.9 or higher is required.
+    </Note>
+  </Tab>
+  <Tab title="TypeScript">
+    ```bash
+    npm install graphor
+    ```
 
-<Note>
-  Python 3.9 or higher is required.
-</Note>
+    <Note>
+      TypeScript 4.9+ and Node.js 20+ (LTS) are recommended.
+    </Note>
+  </Tab>
+</Tabs>
 
 ## Authentication
 
@@ -56,21 +95,41 @@ export GRAPHOR_API_KEY="grlm_your_api_key_here"
 
 Then initialize the client without any arguments:
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
-```
+    client = Graphor()
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+    ```
+  </Tab>
+</Tabs>
 
 ### Direct Initialization
 
-Pass the API key directly to the client:
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-```python
-from graphor import Graphor
+    client = Graphor(api_key="grlm_your_api_key_here")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
 
-client = Graphor(api_key="grlm_your_api_key_here")
-```
+    const client = new Graphor({ apiKey: 'grlm_your_api_key_here' });
+    ```
+  </Tab>
+</Tabs>
 
 <Warning>
   Never hardcode API keys in your source code. Use environment variables or a secrets manager.
@@ -86,21 +145,43 @@ Upload a local file to your Graphor project for processing.
 
 ### Method Signature
 
-```python
-client.sources.upload(
-    file: FileTypes,                              # Required
-    partition_method: PartitionMethod | None = None,  # Optional
-    timeout: float | None = None
-) -> PublicSource
-```
+<Tabs>
+  <Tab title="Python">
+    ```python
+    client.sources.upload(
+        file: FileTypes,                              # Required
+        partition_method: PartitionMethod | None = None,  # Optional
+        timeout: float | None = None
+    ) -> PublicSource
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    await client.sources.upload({
+      file: Uploadable,                                    // Required
+      partition_method?: 'basic' | 'hi_res' | 'hi_res_ft' | 'mai' | 'graphorlm' | null,
+    }): Promise<PublicSource>
+    ```
+  </Tab>
+</Tabs>
 
 ### Parameters
 
-| Parameter | Type | Description | Required |
-|-----------|------|-------------|----------|
-| `file` | `FileTypes` | The file to upload. Accepts `bytes`, `Path`, or tuple `(filename, contents, media_type)` | ✅ Yes |
-| `partition_method` | `PartitionMethod` | Processing method to use (see [Partition Methods](#partition-methods) below) | No |
-| `timeout` | `float` | Request timeout in seconds (default: 60) | No |
+<Tabs>
+  <Tab title="Python">
+    | Parameter | Type | Description | Required |
+    |-----------|------|-------------|----------|
+    | `file` | `FileTypes` | The file to upload. Accepts `bytes`, `Path`, or tuple `(filename, contents, media_type)` | Yes |
+    | `partition_method` | `PartitionMethod` | Processing method to use (see [Partition Methods](#partition-methods) below) | No |
+    | `timeout` | `float` | Request timeout in seconds (default: 60) | No |
+  </Tab>
+  <Tab title="TypeScript">
+    | Parameter | Type | Description | Required |
+    |-----------|------|-------------|----------|
+    | `file` | `Uploadable` | The file to upload. Accepts `ReadStream`, `File`, `Response`, or `toFile()` helper | Yes |
+    | `partition_method` | `string \| null` | Processing method to use (see [Partition Methods](#partition-methods) below) | No |
+  </Tab>
+</Tabs>
 
 ### Partition Methods
 
@@ -168,163 +249,366 @@ The method returns a `PublicSource` object with the following properties:
 
 #### Upload from File Path
 
-```python
-from pathlib import Path
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from pathlib import Path
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-# Upload using a Path object
-source = client.sources.upload(
-    file=Path("./document.pdf")
-)
-
-print(f"Uploaded: {source.file_name}")
-print(f"File ID: {source.file_id}")
-print(f"Status: {source.status}")
-print(f"Project ID: {source.project_id}")
-```
-
-#### Upload with Partition Method
-
-```python
-from pathlib import Path
-from graphor import Graphor
-
-client = Graphor()
-
-# Upload and process with a specific partition method
-source = client.sources.upload(
-    file=Path("./document.pdf"),
-    partition_method="hi_res"  # Use Balanced processing
-)
-
-print(f"Uploaded: {source.file_name}")
-print(f"File ID: {source.file_id}")
-print(f"Partition Method: {source.partition_method}")
-```
-
-#### Upload from Bytes
-
-```python
-from graphor import Graphor
-
-client = Graphor()
-
-# Read file content as bytes
-with open("document.pdf", "rb") as f:
-    file_content = f.read()
-
-# Upload raw bytes with filename tuple
-source = client.sources.upload(
-    file=("document.pdf", file_content, "application/pdf")
-)
-
-print(f"Uploaded: {source.file_name}")
-```
-
-#### Async Upload
-
-```python
-import asyncio
-from pathlib import Path
-from graphor import AsyncGraphor
-
-async def upload_document():
-    client = AsyncGraphor()
-    
-    source = await client.sources.upload(
-        file=Path("./document.pdf")
-    )
-    
-    print(f"Uploaded: {source.file_name}")
-    print(f"Status: {source.status}")
-    
-    return source
-
-# Run the async function
-asyncio.run(upload_document())
-```
-
-#### Batch Upload
-
-```python
-from pathlib import Path
-from graphor import Graphor
-
-client = Graphor()
-
-def batch_upload(directory: str):
-    """Upload all supported documents from a directory."""
-    supported_extensions = {'.pdf', '.doc', '.docx', '.txt', '.md', '.html'}
-    uploaded_files = []
-    failed_files = []
-    
-    for file_path in Path(directory).iterdir():
-        if file_path.suffix.lower() in supported_extensions:
-            try:
-                source = client.sources.upload(file=file_path)
-                uploaded_files.append(source.file_name)
-                print(f"✅ Uploaded: {file_path.name}")
-            except Exception as e:
-                failed_files.append((file_path.name, str(e)))
-                print(f"❌ Failed: {file_path.name} - {e}")
-    
-    print(f"\nSummary: {len(uploaded_files)} uploaded, {len(failed_files)} failed")
-    return uploaded_files, failed_files
-
-# Usage
-uploaded, failed = batch_upload("./documents/")
-```
-
-### Error Handling
-
-```python
-import graphor
-from graphor import Graphor
-
-client = Graphor()
-
-try:
+    # Upload using a Path object
     source = client.sources.upload(
         file=Path("./document.pdf")
     )
-    print(f"Upload successful: {source.file_name}")
-except graphor.BadRequestError as e:
-    print(f"Invalid file type or request: {e}")
-except graphor.AuthenticationError as e:
-    print(f"Invalid API key: {e}")
-except graphor.RateLimitError as e:
-    print(f"Rate limit exceeded. Please wait and retry: {e}")
-except graphor.APIConnectionError as e:
-    print(f"Connection error: {e}")
-except graphor.APIStatusError as e:
-    print(f"API error (status {e.status_code}): {e}")
-```
 
-## Upload Web Page
+    print(f"Uploaded: {source.file_name}")
+    print(f"File ID: {source.file_id}")
+    print(f"Status: {source.status}")
+    print(f"Project ID: {source.project_id}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+    import fs from 'fs';
+
+    const client = new Graphor();
+
+    // Upload using a ReadStream
+    const source = await client.sources.upload({
+      file: fs.createReadStream('./document.pdf'),
+    });
+
+    console.log(`Uploaded: ${source.file_name}`);
+    console.log(`File ID: ${source.file_id}`);
+    console.log(`Status: ${source.status}`);
+    console.log(`Project ID: ${source.project_id}`);
+    ```
+  </Tab>
+</Tabs>
+
+#### Upload with Partition Method
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from pathlib import Path
+    from graphor import Graphor
+
+    client = Graphor()
+
+    # Upload and process with a specific partition method
+    source = client.sources.upload(
+        file=Path("./document.pdf"),
+        partition_method="hi_res"  # Use Balanced processing
+    )
+
+    print(f"Uploaded: {source.file_name}")
+    print(f"File ID: {source.file_id}")
+    print(f"Partition Method: {source.partition_method}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+    import fs from 'fs';
+
+    const client = new Graphor();
+
+    // Upload and process with a specific partition method
+    const source = await client.sources.upload({
+      file: fs.createReadStream('./document.pdf'),
+      partition_method: 'hi_res', // Use Balanced processing
+    });
+
+    console.log(`Uploaded: ${source.file_name}`);
+    console.log(`File ID: ${source.file_id}`);
+    console.log(`Partition Method: ${source.partition_method}`);
+    ```
+  </Tab>
+</Tabs>
+
+#### Upload from Bytes / Buffer
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+
+    client = Graphor()
+
+    # Read file content as bytes
+    with open("document.pdf", "rb") as f:
+        file_content = f.read()
+
+    # Upload raw bytes with filename tuple
+    source = client.sources.upload(
+        file=("document.pdf", file_content, "application/pdf")
+    )
+
+    print(f"Uploaded: {source.file_name}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor, { toFile } from 'graphor';
+    import fs from 'fs';
+
+    const client = new Graphor();
+
+    // Upload from a Buffer using the toFile helper
+    const buffer = fs.readFileSync('document.pdf');
+    const source = await client.sources.upload({
+      file: await toFile(buffer, 'document.pdf'),
+    });
+
+    console.log(`Uploaded: ${source.file_name}`);
+
+    // Or upload from a fetch Response
+    const response = await fetch('https://example.com/document.pdf');
+    const source2 = await client.sources.upload({
+      file: await toFile(response, 'document.pdf'),
+    });
+
+    // Or upload using the File API (browsers)
+    // const source3 = await client.sources.upload({
+    //   file: new File(['my bytes'], 'document.txt'),
+    // });
+    ```
+  </Tab>
+</Tabs>
+
+#### Async Upload
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import asyncio
+    from pathlib import Path
+    from graphor import AsyncGraphor
+
+    async def upload_document():
+        client = AsyncGraphor()
+        
+        source = await client.sources.upload(
+            file=Path("./document.pdf")
+        )
+        
+        print(f"Uploaded: {source.file_name}")
+        print(f"Status: {source.status}")
+        
+        return source
+
+    # Run the async function
+    asyncio.run(upload_document())
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+    import fs from 'fs';
+
+    const client = new Graphor();
+
+    async function uploadDocument() {
+      const source = await client.sources.upload({
+        file: fs.createReadStream('./document.pdf'),
+      });
+
+      console.log(`Uploaded: ${source.file_name}`);
+      console.log(`Status: ${source.status}`);
+
+      return source;
+    }
+
+    await uploadDocument();
+    ```
+  </Tab>
+</Tabs>
+
+#### Batch Upload
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from pathlib import Path
+    from graphor import Graphor
+
+    client = Graphor()
+
+    def batch_upload(directory: str):
+        """Upload all supported documents from a directory."""
+        supported_extensions = {'.pdf', '.doc', '.docx', '.txt', '.md', '.html'}
+        uploaded_files = []
+        failed_files = []
+        
+        for file_path in Path(directory).iterdir():
+            if file_path.suffix.lower() in supported_extensions:
+                try:
+                    source = client.sources.upload(file=file_path)
+                    uploaded_files.append(source.file_name)
+                    print(f"OK - Uploaded: {file_path.name}")
+                except Exception as e:
+                    failed_files.append((file_path.name, str(e)))
+                    print(f"FAIL - {file_path.name}: {e}")
+        
+        print(f"\nSummary: {len(uploaded_files)} uploaded, {len(failed_files)} failed")
+        return uploaded_files, failed_files
+
+    # Usage
+    uploaded, failed = batch_upload("./documents/")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+    import fs from 'fs';
+    import path from 'path';
+
+    const client = new Graphor();
+
+    async function batchUpload(directory: string) {
+      const supportedExtensions = new Set(['.pdf', '.doc', '.docx', '.txt', '.md', '.html']);
+      const uploadedFiles: string[] = [];
+      const failedFiles: { name: string; error: string }[] = [];
+
+      const files = fs.readdirSync(directory);
+
+      for (const file of files) {
+        const ext = path.extname(file).toLowerCase();
+        if (!supportedExtensions.has(ext)) continue;
+
+        const filePath = path.join(directory, file);
+        try {
+          const source = await client.sources.upload({
+            file: fs.createReadStream(filePath),
+          });
+          uploadedFiles.push(source.file_name);
+          console.log(`OK - Uploaded: ${file}`);
+        } catch (err) {
+          const message = err instanceof Graphor.APIError ? err.message : String(err);
+          failedFiles.push({ name: file, error: message });
+          console.log(`FAIL - ${file}: ${message}`);
+        }
+      }
+
+      console.log(`\nSummary: ${uploadedFiles.length} uploaded, ${failedFiles.length} failed`);
+      return { uploadedFiles, failedFiles };
+    }
+
+    // Usage
+    const { uploadedFiles, failedFiles } = await batchUpload('./documents/');
+    ```
+  </Tab>
+</Tabs>
+
+### Error Handling
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import graphor
+    from graphor import Graphor
+    from pathlib import Path
+
+    client = Graphor()
+
+    try:
+        source = client.sources.upload(
+            file=Path("./document.pdf")
+        )
+        print(f"Upload successful: {source.file_name}")
+    except graphor.BadRequestError as e:
+        print(f"Invalid file type or request: {e}")
+    except graphor.AuthenticationError as e:
+        print(f"Invalid API key: {e}")
+    except graphor.RateLimitError as e:
+        print(f"Rate limit exceeded. Please wait and retry: {e}")
+    except graphor.APIConnectionError as e:
+        print(f"Connection error: {e}")
+    except graphor.APIStatusError as e:
+        print(f"API error (status {e.status_code}): {e}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+    import fs from 'fs';
+
+    const client = new Graphor();
+
+    try {
+      const source = await client.sources.upload({
+        file: fs.createReadStream('./document.pdf'),
+      });
+      console.log(`Upload successful: ${source.file_name}`);
+    } catch (err) {
+      if (err instanceof Graphor.BadRequestError) {
+        console.log(`Invalid file type or request: ${err.message}`);
+      } else if (err instanceof Graphor.AuthenticationError) {
+        console.log(`Invalid API key: ${err.message}`);
+      } else if (err instanceof Graphor.RateLimitError) {
+        console.log(`Rate limit exceeded. Please wait and retry: ${err.message}`);
+      } else if (err instanceof Graphor.APIConnectionError) {
+        console.log(`Connection error: ${err.message}`);
+      } else if (err instanceof Graphor.APIError) {
+        console.log(`API error (status ${err.status}): ${err.message}`);
+      } else {
+        throw err;
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Upload from URL
 
 Ingest content by scraping a public web page.
 
 ### Method Signature
 
-```python
-client.sources.upload_url(
-    url: str,                                     # Required
-    crawl_urls: bool = False,
-    partition_method: PartitionMethod | None = None,  # Optional
-    timeout: float | None = None
-) -> PublicSource
-```
+<Tabs>
+  <Tab title="Python">
+    ```python
+    client.sources.upload_url(
+        url: str,                                     # Required
+        crawl_urls: bool = False,
+        partition_method: PartitionMethod | None = None,  # Optional
+        timeout: float | None = None
+    ) -> PublicSource
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    await client.sources.uploadURL({
+      url: string,                                         // Required
+      crawlUrls?: boolean,
+      partition_method?: 'basic' | 'hi_res' | 'hi_res_ft' | 'mai' | 'graphorlm' | null,
+    }): Promise<PublicSource>
+    ```
+  </Tab>
+</Tabs>
 
 ### Parameters
 
-| Parameter | Type | Description | Required |
-|-----------|------|-------------|----------|
-| `url` | `str` | The URL of the web page to scrape | ✅ Yes |
-| `crawl_urls` | `bool` | Whether to crawl and ingest links from the given URL (default: `False`) | No |
-| `partition_method` | `PartitionMethod` | Processing method to use (see [Partition Methods](#partition-methods) above) | No |
-| `timeout` | `float` | Request timeout in seconds | No |
+<Tabs>
+  <Tab title="Python">
+    | Parameter | Type | Description | Required |
+    |-----------|------|-------------|----------|
+    | `url` | `str` | The URL of the web page to scrape | Yes |
+    | `crawl_urls` | `bool` | Whether to crawl and ingest links from the given URL (default: `False`) | No |
+    | `partition_method` | `PartitionMethod` | Processing method to use (see [Partition Methods](#partition-methods) above) | No |
+    | `timeout` | `float` | Request timeout in seconds | No |
+  </Tab>
+  <Tab title="TypeScript">
+    | Parameter | Type | Description | Required |
+    |-----------|------|-------------|----------|
+    | `url` | `string` | The URL of the web page to scrape | Yes |
+    | `crawlUrls` | `boolean` | Whether to crawl and ingest links from the given URL | No |
+    | `partition_method` | `string \| null` | Processing method to use (see [Partition Methods](#partition-methods) above) | No |
+  </Tab>
+</Tabs>
 
 ### URL Requirements
 
@@ -344,92 +628,200 @@ client.sources.upload_url(
 
 #### Basic Web Page Upload
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-# Scrape a single web page
-source = client.sources.upload_url(
-    url="https://example.com/article"
-)
-
-print(f"Ingested: {source.file_name}")
-print(f"Status: {source.status}")
-```
-
-#### Upload with Web Page Crawling
-
-```python
-from graphor import Graphor
-
-client = Graphor()
-
-# Scrape a page and follow links
-source = client.sources.upload_url(
-    url="https://example.com/documentation",
-    crawl_urls=True
-)
-
-print(f"Ingested: {source.file_name}")
-```
-
-#### Upload with Partition Method
-
-```python
-from graphor import Graphor
-
-client = Graphor()
-
-# Scrape a web page with a specific processing method
-source = client.sources.upload_url(
-    url="https://example.com/article",
-    partition_method="hi_res"  # Use Balanced processing
-)
-
-print(f"Ingested: {source.file_name}")
-print(f"File ID: {source.file_id}")
-print(f"Partition Method: {source.partition_method}")
-```
-
-#### Async Web Page Upload
-
-```python
-import asyncio
-from graphor import AsyncGraphor
-
-async def ingest_webpage(url: str):
-    client = AsyncGraphor()
-    
-    source = await client.sources.upload_url(
-        url=url,
-        crawl_urls=False
-    )
-    
-    print(f"Ingested: {source.file_name}")
-    return source
-
-asyncio.run(ingest_webpage("https://example.com"))
-```
-
-### Error Handling
-
-```python
-import graphor
-from graphor import Graphor
-
-client = Graphor()
-
-try:
+    # Scrape a single web page
     source = client.sources.upload_url(
         url="https://example.com/article"
     )
-    print(f"URL ingested: {source.file_name}")
-except graphor.BadRequestError as e:
-    print(f"Invalid URL: {e}")
-except graphor.APIStatusError as e:
-    print(f"Failed to process URL (status {e.status_code}): {e}")
-```
+
+    print(f"Ingested: {source.file_name}")
+    print(f"Status: {source.status}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Scrape a single web page
+    const source = await client.sources.uploadURL({
+      url: 'https://example.com/article',
+    });
+
+    console.log(`Ingested: ${source.file_name}`);
+    console.log(`Status: ${source.status}`);
+    ```
+  </Tab>
+</Tabs>
+
+#### Upload with Web Page Crawling
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+
+    client = Graphor()
+
+    # Scrape a page and follow links
+    source = client.sources.upload_url(
+        url="https://example.com/documentation",
+        crawl_urls=True
+    )
+
+    print(f"Ingested: {source.file_name}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Scrape a page and follow links
+    const source = await client.sources.uploadURL({
+      url: 'https://example.com/documentation',
+      crawlUrls: true,
+    });
+
+    console.log(`Ingested: ${source.file_name}`);
+    ```
+  </Tab>
+</Tabs>
+
+#### Upload with Partition Method
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+
+    client = Graphor()
+
+    # Scrape a web page with a specific processing method
+    source = client.sources.upload_url(
+        url="https://example.com/article",
+        partition_method="hi_res"  # Use Balanced processing
+    )
+
+    print(f"Ingested: {source.file_name}")
+    print(f"File ID: {source.file_id}")
+    print(f"Partition Method: {source.partition_method}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Scrape a web page with a specific processing method
+    const source = await client.sources.uploadURL({
+      url: 'https://example.com/article',
+      partition_method: 'hi_res', // Use Balanced processing
+    });
+
+    console.log(`Ingested: ${source.file_name}`);
+    console.log(`File ID: ${source.file_id}`);
+    console.log(`Partition Method: ${source.partition_method}`);
+    ```
+  </Tab>
+</Tabs>
+
+#### Async Web Page Upload
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import asyncio
+    from graphor import AsyncGraphor
+
+    async def ingest_webpage(url: str):
+        client = AsyncGraphor()
+        
+        source = await client.sources.upload_url(
+            url=url,
+            crawl_urls=False
+        )
+        
+        print(f"Ingested: {source.file_name}")
+        return source
+
+    asyncio.run(ingest_webpage("https://example.com"))
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    async function ingestWebpage(url: string) {
+      const source = await client.sources.uploadURL({
+        url,
+        crawlUrls: false,
+      });
+
+      console.log(`Ingested: ${source.file_name}`);
+      return source;
+    }
+
+    await ingestWebpage('https://example.com');
+    ```
+  </Tab>
+</Tabs>
+
+### Error Handling
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import graphor
+    from graphor import Graphor
+
+    client = Graphor()
+
+    try:
+        source = client.sources.upload_url(
+            url="https://example.com/article"
+        )
+        print(f"URL ingested: {source.file_name}")
+    except graphor.BadRequestError as e:
+        print(f"Invalid URL: {e}")
+    except graphor.APIStatusError as e:
+        print(f"Failed to process URL (status {e.status_code}): {e}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    try {
+      const source = await client.sources.uploadURL({
+        url: 'https://example.com/article',
+      });
+      console.log(`URL ingested: ${source.file_name}`);
+    } catch (err) {
+      if (err instanceof Graphor.BadRequestError) {
+        console.log(`Invalid URL: ${err.message}`);
+      } else if (err instanceof Graphor.APIError) {
+        console.log(`Failed to process URL (status ${err.status}): ${err.message}`);
+      } else {
+        throw err;
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ## Upload from GitHub
 
@@ -437,19 +829,39 @@ Ingest content from a public GitHub repository.
 
 ### Method Signature
 
-```python
-client.sources.upload_github(
-    url: str,              # Required
-    timeout: float | None = None
-) -> PublicSource
-```
+<Tabs>
+  <Tab title="Python">
+    ```python
+    client.sources.upload_github(
+        url: str,              # Required
+        timeout: float | None = None
+    ) -> PublicSource
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    await client.sources.uploadGitHub({
+      url: string,              // Required
+    }): Promise<PublicSource>
+    ```
+  </Tab>
+</Tabs>
 
 ### Parameters
 
-| Parameter | Type | Description | Required |
-|-----------|------|-------------|----------|
-| `url` | `str` | The GitHub repository URL (e.g., `https://github.com/org/repo`) | ✅ Yes |
-| `timeout` | `float` | Request timeout in seconds | No |
+<Tabs>
+  <Tab title="Python">
+    | Parameter | Type | Description | Required |
+    |-----------|------|-------------|----------|
+    | `url` | `str` | The GitHub repository URL (e.g., `https://github.com/org/repo`) | Yes |
+    | `timeout` | `float` | Request timeout in seconds | No |
+  </Tab>
+  <Tab title="TypeScript">
+    | Parameter | Type | Description | Required |
+    |-----------|------|-------------|----------|
+    | `url` | `string` | The GitHub repository URL (e.g., `https://github.com/org/repo`) | Yes |
+  </Tab>
+</Tabs>
 
 ### Repository Requirements
 
@@ -469,58 +881,126 @@ client.sources.upload_github(
 
 #### Basic GitHub Upload
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-# Ingest a public GitHub repository
-source = client.sources.upload_github(
-    url="https://github.com/organization/repository"
-)
+    # Ingest a public GitHub repository
+    source = client.sources.upload_github(
+        url="https://github.com/organization/repository"
+    )
 
-print(f"Ingested: {source.file_name}")
-print(f"Status: {source.status}")
-print(f"Project: {source.project_name}")
-```
+    print(f"Ingested: {source.file_name}")
+    print(f"Status: {source.status}")
+    print(f"Project: {source.project_name}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Ingest a public GitHub repository
+    const source = await client.sources.uploadGitHub({
+      url: 'https://github.com/organization/repository',
+    });
+
+    console.log(`Ingested: ${source.file_name}`);
+    console.log(`Status: ${source.status}`);
+    console.log(`Project: ${source.project_name}`);
+    ```
+  </Tab>
+</Tabs>
 
 #### Async GitHub Upload
 
-```python
-import asyncio
-from graphor import AsyncGraphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import asyncio
+    from graphor import AsyncGraphor
 
-async def ingest_github_repo(repo_url: str):
-    client = AsyncGraphor()
-    
-    source = await client.sources.upload_github(url=repo_url)
-    
-    print(f"Repository ingested: {source.file_name}")
-    return source
+    async def ingest_github_repo(repo_url: str):
+        client = AsyncGraphor()
+        
+        source = await client.sources.upload_github(url=repo_url)
+        
+        print(f"Repository ingested: {source.file_name}")
+        return source
 
-asyncio.run(ingest_github_repo("https://github.com/org/repo"))
-```
+    asyncio.run(ingest_github_repo("https://github.com/org/repo"))
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    async function ingestGithubRepo(repoUrl: string) {
+      const source = await client.sources.uploadGitHub({ url: repoUrl });
+
+      console.log(`Repository ingested: ${source.file_name}`);
+      return source;
+    }
+
+    await ingestGithubRepo('https://github.com/org/repo');
+    ```
+  </Tab>
+</Tabs>
 
 ### Error Handling
 
-```python
-import graphor
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import graphor
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-try:
-    source = client.sources.upload_github(
-        url="https://github.com/org/repo"
-    )
-    print(f"GitHub repo ingested: {source.file_name}")
-except graphor.BadRequestError as e:
-    print(f"Invalid GitHub URL: {e}")
-except graphor.NotFoundError as e:
-    print(f"Repository not found or not accessible: {e}")
-except graphor.APIStatusError as e:
-    print(f"Failed to process repository (status {e.status_code}): {e}")
-```
+    try:
+        source = client.sources.upload_github(
+            url="https://github.com/org/repo"
+        )
+        print(f"GitHub repo ingested: {source.file_name}")
+    except graphor.BadRequestError as e:
+        print(f"Invalid GitHub URL: {e}")
+    except graphor.NotFoundError as e:
+        print(f"Repository not found or not accessible: {e}")
+    except graphor.APIStatusError as e:
+        print(f"Failed to process repository (status {e.status_code}): {e}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    try {
+      const source = await client.sources.uploadGitHub({
+        url: 'https://github.com/org/repo',
+      });
+      console.log(`GitHub repo ingested: ${source.file_name}`);
+    } catch (err) {
+      if (err instanceof Graphor.BadRequestError) {
+        console.log(`Invalid GitHub URL: ${err.message}`);
+      } else if (err instanceof Graphor.NotFoundError) {
+        console.log(`Repository not found or not accessible: ${err.message}`);
+      } else if (err instanceof Graphor.APIError) {
+        console.log(`Failed to process repository (status ${err.status}): ${err.message}`);
+      } else {
+        throw err;
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ## Upload from YouTube
 
@@ -528,19 +1008,39 @@ Ingest content from a public YouTube video.
 
 ### Method Signature
 
-```python
-client.sources.upload_youtube(
-    url: str,              # Required
-    timeout: float | None = None
-) -> PublicSource
-```
+<Tabs>
+  <Tab title="Python">
+    ```python
+    client.sources.upload_youtube(
+        url: str,              # Required
+        timeout: float | None = None
+    ) -> PublicSource
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    await client.sources.uploadYoutube({
+      url: string,              // Required
+    }): Promise<PublicSource>
+    ```
+  </Tab>
+</Tabs>
 
 ### Parameters
 
-| Parameter | Type | Description | Required |
-|-----------|------|-------------|----------|
-| `url` | `str` | The YouTube video URL (e.g., `https://www.youtube.com/watch?v=...`) | ✅ Yes |
-| `timeout` | `float` | Request timeout in seconds | No |
+<Tabs>
+  <Tab title="Python">
+    | Parameter | Type | Description | Required |
+    |-----------|------|-------------|----------|
+    | `url` | `str` | The YouTube video URL (e.g., `https://www.youtube.com/watch?v=...`) | Yes |
+    | `timeout` | `float` | Request timeout in seconds | No |
+  </Tab>
+  <Tab title="TypeScript">
+    | Parameter | Type | Description | Required |
+    |-----------|------|-------------|----------|
+    | `url` | `string` | The YouTube video URL (e.g., `https://www.youtube.com/watch?v=...`) | Yes |
+  </Tab>
+</Tabs>
 
 ### Video Requirements
 
@@ -560,57 +1060,124 @@ client.sources.upload_youtube(
 
 #### Basic YouTube Upload
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-# Ingest a YouTube video
-source = client.sources.upload_youtube(
-    url="https://www.youtube.com/watch?v=VIDEO_ID"
-)
-
-print(f"Ingested: {source.file_name}")
-print(f"Status: {source.status}")
-```
-
-#### Async YouTube Upload
-
-```python
-import asyncio
-from graphor import AsyncGraphor
-
-async def ingest_youtube_video(video_url: str):
-    client = AsyncGraphor()
-    
-    source = await client.sources.upload_youtube(url=video_url)
-    
-    print(f"Video ingested: {source.file_name}")
-    return source
-
-asyncio.run(ingest_youtube_video("https://www.youtube.com/watch?v=VIDEO_ID"))
-```
-
-### Error Handling
-
-```python
-import graphor
-from graphor import Graphor
-
-client = Graphor()
-
-try:
+    # Ingest a YouTube video
     source = client.sources.upload_youtube(
         url="https://www.youtube.com/watch?v=VIDEO_ID"
     )
-    print(f"YouTube video ingested: {source.file_name}")
-except graphor.BadRequestError as e:
-    print(f"Invalid YouTube URL: {e}")
-except graphor.NotFoundError as e:
-    print(f"Video not found or not accessible: {e}")
-except graphor.APIStatusError as e:
-    print(f"Failed to process video (status {e.status_code}): {e}")
-```
+
+    print(f"Ingested: {source.file_name}")
+    print(f"Status: {source.status}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Ingest a YouTube video
+    const source = await client.sources.uploadYoutube({
+      url: 'https://www.youtube.com/watch?v=VIDEO_ID',
+    });
+
+    console.log(`Ingested: ${source.file_name}`);
+    console.log(`Status: ${source.status}`);
+    ```
+  </Tab>
+</Tabs>
+
+#### Async YouTube Upload
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import asyncio
+    from graphor import AsyncGraphor
+
+    async def ingest_youtube_video(video_url: str):
+        client = AsyncGraphor()
+        
+        source = await client.sources.upload_youtube(url=video_url)
+        
+        print(f"Video ingested: {source.file_name}")
+        return source
+
+    asyncio.run(ingest_youtube_video("https://www.youtube.com/watch?v=VIDEO_ID"))
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    async function ingestYoutubeVideo(videoUrl: string) {
+      const source = await client.sources.uploadYoutube({ url: videoUrl });
+
+      console.log(`Video ingested: ${source.file_name}`);
+      return source;
+    }
+
+    await ingestYoutubeVideo('https://www.youtube.com/watch?v=VIDEO_ID');
+    ```
+  </Tab>
+</Tabs>
+
+### Error Handling
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import graphor
+    from graphor import Graphor
+
+    client = Graphor()
+
+    try:
+        source = client.sources.upload_youtube(
+            url="https://www.youtube.com/watch?v=VIDEO_ID"
+        )
+        print(f"YouTube video ingested: {source.file_name}")
+    except graphor.BadRequestError as e:
+        print(f"Invalid YouTube URL: {e}")
+    except graphor.NotFoundError as e:
+        print(f"Video not found or not accessible: {e}")
+    except graphor.APIStatusError as e:
+        print(f"Failed to process video (status {e.status_code}): {e}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    try {
+      const source = await client.sources.uploadYoutube({
+        url: 'https://www.youtube.com/watch?v=VIDEO_ID',
+      });
+      console.log(`YouTube video ingested: ${source.file_name}`);
+    } catch (err) {
+      if (err instanceof Graphor.BadRequestError) {
+        console.log(`Invalid YouTube URL: ${err.message}`);
+      } else if (err instanceof Graphor.NotFoundError) {
+        console.log(`Video not found or not accessible: ${err.message}`);
+      } else if (err instanceof Graphor.APIError) {
+        console.log(`Failed to process video (status ${err.status}): ${err.message}`);
+      } else {
+        throw err;
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ## Advanced Configuration
 
@@ -618,42 +1185,85 @@ except graphor.APIStatusError as e:
 
 For large files or slow connections, you can increase the timeout:
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+    from pathlib import Path
 
-client = Graphor(
-    timeout=300.0  # 5 minutes
-)
+    client = Graphor(
+        timeout=300.0  # 5 minutes
+    )
 
-# Or per-request
-source = client.with_options(timeout=300.0).sources.upload(
-    file=Path("./large-document.pdf")
-)
-```
+    # Or per-request
+    source = client.with_options(timeout=300.0).sources.upload(
+        file=Path("./large-document.pdf")
+    )
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+    import fs from 'fs';
+
+    const client = new Graphor({
+      timeout: 300 * 1000, // 5 minutes (milliseconds)
+    });
+
+    // Or per-request
+    const source = await client.sources.upload(
+      { file: fs.createReadStream('./large-document.pdf') },
+      { timeout: 300 * 1000 },
+    );
+    ```
+  </Tab>
+</Tabs>
 
 ### Retry Configuration
 
 Configure automatic retries for transient errors:
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+    from pathlib import Path
 
-client = Graphor(
-    max_retries=5  # Default is 2
-)
+    client = Graphor(
+        max_retries=5  # Default is 2
+    )
 
-# Or per-request
-source = client.with_options(max_retries=5).sources.upload(
-    file=Path("./document.pdf")
-)
-```
+    # Or per-request
+    source = client.with_options(max_retries=5).sources.upload(
+        file=Path("./document.pdf")
+    )
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+    import fs from 'fs';
 
-### Accessing Raw Response
+    const client = new Graphor({
+      maxRetries: 5, // Default is 2
+    });
+
+    // Or per-request
+    const source = await client.sources.upload(
+      { file: fs.createReadStream('./document.pdf') },
+      { maxRetries: 5 },
+    );
+    ```
+  </Tab>
+</Tabs>
+
+### Accessing Raw Response (Python only)
 
 Access headers and other response metadata:
 
 ```python
 from graphor import Graphor
+from pathlib import Path
 
 client = Graphor()
 
@@ -666,7 +1276,7 @@ source = response.parse()  # Get the PublicSource object
 print(f"Uploaded: {source.file_name}")
 ```
 
-### Using aiohttp for Better Concurrency
+### Using aiohttp for Better Concurrency (Python only)
 
 For high-concurrency async operations:
 
@@ -735,4 +1345,3 @@ After successfully uploading your documents:
     Remove documents that are no longer needed from your project
   </Card>
 </CardGroup>
-

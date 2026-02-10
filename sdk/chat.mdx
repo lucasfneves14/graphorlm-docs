@@ -1,48 +1,93 @@
 ---
 title: 'Chat'
-description: 'Ask questions about your documents using the Graphor Python SDK'
+description: 'Ask questions about your documents using the Graphor SDK'
 ---
 
 The `ask` method allows you to ask questions about your ingested documents and receive answers grounded in your content. The SDK supports conversational memory, enabling follow-up questions that maintain context.
 
 ## Method Overview
 
-<CardGroup cols={2}>
-  <Card title="Sync Method" icon="code">
-    **`client.sources.ask()`**
-  </Card>
-  <Card title="Async Method" icon="code">
-    **`await client.sources.ask()`**
-  </Card>
-</CardGroup>
+<Tabs>
+  <Tab title="Python">
+    <CardGroup cols={2}>
+      <Card title="Sync Method" icon="code">
+        **`client.sources.ask()`**
+      </Card>
+      <Card title="Async Method" icon="code">
+        **`await client.sources.ask()`** (using `AsyncGraphor`)
+      </Card>
+    </CardGroup>
+  </Tab>
+  <Tab title="TypeScript">
+    <CardGroup cols={2}>
+      <Card title="Async Method" icon="code">
+        **`await client.sources.ask()`**
+        
+        All TypeScript methods are async and return a `Promise`.
+      </Card>
+    </CardGroup>
+  </Tab>
+</Tabs>
 
 ## Method Signature
 
-```python
-client.sources.ask(
-    question: str,                            # Required
-    conversation_id: str | None = None,
-    reset: bool | None = None,
-    file_ids: list[str] | None = None,
-    file_names: list[str] | None = None,      # Deprecated
-    output_schema: dict | None = None,
-    thinking_level: str | None = None,
-    timeout: float | None = None
-) -> SourceAskResponse
-```
+<Tabs>
+  <Tab title="Python">
+    ```python
+    client.sources.ask(
+        question: str,                            # Required
+        conversation_id: str | None = None,
+        reset: bool | None = None,
+        file_ids: list[str] | None = None,
+        file_names: list[str] | None = None,      # Deprecated
+        output_schema: dict | None = None,
+        thinking_level: str | None = None,
+        timeout: float | None = None
+    ) -> SourceAskResponse
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    await client.sources.ask({
+      question: string,                                          // Required
+      conversation_id?: string | null,
+      reset?: boolean | null,
+      file_ids?: string[] | null,
+      file_names?: string[] | null,                              // Deprecated
+      output_schema?: Record<string, unknown> | null,
+      thinking_level?: 'fast' | 'balanced' | 'accurate' | null,
+    }): Promise<SourceAskResponse>
+    ```
+  </Tab>
+</Tabs>
 
 ## Parameters
 
-| Parameter | Type | Description | Required |
-|-----------|------|-------------|----------|
-| `question` | `str` | The question to ask about your documents | ✅ Yes |
-| `conversation_id` | `str` | Conversation identifier to maintain memory context across questions | No |
-| `reset` | `bool` | When `True`, starts a new conversation and ignores previous history | No |
-| `file_ids` | `list[str]` | Restrict search to specific documents by file ID (preferred) | No |
-| `file_names` | `list[str]` | Restrict search to specific documents by file name (deprecated, use `file_ids`) | No |
-| `output_schema` | `dict` | JSON Schema to request structured output (see below) | No |
-| `thinking_level` | `str` | Controls model and thinking configuration: `"fast"`, `"balanced"`, `"accurate"` (default) | No |
-| `timeout` | `float` | Request timeout in seconds | No |
+<Tabs>
+  <Tab title="Python">
+    | Parameter | Type | Description | Required |
+    |-----------|------|-------------|----------|
+    | `question` | `str` | The question to ask about your documents | Yes |
+    | `conversation_id` | `str` | Conversation identifier to maintain memory context across questions | No |
+    | `reset` | `bool` | When `True`, starts a new conversation and ignores previous history | No |
+    | `file_ids` | `list[str]` | Restrict search to specific documents by file ID (preferred) | No |
+    | `file_names` | `list[str]` | Restrict search to specific documents by file name (deprecated, use `file_ids`) | No |
+    | `output_schema` | `dict` | JSON Schema to request structured output (see below) | No |
+    | `thinking_level` | `str` | Controls model and thinking configuration: `"fast"`, `"balanced"`, `"accurate"` (default) | No |
+    | `timeout` | `float` | Request timeout in seconds | No |
+  </Tab>
+  <Tab title="TypeScript">
+    | Parameter | Type | Description | Required |
+    |-----------|------|-------------|----------|
+    | `question` | `string` | The question to ask about your documents | Yes |
+    | `conversation_id` | `string \| null` | Conversation identifier to maintain memory context across questions | No |
+    | `reset` | `boolean \| null` | When `true`, starts a new conversation and ignores previous history | No |
+    | `file_ids` | `string[]  \| null` | Restrict search to specific documents by file ID (preferred) | No |
+    | `file_names` | `string[] \| null` | Restrict search to specific documents by file name (deprecated, use `file_ids`) | No |
+    | `output_schema` | `Record<string, unknown> \| null` | JSON Schema to request structured output (see below) | No |
+    | `thinking_level` | `'fast' \| 'balanced' \| 'accurate' \| null` | Controls model and thinking configuration (default: `"accurate"`) | No |
+  </Tab>
+</Tabs>
 
 ### Thinking Level
 
@@ -69,264 +114,540 @@ The method returns a `SourceAskResponse` object:
 
 ### Basic Question
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-# Ask a simple question
-response = client.sources.ask(
-    question="What are the main findings in this report?"
-)
+    # Ask a simple question
+    response = client.sources.ask(
+        question="What are the main findings in this report?"
+    )
 
-print(f"Answer: {response.answer}")
-print(f"Conversation ID: {response.conversation_id}")
-```
+    print(f"Answer: {response.answer}")
+    print(f"Conversation ID: {response.conversation_id}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Ask a simple question
+    const response = await client.sources.ask({
+      question: 'What are the main findings in this report?',
+    });
+
+    console.log(`Answer: ${response.answer}`);
+    console.log(`Conversation ID: ${response.conversation_id}`);
+    ```
+  </Tab>
+</Tabs>
 
 ### Conversation with Memory
 
 Use `conversation_id` to maintain context across multiple questions:
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-# First question
-response = client.sources.ask(
-    question="What products are mentioned in the catalog?"
-)
+    # First question
+    response = client.sources.ask(
+        question="What products are mentioned in the catalog?"
+    )
 
-print(f"Answer: {response.answer}")
+    print(f"Answer: {response.answer}")
 
-# Follow-up question using conversation memory
-follow_up = client.sources.ask(
-    question="Which one is the most expensive?",
-    conversation_id=response.conversation_id
-)
+    # Follow-up question using conversation memory
+    follow_up = client.sources.ask(
+        question="Which one is the most expensive?",
+        conversation_id=response.conversation_id
+    )
 
-print(f"Follow-up: {follow_up.answer}")
+    print(f"Follow-up: {follow_up.answer}")
 
-# Another follow-up
-another = client.sources.ask(
-    question="What are its specifications?",
-    conversation_id=response.conversation_id
-)
+    # Another follow-up
+    another = client.sources.ask(
+        question="What are its specifications?",
+        conversation_id=response.conversation_id
+    )
 
-print(f"Answer: {another.answer}")
-```
+    print(f"Answer: {another.answer}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // First question
+    const response = await client.sources.ask({
+      question: 'What products are mentioned in the catalog?',
+    });
+
+    console.log(`Answer: ${response.answer}`);
+
+    // Follow-up question using conversation memory
+    const followUp = await client.sources.ask({
+      question: 'Which one is the most expensive?',
+      conversation_id: response.conversation_id,
+    });
+
+    console.log(`Follow-up: ${followUp.answer}`);
+
+    // Another follow-up
+    const another = await client.sources.ask({
+      question: 'What are its specifications?',
+      conversation_id: response.conversation_id,
+    });
+
+    console.log(`Answer: ${another.answer}`);
+    ```
+  </Tab>
+</Tabs>
 
 ### Reset Conversation
 
 Start fresh by using the `reset` parameter:
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-# Start a conversation
-response = client.sources.ask(
-    question="What is the company's revenue?"
-)
+    # Start a conversation
+    response = client.sources.ask(
+        question="What is the company's revenue?"
+    )
 
-# Switch to a new topic - reset the conversation
-new_response = client.sources.ask(
-    question="What are the safety guidelines?",
-    conversation_id=response.conversation_id,
-    reset=True  # Ignores previous conversation history
-)
+    # Switch to a new topic - reset the conversation
+    new_response = client.sources.ask(
+        question="What are the safety guidelines?",
+        conversation_id=response.conversation_id,
+        reset=True  # Ignores previous conversation history
+    )
 
-print(f"Answer: {new_response.answer}")
-```
+    print(f"Answer: {new_response.answer}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Start a conversation
+    const response = await client.sources.ask({
+      question: "What is the company's revenue?",
+    });
+
+    // Switch to a new topic - reset the conversation
+    const newResponse = await client.sources.ask({
+      question: 'What are the safety guidelines?',
+      conversation_id: response.conversation_id,
+      reset: true, // Ignores previous conversation history
+    });
+
+    console.log(`Answer: ${newResponse.answer}`);
+    ```
+  </Tab>
+</Tabs>
 
 ### Filter by Specific Documents
 
 Restrict the search to specific files using `file_ids` (preferred):
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-# Ask about specific documents using file_ids (preferred)
-response = client.sources.ask(
-    question="What is the total amount due?",
-    file_ids=["file_abc123", "file_def456"]
-)
+    # Ask about specific documents using file_ids (preferred)
+    response = client.sources.ask(
+        question="What is the total amount due?",
+        file_ids=["file_abc123", "file_def456"]
+    )
 
-print(f"Answer: {response.answer}")
+    print(f"Answer: {response.answer}")
 
-# Or using file_names (deprecated)
-response = client.sources.ask(
-    question="What is the total amount due?",
-    file_names=["invoice-2024.pdf", "invoice-2023.pdf"]
-)
+    # Or using file_names (deprecated)
+    response = client.sources.ask(
+        question="What is the total amount due?",
+        file_names=["invoice-2024.pdf", "invoice-2023.pdf"]
+    )
 
-print(f"Answer: {response.answer}")
-```
+    print(f"Answer: {response.answer}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Ask about specific documents using file_ids (preferred)
+    const response = await client.sources.ask({
+      question: 'What is the total amount due?',
+      file_ids: ['file_abc123', 'file_def456'],
+    });
+
+    console.log(`Answer: ${response.answer}`);
+
+    // Or using file_names (deprecated)
+    const response2 = await client.sources.ask({
+      question: 'What is the total amount due?',
+      file_names: ['invoice-2024.pdf', 'invoice-2023.pdf'],
+    });
+
+    console.log(`Answer: ${response2.answer}`);
+    ```
+  </Tab>
+</Tabs>
 
 ### Using Thinking Level
 
 Control the model's reasoning depth with `thinking_level`:
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-# Fast mode for simple questions
-response = client.sources.ask(
-    question="What is the document title?",
-    thinking_level="fast"
-)
+    # Fast mode for simple questions
+    response = client.sources.ask(
+        question="What is the document title?",
+        thinking_level="fast"
+    )
 
-print(f"Answer: {response.answer}")
+    print(f"Answer: {response.answer}")
 
-# Accurate mode for complex analysis
-response = client.sources.ask(
-    question="Analyze the legal implications of the termination clause and identify potential risks.",
-    file_names=["contract.pdf"],
-    thinking_level="accurate"
-)
+    # Accurate mode for complex analysis
+    response = client.sources.ask(
+        question="Analyze the legal implications of the termination clause and identify potential risks.",
+        file_names=["contract.pdf"],
+        thinking_level="accurate"
+    )
 
-print(f"Analysis: {response.answer}")
-```
+    print(f"Analysis: {response.answer}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Fast mode for simple questions
+    const response = await client.sources.ask({
+      question: 'What is the document title?',
+      thinking_level: 'fast',
+    });
+
+    console.log(`Answer: ${response.answer}`);
+
+    // Accurate mode for complex analysis
+    const analysis = await client.sources.ask({
+      question: 'Analyze the legal implications of the termination clause and identify potential risks.',
+      file_names: ['contract.pdf'],
+      thinking_level: 'accurate',
+    });
+
+    console.log(`Analysis: ${analysis.answer}`);
+    ```
+  </Tab>
+</Tabs>
 
 ### Structured Output with JSON Schema
 
 Request structured data by providing an `output_schema`:
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-# Define the output schema
-invoice_schema = {
-    "type": "object",
-    "properties": {
-        "invoice_number": {"type": ["string", "null"]},
-        "total_amount_due": {"type": ["number", "null"]},
-        "currency": {"type": ["string", "null"]},
-        "due_date": {"type": ["string", "null"]}
+    # Define the output schema
+    invoice_schema = {
+        "type": "object",
+        "properties": {
+            "invoice_number": {"type": ["string", "null"]},
+            "total_amount_due": {"type": ["number", "null"]},
+            "currency": {"type": ["string", "null"]},
+            "due_date": {"type": ["string", "null"]}
+        }
     }
-}
 
-# Ask with structured output
-response = client.sources.ask(
-    question="Extract the invoice number, total amount, currency, and due date.",
-    file_names=["invoice-2024.pdf"],
-    output_schema=invoice_schema
-)
+    # Ask with structured output
+    response = client.sources.ask(
+        question="Extract the invoice number, total amount, currency, and due date.",
+        file_names=["invoice-2024.pdf"],
+        output_schema=invoice_schema
+    )
 
-# Access the structured data
-if response.structured_output:
-    data = response.structured_output
-    print(f"Invoice: {data.get('invoice_number')}")
-    print(f"Amount: {data.get('total_amount_due')} {data.get('currency')}")
-    print(f"Due: {data.get('due_date')}")
+    # Access the structured data
+    if response.structured_output:
+        data = response.structured_output
+        print(f"Invoice: {data.get('invoice_number')}")
+        print(f"Amount: {data.get('total_amount_due')} {data.get('currency')}")
+        print(f"Due: {data.get('due_date')}")
 
-# Raw JSON is also available
-print(f"Raw JSON: {response.raw_json}")
-```
+    # Raw JSON is also available
+    print(f"Raw JSON: {response.raw_json}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Define the output schema
+    const invoiceSchema = {
+      type: 'object',
+      properties: {
+        invoice_number: { type: ['string', 'null'] },
+        total_amount_due: { type: ['number', 'null'] },
+        currency: { type: ['string', 'null'] },
+        due_date: { type: ['string', 'null'] },
+      },
+    };
+
+    // Ask with structured output
+    const response = await client.sources.ask({
+      question: 'Extract the invoice number, total amount, currency, and due date.',
+      file_names: ['invoice-2024.pdf'],
+      output_schema: invoiceSchema,
+    });
+
+    // Access the structured data
+    if (response.structured_output) {
+      const data = response.structured_output as Record<string, unknown>;
+      console.log(`Invoice: ${data.invoice_number}`);
+      console.log(`Amount: ${data.total_amount_due} ${data.currency}`);
+      console.log(`Due: ${data.due_date}`);
+    }
+
+    // Raw JSON is also available
+    console.log(`Raw JSON: ${response.raw_json}`);
+    ```
+  </Tab>
+</Tabs>
 
 ### Extract Array of Items
 
 Extract multiple items with a schema:
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-# Schema for extracting a list of products
-products_schema = {
-    "type": "array",
-    "items": {
-        "type": "object",
-        "properties": {
-            "name": {"type": "string"},
-            "price": {"type": ["number", "null"]},
-            "quantity": {"type": ["integer", "null"]}
+    # Schema for extracting a list of products
+    products_schema = {
+        "type": "array",
+        "items": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "price": {"type": ["number", "null"]},
+                "quantity": {"type": ["integer", "null"]}
+            }
         }
     }
-}
 
-response = client.sources.ask(
-    question="Extract all products with their prices and quantities from the order.",
-    file_names=["order.pdf"],
-    output_schema=products_schema
-)
+    response = client.sources.ask(
+        question="Extract all products with their prices and quantities from the order.",
+        file_names=["order.pdf"],
+        output_schema=products_schema
+    )
 
-if response.structured_output:
-    products = response.structured_output
-    for product in products:
-        print(f"- {product['name']}: ${product.get('price', 'N/A')} x {product.get('quantity', 'N/A')}")
-```
+    if response.structured_output:
+        products = response.structured_output
+        for product in products:
+            print(f"- {product['name']}: ${product.get('price', 'N/A')} x {product.get('quantity', 'N/A')}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Schema for extracting a list of products
+    const productsSchema = {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          price: { type: ['number', 'null'] },
+          quantity: { type: ['integer', 'null'] },
+        },
+      },
+    };
+
+    const response = await client.sources.ask({
+      question: 'Extract all products with their prices and quantities from the order.',
+      file_names: ['order.pdf'],
+      output_schema: productsSchema,
+    });
+
+    if (response.structured_output) {
+      const products = response.structured_output as Array<Record<string, unknown>>;
+      for (const product of products) {
+        console.log(`- ${product.name}: $${product.price ?? 'N/A'} x ${product.quantity ?? 'N/A'}`);
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ### Async Usage
 
-```python
-import asyncio
-from graphor import AsyncGraphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import asyncio
+    from graphor import AsyncGraphor
 
-async def ask_questions():
-    client = AsyncGraphor()
-    
-    # Ask a question
-    response = await client.sources.ask(
-        question="What are the key terms in this contract?"
-    )
-    
-    print(f"Answer: {response.answer}")
-    
-    # Follow-up
-    follow_up = await client.sources.ask(
-        question="When does it expire?",
-        conversation_id=response.conversation_id
-    )
-    
-    print(f"Follow-up: {follow_up.answer}")
+    async def ask_questions():
+        client = AsyncGraphor()
+        
+        # Ask a question
+        response = await client.sources.ask(
+            question="What are the key terms in this contract?"
+        )
+        
+        print(f"Answer: {response.answer}")
+        
+        # Follow-up
+        follow_up = await client.sources.ask(
+            question="When does it expire?",
+            conversation_id=response.conversation_id
+        )
+        
+        print(f"Follow-up: {follow_up.answer}")
 
-asyncio.run(ask_questions())
-```
+    asyncio.run(ask_questions())
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    async function askQuestions() {
+      // Ask a question
+      const response = await client.sources.ask({
+        question: 'What are the key terms in this contract?',
+      });
+
+      console.log(`Answer: ${response.answer}`);
+
+      // Follow-up
+      const followUp = await client.sources.ask({
+        question: 'When does it expire?',
+        conversation_id: response.conversation_id,
+      });
+
+      console.log(`Follow-up: ${followUp.answer}`);
+    }
+
+    await askQuestions();
+    ```
+  </Tab>
+</Tabs>
 
 ### Error Handling
 
-```python
-import graphor
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import graphor
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-try:
-    response = client.sources.ask(
-        question="What is the summary of this document?"
-    )
-    print(f"Answer: {response.answer}")
-    
-except graphor.BadRequestError as e:
-    print(f"Invalid request: {e}")
-    
-except graphor.AuthenticationError as e:
-    print(f"Invalid API key: {e}")
-    
-except graphor.NotFoundError as e:
-    print(f"Document not found: {e}")
-    
-except graphor.UnprocessableEntityError as e:
-    print(f"Invalid output_schema or structured output validation failed: {e}")
-    
-except graphor.RateLimitError as e:
-    print(f"Rate limit exceeded: {e}")
-    
-except graphor.APIConnectionError as e:
-    print(f"Connection error: {e}")
-    
-except graphor.APIStatusError as e:
-    print(f"API error (status {e.status_code}): {e}")
-```
+    try:
+        response = client.sources.ask(
+            question="What is the summary of this document?"
+        )
+        print(f"Answer: {response.answer}")
+        
+    except graphor.BadRequestError as e:
+        print(f"Invalid request: {e}")
+        
+    except graphor.AuthenticationError as e:
+        print(f"Invalid API key: {e}")
+        
+    except graphor.NotFoundError as e:
+        print(f"Document not found: {e}")
+        
+    except graphor.UnprocessableEntityError as e:
+        print(f"Invalid output_schema or structured output validation failed: {e}")
+        
+    except graphor.RateLimitError as e:
+        print(f"Rate limit exceeded: {e}")
+        
+    except graphor.APIConnectionError as e:
+        print(f"Connection error: {e}")
+        
+    except graphor.APIStatusError as e:
+        print(f"API error (status {e.status_code}): {e}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    try {
+      const response = await client.sources.ask({
+        question: 'What is the summary of this document?',
+      });
+      console.log(`Answer: ${response.answer}`);
+    } catch (err) {
+      if (err instanceof Graphor.BadRequestError) {
+        console.log(`Invalid request: ${err.message}`);
+      } else if (err instanceof Graphor.AuthenticationError) {
+        console.log(`Invalid API key: ${err.message}`);
+      } else if (err instanceof Graphor.NotFoundError) {
+        console.log(`Document not found: ${err.message}`);
+      } else if (err instanceof Graphor.UnprocessableEntityError) {
+        console.log(`Invalid output_schema or validation failed: ${err.message}`);
+      } else if (err instanceof Graphor.RateLimitError) {
+        console.log(`Rate limit exceeded: ${err.message}`);
+      } else if (err instanceof Graphor.APIConnectionError) {
+        console.log(`Connection error: ${err.message}`);
+      } else if (err instanceof Graphor.APIError) {
+        console.log(`API error (status ${err.status}): ${err.message}`);
+      } else {
+        throw err;
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ## Advanced Examples
 
@@ -334,262 +655,557 @@ except graphor.APIStatusError as e:
 
 Build a conversational chatbot:
 
-```python
-from graphor import Graphor
-import graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+    import graphor
 
-class DocumentChatbot:
-    def __init__(self, api_key: str | None = None):
-        self.client = Graphor(api_key=api_key) if api_key else Graphor()
-        self.conversation_id = None
-        self.history = []
-    
-    def ask(self, question: str, file_names: list[str] | None = None) -> str:
-        """Ask a question and maintain conversation history."""
-        try:
-            response = self.client.sources.ask(
-                question=question,
-                conversation_id=self.conversation_id,
-                file_names=file_names
-            )
-            
-            # Update conversation ID
-            self.conversation_id = response.conversation_id
-            
-            # Store in history
-            self.history.append({
-                "question": question,
-                "answer": response.answer
-            })
-            
-            return response.answer
-            
-        except graphor.APIStatusError as e:
-            return f"Error: {e}"
-    
-    def reset(self):
-        """Start a new conversation."""
-        self.conversation_id = None
-        self.history = []
-    
-    def get_history(self) -> list[dict]:
-        """Get conversation history."""
-        return self.history.copy()
+    class DocumentChatbot:
+        def __init__(self, api_key: str | None = None):
+            self.client = Graphor(api_key=api_key) if api_key else Graphor()
+            self.conversation_id = None
+            self.history = []
+        
+        def ask(self, question: str, file_names: list[str] | None = None) -> str:
+            """Ask a question and maintain conversation history."""
+            try:
+                response = self.client.sources.ask(
+                    question=question,
+                    conversation_id=self.conversation_id,
+                    file_names=file_names
+                )
+                
+                # Update conversation ID
+                self.conversation_id = response.conversation_id
+                
+                # Store in history
+                self.history.append({
+                    "question": question,
+                    "answer": response.answer
+                })
+                
+                return response.answer
+                
+            except graphor.APIStatusError as e:
+                return f"Error: {e}"
+        
+        def reset(self):
+            """Start a new conversation."""
+            self.conversation_id = None
+            self.history = []
+        
+        def get_history(self) -> list[dict]:
+            """Get conversation history."""
+            return self.history.copy()
 
-# Usage
-chatbot = DocumentChatbot()
+    # Usage
+    chatbot = DocumentChatbot()
 
-# Have a conversation
-print(chatbot.ask("What products are available?"))
-print(chatbot.ask("Tell me more about the first one"))
-print(chatbot.ask("What's its price?"))
+    # Have a conversation
+    print(chatbot.ask("What products are available?"))
+    print(chatbot.ask("Tell me more about the first one"))
+    print(chatbot.ask("What's its price?"))
 
-# View history
-for entry in chatbot.get_history():
-    print(f"Q: {entry['question']}")
-    print(f"A: {entry['answer'][:100]}...")
-    print()
+    # View history
+    for entry in chatbot.get_history():
+        print(f"Q: {entry['question']}")
+        print(f"A: {entry['answer'][:100]}...")
+        print()
 
-# Reset for a new topic
-chatbot.reset()
-print(chatbot.ask("What are the shipping options?"))
-```
+    # Reset for a new topic
+    chatbot.reset()
+    print(chatbot.ask("What are the shipping options?"))
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    interface ChatEntry {
+      question: string;
+      answer: string;
+    }
+
+    class DocumentChatbot {
+      private client: Graphor;
+      private conversationId: string | null = null;
+      private history: ChatEntry[] = [];
+
+      constructor(apiKey?: string) {
+        this.client = apiKey ? new Graphor({ apiKey }) : new Graphor();
+      }
+
+      async ask(question: string, fileNames?: string[]): Promise<string> {
+        try {
+          const response = await this.client.sources.ask({
+            question,
+            conversation_id: this.conversationId ?? undefined,
+            file_names: fileNames,
+          });
+
+          // Update conversation ID
+          this.conversationId = response.conversation_id ?? null;
+
+          // Store in history
+          this.history.push({ question, answer: response.answer });
+
+          return response.answer;
+        } catch (err) {
+          if (err instanceof Graphor.APIError) {
+            return `Error: ${err.message}`;
+          }
+          throw err;
+        }
+      }
+
+      reset(): void {
+        this.conversationId = null;
+        this.history = [];
+      }
+
+      getHistory(): ChatEntry[] {
+        return [...this.history];
+      }
+    }
+
+    // Usage
+    const chatbot = new DocumentChatbot();
+
+    // Have a conversation
+    console.log(await chatbot.ask('What products are available?'));
+    console.log(await chatbot.ask('Tell me more about the first one'));
+    console.log(await chatbot.ask("What's its price?"));
+
+    // View history
+    for (const entry of chatbot.getHistory()) {
+      console.log(`Q: ${entry.question}`);
+      console.log(`A: ${entry.answer.slice(0, 100)}...`);
+      console.log();
+    }
+
+    // Reset for a new topic
+    chatbot.reset();
+    console.log(await chatbot.ask('What are the shipping options?'));
+    ```
+  </Tab>
+</Tabs>
 
 ### Multi-Document Q&A
 
 Ask questions across multiple documents:
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-def compare_documents(file_names: list[str], question: str) -> str:
-    """Ask a comparative question across multiple documents."""
-    response = client.sources.ask(
-        question=question,
-        file_names=file_names
+    def compare_documents(file_names: list[str], question: str) -> str:
+        """Ask a comparative question across multiple documents."""
+        response = client.sources.ask(
+            question=question,
+            file_names=file_names
+        )
+        return response.answer
+
+    # Compare financial reports
+    answer = compare_documents(
+        file_names=["report-2023.pdf", "report-2024.pdf"],
+        question="How did revenue change between 2023 and 2024?"
     )
-    return response.answer
+    print(answer)
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
 
-# Compare financial reports
-answer = compare_documents(
-    file_names=["report-2023.pdf", "report-2024.pdf"],
-    question="How did revenue change between 2023 and 2024?"
-)
-print(answer)
-```
+    const client = new Graphor();
+
+    async function compareDocuments(fileNames: string[], question: string): Promise<string> {
+      const response = await client.sources.ask({
+        question,
+        file_names: fileNames,
+      });
+      return response.answer;
+    }
+
+    // Compare financial reports
+    const answer = await compareDocuments(
+      ['report-2023.pdf', 'report-2024.pdf'],
+      'How did revenue change between 2023 and 2024?',
+    );
+    console.log(answer);
+    ```
+  </Tab>
+</Tabs>
 
 ### Structured Data Extraction Pipeline
 
 Extract structured data from multiple documents:
 
-```python
-from graphor import Graphor
-import graphor
-from typing import Any
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+    import graphor
+    from typing import Any
 
-client = Graphor()
+    client = Graphor()
 
-def extract_structured_data(
-    file_names: list[str],
-    question: str,
-    schema: dict
-) -> list[dict[str, Any]]:
-    """Extract structured data from multiple documents."""
-    results = []
-    
-    for file_name in file_names:
-        try:
-            response = client.sources.ask(
-                question=question,
-                file_names=[file_name],
-                output_schema=schema
-            )
-            
-            if response.structured_output:
-                results.append({
-                    "file": file_name,
-                    "data": response.structured_output,
-                    "success": True
-                })
-            else:
+    def extract_structured_data(
+        file_names: list[str],
+        question: str,
+        schema: dict
+    ) -> list[dict[str, Any]]:
+        """Extract structured data from multiple documents."""
+        results = []
+        
+        for file_name in file_names:
+            try:
+                response = client.sources.ask(
+                    question=question,
+                    file_names=[file_name],
+                    output_schema=schema
+                )
+                
+                if response.structured_output:
+                    results.append({
+                        "file": file_name,
+                        "data": response.structured_output,
+                        "success": True
+                    })
+                else:
+                    results.append({
+                        "file": file_name,
+                        "data": None,
+                        "success": False,
+                        "error": "No structured output returned"
+                    })
+                    
+            except graphor.APIStatusError as e:
                 results.append({
                     "file": file_name,
                     "data": None,
                     "success": False,
-                    "error": "No structured output returned"
+                    "error": str(e)
                 })
-                
-        except graphor.APIStatusError as e:
-            results.append({
-                "file": file_name,
-                "data": None,
-                "success": False,
-                "error": str(e)
-            })
-    
-    return results
+        
+        return results
 
-# Extract invoice data from multiple invoices
-invoice_schema = {
-    "type": "object",
-    "properties": {
-        "invoice_number": {"type": ["string", "null"]},
-        "vendor": {"type": ["string", "null"]},
-        "total": {"type": ["number", "null"]},
-        "date": {"type": ["string", "null"]}
+    # Extract invoice data from multiple invoices
+    invoice_schema = {
+        "type": "object",
+        "properties": {
+            "invoice_number": {"type": ["string", "null"]},
+            "vendor": {"type": ["string", "null"]},
+            "total": {"type": ["number", "null"]},
+            "date": {"type": ["string", "null"]}
+        }
     }
-}
 
-invoices = ["invoice1.pdf", "invoice2.pdf", "invoice3.pdf"]
-results = extract_structured_data(
-    file_names=invoices,
-    question="Extract the invoice number, vendor name, total amount, and date.",
-    schema=invoice_schema
-)
+    invoices = ["invoice1.pdf", "invoice2.pdf", "invoice3.pdf"]
+    results = extract_structured_data(
+        file_names=invoices,
+        question="Extract the invoice number, vendor name, total amount, and date.",
+        schema=invoice_schema
+    )
 
-for result in results:
-    if result["success"]:
-        data = result["data"]
-        print(f"✅ {result['file']}: #{data.get('invoice_number')} - ${data.get('total')}")
-    else:
-        print(f"❌ {result['file']}: {result['error']}")
-```
+    for result in results:
+        if result["success"]:
+            data = result["data"]
+            print(f"OK - {result['file']}: #{data.get('invoice_number')} - ${data.get('total')}")
+        else:
+            print(f"FAIL - {result['file']}: {result['error']}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
 
-### Async Parallel Questions
+    const client = new Graphor();
+
+    interface ExtractionResult {
+      file: string;
+      data: Record<string, unknown> | null;
+      success: boolean;
+      error?: string;
+    }
+
+    async function extractStructuredData(
+      fileNames: string[],
+      question: string,
+      schema: Record<string, unknown>,
+    ): Promise<ExtractionResult[]> {
+      const results: ExtractionResult[] = [];
+
+      for (const fileName of fileNames) {
+        try {
+          const response = await client.sources.ask({
+            question,
+            file_names: [fileName],
+            output_schema: schema,
+          });
+
+          if (response.structured_output) {
+            results.push({
+              file: fileName,
+              data: response.structured_output as Record<string, unknown>,
+              success: true,
+            });
+          } else {
+            results.push({
+              file: fileName,
+              data: null,
+              success: false,
+              error: 'No structured output returned',
+            });
+          }
+        } catch (err) {
+          results.push({
+            file: fileName,
+            data: null,
+            success: false,
+            error: err instanceof Graphor.APIError ? err.message : String(err),
+          });
+        }
+      }
+
+      return results;
+    }
+
+    // Extract invoice data from multiple invoices
+    const invoiceSchema = {
+      type: 'object',
+      properties: {
+        invoice_number: { type: ['string', 'null'] },
+        vendor: { type: ['string', 'null'] },
+        total: { type: ['number', 'null'] },
+        date: { type: ['string', 'null'] },
+      },
+    };
+
+    const invoices = ['invoice1.pdf', 'invoice2.pdf', 'invoice3.pdf'];
+    const results = await extractStructuredData(
+      invoices,
+      'Extract the invoice number, vendor name, total amount, and date.',
+      invoiceSchema,
+    );
+
+    for (const result of results) {
+      if (result.success && result.data) {
+        console.log(`OK - ${result.file}: #${result.data.invoice_number} - $${result.data.total}`);
+      } else {
+        console.log(`FAIL - ${result.file}: ${result.error}`);
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Parallel Questions
 
 Ask multiple questions in parallel:
 
-```python
-import asyncio
-from graphor import AsyncGraphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import asyncio
+    from graphor import AsyncGraphor
 
-async def ask_parallel_questions(questions: list[str]):
-    """Ask multiple questions in parallel."""
-    client = AsyncGraphor()
-    
-    tasks = [
-        client.sources.ask(question=q)
-        for q in questions
+    async def ask_parallel_questions(questions: list[str]):
+        """Ask multiple questions in parallel."""
+        client = AsyncGraphor()
+        
+        tasks = [
+            client.sources.ask(question=q)
+            for q in questions
+        ]
+        
+        responses = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        results = []
+        for question, response in zip(questions, responses):
+            if isinstance(response, Exception):
+                results.append({"question": question, "error": str(response)})
+            else:
+                results.append({"question": question, "answer": response.answer})
+        
+        return results
+
+    # Usage
+    questions = [
+        "What is the total revenue?",
+        "Who are the main competitors?",
+        "What are the key risks?"
     ]
-    
-    responses = await asyncio.gather(*tasks, return_exceptions=True)
-    
-    results = []
-    for question, response in zip(questions, responses):
-        if isinstance(response, Exception):
-            results.append({"question": question, "error": str(response)})
+
+    results = asyncio.run(ask_parallel_questions(questions))
+
+    for result in results:
+        print(f"Q: {result['question']}")
+        if "answer" in result:
+            print(f"A: {result['answer'][:200]}...")
         else:
-            results.append({"question": question, "answer": response.answer})
-    
-    return results
+            print(f"Error: {result['error']}")
+        print()
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
 
-# Usage
-questions = [
-    "What is the total revenue?",
-    "Who are the main competitors?",
-    "What are the key risks?"
-]
+    const client = new Graphor();
 
-results = asyncio.run(ask_parallel_questions(questions))
+    async function askParallelQuestions(questions: string[]) {
+      const promises = questions.map((question) =>
+        client.sources
+          .ask({ question })
+          .then((response) => ({ question, answer: response.answer }))
+          .catch((err) => ({
+            question,
+            error: err instanceof Graphor.APIError ? err.message : String(err),
+          })),
+      );
 
-for result in results:
-    print(f"Q: {result['question']}")
-    if "answer" in result:
-        print(f"A: {result['answer'][:200]}...")
-    else:
-        print(f"Error: {result['error']}")
-    print()
-```
+      return Promise.all(promises);
+    }
+
+    // Usage
+    const questions = [
+      'What is the total revenue?',
+      'Who are the main competitors?',
+      'What are the key risks?',
+    ];
+
+    const results = await askParallelQuestions(questions);
+
+    for (const result of results) {
+      console.log(`Q: ${result.question}`);
+      if ('answer' in result) {
+        console.log(`A: ${result.answer.slice(0, 200)}...`);
+      } else {
+        console.log(`Error: ${result.error}`);
+      }
+      console.log();
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ### Interactive Q&A Session
 
 Build an interactive command-line Q&A:
 
-```python
-from graphor import Graphor
-import graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+    import graphor
 
-def interactive_qa():
-    """Interactive Q&A session with documents."""
-    client = Graphor()
-    conversation_id = None
-    
-    print("Document Q&A Session")
-    print("Type 'quit' to exit, 'reset' to start a new conversation")
-    print("-" * 50)
-    
-    while True:
-        question = input("\nYou: ").strip()
+    def interactive_qa():
+        """Interactive Q&A session with documents."""
+        client = Graphor()
+        conversation_id = None
         
-        if question.lower() == "quit":
-            print("Goodbye!")
-            break
+        print("Document Q&A Session")
+        print("Type 'quit' to exit, 'reset' to start a new conversation")
+        print("-" * 50)
         
-        if question.lower() == "reset":
-            conversation_id = None
-            print("Conversation reset.")
-            continue
-        
-        if not question:
-            continue
-        
-        try:
-            response = client.sources.ask(
-                question=question,
-                conversation_id=conversation_id
-            )
+        while True:
+            question = input("\nYou: ").strip()
             
-            conversation_id = response.conversation_id
-            print(f"\nAssistant: {response.answer}")
+            if question.lower() == "quit":
+                print("Goodbye!")
+                break
             
-        except graphor.APIStatusError as e:
-            print(f"\nError: {e}")
+            if question.lower() == "reset":
+                conversation_id = None
+                print("Conversation reset.")
+                continue
+            
+            if not question:
+                continue
+            
+            try:
+                response = client.sources.ask(
+                    question=question,
+                    conversation_id=conversation_id
+                )
+                
+                conversation_id = response.conversation_id
+                print(f"\nAssistant: {response.answer}")
+                
+            except graphor.APIStatusError as e:
+                print(f"\nError: {e}")
 
-# Run interactive session
-# interactive_qa()
-```
+    # Run interactive session
+    # interactive_qa()
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+    import readline from 'readline';
+
+    async function interactiveQA() {
+      const client = new Graphor();
+      let conversationId: string | null = null;
+
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+      });
+
+      const prompt = (query: string): Promise<string> =>
+        new Promise((resolve) => rl.question(query, resolve));
+
+      console.log('Document Q&A Session');
+      console.log("Type 'quit' to exit, 'reset' to start a new conversation");
+      console.log('-'.repeat(50));
+
+      while (true) {
+        const question = (await prompt('\nYou: ')).trim();
+
+        if (question.toLowerCase() === 'quit') {
+          console.log('Goodbye!');
+          rl.close();
+          break;
+        }
+
+        if (question.toLowerCase() === 'reset') {
+          conversationId = null;
+          console.log('Conversation reset.');
+          continue;
+        }
+
+        if (!question) continue;
+
+        try {
+          const response = await client.sources.ask({
+            question,
+            conversation_id: conversationId ?? undefined,
+          });
+
+          conversationId = response.conversation_id ?? null;
+          console.log(`\nAssistant: ${response.answer}`);
+        } catch (err) {
+          if (err instanceof Graphor.APIError) {
+            console.log(`\nError: ${err.message}`);
+          } else {
+            throw err;
+          }
+        }
+      }
+    }
+
+    // Run interactive session
+    // await interactiveQA();
+    ```
+  </Tab>
+</Tabs>
 
 ## Output Schema Guidelines
 
@@ -610,46 +1226,92 @@ When using `output_schema`, follow these guidelines:
 
 ### Schema Examples
 
-```python
-# Simple object
-person_schema = {
-    "type": "object",
-    "properties": {
-        "name": {"type": "string"},
-        "age": {"type": ["integer", "null"]},
-        "email": {"type": ["string", "null"]}
-    }
-}
-
-# Array of objects
-items_schema = {
-    "type": "array",
-    "items": {
+<Tabs>
+  <Tab title="Python">
+    ```python
+    # Simple object
+    person_schema = {
         "type": "object",
         "properties": {
-            "item": {"type": "string"},
-            "quantity": {"type": "integer"},
-            "price": {"type": "number"}
+            "name": {"type": "string"},
+            "age": {"type": ["integer", "null"]},
+            "email": {"type": ["string", "null"]}
         }
     }
-}
 
-# Nested objects
-order_schema = {
-    "type": "object",
-    "properties": {
-        "order_id": {"type": "string"},
-        "customer": {
+    # Array of objects
+    items_schema = {
+        "type": "array",
+        "items": {
             "type": "object",
             "properties": {
-                "name": {"type": "string"},
-                "address": {"type": ["string", "null"]}
+                "item": {"type": "string"},
+                "quantity": {"type": "integer"},
+                "price": {"type": "number"}
             }
-        },
-        "total": {"type": "number"}
+        }
     }
-}
-```
+
+    # Nested objects
+    order_schema = {
+        "type": "object",
+        "properties": {
+            "order_id": {"type": "string"},
+            "customer": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "address": {"type": ["string", "null"]}
+                }
+            },
+            "total": {"type": "number"}
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    // Simple object
+    const personSchema = {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        age: { type: ['integer', 'null'] },
+        email: { type: ['string', 'null'] },
+      },
+    };
+
+    // Array of objects
+    const itemsSchema = {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          item: { type: 'string' },
+          quantity: { type: 'integer' },
+          price: { type: 'number' },
+        },
+      },
+    };
+
+    // Nested objects
+    const orderSchema = {
+      type: 'object',
+      properties: {
+        order_id: { type: 'string' },
+        customer: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            address: { type: ['string', 'null'] },
+          },
+        },
+        total: { type: 'number' },
+      },
+    };
+    ```
+  </Tab>
+</Tabs>
 
 ## Error Reference
 
@@ -670,7 +1332,7 @@ order_schema = {
 
 2. **Be specific** — Clear, specific questions get better answers
 
-3. **Scope when needed** — Use `file_names` to focus on specific documents for faster, more accurate responses
+3. **Scope when needed** — Use `file_ids` or `file_names` to focus on specific documents for faster, more accurate responses
 
 4. **Use structured output for integration** — Provide `output_schema` to get JSON you can reliably parse in code
 
@@ -678,19 +1340,38 @@ order_schema = {
 
 6. **Handle errors gracefully** — Implement proper error handling for production applications
 
-```python
-# Good: Specific question with context
-response = client.sources.ask(
-    question="What was the total revenue for Q4 2024 compared to Q4 2023?",
-    file_names=["annual-report-2024.pdf"]
-)
+<Tabs>
+  <Tab title="Python">
+    ```python
+    # Good: Specific question with context
+    response = client.sources.ask(
+        question="What was the total revenue for Q4 2024 compared to Q4 2023?",
+        file_names=["annual-report-2024.pdf"]
+    )
 
-# Good: Follow-up with conversation memory
-follow_up = client.sources.ask(
-    question="What were the main drivers of this change?",
-    conversation_id=response.conversation_id
-)
-```
+    # Good: Follow-up with conversation memory
+    follow_up = client.sources.ask(
+        question="What were the main drivers of this change?",
+        conversation_id=response.conversation_id
+    )
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    // Good: Specific question with context
+    const response = await client.sources.ask({
+      question: 'What was the total revenue for Q4 2024 compared to Q4 2023?',
+      file_names: ['annual-report-2024.pdf'],
+    });
+
+    // Good: Follow-up with conversation memory
+    const followUp = await client.sources.ask({
+      question: 'What were the main drivers of this change?',
+      conversation_id: response.conversation_id,
+    });
+    ```
+  </Tab>
+</Tabs>
 
 ## Next Steps
 

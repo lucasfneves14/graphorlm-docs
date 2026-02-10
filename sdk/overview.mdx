@@ -1,9 +1,18 @@
 ---
-title: 'Python SDK Overview'
-description: 'Complete overview of the Graphor Python SDK: Sources, Chat, Extraction, and RAG'
+title: 'SDK Overview'
+description: 'Complete overview of the Graphor SDKs for Python and TypeScript: Sources, Chat, Extraction, and RAG'
 ---
 
-The Graphor Python SDK provides convenient access to the Graphor REST API from any Python 3.9+ application. The library includes type definitions for all request params and response fields, and offers both synchronous and asynchronous clients.
+The Graphor SDKs provide convenient access to the Graphor REST API from Python and TypeScript/JavaScript applications. Both libraries include type definitions for all request params and response fields.
+
+<Tabs>
+  <Tab title="Python">
+    The Python SDK supports Python 3.9+ and offers both synchronous and asynchronous clients.
+  </Tab>
+  <Tab title="TypeScript">
+    The TypeScript SDK provides full type safety and works in Node.js, Deno, Bun, and modern browsers.
+  </Tab>
+</Tabs>
 
 This page provides a comprehensive overview of the SDK. It covers the full lifecycle:
 
@@ -12,25 +21,59 @@ This page provides a comprehensive overview of the SDK. It covers the full lifec
 3. **Data Extraction**: Extract structured data using JSON Schema
 4. **Prebuilt RAG**: Retrieve relevant document chunks for custom RAG pipelines
 
-<Card
-  title="GitHub Repository"
-  icon="github"
-  href="https://github.com/synapseops/graphor-python-sdk"
->
-  View the source code, report issues, and contribute to the SDK.
-</Card>
+<CardGroup cols={2}>
+  <Card
+    title="Python SDK Repository"
+    icon="python"
+    href="https://github.com/synapseops/graphor-python-sdk"
+  >
+    View the Python SDK source code, report issues, and contribute.
+  </Card>
+  <Card
+    title="TypeScript SDK Repository"
+    icon="js"
+    href="https://github.com/synapseops/graphor-typescript-sdk"
+  >
+    View the TypeScript SDK source code, report issues, and contribute.
+  </Card>
+</CardGroup>
 
 ## Installation
 
-Install the Graphor SDK from PyPI:
+<Tabs>
+  <Tab title="Python">
+    Install the Graphor SDK from PyPI:
 
-```bash
-pip install graphor
-```
+    ```bash
+    pip install graphor
+    ```
 
-<Note>
-  Python 3.9 or higher is required.
-</Note>
+    <Note>
+      Python 3.9 or higher is required.
+    </Note>
+  </Tab>
+  <Tab title="TypeScript">
+    Install the Graphor SDK from npm:
+
+    ```bash
+    npm install graphor
+    ```
+
+    Or with your preferred package manager:
+
+    ```bash
+    yarn add graphor
+    ```
+
+    ```bash
+    pnpm add graphor
+    ```
+
+    <Note>
+      TypeScript 4.9+ and Node.js 20+ (LTS) are recommended. Also works in Deno v1.28+, Bun 1.0+, Cloudflare Workers, Vercel Edge Runtime, and modern browsers.
+    </Note>
+  </Tab>
+</Tabs>
 
 ## Data Ingestion (Sources)
 
@@ -136,20 +179,43 @@ Set the `GRAPHOR_API_KEY` environment variable:
 export GRAPHOR_API_KEY="grlm_your_api_key_here"
 ```
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-# API key is automatically read from GRAPHOR_API_KEY
-client = Graphor()
-```
+    # API key is automatically read from GRAPHOR_API_KEY
+    client = Graphor()
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    // API key is automatically read from GRAPHOR_API_KEY
+    const client = new Graphor();
+    ```
+  </Tab>
+</Tabs>
 
 ### Direct Initialization
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor(api_key="grlm_your_api_key_here")
-```
+    client = Graphor(api_key="grlm_your_api_key_here")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor({ apiKey: 'grlm_your_api_key_here' });
+    ```
+  </Tab>
+</Tabs>
 
 <Note>
   Learn how to generate and manage API tokens in the [API Tokens guide](/guides/api-tokens).
@@ -164,43 +230,91 @@ client = Graphor(api_key="grlm_your_api_key_here")
 
 ## Async Usage
 
-Simply import `AsyncGraphor` instead of `Graphor` and use `await` with each API call:
+<Tabs>
+  <Tab title="Python">
+    Simply import `AsyncGraphor` instead of `Graphor` and use `await` with each API call:
 
-```python
-import asyncio
-from graphor import AsyncGraphor
+    ```python
+    import asyncio
+    from graphor import AsyncGraphor
 
-client = AsyncGraphor()
+    client = AsyncGraphor()
 
-async def main():
-    source = await client.sources.upload(file=b"raw file contents")
-    print(source.project_id)
+    async def main():
+        source = await client.sources.upload(file=b"raw file contents")
+        print(source.project_id)
 
-asyncio.run(main())
-```
+    asyncio.run(main())
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    All TypeScript SDK methods are async by default and return Promises:
+
+    ```typescript
+    import Graphor from 'graphor';
+    import fs from 'fs';
+
+    const client = new Graphor();
+
+    async function main() {
+      const source = await client.sources.upload({ file: fs.createReadStream('document.pdf') });
+      console.log(source.project_id);
+    }
+
+    main();
+    ```
+  </Tab>
+</Tabs>
 
 ## Available Methods
 
 ### Sources
 
-| Method | Description |
-|--------|-------------|
-| [`client.sources.upload()`](/sdk/sources/upload#upload-a-file) | Upload a local file |
-| [`client.sources.upload_url()`](/sdk/sources/upload#upload-from-url) | Upload from a web URL |
-| [`client.sources.upload_github()`](/sdk/sources/upload#upload-from-github) | Upload from GitHub |
-| [`client.sources.upload_youtube()`](/sdk/sources/upload#upload-from-youtube) | Upload from YouTube |
-| [`client.sources.parse()`](/sdk/sources/process) | Reprocess a source with different parsing method |
-| [`client.sources.list()`](/sdk/sources/list) | List all sources in the project |
-| [`client.sources.delete()`](/sdk/sources/delete) | Delete a source permanently |
-| [`client.sources.load_elements()`](/sdk/sources/list-elements) | Get parsed elements from a source |
+<Tabs>
+  <Tab title="Python">
+    | Method | Description |
+    |--------|-------------|
+    | [`client.sources.upload()`](/sdk/sources/upload#upload-a-file) | Upload a local file |
+    | [`client.sources.upload_url()`](/sdk/sources/upload#upload-from-url) | Upload from a web URL |
+    | [`client.sources.upload_github()`](/sdk/sources/upload#upload-from-github) | Upload from GitHub |
+    | [`client.sources.upload_youtube()`](/sdk/sources/upload#upload-from-youtube) | Upload from YouTube |
+    | [`client.sources.parse()`](/sdk/sources/process) | Reprocess a source with different parsing method |
+    | [`client.sources.list()`](/sdk/sources/list) | List all sources in the project |
+    | [`client.sources.delete()`](/sdk/sources/delete) | Delete a source permanently |
+    | [`client.sources.load_elements()`](/sdk/sources/list-elements) | Get parsed elements from a source |
+  </Tab>
+  <Tab title="TypeScript">
+    | Method | Description |
+    |--------|-------------|
+    | [`client.sources.upload()`](/sdk/sources/upload#upload-a-file) | Upload a local file |
+    | [`client.sources.uploadURL()`](/sdk/sources/upload#upload-from-url) | Upload from a web URL |
+    | [`client.sources.uploadGitHub()`](/sdk/sources/upload#upload-from-github) | Upload from GitHub |
+    | [`client.sources.uploadYoutube()`](/sdk/sources/upload#upload-from-youtube) | Upload from YouTube |
+    | [`client.sources.parse()`](/sdk/sources/process) | Reprocess a source with different parsing method |
+    | [`client.sources.list()`](/sdk/sources/list) | List all sources in the project |
+    | [`client.sources.delete()`](/sdk/sources/delete) | Delete a source permanently |
+    | [`client.sources.loadElements()`](/sdk/sources/list-elements) | Get parsed elements from a source |
+  </Tab>
+</Tabs>
 
 ### Chat & Extraction
 
-| Method | Description |
-|--------|-------------|
-| [`client.sources.ask()`](/sdk/chat) | Ask questions about your documents |
-| [`client.sources.extract()`](/sdk/extract) | Extract structured data using JSON Schema |
-| [`client.sources.retrieve_chunks()`](/sdk/prebuilt-rag) | Retrieve relevant chunks for custom RAG |
+<Tabs>
+  <Tab title="Python">
+    | Method | Description |
+    |--------|-------------|
+    | [`client.sources.ask()`](/sdk/chat) | Ask questions about your documents |
+    | [`client.sources.extract()`](/sdk/extract) | Extract structured data using JSON Schema |
+    | [`client.sources.retrieve_chunks()`](/sdk/prebuilt-rag) | Retrieve relevant chunks for custom RAG |
+  </Tab>
+  <Tab title="TypeScript">
+    | Method | Description |
+    |--------|-------------|
+    | [`client.sources.ask()`](/sdk/chat) | Ask questions about your documents |
+    | [`client.sources.extract()`](/sdk/extract) | Extract structured data using JSON Schema |
+    | [`client.sources.retrieveChunks()`](/sdk/prebuilt-rag) | Retrieve relevant chunks for custom RAG |
+  </Tab>
+</Tabs>
 
 ## Complete Workflow Example
 
@@ -208,433 +322,850 @@ Here's the full "happy path": **upload → parse → list → elements → chat/
 
 ### 1. Upload a source
 
-```python
-from pathlib import Path
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from pathlib import Path
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-# Upload a document
-source = client.sources.upload(file=Path("./document.pdf"))
-print(f"Uploaded: {source.file_name}")
-print(f"Status: {source.status}")
-```
+    # Upload a document
+    source = client.sources.upload(file=Path("./document.pdf"))
+    print(f"Uploaded: {source.file_name}")
+    print(f"Status: {source.status}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+    import fs from 'fs';
+
+    const client = new Graphor();
+
+    // Upload a document
+    const source = await client.sources.upload({ file: fs.createReadStream('./document.pdf') });
+    console.log(`Uploaded: ${source.file_name}`);
+    console.log(`Status: ${source.status}`);
+    ```
+  </Tab>
+</Tabs>
 
 ### 2. Parse (OCR/parsing)
 
-```python
-# Reprocess with a different parsing method
-source = client.sources.parse(
-    file_name="document.pdf",
-    partition_method="hi_res"
-)
-print(f"Processed with: {source.partition_method}")
-```
+<Tabs>
+  <Tab title="Python">
+    ```python
+    # Reprocess with a different parsing method
+    source = client.sources.parse(
+        file_name="document.pdf",
+        partition_method="hi_res"
+    )
+    print(f"Processed with: {source.partition_method}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    // Reprocess with a different parsing method
+    const parsed = await client.sources.parse({
+      file_name: 'document.pdf',
+      partition_method: 'hi_res',
+    });
+    console.log(`Processed with: ${parsed.partition_method}`);
+    ```
+  </Tab>
+</Tabs>
 
 ### 3. Monitor status (List Sources)
 
-```python
-# List all sources and check status
-sources = client.sources.list()
+<Tabs>
+  <Tab title="Python">
+    ```python
+    # List all sources and check status
+    sources = client.sources.list()
 
-for source in sources:
-    print(f"{source.file_name}: {source.status}")
+    for source in sources:
+        print(f"{source.file_name}: {source.status}")
 
-# Find specific source
-target = next((s for s in sources if s.file_name == "document.pdf"), None)
-if target:
-    print(f"Status: {target.status}")
-```
+    # Find specific source
+    target = next((s for s in sources if s.file_name == "document.pdf"), None)
+    if target:
+        print(f"Status: {target.status}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    // List all sources and check status
+    const sources = await client.sources.list();
+
+    for (const source of sources) {
+      console.log(`${source.file_name}: ${source.status}`);
+    }
+
+    // Find specific source
+    const target = sources.find((s) => s.file_name === 'document.pdf');
+    if (target) {
+      console.log(`Status: ${target.status}`);
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ### 4. Retrieve structured elements (after processing)
 
-```python
-# Get parsed elements with pagination
-elements = client.sources.load_elements(
-    file_name="document.pdf",
-    page=1,
-    page_size=50
-)
+<Tabs>
+  <Tab title="Python">
+    ```python
+    # Get parsed elements with pagination
+    elements = client.sources.load_elements(
+        file_name="document.pdf",
+        page=1,
+        page_size=50
+    )
 
-print(f"Total elements: {elements.total}")
-for item in elements.items:
-    print(f"  [{item.metadata.element_type}] {item.page_content[:100]}...")
-```
+    print(f"Total elements: {elements.total}")
+    for item in elements.items:
+        print(f"  [{item.metadata.element_type}] {item.page_content[:100]}...")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    // Get parsed elements with pagination
+    const elements = await client.sources.loadElements({
+      file_name: 'document.pdf',
+      page: 1,
+      page_size: 50,
+    });
+
+    console.log(`Total elements: ${elements.total}`);
+    for (const item of elements.items) {
+      console.log(`  [${item.metadata?.type}] ${item.page_content.slice(0, 100)}...`);
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ### 5. Ask Questions (Chat)
 
-```python
-# Ask a question about your documents
-response = client.sources.ask(
-    question="What are the main topics in this document?",
-    file_names=["document.pdf"]  # Optional: scope to specific files
-)
+<Tabs>
+  <Tab title="Python">
+    ```python
+    # Ask a question about your documents
+    response = client.sources.ask(
+        question="What are the main topics in this document?",
+        file_names=["document.pdf"]  # Optional: scope to specific files
+    )
 
-print(f"Answer: {response.answer}")
+    print(f"Answer: {response.answer}")
 
-# Continue the conversation
-follow_up = client.sources.ask(
-    question="Can you elaborate on the first topic?",
-    conversation_id=response.conversation_id
-)
-print(f"Follow-up: {follow_up.answer}")
-```
+    # Continue the conversation
+    follow_up = client.sources.ask(
+        question="Can you elaborate on the first topic?",
+        conversation_id=response.conversation_id
+    )
+    print(f"Follow-up: {follow_up.answer}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    // Ask a question about your documents
+    const response = await client.sources.ask({
+      question: 'What are the main topics in this document?',
+      file_names: ['document.pdf'], // Optional: scope to specific files
+    });
+
+    console.log(`Answer: ${response.answer}`);
+
+    // Continue the conversation
+    const followUp = await client.sources.ask({
+      question: 'Can you elaborate on the first topic?',
+      conversation_id: response.conversation_id,
+    });
+    console.log(`Follow-up: ${followUp.answer}`);
+    ```
+  </Tab>
+</Tabs>
 
 ### 6. Extract Data (Extraction)
 
-```python
-# Extract structured data using JSON Schema
-result = client.sources.extract(
-    file_names=["document.pdf"],
-    user_instruction="Extract the invoice number and total amount.",
-    output_schema={
-        "type": "object",
-        "properties": {
-            "invoice_number": {"type": "string", "description": "Invoice ID"},
-            "total_amount": {"type": "number", "description": "Total due"}
-        },
-        "required": ["invoice_number", "total_amount"]
-    }
-)
+<Tabs>
+  <Tab title="Python">
+    ```python
+    # Extract structured data using JSON Schema
+    result = client.sources.extract(
+        file_names=["document.pdf"],
+        user_instruction="Extract the invoice number and total amount.",
+        output_schema={
+            "type": "object",
+            "properties": {
+                "invoice_number": {"type": "string", "description": "Invoice ID"},
+                "total_amount": {"type": "number", "description": "Total due"}
+            },
+            "required": ["invoice_number", "total_amount"]
+        }
+    )
 
-print(f"Invoice: {result.structured_output['invoice_number']}")
-print(f"Amount: ${result.structured_output['total_amount']}")
-```
+    print(f"Invoice: {result.structured_output['invoice_number']}")
+    print(f"Amount: ${result.structured_output['total_amount']}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    // Extract structured data using JSON Schema
+    const result = await client.sources.extract({
+      file_names: ['document.pdf'],
+      user_instruction: 'Extract the invoice number and total amount.',
+      output_schema: {
+        type: 'object',
+        properties: {
+          invoice_number: { type: 'string', description: 'Invoice ID' },
+          total_amount: { type: 'number', description: 'Total due' },
+        },
+        required: ['invoice_number', 'total_amount'],
+      },
+    });
+
+    console.log(`Invoice: ${result.structured_output?.invoice_number}`);
+    console.log(`Amount: $${result.structured_output?.total_amount}`);
+    ```
+  </Tab>
+</Tabs>
 
 ### 7. Retrieve Chunks (Prebuilt RAG)
 
-```python
-# Retrieve relevant chunks for custom RAG pipelines
-chunks = client.sources.retrieve_chunks(
-    query="What are the payment terms?",
-    file_names=["document.pdf"]  # Optional: scope to specific files
-)
+<Tabs>
+  <Tab title="Python">
+    ```python
+    # Retrieve relevant chunks for custom RAG pipelines
+    chunks = client.sources.retrieve_chunks(
+        query="What are the payment terms?",
+        file_names=["document.pdf"]  # Optional: scope to specific files
+    )
 
-print(f"Found {chunks.total} relevant chunks")
-for chunk in chunks.chunks:
-    print(f"\n[{chunk.file_name}, Page {chunk.page_number}]")
-    print(chunk.text)
-    print(f"Score: {chunk.score:.2f}")
-```
+    print(f"Found {chunks.total} relevant chunks")
+    for chunk in chunks.chunks:
+        print(f"\n[{chunk.file_name}, Page {chunk.page_number}]")
+        print(chunk.text)
+        print(f"Score: {chunk.score:.2f}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    // Retrieve relevant chunks for custom RAG pipelines
+    const chunks = await client.sources.retrieveChunks({
+      query: 'What are the payment terms?',
+      file_names: ['document.pdf'], // Optional: scope to specific files
+    });
+
+    console.log(`Found ${chunks.total} relevant chunks`);
+    for (const chunk of chunks.chunks) {
+      console.log(`\n[${chunk.file_name}, Page ${chunk.page_number}]`);
+      console.log(chunk.text);
+      console.log(`Score: ${chunk.score?.toFixed(2)}`);
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ## Integration Patterns
 
 ### Complete SDK Client Wrapper
 
-```python
-from graphor import Graphor, AsyncGraphor
-import graphor
-from pathlib import Path
-from typing import Any
-import os
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor, AsyncGraphor
+    import graphor
+    from pathlib import Path
+    from typing import Any
+    import os
 
 
-class GraphorSDK:
-    """Complete wrapper for common Graphor operations."""
-    
-    def __init__(self, api_key: str | None = None):
-        self.client = Graphor(api_key=api_key) if api_key else Graphor()
-    
-    # ==================== Sources ====================
-    
-    def upload_file(self, file_path: str | Path) -> dict[str, Any]:
-        """Upload a file and return source info."""
-        source = self.client.sources.upload(file=Path(file_path))
-        return {
-            "file_name": source.file_name,
-            "status": source.status,
-            "project_id": source.project_id
-        }
-    
-    def upload_url(self, url: str, crawl: bool = False) -> dict[str, Any]:
-        """Upload from a URL."""
-        source = self.client.sources.upload_url(url=url, crawl_urls=crawl)
-        return {"file_name": source.file_name, "status": source.status}
-    
-    def process(self, file_name: str, method: str = "hi_res") -> dict[str, Any]:
-        """Process a source with specified method."""
-        source = self.client.sources.parse(
-            file_name=file_name,
-            partition_method=method
-        )
-        return {
-            "file_name": source.file_name,
-            "status": source.status,
-            "method": source.partition_method
-        }
-    
-    def list_sources(self) -> list[dict[str, Any]]:
-        """List all sources."""
-        sources = self.client.sources.list()
-        return [
-            {
-                "file_name": s.file_name,
-                "status": s.status,
-                "file_type": s.file_type,
-                "file_size": s.file_size
+    class GraphorSDK:
+        """Complete wrapper for common Graphor operations."""
+        
+        def __init__(self, api_key: str | None = None):
+            self.client = Graphor(api_key=api_key) if api_key else Graphor()
+        
+        # ==================== Sources ====================
+        
+        def upload_file(self, file_path: str | Path) -> dict[str, Any]:
+            """Upload a file and return source info."""
+            source = self.client.sources.upload(file=Path(file_path))
+            return {
+                "file_name": source.file_name,
+                "status": source.status,
+                "project_id": source.project_id
             }
-            for s in sources
-        ]
-    
-    def get_elements(
-        self, 
-        file_name: str, 
-        page: int = 1, 
-        page_size: int = 50
-    ) -> dict[str, Any]:
-        """Get parsed elements from a source."""
-        result = self.client.sources.load_elements(
-            file_name=file_name,
-            page=page,
-            page_size=page_size
-        )
-        return {
-            "total": result.total,
-            "page": result.page,
-            "total_pages": result.total_pages,
-            "items": [
-                {
-                    "type": item.metadata.element_type,
-                    "content": item.page_content,
-                    "page": item.metadata.page_number
-                }
-                for item in result.items
-            ]
-        }
-    
-    def delete(self, file_name: str) -> dict[str, Any]:
-        """Delete a source."""
-        result = self.client.sources.delete(file_name=file_name)
-        return {"file_name": result.file_name, "message": result.message}
-    
-    # ==================== Chat ====================
-    
-    def ask(
-        self, 
-        question: str, 
-        file_names: list[str] | None = None,
-        conversation_id: str | None = None
-    ) -> dict[str, Any]:
-        """Ask a question about documents."""
-        kwargs = {"question": question}
-        if file_names:
-            kwargs["file_names"] = file_names
-        if conversation_id:
-            kwargs["conversation_id"] = conversation_id
         
-        response = self.client.sources.ask(**kwargs)
-        return {
-            "answer": response.answer,
-            "conversation_id": response.conversation_id
-        }
-    
-    # ==================== Extraction ====================
-    
-    def extract(
-        self,
-        file_names: list[str],
-        instruction: str,
-        schema: dict[str, Any]
-    ) -> dict[str, Any]:
-        """Extract structured data from documents."""
-        result = self.client.sources.extract(
-            file_names=file_names,
-            user_instruction=instruction,
-            output_schema=schema
-        )
-        return {
-            "file_names": result.file_names,
-            "data": result.structured_output,
-            "raw": result.raw_json
-        }
-    
-    # ==================== RAG ====================
-    
-    def retrieve(
-        self,
-        query: str,
-        file_names: list[str] | None = None
-    ) -> dict[str, Any]:
-        """Retrieve relevant chunks for RAG."""
-        kwargs = {"query": query}
-        if file_names:
-            kwargs["file_names"] = file_names
+        def upload_url(self, url: str, crawl: bool = False) -> dict[str, Any]:
+            """Upload from a URL."""
+            source = self.client.sources.upload_url(url=url, crawl_urls=crawl)
+            return {"file_name": source.file_name, "status": source.status}
         
-        result = self.client.sources.retrieve_chunks(**kwargs)
-        return {
-            "query": result.query,
-            "total": result.total,
-            "chunks": [
-                {
-                    "text": c.text,
-                    "file_name": c.file_name,
-                    "page": c.page_number,
-                    "score": c.score
-                }
-                for c in result.chunks or []
-            ]
-        }
-
-
-# Usage example
-sdk = GraphorSDK()
-
-def full_workflow(file_path: str):
-    """Complete ingestion, chat, and extraction workflow."""
-    try:
-        # 1. Upload
-        upload_result = sdk.upload_file(file_path)
-        file_name = upload_result["file_name"]
-        print(f"✅ Uploaded: {file_name}")
-        
-        # 2. Process
-        process_result = sdk.process(file_name, "hi_res")
-        print(f"✅ Processed with: {process_result['method']}")
-        
-        # 3. Chat
-        chat_result = sdk.ask("Summarize this document", [file_name])
-        print(f"📝 Summary: {chat_result['answer']}")
-        
-        # 4. Extract
-        extract_result = sdk.extract(
-            file_names=[file_name],
-            instruction="Extract key information",
-            schema={
-                "type": "object",
-                "properties": {
-                    "title": {"type": "string", "description": "Document title"},
-                    "summary": {"type": "string", "description": "Brief summary"}
-                }
+        def process(self, file_name: str, method: str = "hi_res") -> dict[str, Any]:
+            """Process a source with specified method."""
+            source = self.client.sources.parse(
+                file_name=file_name,
+                partition_method=method
+            )
+            return {
+                "file_name": source.file_name,
+                "status": source.status,
+                "method": source.partition_method
             }
-        )
-        print(f"📊 Extracted: {extract_result['data']}")
         
-        return {"success": True, "file_name": file_name}
+        def list_sources(self) -> list[dict[str, Any]]:
+            """List all sources."""
+            sources = self.client.sources.list()
+            return [
+                {
+                    "file_name": s.file_name,
+                    "status": s.status,
+                    "file_type": s.file_type,
+                    "file_size": s.file_size
+                }
+                for s in sources
+            ]
         
-    except graphor.APIStatusError as e:
-        print(f"❌ Error: {e}")
-        return {"success": False, "error": str(e)}
-```
+        def get_elements(
+            self, 
+            file_name: str, 
+            page: int = 1, 
+            page_size: int = 50
+        ) -> dict[str, Any]:
+            """Get parsed elements from a source."""
+            result = self.client.sources.load_elements(
+                file_name=file_name,
+                page=page,
+                page_size=page_size
+            )
+            return {
+                "total": result.total,
+                "page": result.page,
+                "total_pages": result.total_pages,
+                "items": [
+                    {
+                        "type": item.metadata.element_type,
+                        "content": item.page_content,
+                        "page": item.metadata.page_number
+                    }
+                    for item in result.items
+                ]
+            }
+        
+        def delete(self, file_name: str) -> dict[str, Any]:
+            """Delete a source."""
+            result = self.client.sources.delete(file_name=file_name)
+            return {"file_name": result.file_name, "message": result.message}
+        
+        # ==================== Chat ====================
+        
+        def ask(
+            self, 
+            question: str, 
+            file_names: list[str] | None = None,
+            conversation_id: str | None = None
+        ) -> dict[str, Any]:
+            """Ask a question about documents."""
+            kwargs = {"question": question}
+            if file_names:
+                kwargs["file_names"] = file_names
+            if conversation_id:
+                kwargs["conversation_id"] = conversation_id
+            
+            response = self.client.sources.ask(**kwargs)
+            return {
+                "answer": response.answer,
+                "conversation_id": response.conversation_id
+            }
+        
+        # ==================== Extraction ====================
+        
+        def extract(
+            self,
+            file_names: list[str],
+            instruction: str,
+            schema: dict[str, Any]
+        ) -> dict[str, Any]:
+            """Extract structured data from documents."""
+            result = self.client.sources.extract(
+                file_names=file_names,
+                user_instruction=instruction,
+                output_schema=schema
+            )
+            return {
+                "file_names": result.file_names,
+                "data": result.structured_output,
+                "raw": result.raw_json
+            }
+        
+        # ==================== RAG ====================
+        
+        def retrieve(
+            self,
+            query: str,
+            file_names: list[str] | None = None
+        ) -> dict[str, Any]:
+            """Retrieve relevant chunks for RAG."""
+            kwargs = {"query": query}
+            if file_names:
+                kwargs["file_names"] = file_names
+            
+            result = self.client.sources.retrieve_chunks(**kwargs)
+            return {
+                "query": result.query,
+                "total": result.total,
+                "chunks": [
+                    {
+                        "text": c.text,
+                        "file_name": c.file_name,
+                        "page": c.page_number,
+                        "score": c.score
+                    }
+                    for c in result.chunks or []
+                ]
+            }
+
+
+    # Usage example
+    sdk = GraphorSDK()
+
+    def full_workflow(file_path: str):
+        """Complete ingestion, chat, and extraction workflow."""
+        try:
+            # 1. Upload
+            upload_result = sdk.upload_file(file_path)
+            file_name = upload_result["file_name"]
+            print(f"Uploaded: {file_name}")
+            
+            # 2. Process
+            process_result = sdk.process(file_name, "hi_res")
+            print(f"Processed with: {process_result['method']}")
+            
+            # 3. Chat
+            chat_result = sdk.ask("Summarize this document", [file_name])
+            print(f"Summary: {chat_result['answer']}")
+            
+            # 4. Extract
+            extract_result = sdk.extract(
+                file_names=[file_name],
+                instruction="Extract key information",
+                schema={
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string", "description": "Document title"},
+                        "summary": {"type": "string", "description": "Brief summary"}
+                    }
+                }
+            )
+            print(f"Extracted: {extract_result['data']}")
+            
+            return {"success": True, "file_name": file_name}
+            
+        except graphor.APIStatusError as e:
+            print(f"Error: {e}")
+            return {"success": False, "error": str(e)}
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+    import fs from 'fs';
+
+    class GraphorSDK {
+      private client: Graphor;
+
+      constructor(apiKey?: string) {
+        this.client = apiKey ? new Graphor({ apiKey }) : new Graphor();
+      }
+
+      // ==================== Sources ====================
+
+      async uploadFile(filePath: string) {
+        const source = await this.client.sources.upload({ file: fs.createReadStream(filePath) });
+        return {
+          fileName: source.file_name,
+          status: source.status,
+          projectId: source.project_id,
+        };
+      }
+
+      async uploadUrl(url: string, crawl = false) {
+        const source = await this.client.sources.uploadURL({ url, crawlUrls: crawl });
+        return { fileName: source.file_name, status: source.status };
+      }
+
+      async process(fileName: string, method: string = 'hi_res') {
+        const source = await this.client.sources.parse({
+          file_name: fileName,
+          partition_method: method as any,
+        });
+        return {
+          fileName: source.file_name,
+          status: source.status,
+          method: source.partition_method,
+        };
+      }
+
+      async listSources() {
+        const sources = await this.client.sources.list();
+        return sources.map((s) => ({
+          fileName: s.file_name,
+          status: s.status,
+          fileType: s.file_type,
+          fileSize: s.file_size,
+        }));
+      }
+
+      async getElements(fileName: string, page = 1, pageSize = 50) {
+        const result = await this.client.sources.loadElements({
+          file_name: fileName,
+          page,
+          page_size: pageSize,
+        });
+        return {
+          total: result.total,
+          page: result.page,
+          totalPages: result.total_pages,
+          items: result.items.map((item) => ({
+            type: item.metadata?.type,
+            content: item.page_content,
+          })),
+        };
+      }
+
+      async delete(fileName: string) {
+        const result = await this.client.sources.delete({ file_name: fileName });
+        return { fileName: result.file_name, message: result.message };
+      }
+
+      // ==================== Chat ====================
+
+      async ask(question: string, fileNames?: string[], conversationId?: string) {
+        const response = await this.client.sources.ask({
+          question,
+          file_names: fileNames,
+          conversation_id: conversationId,
+        });
+        return {
+          answer: response.answer,
+          conversationId: response.conversation_id,
+        };
+      }
+
+      // ==================== Extraction ====================
+
+      async extract(fileNames: string[], instruction: string, schema: Record<string, unknown>) {
+        const result = await this.client.sources.extract({
+          file_names: fileNames,
+          user_instruction: instruction,
+          output_schema: schema,
+        });
+        return {
+          fileNames: result.file_names,
+          data: result.structured_output,
+          raw: result.raw_json,
+        };
+      }
+
+      // ==================== RAG ====================
+
+      async retrieve(query: string, fileNames?: string[]) {
+        const result = await this.client.sources.retrieveChunks({
+          query,
+          file_names: fileNames,
+        });
+        return {
+          query: result.query,
+          total: result.total,
+          chunks: (result.chunks ?? []).map((c) => ({
+            text: c.text,
+            fileName: c.file_name,
+            page: c.page_number,
+            score: c.score,
+          })),
+        };
+      }
+    }
+
+    // Usage example
+    const sdk = new GraphorSDK();
+
+    async function fullWorkflow(filePath: string) {
+      try {
+        // 1. Upload
+        const uploadResult = await sdk.uploadFile(filePath);
+        const fileName = uploadResult.fileName;
+        console.log(`Uploaded: ${fileName}`);
+
+        // 2. Process
+        const processResult = await sdk.process(fileName, 'hi_res');
+        console.log(`Processed with: ${processResult.method}`);
+
+        // 3. Chat
+        const chatResult = await sdk.ask('Summarize this document', [fileName]);
+        console.log(`Summary: ${chatResult.answer}`);
+
+        // 4. Extract
+        const extractResult = await sdk.extract(
+          [fileName],
+          'Extract key information',
+          {
+            type: 'object',
+            properties: {
+              title: { type: 'string', description: 'Document title' },
+              summary: { type: 'string', description: 'Brief summary' },
+            },
+          },
+        );
+        console.log(`Extracted: ${JSON.stringify(extractResult.data)}`);
+
+        return { success: true, fileName };
+      } catch (err) {
+        if (err instanceof Graphor.APIError) {
+          console.log(`Error: ${err.message}`);
+          return { success: false, error: err.message };
+        }
+        throw err;
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ### Async Integration
 
-```python
-import asyncio
-from graphor import AsyncGraphor
-import graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import asyncio
+    from graphor import AsyncGraphor
+    import graphor
 
 
-class AsyncGraphorSDK:
-    """Async wrapper for Graphor operations."""
-    
-    def __init__(self, api_key: str | None = None):
-        self.client = AsyncGraphor(api_key=api_key) if api_key else AsyncGraphor()
-    
-    async def process_multiple(
-        self,
-        file_paths: list[str],
-        method: str = "hi_res"
-    ) -> list[dict]:
-        """Upload and process multiple files concurrently."""
-        from pathlib import Path
+    class AsyncGraphorSDK:
+        """Async wrapper for Graphor operations."""
         
-        async def process_one(file_path: str) -> dict:
-            try:
-                # Upload
-                source = await self.client.sources.upload(file=Path(file_path))
-                
-                # Process
-                processed = await self.client.sources.parse(
-                    file_name=source.file_name,
-                    partition_method=method
+        def __init__(self, api_key: str | None = None):
+            self.client = AsyncGraphor(api_key=api_key) if api_key else AsyncGraphor()
+        
+        async def process_multiple(
+            self,
+            file_paths: list[str],
+            method: str = "hi_res"
+        ) -> list[dict]:
+            """Upload and process multiple files concurrently."""
+            from pathlib import Path
+            
+            async def process_one(file_path: str) -> dict:
+                try:
+                    # Upload
+                    source = await self.client.sources.upload(file=Path(file_path))
+                    
+                    # Process
+                    processed = await self.client.sources.parse(
+                        file_name=source.file_name,
+                        partition_method=method
+                    )
+                    
+                    return {
+                        "file": file_path,
+                        "status": "success",
+                        "file_name": processed.file_name
+                    }
+                except graphor.APIStatusError as e:
+                    return {"file": file_path, "status": "failed", "error": str(e)}
+            
+            # Process all files concurrently
+            tasks = [process_one(fp) for fp in file_paths]
+            results = await asyncio.gather(*tasks)
+            
+            return results
+        
+        async def batch_ask(
+            self,
+            questions: list[str],
+            file_names: list[str] | None = None
+        ) -> list[dict]:
+            """Ask multiple questions concurrently."""
+            async def ask_one(question: str) -> dict:
+                response = await self.client.sources.ask(
+                    question=question,
+                    file_names=file_names
                 )
-                
-                return {
-                    "file": file_path,
-                    "status": "success",
-                    "file_name": processed.file_name
-                }
-            except graphor.APIStatusError as e:
-                return {"file": file_path, "status": "failed", "error": str(e)}
-        
-        # Process all files concurrently
-        tasks = [process_one(fp) for fp in file_paths]
-        results = await asyncio.gather(*tasks)
-        
-        return results
-    
-    async def batch_ask(
-        self,
-        questions: list[str],
-        file_names: list[str] | None = None
-    ) -> list[dict]:
-        """Ask multiple questions concurrently."""
-        async def ask_one(question: str) -> dict:
-            response = await self.client.sources.ask(
-                question=question,
-                file_names=file_names
-            )
-            return {"question": question, "answer": response.answer}
-        
-        tasks = [ask_one(q) for q in questions]
-        return await asyncio.gather(*tasks)
+                return {"question": question, "answer": response.answer}
+            
+            tasks = [ask_one(q) for q in questions]
+            return await asyncio.gather(*tasks)
 
 
-# Usage
-async def main():
-    sdk = AsyncGraphorSDK()
-    
-    # Process multiple files
-    results = await sdk.process_multiple([
-        "doc1.pdf",
-        "doc2.pdf",
-        "doc3.pdf"
-    ])
-    
-    for r in results:
-        status = "✅" if r["status"] == "success" else "❌"
-        print(f"{status} {r['file']}")
-    
-    # Ask multiple questions
-    answers = await sdk.batch_ask([
-        "What is the main topic?",
-        "Who are the key people mentioned?",
-        "What are the conclusions?"
-    ])
-    
-    for a in answers:
-        print(f"Q: {a['question']}")
-        print(f"A: {a['answer']}\n")
+    # Usage
+    async def main():
+        sdk = AsyncGraphorSDK()
+        
+        # Process multiple files
+        results = await sdk.process_multiple([
+            "doc1.pdf",
+            "doc2.pdf",
+            "doc3.pdf"
+        ])
+        
+        for r in results:
+            status = "OK" if r["status"] == "success" else "FAIL"
+            print(f"{status} {r['file']}")
+        
+        # Ask multiple questions
+        answers = await sdk.batch_ask([
+            "What is the main topic?",
+            "Who are the key people mentioned?",
+            "What are the conclusions?"
+        ])
+        
+        for a in answers:
+            print(f"Q: {a['question']}")
+            print(f"A: {a['answer']}\n")
 
-asyncio.run(main())
-```
+    asyncio.run(main())
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+    import fs from 'fs';
+
+    class AsyncGraphorSDK {
+      private client: Graphor;
+
+      constructor(apiKey?: string) {
+        this.client = apiKey ? new Graphor({ apiKey }) : new Graphor();
+      }
+
+      async processMultiple(filePaths: string[], method = 'hi_res') {
+        const processOne = async (filePath: string) => {
+          try {
+            const source = await this.client.sources.upload({
+              file: fs.createReadStream(filePath),
+            });
+
+            const processed = await this.client.sources.parse({
+              file_name: source.file_name,
+              partition_method: method as any,
+            });
+
+            return { file: filePath, status: 'success' as const, fileName: processed.file_name };
+          } catch (err) {
+            const message = err instanceof Graphor.APIError ? err.message : String(err);
+            return { file: filePath, status: 'failed' as const, error: message };
+          }
+        };
+
+        // Process all files concurrently
+        return Promise.all(filePaths.map(processOne));
+      }
+
+      async batchAsk(questions: string[], fileNames?: string[]) {
+        const askOne = async (question: string) => {
+          const response = await this.client.sources.ask({
+            question,
+            file_names: fileNames,
+          });
+          return { question, answer: response.answer };
+        };
+
+        return Promise.all(questions.map(askOne));
+      }
+    }
+
+    // Usage
+    async function main() {
+      const sdk = new AsyncGraphorSDK();
+
+      // Process multiple files
+      const results = await sdk.processMultiple(['doc1.pdf', 'doc2.pdf', 'doc3.pdf']);
+
+      for (const r of results) {
+        const status = r.status === 'success' ? 'OK' : 'FAIL';
+        console.log(`${status} ${r.file}`);
+      }
+
+      // Ask multiple questions
+      const answers = await sdk.batchAsk([
+        'What is the main topic?',
+        'Who are the key people mentioned?',
+        'What are the conclusions?',
+      ]);
+
+      for (const a of answers) {
+        console.log(`Q: ${a.question}`);
+        console.log(`A: ${a.answer}\n`);
+      }
+    }
+
+    main();
+    ```
+  </Tab>
+</Tabs>
 
 ## Error Handling
 
 The SDK provides typed exceptions for different error scenarios:
 
-```python
-import graphor
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import graphor
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-try:
-    source = client.sources.upload(file=b"raw file contents")
-except graphor.APIConnectionError as e:
-    print("The server could not be reached")
-    print(e.__cause__)
-except graphor.RateLimitError as e:
-    print("Rate limit exceeded. Back off and retry.")
-except graphor.BadRequestError as e:
-    print(f"Invalid request: {e}")
-except graphor.AuthenticationError as e:
-    print(f"Invalid API key: {e}")
-except graphor.NotFoundError as e:
-    print(f"Resource not found: {e}")
-except graphor.APIStatusError as e:
-    print(f"API error (status {e.status_code}): {e}")
-```
+    try:
+        source = client.sources.upload(file=b"raw file contents")
+    except graphor.APIConnectionError as e:
+        print("The server could not be reached")
+        print(e.__cause__)
+    except graphor.RateLimitError as e:
+        print("Rate limit exceeded. Back off and retry.")
+    except graphor.BadRequestError as e:
+        print(f"Invalid request: {e}")
+    except graphor.AuthenticationError as e:
+        print(f"Invalid API key: {e}")
+    except graphor.NotFoundError as e:
+        print(f"Resource not found: {e}")
+    except graphor.APIStatusError as e:
+        print(f"API error (status {e.status_code}): {e}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+    import fs from 'fs';
+
+    const client = new Graphor();
+
+    try {
+      const source = await client.sources.upload({ file: fs.createReadStream('file.pdf') });
+    } catch (err) {
+      if (err instanceof Graphor.APIConnectionError) {
+        console.log('The server could not be reached');
+        console.log(err.cause);
+      } else if (err instanceof Graphor.RateLimitError) {
+        console.log('Rate limit exceeded. Back off and retry.');
+      } else if (err instanceof Graphor.BadRequestError) {
+        console.log(`Invalid request: ${err.message}`);
+      } else if (err instanceof Graphor.AuthenticationError) {
+        console.log(`Invalid API key: ${err.message}`);
+      } else if (err instanceof Graphor.NotFoundError) {
+        console.log(`Resource not found: ${err.message}`);
+      } else if (err instanceof Graphor.APIError) {
+        console.log(`API error (status ${err.status}): ${err.message}`);
+      } else {
+        throw err;
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ### Error Types
 
@@ -656,36 +1187,71 @@ except graphor.APIStatusError as e:
 
 Certain errors are automatically retried 2 times by default with exponential backoff:
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-# Configure default retries
-client = Graphor(max_retries=0)  # Disable retries
+    # Configure default retries
+    client = Graphor(max_retries=0)  # Disable retries
 
-# Or per-request
-client.with_options(max_retries=5).sources.upload(file=b"...")
-```
+    # Or per-request
+    client.with_options(max_retries=5).sources.upload(file=b"...")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    // Configure default retries
+    const client = new Graphor({ maxRetries: 0 }); // Disable retries
+
+    // Or per-request
+    await client.sources.ask({ question: '...' }, { maxRetries: 5 });
+    ```
+  </Tab>
+</Tabs>
 
 ### Timeouts
 
-By default, requests time out after 1 minute:
+<Tabs>
+  <Tab title="Python">
+    By default, requests time out after 1 minute:
 
-```python
-from graphor import Graphor
+    ```python
+    from graphor import Graphor
 
-# Configure default timeout (in seconds)
-client = Graphor(timeout=120.0)  # 2 minutes
+    # Configure default timeout (in seconds)
+    client = Graphor(timeout=120.0)  # 2 minutes
 
-# Or per-request
-client.with_options(timeout=300.0).sources.parse(
-    file_name="large-document.pdf",
-    partition_method="graphorlm"
-)
-```
+    # Or per-request
+    client.with_options(timeout=300.0).sources.parse(
+        file_name="large-document.pdf",
+        partition_method="graphorlm"
+    )
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    By default, requests time out after 60 seconds:
 
-### Using aiohttp for Better Concurrency
+    ```typescript
+    import Graphor from 'graphor';
 
-For high-concurrency async operations, use the aiohttp client:
+    // Configure default timeout (in milliseconds)
+    const client = new Graphor({ timeout: 120 * 1000 }); // 2 minutes
+
+    // Or per-request
+    await client.sources.parse(
+      { file_name: 'large-document.pdf', partition_method: 'graphorlm' },
+      { timeout: 300 * 1000 },
+    );
+    ```
+  </Tab>
+</Tabs>
+
+### Using aiohttp for Better Concurrency (Python only)
+
+For high-concurrency async operations in Python, use the aiohttp client:
 
 ```python
 import asyncio
@@ -708,185 +1274,368 @@ asyncio.run(main())
 ### Performance Guidelines
 
 - **Batch Operations**: Process multiple files sequentially or with controlled concurrency
-- **Async Processing**: Use `AsyncGraphor` for concurrent operations
-- **Retry Logic**: The SDK handles retries automatically; configure `max_retries` as needed
+- **Async Processing**: Use `AsyncGraphor` (Python) or `Promise.all` (TypeScript) for concurrent operations
+- **Retry Logic**: The SDK handles retries automatically; configure `max_retries` / `maxRetries` as needed
 - **Timeout Handling**: Increase timeouts for large documents or complex processing
 
 ### Best Practices
 
-```python
-from graphor import Graphor
-import graphor
-import time
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+    import graphor
+    import time
 
-client = Graphor(
-    max_retries=3,
-    timeout=120.0  # 2 minutes for processing operations
-)
+    client = Graphor(
+        max_retries=3,
+        timeout=120.0  # 2 minutes for processing operations
+    )
 
-def robust_upload(file_path: str, max_attempts: int = 3) -> dict | None:
-    """Upload with custom retry logic."""
-    from pathlib import Path
-    
-    for attempt in range(max_attempts):
-        try:
-            source = client.sources.upload(file=Path(file_path))
-            return {"success": True, "file_name": source.file_name}
-        except graphor.RateLimitError:
-            wait_time = 2 ** attempt  # Exponential backoff
-            print(f"Rate limited. Waiting {wait_time}s...")
-            time.sleep(wait_time)
-        except graphor.APIConnectionError as e:
-            print(f"Connection error (attempt {attempt + 1}): {e}")
-            time.sleep(1)
-        except graphor.APIStatusError as e:
-            print(f"API error: {e}")
-            return {"success": False, "error": str(e)}
-    
-    return {"success": False, "error": "Max retries exceeded"}
-```
+    def robust_upload(file_path: str, max_attempts: int = 3) -> dict | None:
+        """Upload with custom retry logic."""
+        from pathlib import Path
+        
+        for attempt in range(max_attempts):
+            try:
+                source = client.sources.upload(file=Path(file_path))
+                return {"success": True, "file_name": source.file_name}
+            except graphor.RateLimitError:
+                wait_time = 2 ** attempt  # Exponential backoff
+                print(f"Rate limited. Waiting {wait_time}s...")
+                time.sleep(wait_time)
+            except graphor.APIConnectionError as e:
+                print(f"Connection error (attempt {attempt + 1}): {e}")
+                time.sleep(1)
+            except graphor.APIStatusError as e:
+                print(f"API error: {e}")
+                return {"success": False, "error": str(e)}
+        
+        return {"success": False, "error": "Max retries exceeded"}
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+    import fs from 'fs';
+
+    const client = new Graphor({
+      maxRetries: 3,
+      timeout: 120 * 1000, // 2 minutes for processing operations
+    });
+
+    async function robustUpload(filePath: string, maxAttempts = 3) {
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          const source = await client.sources.upload({ file: fs.createReadStream(filePath) });
+          return { success: true, fileName: source.file_name };
+        } catch (err) {
+          if (err instanceof Graphor.RateLimitError) {
+            const waitTime = 2 ** attempt;
+            console.log(`Rate limited. Waiting ${waitTime}s...`);
+            await new Promise((r) => setTimeout(r, waitTime * 1000));
+          } else if (err instanceof Graphor.APIConnectionError) {
+            console.log(`Connection error (attempt ${attempt + 1}): ${err.message}`);
+            await new Promise((r) => setTimeout(r, 1000));
+          } else if (err instanceof Graphor.APIError) {
+            console.log(`API error: ${err.message}`);
+            return { success: false, error: err.message };
+          } else {
+            throw err;
+          }
+        }
+      }
+      return { success: false, error: 'Max retries exceeded' };
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ## Common Use Cases
 
 ### Document Processing Pipeline
 
-```python
-from graphor import Graphor
-from pathlib import Path
-import graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+    from pathlib import Path
+    import graphor
 
-client = Graphor(timeout=300.0)
+    client = Graphor(timeout=300.0)
 
-def document_pipeline(directory: str, method: str = "hi_res"):
-    """Process all documents in a directory."""
-    results = []
-    
-    for file_path in Path(directory).glob("*.pdf"):
-        try:
-            # Upload
-            source = client.sources.upload(file=file_path)
-            print(f"📤 Uploaded: {source.file_name}")
-            
-            # Process
-            processed = client.sources.parse(
-                file_name=source.file_name,
-                partition_method=method
-            )
-            print(f"⚙️ Processed: {processed.file_name}")
-            
-            results.append({
-                "file": str(file_path),
-                "status": "success",
-                "file_name": processed.file_name
-            })
-            
-        except graphor.APIStatusError as e:
-            results.append({
-                "file": str(file_path),
-                "status": "failed",
-                "error": str(e)
-            })
-    
-    successful = sum(1 for r in results if r["status"] == "success")
-    print(f"\n✅ Processed {successful}/{len(results)} files")
-    
-    return results
-```
+    def document_pipeline(directory: str, method: str = "hi_res"):
+        """Process all documents in a directory."""
+        results = []
+        
+        for file_path in Path(directory).glob("*.pdf"):
+            try:
+                # Upload
+                source = client.sources.upload(file=file_path)
+                print(f"Uploaded: {source.file_name}")
+                
+                # Process
+                processed = client.sources.parse(
+                    file_name=source.file_name,
+                    partition_method=method
+                )
+                print(f"Processed: {processed.file_name}")
+                
+                results.append({
+                    "file": str(file_path),
+                    "status": "success",
+                    "file_name": processed.file_name
+                })
+                
+            except graphor.APIStatusError as e:
+                results.append({
+                    "file": str(file_path),
+                    "status": "failed",
+                    "error": str(e)
+                })
+        
+        successful = sum(1 for r in results if r["status"] == "success")
+        print(f"\nProcessed {successful}/{len(results)} files")
+        
+        return results
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+    import fs from 'fs';
+    import path from 'path';
+
+    const client = new Graphor({ timeout: 300 * 1000 });
+
+    async function documentPipeline(directory: string, method = 'hi_res') {
+      const files = fs.readdirSync(directory).filter((f) => f.endsWith('.pdf'));
+      const results = [];
+
+      for (const file of files) {
+        const filePath = path.join(directory, file);
+        try {
+          // Upload
+          const source = await client.sources.upload({ file: fs.createReadStream(filePath) });
+          console.log(`Uploaded: ${source.file_name}`);
+
+          // Process
+          const processed = await client.sources.parse({
+            file_name: source.file_name,
+            partition_method: method as any,
+          });
+          console.log(`Processed: ${processed.file_name}`);
+
+          results.push({ file: filePath, status: 'success', fileName: processed.file_name });
+        } catch (err) {
+          const message = err instanceof Graphor.APIError ? err.message : String(err);
+          results.push({ file: filePath, status: 'failed', error: message });
+        }
+      }
+
+      const successful = results.filter((r) => r.status === 'success').length;
+      console.log(`\nProcessed ${successful}/${results.length} files`);
+
+      return results;
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ### Q&A System
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-class DocumentQA:
-    """Simple Q&A system with conversation history."""
-    
-    def __init__(self, file_names: list[str] | None = None):
-        self.file_names = file_names
-        self.conversation_id = None
-    
-    def ask(self, question: str) -> str:
-        """Ask a question, maintaining conversation history."""
-        response = client.sources.ask(
-            question=question,
-            file_names=self.file_names,
-            conversation_id=self.conversation_id
-        )
+    class DocumentQA:
+        """Simple Q&A system with conversation history."""
         
-        # Store conversation ID for follow-up questions
-        self.conversation_id = response.conversation_id
+        def __init__(self, file_names: list[str] | None = None):
+            self.file_names = file_names
+            self.conversation_id = None
         
-        return response.answer
-    
-    def reset(self):
-        """Reset conversation history."""
-        self.conversation_id = None
+        def ask(self, question: str) -> str:
+            """Ask a question, maintaining conversation history."""
+            response = client.sources.ask(
+                question=question,
+                file_names=self.file_names,
+                conversation_id=self.conversation_id
+            )
+            
+            # Store conversation ID for follow-up questions
+            self.conversation_id = response.conversation_id
+            
+            return response.answer
+        
+        def reset(self):
+            """Reset conversation history."""
+            self.conversation_id = None
 
 
-# Usage
-qa = DocumentQA(file_names=["report.pdf"])
+    # Usage
+    qa = DocumentQA(file_names=["report.pdf"])
 
-print(qa.ask("What is this document about?"))
-print(qa.ask("What are the main findings?"))  # Follow-up
-print(qa.ask("Can you summarize the conclusions?"))  # Follow-up
+    print(qa.ask("What is this document about?"))
+    print(qa.ask("What are the main findings?"))  # Follow-up
+    print(qa.ask("Can you summarize the conclusions?"))  # Follow-up
 
-qa.reset()  # Start new conversation
-```
+    qa.reset()  # Start new conversation
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    class DocumentQA {
+      private fileNames?: string[];
+      private conversationId?: string;
+
+      constructor(fileNames?: string[]) {
+        this.fileNames = fileNames;
+      }
+
+      async ask(question: string): Promise<string> {
+        const response = await client.sources.ask({
+          question,
+          file_names: this.fileNames,
+          conversation_id: this.conversationId,
+        });
+
+        // Store conversation ID for follow-up questions
+        this.conversationId = response.conversation_id ?? undefined;
+
+        return response.answer;
+      }
+
+      reset() {
+        this.conversationId = undefined;
+      }
+    }
+
+    // Usage
+    const qa = new DocumentQA(['report.pdf']);
+
+    console.log(await qa.ask('What is this document about?'));
+    console.log(await qa.ask('What are the main findings?')); // Follow-up
+    console.log(await qa.ask('Can you summarize the conclusions?')); // Follow-up
+
+    qa.reset(); // Start new conversation
+    ```
+  </Tab>
+</Tabs>
 
 ### Custom RAG with Your LLM
 
-```python
-from graphor import Graphor
-from openai import OpenAI
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+    from openai import OpenAI
 
-graphor_client = Graphor()
-openai_client = OpenAI()
+    graphor_client = Graphor()
+    openai_client = OpenAI()
 
-def custom_rag(question: str, file_names: list[str] | None = None) -> dict:
-    """Custom RAG pipeline with OpenAI."""
-    # 1. Retrieve relevant chunks
-    chunks = graphor_client.sources.retrieve_chunks(
-        query=question,
-        file_names=file_names
-    )
-    
-    # 2. Build context
-    context = "\n\n".join([
-        f"[{c.file_name}, Page {c.page_number}]\n{c.text}"
-        for c in chunks.chunks or []
-    ])
-    
-    # 3. Generate answer with your LLM
-    response = openai_client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {
-                "role": "system",
-                "content": "Answer questions based on the provided context. Cite sources."
-            },
-            {
-                "role": "user",
-                "content": f"Context:\n{context}\n\nQuestion: {question}"
-            }
-        ]
-    )
-    
-    return {
-        "answer": response.choices[0].message.content,
-        "sources": [
-            {"file": c.file_name, "page": c.page_number}
+    def custom_rag(question: str, file_names: list[str] | None = None) -> dict:
+        """Custom RAG pipeline with OpenAI."""
+        # 1. Retrieve relevant chunks
+        chunks = graphor_client.sources.retrieve_chunks(
+            query=question,
+            file_names=file_names
+        )
+        
+        # 2. Build context
+        context = "\n\n".join([
+            f"[{c.file_name}, Page {c.page_number}]\n{c.text}"
             for c in chunks.chunks or []
-        ]
+        ])
+        
+        # 3. Generate answer with your LLM
+        response = openai_client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Answer questions based on the provided context. Cite sources."
+                },
+                {
+                    "role": "user",
+                    "content": f"Context:\n{context}\n\nQuestion: {question}"
+                }
+            ]
+        )
+        
+        return {
+            "answer": response.choices[0].message.content,
+            "sources": [
+                {"file": c.file_name, "page": c.page_number}
+                for c in chunks.chunks or []
+            ]
+        }
+
+
+    # Usage
+    result = custom_rag("What are the payment terms?", ["contract.pdf"])
+    print(result["answer"])
+    print("Sources:", result["sources"])
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+    import OpenAI from 'openai';
+
+    const graphorClient = new Graphor();
+    const openaiClient = new OpenAI();
+
+    async function customRag(question: string, fileNames?: string[]) {
+      // 1. Retrieve relevant chunks
+      const chunks = await graphorClient.sources.retrieveChunks({
+        query: question,
+        file_names: fileNames,
+      });
+
+      // 2. Build context
+      const context = (chunks.chunks ?? [])
+        .map((c) => `[${c.file_name}, Page ${c.page_number}]\n${c.text}`)
+        .join('\n\n');
+
+      // 3. Generate answer with your LLM
+      const response = await openaiClient.chat.completions.create({
+        model: 'gpt-4',
+        messages: [
+          {
+            role: 'system',
+            content: 'Answer questions based on the provided context. Cite sources.',
+          },
+          {
+            role: 'user',
+            content: `Context:\n${context}\n\nQuestion: ${question}`,
+          },
+        ],
+      });
+
+      return {
+        answer: response.choices[0].message.content,
+        sources: (chunks.chunks ?? []).map((c) => ({
+          file: c.file_name,
+          page: c.page_number,
+        })),
+      };
     }
 
-
-# Usage
-result = custom_rag("What are the payment terms?", ["contract.pdf"])
-print(result["answer"])
-print("Sources:", result["sources"])
-```
+    // Usage
+    const result = await customRag('What are the payment terms?', ['contract.pdf']);
+    console.log(result.answer);
+    console.log('Sources:', result.sources);
+    ```
+  </Tab>
+</Tabs>
 
 ## Support and Resources
 
@@ -986,4 +1735,4 @@ Ready to start building with the Graphor SDK? Choose your path:
   </Card>
 </CardGroup>
 
-The Graphor Python SDK provides a powerful foundation for building intelligent, document-driven applications. With comprehensive support for document ingestion, conversational AI, structured extraction, and custom RAG pipelines, the SDK gives you the flexibility to build sophisticated AI workflows that scale from simple document search to complex analysis systems.
+The Graphor SDKs provide a powerful foundation for building intelligent, document-driven applications. With comprehensive support for document ingestion, conversational AI, structured extraction, and custom RAG pipelines, both the Python and TypeScript SDKs give you the flexibility to build sophisticated AI workflows that scale from simple document search to complex analysis systems.

@@ -1,34 +1,61 @@
 ---
 title: 'List Sources'
-description: 'Retrieve all documents in your project using the Graphor Python SDK'
+description: 'Retrieve all documents in your project using the Graphor SDK'
 ---
 
 The `list` method allows you to retrieve information about all documents in your Graphor project. This method provides comprehensive details about each document's status, processing information, and metadata, enabling you to monitor and manage your document collection programmatically.
 
 ## Method Overview
 
-<CardGroup cols={2}>
-  <Card title="Sync Method" icon="code">
-    **`client.sources.list()`**
-  </Card>
-  <Card title="Async Method" icon="code">
-    **`await client.sources.list()`**
-  </Card>
-</CardGroup>
+<Tabs>
+  <Tab title="Python">
+    <CardGroup cols={2}>
+      <Card title="Sync Method" icon="code">
+        **`client.sources.list()`**
+      </Card>
+      <Card title="Async Method" icon="code">
+        **`await client.sources.list()`**
+      </Card>
+    </CardGroup>
+  </Tab>
+  <Tab title="TypeScript">
+    <CardGroup cols={2}>
+      <Card title="Async Method" icon="code">
+        **`await client.sources.list()`**
+      </Card>
+    </CardGroup>
+  </Tab>
+</Tabs>
 
 ## Method Signature
 
-```python
-client.sources.list(
-    timeout: float | None = None
-) -> list[PublicSource]
-```
+<Tabs>
+  <Tab title="Python">
+    ```python
+    client.sources.list(
+        timeout: float | None = None
+    ) -> list[PublicSource]
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    await client.sources.list(): Promise<PublicSource[]>
+    ```
+  </Tab>
+</Tabs>
 
 ## Parameters
 
-| Parameter | Type | Description | Required |
-|-----------|------|-------------|----------|
-| `timeout` | `float` | Request timeout in seconds | No |
+<Tabs>
+  <Tab title="Python">
+    | Parameter | Type | Description | Required |
+    |-----------|------|-------------|----------|
+    | `timeout` | `float` | Request timeout in seconds | No |
+  </Tab>
+  <Tab title="TypeScript">
+    This method takes no parameters. You can pass request options (e.g., `timeout`) as a second argument.
+  </Tab>
+</Tabs>
 
 <Note>
   This method returns all sources in the project associated with your API key. No filtering parameters are required.
@@ -36,7 +63,7 @@ client.sources.list(
 
 ## Response Object
 
-The method returns a `list[PublicSource]` — a list of `PublicSource` objects with the following properties:
+The method returns a list of `PublicSource` objects with the following properties:
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -98,134 +125,285 @@ The method returns a `list[PublicSource]` — a list of `PublicSource` objects w
 
 ### Basic Usage
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-# List all sources in the project
-sources = client.sources.list()
+    # List all sources in the project
+    sources = client.sources.list()
 
-print(f"Found {len(sources)} sources")
+    print(f"Found {len(sources)} sources")
 
-for source in sources:
-    print(f"{source.file_name} - {source.status}")
-```
+    for source in sources:
+        print(f"{source.file_name} - {source.status}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // List all sources in the project
+    const sources = await client.sources.list();
+
+    console.log(`Found ${sources.length} sources`);
+
+    for (const source of sources) {
+      console.log(`${source.file_name} - ${source.status}`);
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ### Async Usage
 
-```python
-import asyncio
-from graphor import AsyncGraphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import asyncio
+    from graphor import AsyncGraphor
 
-async def list_all_sources():
-    client = AsyncGraphor()
-    
-    sources = await client.sources.list()
-    
-    print(f"Found {len(sources)} sources")
-    
-    for source in sources:
-        print(f"{source.file_name} - {source.status}")
-    
-    return sources
+    async def list_all_sources():
+        client = AsyncGraphor()
+        
+        sources = await client.sources.list()
+        
+        print(f"Found {len(sources)} sources")
+        
+        for source in sources:
+            print(f"{source.file_name} - {source.status}")
+        
+        return sources
 
-asyncio.run(list_all_sources())
-```
+    asyncio.run(list_all_sources())
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    async function listAllSources() {
+      const sources = await client.sources.list();
+
+      console.log(`Found ${sources.length} sources`);
+
+      for (const source of sources) {
+        console.log(`${source.file_name} - ${source.status}`);
+      }
+
+      return sources;
+    }
+
+    await listAllSources();
+    ```
+  </Tab>
+</Tabs>
 
 ### Filter by Status
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-sources = client.sources.list()
+    sources = client.sources.list()
 
-# Filter by status
-completed = [s for s in sources if s.status == "Completed"]
-processing = [s for s in sources if s.status == "Processing"]
-failed = [s for s in sources if s.status == "Failed"]
-new = [s for s in sources if s.status == "New"]
+    # Filter by status
+    completed = [s for s in sources if s.status == "Completed"]
+    processing = [s for s in sources if s.status == "Processing"]
+    failed = [s for s in sources if s.status == "Failed"]
+    new = [s for s in sources if s.status == "New"]
 
-print(f"Completed: {len(completed)}")
-print(f"Processing: {len(processing)}")
-print(f"Failed: {len(failed)}")
-print(f"New: {len(new)}")
-```
+    print(f"Completed: {len(completed)}")
+    print(f"Processing: {len(processing)}")
+    print(f"Failed: {len(failed)}")
+    print(f"New: {len(new)}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    const sources = await client.sources.list();
+
+    // Filter by status
+    const completed = sources.filter((s) => s.status === 'Completed');
+    const processing = sources.filter((s) => s.status === 'Processing');
+    const failed = sources.filter((s) => s.status === 'Failed');
+    const newSources = sources.filter((s) => s.status === 'New');
+
+    console.log(`Completed: ${completed.length}`);
+    console.log(`Processing: ${processing.length}`);
+    console.log(`Failed: ${failed.length}`);
+    console.log(`New: ${newSources.length}`);
+    ```
+  </Tab>
+</Tabs>
 
 ### Filter by File Type
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-sources = client.sources.list()
+    sources = client.sources.list()
 
-# Filter by file type
-pdf_files = [s for s in sources if s.file_type == "pdf"]
-docx_files = [s for s in sources if s.file_type == "docx"]
-images = [s for s in sources if s.file_type in ("png", "jpg", "jpeg")]
+    # Filter by file type
+    pdf_files = [s for s in sources if s.file_type == "pdf"]
+    docx_files = [s for s in sources if s.file_type == "docx"]
+    images = [s for s in sources if s.file_type in ("png", "jpg", "jpeg")]
 
-print(f"PDFs: {len(pdf_files)}")
-print(f"Word docs: {len(docx_files)}")
-print(f"Images: {len(images)}")
+    print(f"PDFs: {len(pdf_files)}")
+    print(f"Word docs: {len(docx_files)}")
+    print(f"Images: {len(images)}")
 
-# List all PDF files
-for pdf in pdf_files:
-    size_mb = pdf.file_size / (1024 * 1024)
-    print(f"  {pdf.file_name} ({size_mb:.2f} MB)")
-```
+    # List all PDF files
+    for pdf in pdf_files:
+        size_mb = pdf.file_size / (1024 * 1024)
+        print(f"  {pdf.file_name} ({size_mb:.2f} MB)")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    const sources = await client.sources.list();
+
+    // Filter by file type
+    const pdfFiles = sources.filter((s) => s.file_type === 'pdf');
+    const docxFiles = sources.filter((s) => s.file_type === 'docx');
+    const images = sources.filter((s) => ['png', 'jpg', 'jpeg'].includes(s.file_type));
+
+    console.log(`PDFs: ${pdfFiles.length}`);
+    console.log(`Word docs: ${docxFiles.length}`);
+    console.log(`Images: ${images.length}`);
+
+    // List all PDF files
+    for (const pdf of pdfFiles) {
+      const sizeMb = pdf.file_size / (1024 * 1024);
+      console.log(`  ${pdf.file_name} (${sizeMb.toFixed(2)} MB)`);
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ### Filter by Source Type
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-sources = client.sources.list()
+    sources = client.sources.list()
 
-# Filter by source type
-local_files = [s for s in sources if s.file_source == "local file"]
-url_sources = [s for s in sources if s.file_source == "url"]
-github_sources = [s for s in sources if s.file_source == "github"]
-youtube_sources = [s for s in sources if s.file_source == "youtube"]
+    # Filter by source type
+    local_files = [s for s in sources if s.file_source == "local file"]
+    url_sources = [s for s in sources if s.file_source == "url"]
+    github_sources = [s for s in sources if s.file_source == "github"]
+    youtube_sources = [s for s in sources if s.file_source == "youtube"]
 
-print(f"Local files: {len(local_files)}")
-print(f"URL sources: {len(url_sources)}")
-print(f"GitHub repos: {len(github_sources)}")
-print(f"YouTube videos: {len(youtube_sources)}")
-```
+    print(f"Local files: {len(local_files)}")
+    print(f"URL sources: {len(url_sources)}")
+    print(f"GitHub repos: {len(github_sources)}")
+    print(f"YouTube videos: {len(youtube_sources)}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    const sources = await client.sources.list();
+
+    // Filter by source type
+    const localFiles = sources.filter((s) => s.file_source === 'local file');
+    const urlSources = sources.filter((s) => s.file_source === 'url');
+    const githubSources = sources.filter((s) => s.file_source === 'github');
+    const youtubeSources = sources.filter((s) => s.file_source === 'youtube');
+
+    console.log(`Local files: ${localFiles.length}`);
+    console.log(`URL sources: ${urlSources.length}`);
+    console.log(`GitHub repos: ${githubSources.length}`);
+    console.log(`YouTube videos: ${youtubeSources.length}`);
+    ```
+  </Tab>
+</Tabs>
 
 ### Error Handling
 
-```python
-import graphor
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import graphor
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-try:
-    sources = client.sources.list()
-    print(f"Found {len(sources)} sources")
-    
-except graphor.AuthenticationError as e:
-    print(f"Invalid API key: {e}")
-    
-except graphor.PermissionDeniedError as e:
-    print(f"Access denied to project: {e}")
-    
-except graphor.RateLimitError as e:
-    print(f"Rate limit exceeded. Please wait and retry: {e}")
-    
-except graphor.APIConnectionError as e:
-    print(f"Connection error: {e}")
-    
-except graphor.InternalServerError as e:
-    print(f"Server error: {e}")
-```
+    try:
+        sources = client.sources.list()
+        print(f"Found {len(sources)} sources")
+        
+    except graphor.AuthenticationError as e:
+        print(f"Invalid API key: {e}")
+        
+    except graphor.PermissionDeniedError as e:
+        print(f"Access denied to project: {e}")
+        
+    except graphor.RateLimitError as e:
+        print(f"Rate limit exceeded. Please wait and retry: {e}")
+        
+    except graphor.APIConnectionError as e:
+        print(f"Connection error: {e}")
+        
+    except graphor.InternalServerError as e:
+        print(f"Server error: {e}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    try {
+      const sources = await client.sources.list();
+      console.log(`Found ${sources.length} sources`);
+    } catch (err) {
+      if (err instanceof Graphor.AuthenticationError) {
+        console.log(`Invalid API key: ${err.message}`);
+      } else if (err instanceof Graphor.PermissionDeniedError) {
+        console.log(`Access denied to project: ${err.message}`);
+      } else if (err instanceof Graphor.RateLimitError) {
+        console.log(`Rate limit exceeded. Please wait and retry: ${err.message}`);
+      } else if (err instanceof Graphor.APIConnectionError) {
+        console.log(`Connection error: ${err.message}`);
+      } else if (err instanceof Graphor.InternalServerError) {
+        console.log(`Server error: ${err.message}`);
+      } else {
+        throw err;
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ## Advanced Examples
 
@@ -233,404 +411,827 @@ except graphor.InternalServerError as e:
 
 Analyze your project's sources with detailed statistics:
 
-```python
-from graphor import Graphor
-from collections import defaultdict
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+    from collections import defaultdict
 
-client = Graphor()
+    client = Graphor()
 
-def analyze_sources():
-    """Analyze sources by status, type, and size."""
-    sources = client.sources.list()
-    
-    status_counts = defaultdict(int)
-    type_counts = defaultdict(int)
-    source_counts = defaultdict(int)
-    total_size = 0
-    
-    for source in sources:
-        status_counts[source.status] += 1
-        type_counts[source.file_type] += 1
-        source_counts[source.file_source] += 1
-        total_size += source.file_size
-    
-    return {
-        "total_sources": len(sources),
-        "total_size_mb": round(total_size / (1024 * 1024), 2),
-        "by_status": dict(status_counts),
-        "by_type": dict(type_counts),
-        "by_source": dict(source_counts)
+    def analyze_sources():
+        """Analyze sources by status, type, and size."""
+        sources = client.sources.list()
+        
+        status_counts = defaultdict(int)
+        type_counts = defaultdict(int)
+        source_counts = defaultdict(int)
+        total_size = 0
+        
+        for source in sources:
+            status_counts[source.status] += 1
+            type_counts[source.file_type] += 1
+            source_counts[source.file_source] += 1
+            total_size += source.file_size
+        
+        return {
+            "total_sources": len(sources),
+            "total_size_mb": round(total_size / (1024 * 1024), 2),
+            "by_status": dict(status_counts),
+            "by_type": dict(type_counts),
+            "by_source": dict(source_counts)
+        }
+
+    # Usage
+    analysis = analyze_sources()
+    print(f"Total sources: {analysis['total_sources']}")
+    print(f"Total size: {analysis['total_size_mb']} MB")
+    print(f"By status: {analysis['by_status']}")
+    print(f"By type: {analysis['by_type']}")
+    print(f"By source: {analysis['by_source']}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    async function analyzeSources() {
+      const sources = await client.sources.list();
+
+      const statusCounts: Record<string, number> = {};
+      const typeCounts: Record<string, number> = {};
+      const sourceCounts: Record<string, number> = {};
+      let totalSize = 0;
+
+      for (const source of sources) {
+        statusCounts[source.status] = (statusCounts[source.status] ?? 0) + 1;
+        typeCounts[source.file_type] = (typeCounts[source.file_type] ?? 0) + 1;
+        sourceCounts[source.file_source] = (sourceCounts[source.file_source] ?? 0) + 1;
+        totalSize += source.file_size;
+      }
+
+      return {
+        totalSources: sources.length,
+        totalSizeMb: Math.round((totalSize / (1024 * 1024)) * 100) / 100,
+        byStatus: statusCounts,
+        byType: typeCounts,
+        bySource: sourceCounts,
+      };
     }
 
-# Usage
-analysis = analyze_sources()
-print(f"Total sources: {analysis['total_sources']}")
-print(f"Total size: {analysis['total_size_mb']} MB")
-print(f"By status: {analysis['by_status']}")
-print(f"By type: {analysis['by_type']}")
-print(f"By source: {analysis['by_source']}")
-```
+    // Usage
+    const analysis = await analyzeSources();
+    console.log(`Total sources: ${analysis.totalSources}`);
+    console.log(`Total size: ${analysis.totalSizeMb} MB`);
+    console.log('By status:', analysis.byStatus);
+    console.log('By type:', analysis.byType);
+    console.log('By source:', analysis.bySource);
+    ```
+  </Tab>
+</Tabs>
 
 ### Status Monitoring
 
 Monitor the processing status of your documents:
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-def monitor_processing_status():
-    """Monitor and report on processing status."""
-    sources = client.sources.list()
-    
-    processing = [s for s in sources if s.status == "Processing"]
-    failed = [s for s in sources if s.status == "Failed"]
-    completed = [s for s in sources if s.status == "Completed"]
-    new = [s for s in sources if s.status == "New"]
-    
-    print("=" * 50)
-    print("Processing Status Report")
-    print("=" * 50)
-    print(f"✅ Completed: {len(completed)}")
-    print(f"⏳ Processing: {len(processing)}")
-    print(f"🆕 New: {len(new)}")
-    print(f"❌ Failed: {len(failed)}")
-    print("=" * 50)
-    
-    # List files currently processing
-    if processing:
-        print("\n📋 Currently Processing:")
-        for source in processing:
-            print(f"  • {source.file_name} ({source.partition_method})")
-    
-    # List failed files that need attention
-    if failed:
-        print("\n⚠️ Failed Files (need attention):")
-        for source in failed:
-            print(f"  • {source.file_name}: {source.message}")
-    
-    return {
-        "completed": completed,
-        "processing": processing,
-        "new": new,
-        "failed": failed
+    def monitor_processing_status():
+        """Monitor and report on processing status."""
+        sources = client.sources.list()
+        
+        processing = [s for s in sources if s.status == "Processing"]
+        failed = [s for s in sources if s.status == "Failed"]
+        completed = [s for s in sources if s.status == "Completed"]
+        new = [s for s in sources if s.status == "New"]
+        
+        print("=" * 50)
+        print("Processing Status Report")
+        print("=" * 50)
+        print(f"Completed: {len(completed)}")
+        print(f"Processing: {len(processing)}")
+        print(f"New: {len(new)}")
+        print(f"Failed: {len(failed)}")
+        print("=" * 50)
+        
+        # List files currently processing
+        if processing:
+            print("\nCurrently Processing:")
+            for source in processing:
+                print(f"  - {source.file_name} ({source.partition_method})")
+        
+        # List failed files that need attention
+        if failed:
+            print("\nFailed Files (need attention):")
+            for source in failed:
+                print(f"  - {source.file_name}: {source.message}")
+        
+        return {
+            "completed": completed,
+            "processing": processing,
+            "new": new,
+            "failed": failed
+        }
+
+    # Usage
+    status = monitor_processing_status()
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    async function monitorProcessingStatus() {
+      const sources = await client.sources.list();
+
+      const processing = sources.filter((s) => s.status === 'Processing');
+      const failed = sources.filter((s) => s.status === 'Failed');
+      const completed = sources.filter((s) => s.status === 'Completed');
+      const newSources = sources.filter((s) => s.status === 'New');
+
+      console.log('='.repeat(50));
+      console.log('Processing Status Report');
+      console.log('='.repeat(50));
+      console.log(`Completed: ${completed.length}`);
+      console.log(`Processing: ${processing.length}`);
+      console.log(`New: ${newSources.length}`);
+      console.log(`Failed: ${failed.length}`);
+      console.log('='.repeat(50));
+
+      // List files currently processing
+      if (processing.length > 0) {
+        console.log('\nCurrently Processing:');
+        for (const source of processing) {
+          console.log(`  - ${source.file_name} (${source.partition_method})`);
+        }
+      }
+
+      // List failed files that need attention
+      if (failed.length > 0) {
+        console.log('\nFailed Files (need attention):');
+        for (const source of failed) {
+          console.log(`  - ${source.file_name}: ${source.message}`);
+        }
+      }
+
+      return { completed, processing, new: newSources, failed };
     }
 
-# Usage
-status = monitor_processing_status()
-```
+    // Usage
+    const status = await monitorProcessingStatus();
+    ```
+  </Tab>
+</Tabs>
 
 ### Find Source by Name
 
 Search for a specific source by filename:
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-def find_source(file_name: str):
-    """Find a source by exact file name."""
-    sources = client.sources.list()
-    
-    for source in sources:
-        if source.file_name == file_name:
-            return source
-    
-    return None
+    def find_source(file_name: str):
+        """Find a source by exact file name."""
+        sources = client.sources.list()
+        
+        for source in sources:
+            if source.file_name == file_name:
+                return source
+        
+        return None
 
-def search_sources(query: str):
-    """Search sources by partial name match."""
-    sources = client.sources.list()
-    
-    matches = [s for s in sources if query.lower() in s.file_name.lower()]
-    return matches
+    def search_sources(query: str):
+        """Search sources by partial name match."""
+        sources = client.sources.list()
+        
+        matches = [s for s in sources if query.lower() in s.file_name.lower()]
+        return matches
 
-# Usage
-# Find exact match
-source = find_source("document.pdf")
-if source:
-    print(f"Found: {source.file_name} - {source.status}")
-else:
-    print("Source not found")
+    # Usage
+    # Find exact match
+    source = find_source("document.pdf")
+    if source:
+        print(f"Found: {source.file_name} - {source.status}")
+    else:
+        print("Source not found")
 
-# Search by partial name
-matches = search_sources("report")
-print(f"Found {len(matches)} sources matching 'report'")
-for match in matches:
-    print(f"  • {match.file_name}")
-```
+    # Search by partial name
+    matches = search_sources("report")
+    print(f"Found {len(matches)} sources matching 'report'")
+    for match in matches:
+        print(f"  - {match.file_name}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    async function findSource(fileName: string) {
+      const sources = await client.sources.list();
+      return sources.find((s) => s.file_name === fileName) ?? null;
+    }
+
+    async function searchSources(query: string) {
+      const sources = await client.sources.list();
+      return sources.filter((s) => s.file_name.toLowerCase().includes(query.toLowerCase()));
+    }
+
+    // Usage
+    // Find exact match
+    const source = await findSource('document.pdf');
+    if (source) {
+      console.log(`Found: ${source.file_name} - ${source.status}`);
+    } else {
+      console.log('Source not found');
+    }
+
+    // Search by partial name
+    const matches = await searchSources('report');
+    console.log(`Found ${matches.length} sources matching 'report'`);
+    for (const match of matches) {
+      console.log(`  - ${match.file_name}`);
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ### Project Health Check
 
 Perform a comprehensive health check of your project:
 
-```python
-from graphor import Graphor
-from datetime import datetime
-import graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+    from datetime import datetime
+    import graphor
 
-client = Graphor()
+    client = Graphor()
 
-def project_health_check():
-    """Perform a comprehensive health check of the project."""
-    try:
-        sources = client.sources.list()
-        
-        health_report = {
-            "timestamp": datetime.now().isoformat(),
-            "total_sources": len(sources),
-            "status_summary": {},
-            "issues": [],
-            "recommendations": []
-        }
-        
-        # Analyze status distribution
-        for source in sources:
-            status = source.status or "unknown"
-            health_report["status_summary"][status] = health_report["status_summary"].get(status, 0) + 1
+    def project_health_check():
+        """Perform a comprehensive health check of the project."""
+        try:
+            sources = client.sources.list()
             
-            # Identify issues
-            if source.status == "Failed":
-                health_report["issues"].append(f"Failed processing: {source.file_name}")
-            elif source.status == "unknown":
-                health_report["issues"].append(f"Unknown status: {source.file_name}")
-        
-        # Generate recommendations
-        failed_count = health_report["status_summary"].get("Failed", 0)
-        if failed_count > 0:
-            health_report["recommendations"].append(
-                f"Reprocess {failed_count} failed documents using client.sources.parse()"
-            )
-        
-        processing_count = health_report["status_summary"].get("Processing", 0)
-        if processing_count > 5:
-            health_report["recommendations"].append(
-                "Monitor processing queue - high volume detected"
-            )
-        
-        new_count = health_report["status_summary"].get("New", 0)
-        if new_count > 0:
-            health_report["recommendations"].append(
-                f"{new_count} documents awaiting processing"
-            )
-        
-        return health_report
-        
-    except graphor.APIStatusError as e:
-        return {
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
+            health_report = {
+                "timestamp": datetime.now().isoformat(),
+                "total_sources": len(sources),
+                "status_summary": {},
+                "issues": [],
+                "recommendations": []
+            }
+            
+            # Analyze status distribution
+            for source in sources:
+                status = source.status or "unknown"
+                health_report["status_summary"][status] = health_report["status_summary"].get(status, 0) + 1
+                
+                # Identify issues
+                if source.status == "Failed":
+                    health_report["issues"].append(f"Failed processing: {source.file_name}")
+                elif source.status == "unknown":
+                    health_report["issues"].append(f"Unknown status: {source.file_name}")
+            
+            # Generate recommendations
+            failed_count = health_report["status_summary"].get("Failed", 0)
+            if failed_count > 0:
+                health_report["recommendations"].append(
+                    f"Reprocess {failed_count} failed documents using client.sources.parse()"
+                )
+            
+            processing_count = health_report["status_summary"].get("Processing", 0)
+            if processing_count > 5:
+                health_report["recommendations"].append(
+                    "Monitor processing queue - high volume detected"
+                )
+            
+            new_count = health_report["status_summary"].get("New", 0)
+            if new_count > 0:
+                health_report["recommendations"].append(
+                    f"{new_count} documents awaiting processing"
+                )
+            
+            return health_report
+            
+        except graphor.APIStatusError as e:
+            return {
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+
+    # Usage
+    health = project_health_check()
+    print(f"Project Health Report")
+    print(f"Timestamp: {health['timestamp']}")
+    print(f"Total Sources: {health['total_sources']}")
+    print(f"Status Summary: {health['status_summary']}")
+
+    if health.get("issues"):
+        print(f"\nIssues:")
+        for issue in health["issues"]:
+            print(f"  - {issue}")
+
+    if health.get("recommendations"):
+        print(f"\nRecommendations:")
+        for rec in health["recommendations"]:
+            print(f"  - {rec}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    async function projectHealthCheck() {
+      try {
+        const sources = await client.sources.list();
+
+        const statusSummary: Record<string, number> = {};
+        const issues: string[] = [];
+        const recommendations: string[] = [];
+
+        // Analyze status distribution
+        for (const source of sources) {
+          const status = source.status || 'unknown';
+          statusSummary[status] = (statusSummary[status] ?? 0) + 1;
+
+          if (source.status === 'Failed') {
+            issues.push(`Failed processing: ${source.file_name}`);
+          } else if (source.status === 'unknown') {
+            issues.push(`Unknown status: ${source.file_name}`);
+          }
         }
 
-# Usage
-health = project_health_check()
-print(f"Project Health Report")
-print(f"Timestamp: {health['timestamp']}")
-print(f"Total Sources: {health['total_sources']}")
-print(f"Status Summary: {health['status_summary']}")
+        // Generate recommendations
+        const failedCount = statusSummary['Failed'] ?? 0;
+        if (failedCount > 0) {
+          recommendations.push(
+            `Reprocess ${failedCount} failed documents using client.sources.parse()`,
+          );
+        }
 
-if health.get("issues"):
-    print(f"\nIssues:")
-    for issue in health["issues"]:
-        print(f"  ⚠️ {issue}")
+        const processingCount = statusSummary['Processing'] ?? 0;
+        if (processingCount > 5) {
+          recommendations.push('Monitor processing queue - high volume detected');
+        }
 
-if health.get("recommendations"):
-    print(f"\nRecommendations:")
-    for rec in health["recommendations"]:
-        print(f"  💡 {rec}")
-```
+        const newCount = statusSummary['New'] ?? 0;
+        if (newCount > 0) {
+          recommendations.push(`${newCount} documents awaiting processing`);
+        }
+
+        return {
+          timestamp: new Date().toISOString(),
+          totalSources: sources.length,
+          statusSummary,
+          issues,
+          recommendations,
+        };
+      } catch (err) {
+        return {
+          error: err instanceof Graphor.APIError ? err.message : String(err),
+          timestamp: new Date().toISOString(),
+        };
+      }
+    }
+
+    // Usage
+    const health = await projectHealthCheck();
+    console.log('Project Health Report');
+    console.log(`Timestamp: ${health.timestamp}`);
+    if ('totalSources' in health) {
+      console.log(`Total Sources: ${health.totalSources}`);
+      console.log('Status Summary:', health.statusSummary);
+
+      if (health.issues?.length) {
+        console.log('\nIssues:');
+        for (const issue of health.issues) {
+          console.log(`  - ${issue}`);
+        }
+      }
+
+      if (health.recommendations?.length) {
+        console.log('\nRecommendations:');
+        for (const rec of health.recommendations) {
+          console.log(`  - ${rec}`);
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ### Async Batch Operations
 
 Use the list to perform batch operations efficiently:
 
-```python
-import asyncio
-from graphor import AsyncGraphor
-import graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import asyncio
+    from graphor import AsyncGraphor
+    import graphor
 
-async def reprocess_failed_sources(method: str = "hi_res"):
-    """Find and reprocess all failed sources."""
-    client = AsyncGraphor(timeout=300.0)
-    
-    # Get all sources
-    sources = await client.sources.list()
-    
-    # Find failed sources
-    failed = [s for s in sources if s.status == "Failed"]
-    
-    if not failed:
-        print("No failed sources to reprocess")
-        return []
-    
-    print(f"Found {len(failed)} failed sources to reprocess")
-    
-    # Reprocess each failed source
-    results = []
-    for source in failed:
-        try:
-            print(f"Reprocessing: {source.file_name}...")
-            result = await client.sources.parse(
-                file_name=source.file_name,
-                partition_method=method
-            )
-            results.append({"file_name": source.file_name, "status": "success"})
-            print(f"  ✅ {source.file_name} reprocessed")
-        except graphor.APIStatusError as e:
-            results.append({"file_name": source.file_name, "status": "failed", "error": str(e)})
-            print(f"  ❌ {source.file_name} failed: {e}")
-    
-    return results
+    async def reprocess_failed_sources(method: str = "hi_res"):
+        """Find and reprocess all failed sources."""
+        client = AsyncGraphor(timeout=300.0)
+        
+        # Get all sources
+        sources = await client.sources.list()
+        
+        # Find failed sources
+        failed = [s for s in sources if s.status == "Failed"]
+        
+        if not failed:
+            print("No failed sources to reprocess")
+            return []
+        
+        print(f"Found {len(failed)} failed sources to reprocess")
+        
+        # Reprocess each failed source
+        results = []
+        for source in failed:
+            try:
+                print(f"Reprocessing: {source.file_name}...")
+                result = await client.sources.parse(
+                    file_name=source.file_name,
+                    partition_method=method
+                )
+                results.append({"file_name": source.file_name, "status": "success"})
+                print(f"  OK - {source.file_name} reprocessed")
+            except graphor.APIStatusError as e:
+                results.append({"file_name": source.file_name, "status": "failed", "error": str(e)})
+                print(f"  FAIL - {source.file_name}: {e}")
+        
+        return results
 
-# Usage
-results = asyncio.run(reprocess_failed_sources("hi_res"))
-```
+    # Usage
+    results = asyncio.run(reprocess_failed_sources("hi_res"))
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor({ timeout: 300 * 1000 });
+
+    async function reprocessFailedSources(method = 'hi_res') {
+      // Get all sources
+      const sources = await client.sources.list();
+
+      // Find failed sources
+      const failed = sources.filter((s) => s.status === 'Failed');
+
+      if (failed.length === 0) {
+        console.log('No failed sources to reprocess');
+        return [];
+      }
+
+      console.log(`Found ${failed.length} failed sources to reprocess`);
+
+      // Reprocess each failed source
+      const results: { fileName: string; status: string; error?: string }[] = [];
+      for (const source of failed) {
+        try {
+          console.log(`Reprocessing: ${source.file_name}...`);
+          await client.sources.parse({
+            file_name: source.file_name,
+            partition_method: method as any,
+          });
+          results.push({ fileName: source.file_name, status: 'success' });
+          console.log(`  OK - ${source.file_name} reprocessed`);
+        } catch (err) {
+          const message = err instanceof Graphor.APIError ? err.message : String(err);
+          results.push({ fileName: source.file_name, status: 'failed', error: message });
+          console.log(`  FAIL - ${source.file_name}: ${message}`);
+        }
+      }
+
+      return results;
+    }
+
+    // Usage
+    const results = await reprocessFailedSources('hi_res');
+    ```
+  </Tab>
+</Tabs>
 
 ### Source Management Class
 
 A complete class for managing sources:
 
-```python
-from graphor import Graphor
-import graphor
-from dataclasses import dataclass
-from typing import Optional
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+    import graphor
+    from dataclasses import dataclass
+    from typing import Optional
 
-@dataclass
-class SourceSummary:
-    total: int
-    completed: int
-    processing: int
-    failed: int
-    new: int
-    total_size_mb: float
+    @dataclass
+    class SourceSummary:
+        total: int
+        completed: int
+        processing: int
+        failed: int
+        new: int
+        total_size_mb: float
 
-class SourceManager:
-    def __init__(self, api_key: Optional[str] = None):
-        self.client = Graphor(api_key=api_key) if api_key else Graphor()
-        self._cache = None
-    
-    def refresh(self):
-        """Refresh the sources cache."""
-        self._cache = self.client.sources.list()
-        return self._cache
-    
-    @property
-    def sources(self):
-        """Get sources (cached)."""
-        if self._cache is None:
-            self.refresh()
-        return self._cache
-    
-    def get_summary(self) -> SourceSummary:
-        """Get a summary of all sources."""
-        sources = self.sources
+    class SourceManager:
+        def __init__(self, api_key: Optional[str] = None):
+            self.client = Graphor(api_key=api_key) if api_key else Graphor()
+            self._cache = None
         
-        total_size = sum(s.file_size for s in sources)
+        def refresh(self):
+            """Refresh the sources cache."""
+            self._cache = self.client.sources.list()
+            return self._cache
         
-        return SourceSummary(
-            total=len(sources),
-            completed=len([s for s in sources if s.status == "Completed"]),
-            processing=len([s for s in sources if s.status == "Processing"]),
-            failed=len([s for s in sources if s.status == "Failed"]),
-            new=len([s for s in sources if s.status == "New"]),
-            total_size_mb=round(total_size / (1024 * 1024), 2)
-        )
-    
-    def find_by_name(self, name: str):
-        """Find a source by exact name."""
-        for source in self.sources:
-            if source.file_name == name:
-                return source
-        return None
-    
-    def search(self, query: str):
-        """Search sources by partial name match."""
-        return [s for s in self.sources if query.lower() in s.file_name.lower()]
-    
-    def filter_by_status(self, status: str):
-        """Filter sources by status."""
-        return [s for s in self.sources if s.status == status]
-    
-    def filter_by_type(self, file_type: str):
-        """Filter sources by file type."""
-        return [s for s in self.sources if s.file_type == file_type]
-    
-    def get_failed(self):
-        """Get all failed sources."""
-        return self.filter_by_status("Failed")
-    
-    def get_processing(self):
-        """Get all processing sources."""
-        return self.filter_by_status("Processing")
+        @property
+        def sources(self):
+            """Get sources (cached)."""
+            if self._cache is None:
+                self.refresh()
+            return self._cache
+        
+        def get_summary(self) -> SourceSummary:
+            """Get a summary of all sources."""
+            sources = self.sources
+            
+            total_size = sum(s.file_size for s in sources)
+            
+            return SourceSummary(
+                total=len(sources),
+                completed=len([s for s in sources if s.status == "Completed"]),
+                processing=len([s for s in sources if s.status == "Processing"]),
+                failed=len([s for s in sources if s.status == "Failed"]),
+                new=len([s for s in sources if s.status == "New"]),
+                total_size_mb=round(total_size / (1024 * 1024), 2)
+            )
+        
+        def find_by_name(self, name: str):
+            """Find a source by exact name."""
+            for source in self.sources:
+                if source.file_name == name:
+                    return source
+            return None
+        
+        def search(self, query: str):
+            """Search sources by partial name match."""
+            return [s for s in self.sources if query.lower() in s.file_name.lower()]
+        
+        def filter_by_status(self, status: str):
+            """Filter sources by status."""
+            return [s for s in self.sources if s.status == status]
+        
+        def filter_by_type(self, file_type: str):
+            """Filter sources by file type."""
+            return [s for s in self.sources if s.file_type == file_type]
+        
+        def get_failed(self):
+            """Get all failed sources."""
+            return self.filter_by_status("Failed")
+        
+        def get_processing(self):
+            """Get all processing sources."""
+            return self.filter_by_status("Processing")
 
-# Usage
-manager = SourceManager()
+    # Usage
+    manager = SourceManager()
 
-# Get summary
-summary = manager.get_summary()
-print(f"Total: {summary.total}, Completed: {summary.completed}, Failed: {summary.failed}")
+    # Get summary
+    summary = manager.get_summary()
+    print(f"Total: {summary.total}, Completed: {summary.completed}, Failed: {summary.failed}")
 
-# Find a specific source
-source = manager.find_by_name("document.pdf")
-if source:
-    print(f"Found: {source.file_name} - {source.status}")
+    # Find a specific source
+    source = manager.find_by_name("document.pdf")
+    if source:
+        print(f"Found: {source.file_name} - {source.status}")
 
-# Search sources
-matches = manager.search("report")
-print(f"Found {len(matches)} matches for 'report'")
+    # Search sources
+    matches = manager.search("report")
+    print(f"Found {len(matches)} matches for 'report'")
 
-# Get failed sources
-failed = manager.get_failed()
-print(f"Failed sources: {len(failed)}")
-```
+    # Get failed sources
+    failed = manager.get_failed()
+    print(f"Failed sources: {len(failed)}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    interface SourceSummary {
+      total: number;
+      completed: number;
+      processing: number;
+      failed: number;
+      new: number;
+      totalSizeMb: number;
+    }
+
+    type PublicSource = Awaited<ReturnType<Graphor['sources']['list']>>[number];
+
+    class SourceManager {
+      private client: Graphor;
+      private _cache: PublicSource[] | null = null;
+
+      constructor(apiKey?: string) {
+        this.client = apiKey ? new Graphor({ apiKey }) : new Graphor();
+      }
+
+      async refresh() {
+        this._cache = await this.client.sources.list();
+        return this._cache;
+      }
+
+      async getSources() {
+        if (this._cache === null) {
+          await this.refresh();
+        }
+        return this._cache!;
+      }
+
+      async getSummary(): Promise<SourceSummary> {
+        const sources = await this.getSources();
+
+        const totalSize = sources.reduce((sum, s) => sum + s.file_size, 0);
+
+        return {
+          total: sources.length,
+          completed: sources.filter((s) => s.status === 'Completed').length,
+          processing: sources.filter((s) => s.status === 'Processing').length,
+          failed: sources.filter((s) => s.status === 'Failed').length,
+          new: sources.filter((s) => s.status === 'New').length,
+          totalSizeMb: Math.round((totalSize / (1024 * 1024)) * 100) / 100,
+        };
+      }
+
+      async findByName(name: string) {
+        const sources = await this.getSources();
+        return sources.find((s) => s.file_name === name) ?? null;
+      }
+
+      async search(query: string) {
+        const sources = await this.getSources();
+        return sources.filter((s) => s.file_name.toLowerCase().includes(query.toLowerCase()));
+      }
+
+      async filterByStatus(status: string) {
+        const sources = await this.getSources();
+        return sources.filter((s) => s.status === status);
+      }
+
+      async filterByType(fileType: string) {
+        const sources = await this.getSources();
+        return sources.filter((s) => s.file_type === fileType);
+      }
+
+      async getFailed() {
+        return this.filterByStatus('Failed');
+      }
+
+      async getProcessing() {
+        return this.filterByStatus('Processing');
+      }
+    }
+
+    // Usage
+    const manager = new SourceManager();
+
+    // Get summary
+    const summary = await manager.getSummary();
+    console.log(`Total: ${summary.total}, Completed: ${summary.completed}, Failed: ${summary.failed}`);
+
+    // Find a specific source
+    const source = await manager.findByName('document.pdf');
+    if (source) {
+      console.log(`Found: ${source.file_name} - ${source.status}`);
+    }
+
+    // Search sources
+    const matches = await manager.search('report');
+    console.log(`Found ${matches.length} matches for 'report'`);
+
+    // Get failed sources
+    const failed = await manager.getFailed();
+    console.log(`Failed sources: ${failed.length}`);
+    ```
+  </Tab>
+</Tabs>
 
 ### Continuous Monitoring
 
 Set up continuous monitoring of your sources:
 
-```python
-import time
-from graphor import Graphor
-import graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import time
+    from graphor import Graphor
+    import graphor
 
-client = Graphor()
+    client = Graphor()
 
-def continuous_monitoring(interval_seconds: int = 60, max_iterations: int = None):
-    """Continuously monitor source processing status."""
-    iteration = 0
-    
-    while max_iterations is None or iteration < max_iterations:
-        try:
-            sources = client.sources.list()
-            
-            processing = len([s for s in sources if s.status == "Processing"])
-            failed = len([s for s in sources if s.status == "Failed"])
-            completed = len([s for s in sources if s.status == "Completed"])
-            
-            print(f"[{time.strftime('%H:%M:%S')}] "
-                  f"✅ {completed} | ⏳ {processing} | ❌ {failed}")
-            
-            # Alert if new failures detected
-            if failed > 0:
-                failed_sources = [s for s in sources if s.status == "Failed"]
-                print(f"  ⚠️ Failed sources: {[s.file_name for s in failed_sources]}")
-            
-            time.sleep(interval_seconds)
-            iteration += 1
-            
-        except graphor.APIConnectionError as e:
-            print(f"[{time.strftime('%H:%M:%S')}] Connection error: {e}")
-            time.sleep(interval_seconds)
-        except KeyboardInterrupt:
-            print("\nMonitoring stopped")
-            break
+    def continuous_monitoring(interval_seconds: int = 60, max_iterations: int = None):
+        """Continuously monitor source processing status."""
+        iteration = 0
+        
+        while max_iterations is None or iteration < max_iterations:
+            try:
+                sources = client.sources.list()
+                
+                processing = len([s for s in sources if s.status == "Processing"])
+                failed = len([s for s in sources if s.status == "Failed"])
+                completed = len([s for s in sources if s.status == "Completed"])
+                
+                print(f"[{time.strftime('%H:%M:%S')}] "
+                      f"Completed: {completed} | Processing: {processing} | Failed: {failed}")
+                
+                # Alert if new failures detected
+                if failed > 0:
+                    failed_sources = [s for s in sources if s.status == "Failed"]
+                    print(f"  Warning - Failed sources: {[s.file_name for s in failed_sources]}")
+                
+                time.sleep(interval_seconds)
+                iteration += 1
+                
+            except graphor.APIConnectionError as e:
+                print(f"[{time.strftime('%H:%M:%S')}] Connection error: {e}")
+                time.sleep(interval_seconds)
+            except KeyboardInterrupt:
+                print("\nMonitoring stopped")
+                break
 
-# Usage (monitor every 30 seconds, 10 times)
-# continuous_monitoring(interval_seconds=30, max_iterations=10)
-```
+    # Usage (monitor every 30 seconds, 10 times)
+    # continuous_monitoring(interval_seconds=30, max_iterations=10)
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    async function continuousMonitoring(intervalSeconds = 60, maxIterations?: number) {
+      let iteration = 0;
+
+      while (maxIterations === undefined || iteration < maxIterations) {
+        try {
+          const sources = await client.sources.list();
+
+          const processing = sources.filter((s) => s.status === 'Processing').length;
+          const failed = sources.filter((s) => s.status === 'Failed').length;
+          const completed = sources.filter((s) => s.status === 'Completed').length;
+
+          const time = new Date().toLocaleTimeString();
+          console.log(
+            `[${time}] Completed: ${completed} | Processing: ${processing} | Failed: ${failed}`,
+          );
+
+          // Alert if new failures detected
+          if (failed > 0) {
+            const failedSources = sources.filter((s) => s.status === 'Failed');
+            console.log(
+              `  Warning - Failed sources: ${failedSources.map((s) => s.file_name).join(', ')}`,
+            );
+          }
+
+          await new Promise((r) => setTimeout(r, intervalSeconds * 1000));
+          iteration++;
+        } catch (err) {
+          if (err instanceof Graphor.APIConnectionError) {
+            const time = new Date().toLocaleTimeString();
+            console.log(`[${time}] Connection error: ${err.message}`);
+            await new Promise((r) => setTimeout(r, intervalSeconds * 1000));
+          } else {
+            throw err;
+          }
+        }
+      }
+    }
+
+    // Usage (monitor every 30 seconds, 10 times)
+    // await continuousMonitoring(30, 10);
+    ```
+  </Tab>
+</Tabs>
 
 ## Error Reference
 
@@ -651,15 +1252,30 @@ def continuous_monitoring(interval_seconds: int = 60, max_iterations: int = None
 - **Filter client-side**: The SDK returns all sources; filter in your code as needed
 - **Use async**: For applications that need to perform other work while waiting
 
-```python
-# Example: Cache sources for multiple operations
-sources = client.sources.list()
+<Tabs>
+  <Tab title="Python">
+    ```python
+    # Example: Cache sources for multiple operations
+    sources = client.sources.list()
 
-# Now perform multiple filter operations without re-fetching
-pdfs = [s for s in sources if s.file_type == "pdf"]
-completed = [s for s in sources if s.status == "Completed"]
-large_files = [s for s in sources if s.file_size > 10 * 1024 * 1024]
-```
+    # Now perform multiple filter operations without re-fetching
+    pdfs = [s for s in sources if s.file_type == "pdf"]
+    completed = [s for s in sources if s.status == "Completed"]
+    large_files = [s for s in sources if s.file_size > 10 * 1024 * 1024]
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    // Example: Cache sources for multiple operations
+    const sources = await client.sources.list();
+
+    // Now perform multiple filter operations without re-fetching
+    const pdfs = sources.filter((s) => s.file_type === 'pdf');
+    const completed = sources.filter((s) => s.status === 'Completed');
+    const largeFiles = sources.filter((s) => s.file_size > 10 * 1024 * 1024);
+    ```
+  </Tab>
+</Tabs>
 
 ### Data Management
 
@@ -673,15 +1289,30 @@ large_files = [s for s in sources if s.file_size > 10 * 1024 * 1024]
 - **Monitor status**: Regularly check for failed processing jobs
 - **Graceful degradation**: Have fallback plans when the API is unavailable
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-# Configure retries
-client = Graphor(max_retries=5)
+    # Configure retries
+    client = Graphor(max_retries=5)
 
-# Or per-request
-sources = client.with_options(max_retries=5).sources.list()
-```
+    # Or per-request
+    sources = client.with_options(max_retries=5).sources.list()
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    // Configure retries
+    const client = new Graphor({ maxRetries: 5 });
+
+    // Or per-request
+    const sources = await client.sources.list({}, { maxRetries: 5 });
+    ```
+  </Tab>
+</Tabs>
 
 ## Troubleshooting
 
@@ -693,10 +1324,19 @@ sources = client.with_options(max_retries=5).sources.list()
     - Implement request timeouts
     - Use response caching for non-critical applications
     - Consider filtering client-side after initial fetch
-    
+
+<Tabs>
+  <Tab title="Python">
     ```python
     client = Graphor(timeout=60.0)  # Increase timeout
     ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    const client = new Graphor({ timeout: 60 * 1000 }); // Increase timeout
+    ```
+  </Tab>
+</Tabs>
   </Accordion>
   
   <Accordion icon="list" title="Empty response">

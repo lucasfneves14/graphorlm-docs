@@ -1,40 +1,75 @@
 ---
 title: 'Parse Source'
-description: 'Reprocess uploaded documents with different parsing methods using the Graphor Python SDK'
+description: 'Reprocess uploaded documents with different parsing methods using the Graphor SDK'
 ---
 
 The `parse` method allows you to reprocess previously uploaded documents using different parsing and classification methods. This enables you to optimize document processing for better text extraction, structure recognition, and retrieval performance without re-uploading the file.
 
 ## Method Overview
 
-<CardGroup cols={2}>
-  <Card title="Sync Method" icon="code">
-    **`client.sources.parse()`**
-  </Card>
-  <Card title="Async Method" icon="code">
-    **`await client.sources.parse()`**
-  </Card>
-</CardGroup>
+<Tabs>
+  <Tab title="Python">
+    <CardGroup cols={2}>
+      <Card title="Sync Method" icon="code">
+        **`client.sources.parse()`**
+      </Card>
+      <Card title="Async Method" icon="code">
+        **`await client.sources.parse()`**
+      </Card>
+    </CardGroup>
+  </Tab>
+  <Tab title="TypeScript">
+    <CardGroup cols={2}>
+      <Card title="Async Method" icon="code">
+        **`await client.sources.parse()`**
+      </Card>
+    </CardGroup>
+  </Tab>
+</Tabs>
 
 ## Method Signature
 
-```python
-client.sources.parse(
-    file_id: str | None = None,          # Preferred
-    file_name: str | None = None,        # Deprecated
-    partition_method: PartitionMethod,   # Optional
-    timeout: float | None = None
-) -> PublicSource
-```
+<Tabs>
+  <Tab title="Python">
+    ```python
+    client.sources.parse(
+        file_id: str | None = None,          # Preferred
+        file_name: str | None = None,        # Deprecated
+        partition_method: PartitionMethod,   # Optional
+        timeout: float | None = None
+    ) -> PublicSource
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    await client.sources.parse({
+      file_id?: string | null,          // Preferred
+      file_name?: string | null,        // Deprecated
+      partition_method?: 'basic' | 'hi_res' | 'hi_res_ft' | 'mai' | 'graphorlm',
+    }): Promise<PublicSource>
+    ```
+  </Tab>
+</Tabs>
 
 ## Parameters
 
-| Parameter | Type | Description | Required |
-|-----------|------|-------------|----------|
-| `file_id` | `str` | Unique identifier for the source (preferred) | No* |
-| `file_name` | `str` | Name of the previously uploaded file to reprocess (deprecated, use `file_id`) | No* |
-| `partition_method` | `PartitionMethod` | Processing method to use (see available methods below) | No |
-| `timeout` | `float` | Request timeout in seconds | No |
+<Tabs>
+  <Tab title="Python">
+    | Parameter | Type | Description | Required |
+    |-----------|------|-------------|----------|
+    | `file_id` | `str` | Unique identifier for the source (preferred) | No* |
+    | `file_name` | `str` | Name of the previously uploaded file to reprocess (deprecated, use `file_id`) | No* |
+    | `partition_method` | `PartitionMethod` | Processing method to use (see available methods below) | No |
+    | `timeout` | `float` | Request timeout in seconds | No |
+  </Tab>
+  <Tab title="TypeScript">
+    | Parameter | Type | Description | Required |
+    |-----------|------|-------------|----------|
+    | `file_id` | `string \| null` | Unique identifier for the source (preferred) | No* |
+    | `file_name` | `string \| null` | Name of the previously uploaded file to reprocess (deprecated, use `file_id`) | No* |
+    | `partition_method` | `string` | Processing method to use (see available methods below) | No |
+  </Tab>
+</Tabs>
 
 <Note>
 *At least one of `file_id` or `file_name` must be provided. `file_id` is preferred.
@@ -145,104 +180,214 @@ The method returns a `PublicSource` object with the following properties:
 
 ### Basic Usage
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-# Reprocess a document with the Balanced method
-source = client.sources.parse(
-    file_name="document.pdf",
-    partition_method="hi_res"
-)
+    # Reprocess a document with the Balanced method
+    source = client.sources.parse(
+        file_name="document.pdf",
+        partition_method="hi_res"
+    )
 
-print(f"Processed: {source.file_name}")
-print(f"Method: {source.partition_method}")
-print(f"Status: {source.status}")
-```
+    print(f"Processed: {source.file_name}")
+    print(f"Method: {source.partition_method}")
+    print(f"Status: {source.status}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Reprocess a document with the Balanced method
+    const source = await client.sources.parse({
+      file_name: 'document.pdf',
+      partition_method: 'hi_res',
+    });
+
+    console.log(`Processed: ${source.file_name}`);
+    console.log(`Method: ${source.partition_method}`);
+    console.log(`Status: ${source.status}`);
+    ```
+  </Tab>
+</Tabs>
 
 ### Using Different Methods
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-# Fast processing for simple documents
-source = client.sources.parse(
-    file_name="simple-text.txt",
-    partition_method="basic"
-)
+    # Fast processing for simple documents
+    source = client.sources.parse(
+        file_name="simple-text.txt",
+        partition_method="basic"
+    )
 
-# Balanced for complex layouts
-source = client.sources.parse(
-    file_name="report.pdf",
-    partition_method="hi_res"
-)
+    # Balanced for complex layouts
+    source = client.sources.parse(
+        file_name="report.pdf",
+        partition_method="hi_res"
+    )
 
-# Accurate for premium quality
-source = client.sources.parse(
-    file_name="legal-contract.pdf",
-    partition_method="hi_res_ft"
-)
+    # Accurate for premium quality
+    source = client.sources.parse(
+        file_name="legal-contract.pdf",
+        partition_method="hi_res_ft"
+    )
 
-# VLM for handwritten documents
-source = client.sources.parse(
-    file_name="handwritten-notes.pdf",
-    partition_method="mai"
-)
+    # VLM for handwritten documents
+    source = client.sources.parse(
+        file_name="handwritten-notes.pdf",
+        partition_method="mai"
+    )
 
-# Agentic for complex diagrams and tables
-source = client.sources.parse(
-    file_name="technical-manual.pdf",
-    partition_method="graphorlm"
-)
-```
+    # Agentic for complex diagrams and tables
+    source = client.sources.parse(
+        file_name="technical-manual.pdf",
+        partition_method="graphorlm"
+    )
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Fast processing for simple documents
+    const basic = await client.sources.parse({
+      file_name: 'simple-text.txt',
+      partition_method: 'basic',
+    });
+
+    // Balanced for complex layouts
+    const hiRes = await client.sources.parse({
+      file_name: 'report.pdf',
+      partition_method: 'hi_res',
+    });
+
+    // Accurate for premium quality
+    const hiResFt = await client.sources.parse({
+      file_name: 'legal-contract.pdf',
+      partition_method: 'hi_res_ft',
+    });
+
+    // VLM for handwritten documents
+    const mai = await client.sources.parse({
+      file_name: 'handwritten-notes.pdf',
+      partition_method: 'mai',
+    });
+
+    // Agentic for complex diagrams and tables
+    const graphorlm = await client.sources.parse({
+      file_name: 'technical-manual.pdf',
+      partition_method: 'graphorlm',
+    });
+    ```
+  </Tab>
+</Tabs>
 
 ### Async Usage
 
-```python
-import asyncio
-from graphor import AsyncGraphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import asyncio
+    from graphor import AsyncGraphor
 
-async def process_document(file_name: str, method: str):
-    client = AsyncGraphor()
-    
-    source = await client.sources.parse(
-        file_name=file_name,
-        partition_method=method
-    )
-    
-    print(f"Processed: {source.file_name}")
-    print(f"Method: {source.partition_method}")
-    
-    return source
+    async def process_document(file_name: str, method: str):
+        client = AsyncGraphor()
+        
+        source = await client.sources.parse(
+            file_name=file_name,
+            partition_method=method
+        )
+        
+        print(f"Processed: {source.file_name}")
+        print(f"Method: {source.partition_method}")
+        
+        return source
 
-# Run the async function
-asyncio.run(process_document("document.pdf", "hi_res"))
-```
+    # Run the async function
+    asyncio.run(process_document("document.pdf", "hi_res"))
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    async function processDocument(fileName: string, method: string) {
+      const source = await client.sources.parse({
+        file_name: fileName,
+        partition_method: method as any,
+      });
+
+      console.log(`Processed: ${source.file_name}`);
+      console.log(`Method: ${source.partition_method}`);
+
+      return source;
+    }
+
+    await processDocument('document.pdf', 'hi_res');
+    ```
+  </Tab>
+</Tabs>
 
 ### With Extended Timeout
 
 Processing complex documents can take several minutes. Configure appropriate timeouts:
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-# Configure default timeout for all requests
-client = Graphor(timeout=300.0)  # 5 minutes
+    # Configure default timeout for all requests
+    client = Graphor(timeout=300.0)  # 5 minutes
 
-source = client.sources.parse(
-    file_name="large-document.pdf",
-    partition_method="graphorlm"
-)
+    source = client.sources.parse(
+        file_name="large-document.pdf",
+        partition_method="graphorlm"
+    )
 
-# Or per-request timeout
-source = client.with_options(timeout=600.0).sources.parse(
-    file_name="very-large-document.pdf",
-    partition_method="hi_res_ft"
-)
-```
+    # Or per-request timeout
+    source = client.with_options(timeout=600.0).sources.parse(
+        file_name="very-large-document.pdf",
+        partition_method="hi_res_ft"
+    )
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    // Configure default timeout for all requests
+    const client = new Graphor({ timeout: 300 * 1000 }); // 5 minutes
+
+    const source = await client.sources.parse({
+      file_name: 'large-document.pdf',
+      partition_method: 'graphorlm',
+    });
+
+    // Or per-request timeout
+    const source2 = await client.sources.parse(
+      { file_name: 'very-large-document.pdf', partition_method: 'hi_res_ft' },
+      { timeout: 600 * 1000 },
+    );
+    ```
+  </Tab>
+</Tabs>
 
 <Warning>
   Processing can take several minutes depending on document size, complexity, and the selected processing method. Advanced methods like Balanced, Accurate, VLM and Agentic typically require more time for analysis.
@@ -250,40 +395,77 @@ source = client.with_options(timeout=600.0).sources.parse(
 
 ### Error Handling
 
-```python
-import graphor
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import graphor
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-try:
-    source = client.sources.parse(
-        file_name="document.pdf",
-        partition_method="hi_res"
-    )
-    print(f"Processing successful: {source.file_name}")
-    
-except graphor.NotFoundError as e:
-    print(f"File not found: {e}")
-    
-except graphor.BadRequestError as e:
-    print(f"Invalid request (check partition_method): {e}")
-    
-except graphor.AuthenticationError as e:
-    print(f"Invalid API key: {e}")
-    
-except graphor.RateLimitError as e:
-    print(f"Rate limit exceeded. Please wait and retry: {e}")
-    
-except graphor.InternalServerError as e:
-    print(f"Processing failed on server: {e}")
-    
-except graphor.APIConnectionError as e:
-    print(f"Connection error: {e}")
-    
-except graphor.APITimeoutError as e:
-    print(f"Request timed out. Try increasing timeout: {e}")
-```
+    try:
+        source = client.sources.parse(
+            file_name="document.pdf",
+            partition_method="hi_res"
+        )
+        print(f"Processing successful: {source.file_name}")
+        
+    except graphor.NotFoundError as e:
+        print(f"File not found: {e}")
+        
+    except graphor.BadRequestError as e:
+        print(f"Invalid request (check partition_method): {e}")
+        
+    except graphor.AuthenticationError as e:
+        print(f"Invalid API key: {e}")
+        
+    except graphor.RateLimitError as e:
+        print(f"Rate limit exceeded. Please wait and retry: {e}")
+        
+    except graphor.InternalServerError as e:
+        print(f"Processing failed on server: {e}")
+        
+    except graphor.APIConnectionError as e:
+        print(f"Connection error: {e}")
+        
+    except graphor.APITimeoutError as e:
+        print(f"Request timed out. Try increasing timeout: {e}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    try {
+      const source = await client.sources.parse({
+        file_name: 'document.pdf',
+        partition_method: 'hi_res',
+      });
+      console.log(`Processing successful: ${source.file_name}`);
+    } catch (err) {
+      if (err instanceof Graphor.NotFoundError) {
+        console.log(`File not found: ${err.message}`);
+      } else if (err instanceof Graphor.BadRequestError) {
+        console.log(`Invalid request (check partition_method): ${err.message}`);
+      } else if (err instanceof Graphor.AuthenticationError) {
+        console.log(`Invalid API key: ${err.message}`);
+      } else if (err instanceof Graphor.RateLimitError) {
+        console.log(`Rate limit exceeded. Please wait and retry: ${err.message}`);
+      } else if (err instanceof Graphor.InternalServerError) {
+        console.log(`Processing failed on server: ${err.message}`);
+      } else if (err instanceof Graphor.APIConnectionError) {
+        console.log(`Connection error: ${err.message}`);
+      } else if (err instanceof Graphor.APIError) {
+        console.log(`API error (status ${err.status}): ${err.message}`);
+      } else {
+        throw err;
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ## Advanced Examples
 
@@ -291,222 +473,463 @@ except graphor.APITimeoutError as e:
 
 Progressively try more advanced processing methods until quality is satisfactory:
 
-```python
-from graphor import Graphor
-import graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+    import graphor
 
-client = Graphor(timeout=300.0)
+    client = Graphor(timeout=300.0)
 
-def improve_processing_quality(file_name: str):
-    """Automatically upgrade processing method for better quality."""
-    methods = ["basic", "hi_res", "hi_res_ft", "mai", "graphorlm"]
-    
-    for method in methods:
-        try:
-            print(f"Trying {method} method...")
-            source = client.sources.parse(
-                file_name=file_name,
-                partition_method=method
-            )
-            
-            # Add your quality assessment logic here
-            if assess_quality(source):
-                print(f"✅ Success with {method} method")
-                return source
-            else:
-                print(f"⚠️ Quality insufficient with {method}, trying next...")
+    def improve_processing_quality(file_name: str):
+        """Automatically upgrade processing method for better quality."""
+        methods = ["basic", "hi_res", "hi_res_ft", "mai", "graphorlm"]
+        
+        for method in methods:
+            try:
+                print(f"Trying {method} method...")
+                source = client.sources.parse(
+                    file_name=file_name,
+                    partition_method=method
+                )
                 
-        except graphor.APIStatusError as e:
-            print(f"❌ Failed with {method}: {e}")
-            continue
-    
-    raise Exception("All processing methods failed or produced insufficient quality")
+                # Add your quality assessment logic here
+                if assess_quality(source):
+                    print(f"Success with {method} method")
+                    return source
+                else:
+                    print(f"Quality insufficient with {method}, trying next...")
+                    
+            except graphor.APIStatusError as e:
+                print(f"Failed with {method}: {e}")
+                continue
+        
+        raise Exception("All processing methods failed or produced insufficient quality")
 
-def assess_quality(source) -> bool:
-    """Add your quality assessment logic here."""
-    # Example: check if processing was successful
-    return source.status == "success"
+    def assess_quality(source) -> bool:
+        """Add your quality assessment logic here."""
+        return source.status == "success"
 
-# Usage
-try:
-    result = improve_processing_quality("complex-document.pdf")
-    print(f"Final result: {result.partition_method}")
-except Exception as e:
-    print(f"Error: {e}")
-```
+    # Usage
+    try:
+        result = improve_processing_quality("complex-document.pdf")
+        print(f"Final result: {result.partition_method}")
+    except Exception as e:
+        print(f"Error: {e}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor({ timeout: 300 * 1000 });
+
+    type PartitionMethod = 'basic' | 'hi_res' | 'hi_res_ft' | 'mai' | 'graphorlm';
+
+    async function improveProcessingQuality(fileName: string) {
+      const methods: PartitionMethod[] = ['basic', 'hi_res', 'hi_res_ft', 'mai', 'graphorlm'];
+
+      for (const method of methods) {
+        try {
+          console.log(`Trying ${method} method...`);
+          const source = await client.sources.parse({
+            file_name: fileName,
+            partition_method: method,
+          });
+
+          // Add your quality assessment logic here
+          if (assessQuality(source)) {
+            console.log(`Success with ${method} method`);
+            return source;
+          } else {
+            console.log(`Quality insufficient with ${method}, trying next...`);
+          }
+        } catch (err) {
+          if (err instanceof Graphor.APIError) {
+            console.log(`Failed with ${method}: ${err.message}`);
+            continue;
+          }
+          throw err;
+        }
+      }
+
+      throw new Error('All processing methods failed or produced insufficient quality');
+    }
+
+    function assessQuality(source: { status: string }) {
+      return source.status === 'success';
+    }
+
+    // Usage
+    try {
+      const result = await improveProcessingQuality('complex-document.pdf');
+      console.log(`Final result: ${result.partition_method}`);
+    } catch (err) {
+      console.log(`Error: ${err}`);
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ### Batch Reprocessing
 
 Reprocess multiple files with the same method:
 
-```python
-from graphor import Graphor
-import graphor
-import time
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+    import graphor
+    import time
 
-client = Graphor(timeout=300.0)
+    client = Graphor(timeout=300.0)
 
-def batch_reprocess(file_names: list[str], method: str):
-    """Reprocess multiple files with the same method."""
-    results = []
-    failed = []
-    
-    for file_name in file_names:
-        try:
-            print(f"Processing {file_name} with {method}...")
-            source = client.sources.parse(
-                file_name=file_name,
-                partition_method=method
-            )
-            results.append(source)
-            print(f"✅ {file_name} processed successfully")
-            
-            # Small delay between requests
-            time.sleep(1.0)
-            
-        except graphor.APIStatusError as e:
-            print(f"❌ Failed to process {file_name}: {e}")
-            failed.append({"file_name": file_name, "error": str(e)})
-    
-    print(f"\nSummary: {len(results)} successful, {len(failed)} failed")
-    return results, failed
+    def batch_reprocess(file_names: list[str], method: str):
+        """Reprocess multiple files with the same method."""
+        results = []
+        failed = []
+        
+        for file_name in file_names:
+            try:
+                print(f"Processing {file_name} with {method}...")
+                source = client.sources.parse(
+                    file_name=file_name,
+                    partition_method=method
+                )
+                results.append(source)
+                print(f"OK - {file_name} processed successfully")
+                
+                # Small delay between requests
+                time.sleep(1.0)
+                
+            except graphor.APIStatusError as e:
+                print(f"FAIL - {file_name}: {e}")
+                failed.append({"file_name": file_name, "error": str(e)})
+        
+        print(f"\nSummary: {len(results)} successful, {len(failed)} failed")
+        return results, failed
 
-# Usage
-files = ["doc1.pdf", "doc2.pdf", "doc3.pdf"]
-successful, failed = batch_reprocess(files, "hi_res")
-```
+    # Usage
+    files = ["doc1.pdf", "doc2.pdf", "doc3.pdf"]
+    successful, failed = batch_reprocess(files, "hi_res")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor({ timeout: 300 * 1000 });
+
+    async function batchReprocess(fileNames: string[], method: string) {
+      const results: Awaited<ReturnType<typeof client.sources.parse>>[] = [];
+      const failed: { fileName: string; error: string }[] = [];
+
+      for (const fileName of fileNames) {
+        try {
+          console.log(`Processing ${fileName} with ${method}...`);
+          const source = await client.sources.parse({
+            file_name: fileName,
+            partition_method: method as any,
+          });
+          results.push(source);
+          console.log(`OK - ${fileName} processed successfully`);
+
+          // Small delay between requests
+          await new Promise((r) => setTimeout(r, 1000));
+        } catch (err) {
+          const message = err instanceof Graphor.APIError ? err.message : String(err);
+          console.log(`FAIL - ${fileName}: ${message}`);
+          failed.push({ fileName, error: message });
+        }
+      }
+
+      console.log(`\nSummary: ${results.length} successful, ${failed.length} failed`);
+      return { results, failed };
+    }
+
+    // Usage
+    const { results, failed } = await batchReprocess(['doc1.pdf', 'doc2.pdf', 'doc3.pdf'], 'hi_res');
+    ```
+  </Tab>
+</Tabs>
 
 ### Async Batch Processing
 
 Process multiple files concurrently for better performance:
 
-```python
-import asyncio
-from graphor import AsyncGraphor
-import graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import asyncio
+    from graphor import AsyncGraphor
+    import graphor
 
-async def process_single(client: AsyncGraphor, file_name: str, method: str):
-    """Process a single file."""
-    try:
-        source = await client.sources.parse(
-            file_name=file_name,
-            partition_method=method
-        )
-        return {"file_name": file_name, "status": "success", "source": source}
-    except graphor.APIStatusError as e:
-        return {"file_name": file_name, "status": "failed", "error": str(e)}
-
-async def batch_reprocess_async(file_names: list[str], method: str, max_concurrent: int = 3):
-    """Reprocess multiple files with controlled concurrency."""
-    client = AsyncGraphor(timeout=300.0)
-    
-    # Use semaphore to limit concurrent requests
-    semaphore = asyncio.Semaphore(max_concurrent)
-    
-    async def process_with_semaphore(file_name: str):
-        async with semaphore:
-            print(f"Processing {file_name}...")
-            result = await process_single(client, file_name, method)
-            status_icon = "✅" if result["status"] == "success" else "❌"
-            print(f"{status_icon} {file_name}: {result['status']}")
-            return result
-    
-    tasks = [process_with_semaphore(f) for f in file_names]
-    results = await asyncio.gather(*tasks)
-    
-    successful = [r for r in results if r["status"] == "success"]
-    failed = [r for r in results if r["status"] == "failed"]
-    
-    print(f"\nSummary: {len(successful)} successful, {len(failed)} failed")
-    return results
-
-# Usage
-files = ["doc1.pdf", "doc2.pdf", "doc3.pdf", "doc4.pdf", "doc5.pdf"]
-results = asyncio.run(batch_reprocess_async(files, "hi_res", max_concurrent=3))
-```
-
-### Processing with Progress Tracking
-
-```python
-from graphor import Graphor
-import graphor
-import time
-from typing import TypedDict
-
-class ProcessingTask(TypedDict):
-    file_name: str
-    method: str
-
-client = Graphor(timeout=300.0)
-
-def process_with_progress(tasks: list[ProcessingTask]):
-    """Process multiple files with progress tracking."""
-    total = len(tasks)
-    completed = 0
-    results = []
-    
-    print(f"Starting batch processing of {total} files...\n")
-    
-    for task in tasks:
-        file_name = task["file_name"]
-        method = task["method"]
-        
+    async def process_single(client: AsyncGraphor, file_name: str, method: str):
+        """Process a single file."""
         try:
-            print(f"[{completed + 1}/{total}] Processing {file_name} with {method}...")
-            start_time = time.time()
-            
-            source = client.sources.parse(
+            source = await client.sources.parse(
                 file_name=file_name,
                 partition_method=method
             )
-            
-            duration = time.time() - start_time
-            completed += 1
-            
-            results.append({
-                "file_name": file_name,
-                "method": method,
-                "status": "success",
-                "duration": duration,
-                "source": source
-            })
-            
-            print(f"✅ Completed {file_name} in {duration:.1f}s")
-            
+            return {"file_name": file_name, "status": "success", "source": source}
         except graphor.APIStatusError as e:
-            completed += 1
-            results.append({
-                "file_name": file_name,
-                "method": method,
-                "status": "failed",
-                "error": str(e)
-            })
-            print(f"❌ Failed {file_name}: {e}")
+            return {"file_name": file_name, "status": "failed", "error": str(e)}
+
+    async def batch_reprocess_async(file_names: list[str], method: str, max_concurrent: int = 3):
+        """Reprocess multiple files with controlled concurrency."""
+        client = AsyncGraphor(timeout=300.0)
         
-        # Progress update
-        progress = (completed / total) * 100
-        print(f"Progress: {progress:.1f}% ({completed}/{total})\n")
+        # Use semaphore to limit concurrent requests
+        semaphore = asyncio.Semaphore(max_concurrent)
         
-        # Small delay between requests
-        time.sleep(0.5)
-    
-    return results
+        async def process_with_semaphore(file_name: str):
+            async with semaphore:
+                print(f"Processing {file_name}...")
+                result = await process_single(client, file_name, method)
+                status = "OK" if result["status"] == "success" else "FAIL"
+                print(f"{status} {file_name}: {result['status']}")
+                return result
+        
+        tasks = [process_with_semaphore(f) for f in file_names]
+        results = await asyncio.gather(*tasks)
+        
+        successful = [r for r in results if r["status"] == "success"]
+        failed = [r for r in results if r["status"] == "failed"]
+        
+        print(f"\nSummary: {len(successful)} successful, {len(failed)} failed")
+        return results
 
-# Usage
-processing_queue = [
-    {"file_name": "document1.pdf", "method": "hi_res"},
-    {"file_name": "document2.pdf", "method": "hi_res_ft"},
-    {"file_name": "document3.pdf", "method": "mai"}
-]
+    # Usage
+    files = ["doc1.pdf", "doc2.pdf", "doc3.pdf", "doc4.pdf", "doc5.pdf"]
+    results = asyncio.run(batch_reprocess_async(files, "hi_res", max_concurrent=3))
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
 
-results = process_with_progress(processing_queue)
+    const client = new Graphor({ timeout: 300 * 1000 });
 
-# Print final summary
-successful = [r for r in results if r["status"] == "success"]
-failed = [r for r in results if r["status"] == "failed"]
-print(f"\n{'='*50}")
-print(f"Final Summary: {len(successful)} successful, {len(failed)} failed")
-```
+    async function processSingle(fileName: string, method: string) {
+      try {
+        const source = await client.sources.parse({
+          file_name: fileName,
+          partition_method: method as any,
+        });
+        return { fileName, status: 'success' as const, source };
+      } catch (err) {
+        const message = err instanceof Graphor.APIError ? err.message : String(err);
+        return { fileName, status: 'failed' as const, error: message };
+      }
+    }
+
+    async function batchReprocessAsync(fileNames: string[], method: string, maxConcurrent = 3) {
+      const results: Awaited<ReturnType<typeof processSingle>>[] = [];
+
+      for (let i = 0; i < fileNames.length; i += maxConcurrent) {
+        const batch = fileNames.slice(i, i + maxConcurrent);
+        console.log(`Processing batch ${Math.floor(i / maxConcurrent) + 1}...`);
+
+        const batchResults = await Promise.all(
+          batch.map(async (fileName) => {
+            console.log(`Processing ${fileName}...`);
+            const result = await processSingle(fileName, method);
+            const status = result.status === 'success' ? 'OK' : 'FAIL';
+            console.log(`${status} ${fileName}: ${result.status}`);
+            return result;
+          }),
+        );
+
+        results.push(...batchResults);
+      }
+
+      const successful = results.filter((r) => r.status === 'success');
+      const failed = results.filter((r) => r.status === 'failed');
+
+      console.log(`\nSummary: ${successful.length} successful, ${failed.length} failed`);
+      return results;
+    }
+
+    // Usage
+    const results = await batchReprocessAsync(
+      ['doc1.pdf', 'doc2.pdf', 'doc3.pdf', 'doc4.pdf', 'doc5.pdf'],
+      'hi_res',
+      3,
+    );
+    ```
+  </Tab>
+</Tabs>
+
+### Processing with Progress Tracking
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+    import graphor
+    import time
+    from typing import TypedDict
+
+    class ProcessingTask(TypedDict):
+        file_name: str
+        method: str
+
+    client = Graphor(timeout=300.0)
+
+    def process_with_progress(tasks: list[ProcessingTask]):
+        """Process multiple files with progress tracking."""
+        total = len(tasks)
+        completed = 0
+        results = []
+        
+        print(f"Starting batch processing of {total} files...\n")
+        
+        for task in tasks:
+            file_name = task["file_name"]
+            method = task["method"]
+            
+            try:
+                print(f"[{completed + 1}/{total}] Processing {file_name} with {method}...")
+                start_time = time.time()
+                
+                source = client.sources.parse(
+                    file_name=file_name,
+                    partition_method=method
+                )
+                
+                duration = time.time() - start_time
+                completed += 1
+                
+                results.append({
+                    "file_name": file_name,
+                    "method": method,
+                    "status": "success",
+                    "duration": duration,
+                    "source": source
+                })
+                
+                print(f"OK - Completed {file_name} in {duration:.1f}s")
+                
+            except graphor.APIStatusError as e:
+                completed += 1
+                results.append({
+                    "file_name": file_name,
+                    "method": method,
+                    "status": "failed",
+                    "error": str(e)
+                })
+                print(f"FAIL - {file_name}: {e}")
+            
+            # Progress update
+            progress = (completed / total) * 100
+            print(f"Progress: {progress:.1f}% ({completed}/{total})\n")
+            
+            # Small delay between requests
+            time.sleep(0.5)
+        
+        return results
+
+    # Usage
+    processing_queue = [
+        {"file_name": "document1.pdf", "method": "hi_res"},
+        {"file_name": "document2.pdf", "method": "hi_res_ft"},
+        {"file_name": "document3.pdf", "method": "mai"}
+    ]
+
+    results = process_with_progress(processing_queue)
+
+    # Print final summary
+    successful = [r for r in results if r["status"] == "success"]
+    failed = [r for r in results if r["status"] == "failed"]
+    print(f"\n{'='*50}")
+    print(f"Final Summary: {len(successful)} successful, {len(failed)} failed")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor({ timeout: 300 * 1000 });
+
+    interface ProcessingTask {
+      fileName: string;
+      method: string;
+    }
+
+    async function processWithProgress(tasks: ProcessingTask[]) {
+      const total = tasks.length;
+      let completed = 0;
+      const results: {
+        fileName: string;
+        method: string;
+        status: string;
+        duration?: number;
+        error?: string;
+      }[] = [];
+
+      console.log(`Starting batch processing of ${total} files...\n`);
+
+      for (const task of tasks) {
+        try {
+          console.log(`[${completed + 1}/${total}] Processing ${task.fileName} with ${task.method}...`);
+          const startTime = Date.now();
+
+          const source = await client.sources.parse({
+            file_name: task.fileName,
+            partition_method: task.method as any,
+          });
+
+          const duration = (Date.now() - startTime) / 1000;
+          completed++;
+
+          results.push({
+            fileName: task.fileName,
+            method: task.method,
+            status: 'success',
+            duration,
+          });
+
+          console.log(`OK - Completed ${task.fileName} in ${duration.toFixed(1)}s`);
+        } catch (err) {
+          completed++;
+          const message = err instanceof Graphor.APIError ? err.message : String(err);
+          results.push({
+            fileName: task.fileName,
+            method: task.method,
+            status: 'failed',
+            error: message,
+          });
+          console.log(`FAIL - ${task.fileName}: ${message}`);
+        }
+
+        // Progress update
+        const progress = ((completed / total) * 100).toFixed(1);
+        console.log(`Progress: ${progress}% (${completed}/${total})\n`);
+
+        // Small delay between requests
+        await new Promise((r) => setTimeout(r, 500));
+      }
+
+      return results;
+    }
+
+    // Usage
+    const processingQueue: ProcessingTask[] = [
+      { fileName: 'document1.pdf', method: 'hi_res' },
+      { fileName: 'document2.pdf', method: 'hi_res_ft' },
+      { fileName: 'document3.pdf', method: 'mai' },
+    ];
+
+    const results = await processWithProgress(processingQueue);
+
+    // Print final summary
+    const successful = results.filter((r) => r.status === 'success');
+    const failed = results.filter((r) => r.status === 'failed');
+    console.log(`\n${'='.repeat(50)}`);
+    console.log(`Final Summary: ${successful.length} successful, ${failed.length} failed`);
+    ```
+  </Tab>
+</Tabs>
 
 ## When to Reprocess
 
@@ -594,10 +1017,19 @@ After processing, evaluate the results by:
     - Increase request timeout (5+ minutes recommended)
     - Try a simpler processing method first
     - Process during off-peak hours
-    
+
+<Tabs>
+  <Tab title="Python">
     ```python
     client = Graphor(timeout=600.0)  # 10 minutes
     ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    const client = new Graphor({ timeout: 600 * 1000 }); // 10 minutes
+    ```
+  </Tab>
+</Tabs>
   </Accordion>
   
   <Accordion icon="file-xmark" title="File not found errors">
@@ -607,13 +1039,26 @@ After processing, evaluate the results by:
     - Verify exact file name (case-sensitive)
     - Use `client.sources.list()` to check available files
     - Ensure you're using the correct API key for the project
-    
+
+<Tabs>
+  <Tab title="Python">
     ```python
     # List all sources to find the correct file name
     sources = client.sources.list()
     for source in sources:
         print(source.file_name)
     ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    // List all sources to find the correct file name
+    const sources = await client.sources.list();
+    for (const source of sources) {
+      console.log(source.file_name);
+    }
+    ```
+  </Tab>
+</Tabs>
   </Accordion>
   
   <Accordion icon="exclamation-triangle" title="Processing failures">

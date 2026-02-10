@@ -1,44 +1,87 @@
 ---
 title: 'List Source Elements'
-description: 'Retrieve document elements and partitions from your sources using the Graphor Python SDK'
+description: 'Retrieve document elements and partitions from your sources using the Graphor SDK'
 ---
 
-The `load_elements` method allows you to retrieve detailed information about document elements (partitions) from processed sources in your Graphor project. This method provides access to individual text blocks, images, tables, and other document components with their metadata, positioning, and content, enabling you to analyze document structure and extract specific information programmatically.
+The `load_elements` / `loadElements` method allows you to retrieve detailed information about document elements (partitions) from processed sources in your Graphor project. This method provides access to individual text blocks, images, tables, and other document components with their metadata, positioning, and content, enabling you to analyze document structure and extract specific information programmatically.
 
 ## Method Overview
 
-<CardGroup cols={2}>
-  <Card title="Sync Method" icon="code">
-    **`client.sources.load_elements()`**
-  </Card>
-  <Card title="Async Method" icon="code">
-    **`await client.sources.load_elements()`**
-  </Card>
-</CardGroup>
+<Tabs>
+  <Tab title="Python">
+    <CardGroup cols={2}>
+      <Card title="Sync Method" icon="code">
+        **`client.sources.load_elements()`**
+      </Card>
+      <Card title="Async Method" icon="code">
+        **`await client.sources.load_elements()`**
+      </Card>
+    </CardGroup>
+  </Tab>
+  <Tab title="TypeScript">
+    <CardGroup cols={2}>
+      <Card title="Async Method" icon="code">
+        **`await client.sources.loadElements()`**
+      </Card>
+    </CardGroup>
+  </Tab>
+</Tabs>
 
 ## Method Signature
 
-```python
-client.sources.load_elements(
-    file_id: str | None = None,        # Preferred
-    file_name: str | None = None,      # Deprecated
-    page: int | None = None,
-    page_size: int | None = None,
-    filter: Filter | None = None,
-    timeout: float | None = None
-) -> SourceLoadElementsResponse
-```
+<Tabs>
+  <Tab title="Python">
+    ```python
+    client.sources.load_elements(
+        file_id: str | None = None,        # Preferred
+        file_name: str | None = None,      # Deprecated
+        page: int | None = None,
+        page_size: int | None = None,
+        filter: Filter | None = None,
+        timeout: float | None = None
+    ) -> SourceLoadElementsResponse
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    await client.sources.loadElements({
+      file_id?: string | null,        // Preferred
+      file_name?: string | null,      // Deprecated
+      page?: number | null,
+      page_size?: number | null,
+      filter?: {
+        type?: string | null,
+        page_numbers?: number[] | null,
+        elementsToRemove?: string[] | null,
+      },
+    }): Promise<SourceLoadElementsResponse>
+    ```
+  </Tab>
+</Tabs>
 
 ## Parameters
 
-| Parameter | Type | Description | Required |
-|-----------|------|-------------|----------|
-| `file_id` | `str` | Unique identifier for the source (preferred) | No* |
-| `file_name` | `str` | Name of the source file to retrieve elements from (deprecated, use `file_id`) | No* |
-| `page` | `int` | Page number for pagination (starts from 1) | No |
-| `page_size` | `int` | Number of elements to return per page | No |
-| `filter` | `Filter` | Filter criteria to refine element selection | No |
-| `timeout` | `float` | Request timeout in seconds | No |
+<Tabs>
+  <Tab title="Python">
+    | Parameter | Type | Description | Required |
+    |-----------|------|-------------|----------|
+    | `file_id` | `str` | Unique identifier for the source (preferred) | No* |
+    | `file_name` | `str` | Name of the source file to retrieve elements from (deprecated, use `file_id`) | No* |
+    | `page` | `int` | Page number for pagination (starts from 1) | No |
+    | `page_size` | `int` | Number of elements to return per page | No |
+    | `filter` | `Filter` | Filter criteria to refine element selection | No |
+    | `timeout` | `float` | Request timeout in seconds | No |
+  </Tab>
+  <Tab title="TypeScript">
+    | Parameter | Type | Description | Required |
+    |-----------|------|-------------|----------|
+    | `file_id` | `string \| null` | Unique identifier for the source (preferred) | No* |
+    | `file_name` | `string \| null` | Name of the source file to retrieve elements from (deprecated, use `file_id`) | No* |
+    | `page` | `number \| null` | Page number for pagination (starts from 1) | No |
+    | `page_size` | `number \| null` | Number of elements to return per page | No |
+    | `filter` | `object` | Filter criteria to refine element selection | No |
+  </Tab>
+</Tabs>
 
 <Note>
 *At least one of `file_id` or `file_name` must be provided. `file_id` is preferred.
@@ -46,13 +89,24 @@ client.sources.load_elements(
 
 ### Filter Parameters
 
-The `filter` parameter accepts a `TypedDict` with the following optional fields:
+The `filter` parameter accepts the following optional fields:
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `type` | `str` | Filter by specific element type (e.g., `"Title"`, `"NarrativeText"`, `"Table"`) |
-| `page_numbers` | `list[int]` | Filter elements from specific page numbers |
-| `elements_to_remove` | `list[str]` | Exclude specific element types from results |
+<Tabs>
+  <Tab title="Python">
+    | Parameter | Type | Description |
+    |-----------|------|-------------|
+    | `type` | `str` | Filter by specific element type (e.g., `"Title"`, `"NarrativeText"`, `"Table"`) |
+    | `page_numbers` | `list[int]` | Filter elements from specific page numbers |
+    | `elements_to_remove` | `list[str]` | Exclude specific element types from results |
+  </Tab>
+  <Tab title="TypeScript">
+    | Parameter | Type | Description |
+    |-----------|------|-------------|
+    | `type` | `string \| null` | Filter by specific element type (e.g., `"Title"`, `"NarrativeText"`, `"Table"`) |
+    | `page_numbers` | `number[] \| null` | Filter elements from specific page numbers |
+    | `elementsToRemove` | `string[] \| null` | Exclude specific element types from results |
+  </Tab>
+</Tabs>
 
 ## Response Object
 
@@ -124,196 +178,421 @@ The `metadata` dictionary contains detailed information:
 
 ### Basic Usage
 
-```python
-from graphor import Graphor
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
 
-client = Graphor()
+    client = Graphor()
 
-# Get elements from a document
-response = client.sources.load_elements(
-    file_name="document.pdf",
-    page=1,
-    page_size=20
-)
-
-print(f"Found {response.total} elements (page {response.page}/{response.total_pages})")
-
-for item in response.items:
-    element_type = item.metadata.get("element_type") if item.metadata else "Unknown"
-    print(f"{element_type}: {item.page_content[:50]}...")
-```
-
-### Filter by Element Type
-
-```python
-from graphor import Graphor
-
-client = Graphor()
-
-# Get only titles
-response = client.sources.load_elements(
-    file_name="document.pdf",
-    page_size=50,
-    filter={"type": "Title"}
-)
-
-print(f"Found {response.total} titles")
-
-for item in response.items:
-    page_num = item.metadata.get("page_number") if item.metadata else "?"
-    print(f"Page {page_num}: {item.page_content}")
-```
-
-### Filter by Page Numbers
-
-```python
-from graphor import Graphor
-
-client = Graphor()
-
-# Get elements from specific pages
-response = client.sources.load_elements(
-    file_name="document.pdf",
-    page_size=100,
-    filter={"page_numbers": [1, 2, 3]}
-)
-
-print(f"Found {response.total} elements on pages 1-3")
-
-for item in response.items:
-    print(f"Page {item.metadata['page_number']}: {item.page_content[:80]}...")
-```
-
-### Exclude Element Types
-
-```python
-from graphor import Graphor
-
-client = Graphor()
-
-# Get all elements except footers and page numbers
-response = client.sources.load_elements(
-    file_name="document.pdf",
-    page_size=50,
-    filter={"elements_to_remove": ["Footer", "PageNumber"]}
-)
-
-print(f"Found {response.total} content elements (excluding footers/page numbers)")
-```
-
-### Combine Filters
-
-```python
-from graphor import Graphor
-
-client = Graphor()
-
-# Get tables from pages 2-5, excluding certain elements
-response = client.sources.load_elements(
-    file_name="document.pdf",
-    page_size=50,
-    filter={
-        "type": "Table",
-        "page_numbers": [2, 3, 4, 5]
-    }
-)
-
-print(f"Found {response.total} tables on pages 2-5")
-
-for item in response.items:
-    print(f"Table on page {item.metadata['page_number']}:")
-    print(f"  {item.page_content[:100]}...")
-```
-
-### Async Usage
-
-```python
-import asyncio
-from graphor import AsyncGraphor
-
-async def get_document_elements(file_name: str):
-    client = AsyncGraphor()
-    
-    response = await client.sources.load_elements(
-        file_name=file_name,
-        page=1,
-        page_size=50
-    )
-    
-    print(f"Found {response.total} elements")
-    
-    for item in response.items:
-        print(f"{item.metadata['element_type']}: {item.page_content[:50]}...")
-    
-    return response
-
-asyncio.run(get_document_elements("document.pdf"))
-```
-
-### Paginate Through All Elements
-
-```python
-from graphor import Graphor
-
-client = Graphor()
-
-def get_all_elements(file_name: str, page_size: int = 50):
-    """Retrieve all elements from a document."""
-    all_elements = []
-    page = 1
-    
-    while True:
-        response = client.sources.load_elements(
-            file_name=file_name,
-            page=page,
-            page_size=page_size
-        )
-        
-        all_elements.extend(response.items)
-        print(f"Retrieved page {page}/{response.total_pages} ({len(all_elements)}/{response.total} elements)")
-        
-        if page >= response.total_pages:
-            break
-        page += 1
-    
-    return all_elements
-
-# Usage
-elements = get_all_elements("document.pdf")
-print(f"Total elements retrieved: {len(elements)}")
-```
-
-### Error Handling
-
-```python
-import graphor
-from graphor import Graphor
-
-client = Graphor()
-
-try:
+    # Get elements from a document
     response = client.sources.load_elements(
         file_name="document.pdf",
         page=1,
         page_size=20
     )
-    print(f"Found {response.total} elements")
-    
-except graphor.NotFoundError as e:
-    print(f"File not found: {e}")
-    
-except graphor.BadRequestError as e:
-    print(f"Invalid request parameters: {e}")
-    
-except graphor.AuthenticationError as e:
-    print(f"Invalid API key: {e}")
-    
-except graphor.APIConnectionError as e:
-    print(f"Connection error: {e}")
-    
-except graphor.APIStatusError as e:
-    print(f"API error (status {e.status_code}): {e}")
-```
+
+    print(f"Found {response.total} elements (page {response.page}/{response.total_pages})")
+
+    for item in response.items:
+        element_type = item.metadata.get("element_type") if item.metadata else "Unknown"
+        print(f"{element_type}: {item.page_content[:50]}...")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Get elements from a document
+    const response = await client.sources.loadElements({
+      file_name: 'document.pdf',
+      page: 1,
+      page_size: 20,
+    });
+
+    console.log(`Found ${response.total} elements (page ${response.page}/${response.total_pages})`);
+
+    for (const item of response.items) {
+      const elementType = item.metadata?.element_type ?? 'Unknown';
+      console.log(`${elementType}: ${item.page_content.slice(0, 50)}...`);
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Filter by Element Type
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+
+    client = Graphor()
+
+    # Get only titles
+    response = client.sources.load_elements(
+        file_name="document.pdf",
+        page_size=50,
+        filter={"type": "Title"}
+    )
+
+    print(f"Found {response.total} titles")
+
+    for item in response.items:
+        page_num = item.metadata.get("page_number") if item.metadata else "?"
+        print(f"Page {page_num}: {item.page_content}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Get only titles
+    const response = await client.sources.loadElements({
+      file_name: 'document.pdf',
+      page_size: 50,
+      filter: { type: 'Title' },
+    });
+
+    console.log(`Found ${response.total} titles`);
+
+    for (const item of response.items) {
+      const pageNum = item.metadata?.page_number ?? '?';
+      console.log(`Page ${pageNum}: ${item.page_content}`);
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Filter by Page Numbers
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+
+    client = Graphor()
+
+    # Get elements from specific pages
+    response = client.sources.load_elements(
+        file_name="document.pdf",
+        page_size=100,
+        filter={"page_numbers": [1, 2, 3]}
+    )
+
+    print(f"Found {response.total} elements on pages 1-3")
+
+    for item in response.items:
+        print(f"Page {item.metadata['page_number']}: {item.page_content[:80]}...")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Get elements from specific pages
+    const response = await client.sources.loadElements({
+      file_name: 'document.pdf',
+      page_size: 100,
+      filter: { page_numbers: [1, 2, 3] },
+    });
+
+    console.log(`Found ${response.total} elements on pages 1-3`);
+
+    for (const item of response.items) {
+      console.log(`Page ${item.metadata?.page_number}: ${item.page_content.slice(0, 80)}...`);
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Exclude Element Types
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+
+    client = Graphor()
+
+    # Get all elements except footers and page numbers
+    response = client.sources.load_elements(
+        file_name="document.pdf",
+        page_size=50,
+        filter={"elements_to_remove": ["Footer", "PageNumber"]}
+    )
+
+    print(f"Found {response.total} content elements (excluding footers/page numbers)")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Get all elements except footers and page numbers
+    const response = await client.sources.loadElements({
+      file_name: 'document.pdf',
+      page_size: 50,
+      filter: { elementsToRemove: ['Footer', 'PageNumber'] },
+    });
+
+    console.log(`Found ${response.total} content elements (excluding footers/page numbers)`);
+    ```
+  </Tab>
+</Tabs>
+
+### Combine Filters
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+
+    client = Graphor()
+
+    # Get tables from pages 2-5
+    response = client.sources.load_elements(
+        file_name="document.pdf",
+        page_size=50,
+        filter={
+            "type": "Table",
+            "page_numbers": [2, 3, 4, 5]
+        }
+    )
+
+    print(f"Found {response.total} tables on pages 2-5")
+
+    for item in response.items:
+        print(f"Table on page {item.metadata['page_number']}:")
+        print(f"  {item.page_content[:100]}...")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Get tables from pages 2-5
+    const response = await client.sources.loadElements({
+      file_name: 'document.pdf',
+      page_size: 50,
+      filter: {
+        type: 'Table',
+        page_numbers: [2, 3, 4, 5],
+      },
+    });
+
+    console.log(`Found ${response.total} tables on pages 2-5`);
+
+    for (const item of response.items) {
+      console.log(`Table on page ${item.metadata?.page_number}:`);
+      console.log(`  ${item.page_content.slice(0, 100)}...`);
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Async Usage
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import asyncio
+    from graphor import AsyncGraphor
+
+    async def get_document_elements(file_name: str):
+        client = AsyncGraphor()
+        
+        response = await client.sources.load_elements(
+            file_name=file_name,
+            page=1,
+            page_size=50
+        )
+        
+        print(f"Found {response.total} elements")
+        
+        for item in response.items:
+            print(f"{item.metadata['element_type']}: {item.page_content[:50]}...")
+        
+        return response
+
+    asyncio.run(get_document_elements("document.pdf"))
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    async function getDocumentElements(fileName: string) {
+      const response = await client.sources.loadElements({
+        file_name: fileName,
+        page: 1,
+        page_size: 50,
+      });
+
+      console.log(`Found ${response.total} elements`);
+
+      for (const item of response.items) {
+        console.log(`${item.metadata?.element_type}: ${item.page_content.slice(0, 50)}...`);
+      }
+
+      return response;
+    }
+
+    await getDocumentElements('document.pdf');
+    ```
+  </Tab>
+</Tabs>
+
+### Paginate Through All Elements
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+
+    client = Graphor()
+
+    def get_all_elements(file_name: str, page_size: int = 50):
+        """Retrieve all elements from a document."""
+        all_elements = []
+        page = 1
+        
+        while True:
+            response = client.sources.load_elements(
+                file_name=file_name,
+                page=page,
+                page_size=page_size
+            )
+            
+            all_elements.extend(response.items)
+            print(f"Retrieved page {page}/{response.total_pages} ({len(all_elements)}/{response.total} elements)")
+            
+            if page >= response.total_pages:
+                break
+            page += 1
+        
+        return all_elements
+
+    # Usage
+    elements = get_all_elements("document.pdf")
+    print(f"Total elements retrieved: {len(elements)}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    async function getAllElements(fileName: string, pageSize = 50) {
+      const allElements: Awaited<
+        ReturnType<typeof client.sources.loadElements>
+      >['items'] = [];
+      let page = 1;
+
+      while (true) {
+        const response = await client.sources.loadElements({
+          file_name: fileName,
+          page,
+          page_size: pageSize,
+        });
+
+        allElements.push(...response.items);
+        console.log(
+          `Retrieved page ${page}/${response.total_pages} (${allElements.length}/${response.total} elements)`,
+        );
+
+        if (page >= (response.total_pages ?? 1)) break;
+        page++;
+      }
+
+      return allElements;
+    }
+
+    // Usage
+    const elements = await getAllElements('document.pdf');
+    console.log(`Total elements retrieved: ${elements.length}`);
+    ```
+  </Tab>
+</Tabs>
+
+### Error Handling
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import graphor
+    from graphor import Graphor
+
+    client = Graphor()
+
+    try:
+        response = client.sources.load_elements(
+            file_name="document.pdf",
+            page=1,
+            page_size=20
+        )
+        print(f"Found {response.total} elements")
+        
+    except graphor.NotFoundError as e:
+        print(f"File not found: {e}")
+        
+    except graphor.BadRequestError as e:
+        print(f"Invalid request parameters: {e}")
+        
+    except graphor.AuthenticationError as e:
+        print(f"Invalid API key: {e}")
+        
+    except graphor.APIConnectionError as e:
+        print(f"Connection error: {e}")
+        
+    except graphor.APIStatusError as e:
+        print(f"API error (status {e.status_code}): {e}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    try {
+      const response = await client.sources.loadElements({
+        file_name: 'document.pdf',
+        page: 1,
+        page_size: 20,
+      });
+      console.log(`Found ${response.total} elements`);
+    } catch (err) {
+      if (err instanceof Graphor.NotFoundError) {
+        console.log(`File not found: ${err.message}`);
+      } else if (err instanceof Graphor.BadRequestError) {
+        console.log(`Invalid request parameters: ${err.message}`);
+      } else if (err instanceof Graphor.AuthenticationError) {
+        console.log(`Invalid API key: ${err.message}`);
+      } else if (err instanceof Graphor.APIConnectionError) {
+        console.log(`Connection error: ${err.message}`);
+      } else if (err instanceof Graphor.APIError) {
+        console.log(`API error (status ${err.status}): ${err.message}`);
+      } else {
+        throw err;
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ## Advanced Examples
 
@@ -321,238 +600,22 @@ except graphor.APIStatusError as e:
 
 Analyze the structure of a document:
 
-```python
-from graphor import Graphor
-from collections import defaultdict
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+    from collections import defaultdict
 
-client = Graphor()
+    client = Graphor()
 
-def analyze_document_structure(file_name: str):
-    """Analyze document structure and element distribution."""
-    all_elements = []
-    page = 1
-    
-    # Fetch all elements
-    while True:
-        response = client.sources.load_elements(
-            file_name=file_name,
-            page=page,
-            page_size=100
-        )
-        all_elements.extend(response.items)
+    def analyze_document_structure(file_name: str):
+        """Analyze document structure and element distribution."""
+        all_elements = []
+        page = 1
         
-        if page >= response.total_pages:
-            break
-        page += 1
-    
-    # Analyze structure
-    type_counts = defaultdict(int)
-    page_distribution = defaultdict(int)
-    total_chars = 0
-    languages = set()
-    
-    for item in all_elements:
-        metadata = item.metadata or {}
-        
-        element_type = metadata.get("element_type", "Unknown")
-        type_counts[element_type] += 1
-        
-        page_num = metadata.get("page_number", 0)
-        page_distribution[page_num] += 1
-        
-        total_chars += len(item.page_content)
-        
-        for lang in metadata.get("languages", []):
-            languages.add(lang)
-    
-    return {
-        "total_elements": len(all_elements),
-        "element_types": dict(type_counts),
-        "pages": len(page_distribution),
-        "elements_per_page": dict(page_distribution),
-        "total_characters": total_chars,
-        "average_element_length": total_chars / len(all_elements) if all_elements else 0,
-        "detected_languages": list(languages)
-    }
-
-# Usage
-analysis = analyze_document_structure("research_paper.pdf")
-print(f"Document Analysis:")
-print(f"  Total elements: {analysis['total_elements']}")
-print(f"  Pages: {analysis['pages']}")
-print(f"  Element types: {analysis['element_types']}")
-print(f"  Languages: {analysis['detected_languages']}")
-```
-
-### Extract Tables
-
-Extract all tables from a document:
-
-```python
-from graphor import Graphor
-
-client = Graphor()
-
-def extract_tables(file_name: str):
-    """Extract all tables from a document."""
-    tables = []
-    page = 1
-    
-    while True:
-        response = client.sources.load_elements(
-            file_name=file_name,
-            page=page,
-            page_size=50,
-            filter={"type": "Table"}
-        )
-        
-        for item in response.items:
-            metadata = item.metadata or {}
-            tables.append({
-                "content": item.page_content,
-                "page": metadata.get("page_number"),
-                "position": metadata.get("position"),
-                "html": metadata.get("text_as_html"),
-                "bounding_box": metadata.get("bounding_box")
-            })
-        
-        if page >= response.total_pages:
-            break
-        page += 1
-    
-    return tables
-
-# Usage
-tables = extract_tables("financial_report.pdf")
-print(f"Found {len(tables)} tables")
-
-for i, table in enumerate(tables, 1):
-    print(f"\nTable {i} (Page {table['page']}):")
-    print(f"  {table['content'][:200]}...")
-```
-
-### Build Document Outline
-
-Create a document outline from titles:
-
-```python
-from graphor import Graphor
-
-client = Graphor()
-
-def build_document_outline(file_name: str):
-    """Build a document outline from titles."""
-    response = client.sources.load_elements(
-        file_name=file_name,
-        page_size=500,
-        filter={"type": "Title"}
-    )
-    
-    outline = []
-    
-    for item in response.items:
-        metadata = item.metadata or {}
-        html = metadata.get("text_as_html", "")
-        
-        # Detect heading level from HTML
-        level = 5  # default
-        if "<h1>" in html: level = 1
-        elif "<h2>" in html: level = 2
-        elif "<h3>" in html: level = 3
-        elif "<h4>" in html: level = 4
-        
-        outline.append({
-            "title": item.page_content,
-            "page": metadata.get("page_number"),
-            "level": level,
-            "position": metadata.get("position")
-        })
-    
-    # Sort by position
-    outline.sort(key=lambda x: (x["page"] or 0, x["position"] or 0))
-    
-    return outline
-
-# Usage
-outline = build_document_outline("book.pdf")
-print("Document Outline:")
-for item in outline:
-    indent = "  " * (item["level"] - 1)
-    print(f"{indent}• {item['title']} (Page {item['page']})")
-```
-
-### Search Content in Elements
-
-Search for specific content within document elements:
-
-```python
-from graphor import Graphor
-
-client = Graphor()
-
-def search_in_document(file_name: str, query: str):
-    """Search for content within document elements."""
-    matches = []
-    page = 1
-    
-    while True:
-        response = client.sources.load_elements(
-            file_name=file_name,
-            page=page,
-            page_size=100,
-            filter={"elements_to_remove": ["Footer", "PageNumber"]}
-        )
-        
-        for item in response.items:
-            if query.lower() in item.page_content.lower():
-                metadata = item.metadata or {}
-                matches.append({
-                    "content": item.page_content,
-                    "page": metadata.get("page_number"),
-                    "type": metadata.get("element_type"),
-                    "position": metadata.get("position")
-                })
-        
-        if page >= response.total_pages:
-            break
-        page += 1
-    
-    return matches
-
-def highlight_match(text: str, query: str) -> str:
-    """Highlight search query in text."""
-    import re
-    pattern = re.compile(f"({re.escape(query)})", re.IGNORECASE)
-    return pattern.sub(r"**\1**", text)
-
-# Usage
-query = "machine learning"
-matches = search_in_document("research_paper.pdf", query)
-
-print(f"Found {len(matches)} matches for '{query}':")
-for i, match in enumerate(matches[:10], 1):
-    print(f"\n{i}. Page {match['page']} ({match['type']}):")
-    highlighted = highlight_match(match["content"][:200], query)
-    print(f"   {highlighted}...")
-```
-
-### Async Batch Processing
-
-Process multiple documents concurrently:
-
-```python
-import asyncio
-from graphor import AsyncGraphor
-import graphor
-
-async def get_elements_async(client: AsyncGraphor, file_name: str):
-    """Get all elements from a single document."""
-    all_elements = []
-    page = 1
-    
-    while True:
-        try:
-            response = await client.sources.load_elements(
+        # Fetch all elements
+        while True:
+            response = client.sources.load_elements(
                 file_name=file_name,
                 page=page,
                 page_size=100
@@ -562,108 +625,713 @@ async def get_elements_async(client: AsyncGraphor, file_name: str):
             if page >= response.total_pages:
                 break
             page += 1
+        
+        # Analyze structure
+        type_counts = defaultdict(int)
+        page_distribution = defaultdict(int)
+        total_chars = 0
+        languages = set()
+        
+        for item in all_elements:
+            metadata = item.metadata or {}
             
-        except graphor.APIStatusError as e:
-            print(f"Error processing {file_name}: {e}")
-            break
-    
-    return {"file_name": file_name, "elements": all_elements}
+            element_type = metadata.get("element_type", "Unknown")
+            type_counts[element_type] += 1
+            
+            page_num = metadata.get("page_number", 0)
+            page_distribution[page_num] += 1
+            
+            total_chars += len(item.page_content)
+            
+            for lang in metadata.get("languages", []):
+                languages.add(lang)
+        
+        return {
+            "total_elements": len(all_elements),
+            "element_types": dict(type_counts),
+            "pages": len(page_distribution),
+            "elements_per_page": dict(page_distribution),
+            "total_characters": total_chars,
+            "average_element_length": total_chars / len(all_elements) if all_elements else 0,
+            "detected_languages": list(languages)
+        }
 
-async def batch_get_elements(file_names: list[str], max_concurrent: int = 3):
-    """Get elements from multiple documents concurrently."""
-    client = AsyncGraphor()
-    semaphore = asyncio.Semaphore(max_concurrent)
-    
-    async def process_with_semaphore(file_name: str):
-        async with semaphore:
-            print(f"Processing: {file_name}")
-            result = await get_elements_async(client, file_name)
-            print(f"  Completed: {file_name} ({len(result['elements'])} elements)")
-            return result
-    
-    tasks = [process_with_semaphore(f) for f in file_names]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-    
-    return [r for r in results if not isinstance(r, Exception)]
+    # Usage
+    analysis = analyze_document_structure("research_paper.pdf")
+    print(f"Document Analysis:")
+    print(f"  Total elements: {analysis['total_elements']}")
+    print(f"  Pages: {analysis['pages']}")
+    print(f"  Element types: {analysis['element_types']}")
+    print(f"  Languages: {analysis['detected_languages']}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
 
-# Usage
-files = ["doc1.pdf", "doc2.pdf", "doc3.pdf"]
-results = asyncio.run(batch_get_elements(files))
+    const client = new Graphor();
 
-for result in results:
-    print(f"{result['file_name']}: {len(result['elements'])} elements")
-```
+    async function analyzeDocumentStructure(fileName: string) {
+      type ElementItem = Awaited<
+        ReturnType<typeof client.sources.loadElements>
+      >['items'][number];
+      const allElements: ElementItem[] = [];
+      let page = 1;
+
+      // Fetch all elements
+      while (true) {
+        const response = await client.sources.loadElements({
+          file_name: fileName,
+          page,
+          page_size: 100,
+        });
+        allElements.push(...response.items);
+
+        if (page >= (response.total_pages ?? 1)) break;
+        page++;
+      }
+
+      // Analyze structure
+      const typeCounts: Record<string, number> = {};
+      const pageDistribution: Record<number, number> = {};
+      let totalChars = 0;
+      const languages = new Set<string>();
+
+      for (const item of allElements) {
+        const metadata = item.metadata ?? {};
+
+        const elementType = (metadata.element_type as string) ?? 'Unknown';
+        typeCounts[elementType] = (typeCounts[elementType] ?? 0) + 1;
+
+        const pageNum = (metadata.page_number as number) ?? 0;
+        pageDistribution[pageNum] = (pageDistribution[pageNum] ?? 0) + 1;
+
+        totalChars += item.page_content.length;
+
+        for (const lang of (metadata.languages as string[]) ?? []) {
+          languages.add(lang);
+        }
+      }
+
+      return {
+        totalElements: allElements.length,
+        elementTypes: typeCounts,
+        pages: Object.keys(pageDistribution).length,
+        elementsPerPage: pageDistribution,
+        totalCharacters: totalChars,
+        averageElementLength: allElements.length > 0 ? totalChars / allElements.length : 0,
+        detectedLanguages: [...languages],
+      };
+    }
+
+    // Usage
+    const analysis = await analyzeDocumentStructure('research_paper.pdf');
+    console.log('Document Analysis:');
+    console.log(`  Total elements: ${analysis.totalElements}`);
+    console.log(`  Pages: ${analysis.pages}`);
+    console.log(`  Element types:`, analysis.elementTypes);
+    console.log(`  Languages:`, analysis.detectedLanguages);
+    ```
+  </Tab>
+</Tabs>
+
+### Extract Tables
+
+Extract all tables from a document:
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+
+    client = Graphor()
+
+    def extract_tables(file_name: str):
+        """Extract all tables from a document."""
+        tables = []
+        page = 1
+        
+        while True:
+            response = client.sources.load_elements(
+                file_name=file_name,
+                page=page,
+                page_size=50,
+                filter={"type": "Table"}
+            )
+            
+            for item in response.items:
+                metadata = item.metadata or {}
+                tables.append({
+                    "content": item.page_content,
+                    "page": metadata.get("page_number"),
+                    "position": metadata.get("position"),
+                    "html": metadata.get("text_as_html"),
+                    "bounding_box": metadata.get("bounding_box")
+                })
+            
+            if page >= response.total_pages:
+                break
+            page += 1
+        
+        return tables
+
+    # Usage
+    tables = extract_tables("financial_report.pdf")
+    print(f"Found {len(tables)} tables")
+
+    for i, table in enumerate(tables, 1):
+        print(f"\nTable {i} (Page {table['page']}):")
+        print(f"  {table['content'][:200]}...")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    async function extractTables(fileName: string) {
+      const tables: {
+        content: string;
+        page: number | undefined;
+        position: number | undefined;
+        html: string | undefined;
+        boundingBox: unknown;
+      }[] = [];
+      let page = 1;
+
+      while (true) {
+        const response = await client.sources.loadElements({
+          file_name: fileName,
+          page,
+          page_size: 50,
+          filter: { type: 'Table' },
+        });
+
+        for (const item of response.items) {
+          const metadata = item.metadata ?? {};
+          tables.push({
+            content: item.page_content,
+            page: metadata.page_number as number | undefined,
+            position: metadata.position as number | undefined,
+            html: metadata.text_as_html as string | undefined,
+            boundingBox: metadata.bounding_box,
+          });
+        }
+
+        if (page >= (response.total_pages ?? 1)) break;
+        page++;
+      }
+
+      return tables;
+    }
+
+    // Usage
+    const tables = await extractTables('financial_report.pdf');
+    console.log(`Found ${tables.length} tables`);
+
+    tables.forEach((table, i) => {
+      console.log(`\nTable ${i + 1} (Page ${table.page}):`);
+      console.log(`  ${table.content.slice(0, 200)}...`);
+    });
+    ```
+  </Tab>
+</Tabs>
+
+### Build Document Outline
+
+Create a document outline from titles:
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+
+    client = Graphor()
+
+    def build_document_outline(file_name: str):
+        """Build a document outline from titles."""
+        response = client.sources.load_elements(
+            file_name=file_name,
+            page_size=500,
+            filter={"type": "Title"}
+        )
+        
+        outline = []
+        
+        for item in response.items:
+            metadata = item.metadata or {}
+            html = metadata.get("text_as_html", "")
+            
+            # Detect heading level from HTML
+            level = 5  # default
+            if "<h1>" in html: level = 1
+            elif "<h2>" in html: level = 2
+            elif "<h3>" in html: level = 3
+            elif "<h4>" in html: level = 4
+            
+            outline.append({
+                "title": item.page_content,
+                "page": metadata.get("page_number"),
+                "level": level,
+                "position": metadata.get("position")
+            })
+        
+        # Sort by position
+        outline.sort(key=lambda x: (x["page"] or 0, x["position"] or 0))
+        
+        return outline
+
+    # Usage
+    outline = build_document_outline("book.pdf")
+    print("Document Outline:")
+    for item in outline:
+        indent = "  " * (item["level"] - 1)
+        print(f"{indent}• {item['title']} (Page {item['page']})")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    async function buildDocumentOutline(fileName: string) {
+      const response = await client.sources.loadElements({
+        file_name: fileName,
+        page_size: 500,
+        filter: { type: 'Title' },
+      });
+
+      const outline = response.items.map((item) => {
+        const metadata = item.metadata ?? {};
+        const html = (metadata.text_as_html as string) ?? '';
+
+        // Detect heading level from HTML
+        let level = 5;
+        if (html.includes('<h1>')) level = 1;
+        else if (html.includes('<h2>')) level = 2;
+        else if (html.includes('<h3>')) level = 3;
+        else if (html.includes('<h4>')) level = 4;
+
+        return {
+          title: item.page_content,
+          page: metadata.page_number as number | undefined,
+          level,
+          position: metadata.position as number | undefined,
+        };
+      });
+
+      // Sort by position
+      outline.sort((a, b) => (a.page ?? 0) - (b.page ?? 0) || (a.position ?? 0) - (b.position ?? 0));
+
+      return outline;
+    }
+
+    // Usage
+    const outline = await buildDocumentOutline('book.pdf');
+    console.log('Document Outline:');
+    for (const item of outline) {
+      const indent = '  '.repeat(item.level - 1);
+      console.log(`${indent}• ${item.title} (Page ${item.page})`);
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Search Content in Elements
+
+Search for specific content within document elements:
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+
+    client = Graphor()
+
+    def search_in_document(file_name: str, query: str):
+        """Search for content within document elements."""
+        matches = []
+        page = 1
+        
+        while True:
+            response = client.sources.load_elements(
+                file_name=file_name,
+                page=page,
+                page_size=100,
+                filter={"elements_to_remove": ["Footer", "PageNumber"]}
+            )
+            
+            for item in response.items:
+                if query.lower() in item.page_content.lower():
+                    metadata = item.metadata or {}
+                    matches.append({
+                        "content": item.page_content,
+                        "page": metadata.get("page_number"),
+                        "type": metadata.get("element_type"),
+                        "position": metadata.get("position")
+                    })
+            
+            if page >= response.total_pages:
+                break
+            page += 1
+        
+        return matches
+
+    def highlight_match(text: str, query: str) -> str:
+        """Highlight search query in text."""
+        import re
+        pattern = re.compile(f"({re.escape(query)})", re.IGNORECASE)
+        return pattern.sub(r"**\1**", text)
+
+    # Usage
+    query = "machine learning"
+    matches = search_in_document("research_paper.pdf", query)
+
+    print(f"Found {len(matches)} matches for '{query}':")
+    for i, match in enumerate(matches[:10], 1):
+        print(f"\n{i}. Page {match['page']} ({match['type']}):")
+        highlighted = highlight_match(match["content"][:200], query)
+        print(f"   {highlighted}...")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    async function searchInDocument(fileName: string, query: string) {
+      const matches: {
+        content: string;
+        page: number | undefined;
+        type: string | undefined;
+        position: number | undefined;
+      }[] = [];
+      let page = 1;
+
+      while (true) {
+        const response = await client.sources.loadElements({
+          file_name: fileName,
+          page,
+          page_size: 100,
+          filter: { elementsToRemove: ['Footer', 'PageNumber'] },
+        });
+
+        for (const item of response.items) {
+          if (item.page_content.toLowerCase().includes(query.toLowerCase())) {
+            const metadata = item.metadata ?? {};
+            matches.push({
+              content: item.page_content,
+              page: metadata.page_number as number | undefined,
+              type: metadata.element_type as string | undefined,
+              position: metadata.position as number | undefined,
+            });
+          }
+        }
+
+        if (page >= (response.total_pages ?? 1)) break;
+        page++;
+      }
+
+      return matches;
+    }
+
+    function highlightMatch(text: string, query: string): string {
+      const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+      return text.replace(regex, '**$1**');
+    }
+
+    // Usage
+    const query = 'machine learning';
+    const matches = await searchInDocument('research_paper.pdf', query);
+
+    console.log(`Found ${matches.length} matches for '${query}':`);
+    matches.slice(0, 10).forEach((match, i) => {
+      console.log(`\n${i + 1}. Page ${match.page} (${match.type}):`);
+      const highlighted = highlightMatch(match.content.slice(0, 200), query);
+      console.log(`   ${highlighted}...`);
+    });
+    ```
+  </Tab>
+</Tabs>
+
+### Async Batch Processing
+
+Process multiple documents concurrently:
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import asyncio
+    from graphor import AsyncGraphor
+    import graphor
+
+    async def get_elements_async(client: AsyncGraphor, file_name: str):
+        """Get all elements from a single document."""
+        all_elements = []
+        page = 1
+        
+        while True:
+            try:
+                response = await client.sources.load_elements(
+                    file_name=file_name,
+                    page=page,
+                    page_size=100
+                )
+                all_elements.extend(response.items)
+                
+                if page >= response.total_pages:
+                    break
+                page += 1
+                
+            except graphor.APIStatusError as e:
+                print(f"Error processing {file_name}: {e}")
+                break
+        
+        return {"file_name": file_name, "elements": all_elements}
+
+    async def batch_get_elements(file_names: list[str], max_concurrent: int = 3):
+        """Get elements from multiple documents concurrently."""
+        client = AsyncGraphor()
+        semaphore = asyncio.Semaphore(max_concurrent)
+        
+        async def process_with_semaphore(file_name: str):
+            async with semaphore:
+                print(f"Processing: {file_name}")
+                result = await get_elements_async(client, file_name)
+                print(f"  Completed: {file_name} ({len(result['elements'])} elements)")
+                return result
+        
+        tasks = [process_with_semaphore(f) for f in file_names]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        return [r for r in results if not isinstance(r, Exception)]
+
+    # Usage
+    files = ["doc1.pdf", "doc2.pdf", "doc3.pdf"]
+    results = asyncio.run(batch_get_elements(files))
+
+    for result in results:
+        print(f"{result['file_name']}: {len(result['elements'])} elements")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    type ElementItem = Awaited<
+      ReturnType<typeof client.sources.loadElements>
+    >['items'][number];
+
+    async function getElementsForFile(fileName: string) {
+      const allElements: ElementItem[] = [];
+      let page = 1;
+
+      while (true) {
+        try {
+          const response = await client.sources.loadElements({
+            file_name: fileName,
+            page,
+            page_size: 100,
+          });
+          allElements.push(...response.items);
+
+          if (page >= (response.total_pages ?? 1)) break;
+          page++;
+        } catch (err) {
+          const message = err instanceof Graphor.APIError ? err.message : String(err);
+          console.log(`Error processing ${fileName}: ${message}`);
+          break;
+        }
+      }
+
+      return { fileName, elements: allElements };
+    }
+
+    async function batchGetElements(fileNames: string[], maxConcurrent = 3) {
+      const results: Awaited<ReturnType<typeof getElementsForFile>>[] = [];
+
+      for (let i = 0; i < fileNames.length; i += maxConcurrent) {
+        const batch = fileNames.slice(i, i + maxConcurrent);
+        console.log(`Processing batch ${Math.floor(i / maxConcurrent) + 1}...`);
+
+        const batchResults = await Promise.all(
+          batch.map(async (fileName) => {
+            console.log(`Processing: ${fileName}`);
+            const result = await getElementsForFile(fileName);
+            console.log(`  Completed: ${fileName} (${result.elements.length} elements)`);
+            return result;
+          }),
+        );
+
+        results.push(...batchResults);
+      }
+
+      return results;
+    }
+
+    // Usage
+    const results = await batchGetElements(['doc1.pdf', 'doc2.pdf', 'doc3.pdf']);
+
+    for (const result of results) {
+      console.log(`${result.fileName}: ${result.elements.length} elements`);
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ### Document Comparator
 
 Compare element structure between documents:
 
-```python
-from graphor import Graphor
-from collections import defaultdict
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+    from collections import defaultdict
 
-client = Graphor()
+    client = Graphor()
 
-def get_document_stats(file_name: str) -> dict:
-    """Get statistics for a document."""
-    type_counts = defaultdict(int)
-    total_chars = 0
-    page = 1
-    
-    while True:
-        response = client.sources.load_elements(
-            file_name=file_name,
-            page=page,
-            page_size=100
-        )
+    def get_document_stats(file_name: str) -> dict:
+        """Get statistics for a document."""
+        type_counts = defaultdict(int)
+        total_chars = 0
+        page = 1
         
-        for item in response.items:
-            metadata = item.metadata or {}
-            type_counts[metadata.get("element_type", "Unknown")] += 1
-            total_chars += len(item.page_content)
+        while True:
+            response = client.sources.load_elements(
+                file_name=file_name,
+                page=page,
+                page_size=100
+            )
+            
+            for item in response.items:
+                metadata = item.metadata or {}
+                type_counts[metadata.get("element_type", "Unknown")] += 1
+                total_chars += len(item.page_content)
+            
+            if page >= response.total_pages:
+                total_elements = response.total
+                break
+            page += 1
         
-        if page >= response.total_pages:
-            total_elements = response.total
-            break
-        page += 1
-    
-    return {
-        "file_name": file_name,
-        "total_elements": total_elements,
-        "total_characters": total_chars,
-        "element_types": dict(type_counts)
+        return {
+            "file_name": file_name,
+            "total_elements": total_elements,
+            "total_characters": total_chars,
+            "element_types": dict(type_counts)
+        }
+
+    def compare_documents(file_name_1: str, file_name_2: str):
+        """Compare two documents."""
+        stats1 = get_document_stats(file_name_1)
+        stats2 = get_document_stats(file_name_2)
+        
+        all_types = set(stats1["element_types"].keys()) | set(stats2["element_types"].keys())
+        
+        comparison = {
+            "documents": [stats1["file_name"], stats2["file_name"]],
+            "total_elements": [stats1["total_elements"], stats2["total_elements"]],
+            "total_characters": [stats1["total_characters"], stats2["total_characters"]],
+            "element_comparison": {}
+        }
+        
+        for element_type in sorted(all_types):
+            count1 = stats1["element_types"].get(element_type, 0)
+            count2 = stats2["element_types"].get(element_type, 0)
+            comparison["element_comparison"][element_type] = [count1, count2]
+        
+        return comparison
+
+    # Usage
+    comparison = compare_documents("version1.pdf", "version2.pdf")
+    print(f"Comparing: {comparison['documents'][0]} vs {comparison['documents'][1]}")
+    print(f"Elements: {comparison['total_elements'][0]} vs {comparison['total_elements'][1]}")
+    print(f"Characters: {comparison['total_characters'][0]} vs {comparison['total_characters'][1]}")
+    print("\nElement breakdown:")
+    for elem_type, counts in comparison["element_comparison"].items():
+        print(f"  {elem_type}: {counts[0]} vs {counts[1]}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    async function getDocumentStats(fileName: string) {
+      const typeCounts: Record<string, number> = {};
+      let totalChars = 0;
+      let totalElements = 0;
+      let page = 1;
+
+      while (true) {
+        const response = await client.sources.loadElements({
+          file_name: fileName,
+          page,
+          page_size: 100,
+        });
+
+        for (const item of response.items) {
+          const metadata = item.metadata ?? {};
+          const elementType = (metadata.element_type as string) ?? 'Unknown';
+          typeCounts[elementType] = (typeCounts[elementType] ?? 0) + 1;
+          totalChars += item.page_content.length;
+        }
+
+        if (page >= (response.total_pages ?? 1)) {
+          totalElements = response.total;
+          break;
+        }
+        page++;
+      }
+
+      return { fileName, totalElements, totalCharacters: totalChars, elementTypes: typeCounts };
     }
 
-def compare_documents(file_name_1: str, file_name_2: str):
-    """Compare two documents."""
-    stats1 = get_document_stats(file_name_1)
-    stats2 = get_document_stats(file_name_2)
-    
-    all_types = set(stats1["element_types"].keys()) | set(stats2["element_types"].keys())
-    
-    comparison = {
-        "documents": [stats1["file_name"], stats2["file_name"]],
-        "total_elements": [stats1["total_elements"], stats2["total_elements"]],
-        "total_characters": [stats1["total_characters"], stats2["total_characters"]],
-        "element_comparison": {}
-    }
-    
-    for element_type in sorted(all_types):
-        count1 = stats1["element_types"].get(element_type, 0)
-        count2 = stats2["element_types"].get(element_type, 0)
-        comparison["element_comparison"][element_type] = [count1, count2]
-    
-    return comparison
+    async function compareDocuments(fileName1: string, fileName2: string) {
+      const [stats1, stats2] = await Promise.all([
+        getDocumentStats(fileName1),
+        getDocumentStats(fileName2),
+      ]);
 
-# Usage
-comparison = compare_documents("version1.pdf", "version2.pdf")
-print(f"Comparing: {comparison['documents'][0]} vs {comparison['documents'][1]}")
-print(f"Elements: {comparison['total_elements'][0]} vs {comparison['total_elements'][1]}")
-print(f"Characters: {comparison['total_characters'][0]} vs {comparison['total_characters'][1]}")
-print("\nElement breakdown:")
-for elem_type, counts in comparison["element_comparison"].items():
-    print(f"  {elem_type}: {counts[0]} vs {counts[1]}")
-```
+      const allTypes = new Set([
+        ...Object.keys(stats1.elementTypes),
+        ...Object.keys(stats2.elementTypes),
+      ]);
+
+      const elementComparison: Record<string, [number, number]> = {};
+      for (const type of [...allTypes].sort()) {
+        elementComparison[type] = [
+          stats1.elementTypes[type] ?? 0,
+          stats2.elementTypes[type] ?? 0,
+        ];
+      }
+
+      return {
+        documents: [stats1.fileName, stats2.fileName],
+        totalElements: [stats1.totalElements, stats2.totalElements],
+        totalCharacters: [stats1.totalCharacters, stats2.totalCharacters],
+        elementComparison,
+      };
+    }
+
+    // Usage
+    const comparison = await compareDocuments('version1.pdf', 'version2.pdf');
+    console.log(`Comparing: ${comparison.documents[0]} vs ${comparison.documents[1]}`);
+    console.log(`Elements: ${comparison.totalElements[0]} vs ${comparison.totalElements[1]}`);
+    console.log(`Characters: ${comparison.totalCharacters[0]} vs ${comparison.totalCharacters[1]}`);
+    console.log('\nElement breakdown:');
+    for (const [elemType, counts] of Object.entries(comparison.elementComparison)) {
+      console.log(`  ${elemType}: ${counts[0]} vs ${counts[1]}`);
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ## Error Reference
 
@@ -685,20 +1353,40 @@ for elem_type, counts in comparison["element_comparison"].items():
 - **Filter server-side**: Use filter parameters to reduce data transfer
 - **Cache results**: Store element data locally for repeated access
 
-```python
-# Good: Filter on server
-response = client.sources.load_elements(
-    file_name="doc.pdf",
-    filter={"type": "Title"}  # Filter on server
-)
+<Tabs>
+  <Tab title="Python">
+    ```python
+    # Good: Filter on server
+    response = client.sources.load_elements(
+        file_name="doc.pdf",
+        filter={"type": "Title"}  # Filter on server
+    )
 
-# Less efficient: Filter on client
-response = client.sources.load_elements(
-    file_name="doc.pdf",
-    page_size=500
-)
-titles = [item for item in response.items if item.metadata.get("element_type") == "Title"]
-```
+    # Less efficient: Filter on client
+    response = client.sources.load_elements(
+        file_name="doc.pdf",
+        page_size=500
+    )
+    titles = [item for item in response.items if item.metadata.get("element_type") == "Title"]
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    // Good: Filter on server
+    const response = await client.sources.loadElements({
+      file_name: 'doc.pdf',
+      filter: { type: 'Title' }, // Filter on server
+    });
+
+    // Less efficient: Filter on client
+    const all = await client.sources.loadElements({
+      file_name: 'doc.pdf',
+      page_size: 500,
+    });
+    const titles = all.items.filter((item) => item.metadata?.element_type === 'Title');
+    ```
+  </Tab>
+</Tabs>
 
 ### Data Processing
 
@@ -706,37 +1394,76 @@ titles = [item for item in response.items if item.metadata.get("element_type") =
 - **Use HTML field**: The `text_as_html` field preserves formatting
 - **Handle None metadata**: Always check if metadata exists before accessing
 
-```python
-for item in response.items:
-    # Safe metadata access
-    metadata = item.metadata or {}
-    element_type = metadata.get("element_type", "Unknown")
-    page_num = metadata.get("page_number", 0)
-```
+<Tabs>
+  <Tab title="Python">
+    ```python
+    for item in response.items:
+        # Safe metadata access
+        metadata = item.metadata or {}
+        element_type = metadata.get("element_type", "Unknown")
+        page_num = metadata.get("page_number", 0)
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    for (const item of response.items) {
+      // Safe metadata access
+      const metadata = item.metadata ?? {};
+      const elementType = (metadata.element_type as string) ?? 'Unknown';
+      const pageNum = (metadata.page_number as number) ?? 0;
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ### Memory Management
 
 - **Stream large documents**: Process in chunks rather than loading all at once
 - **Clear processed data**: Remove unnecessary fields when not needed
 
-```python
-# Process large documents in chunks
-page = 1
-while True:
-    response = client.sources.load_elements(
-        file_name="large_doc.pdf",
-        page=page,
-        page_size=50
-    )
-    
-    # Process this batch
-    for item in response.items:
-        process_element(item)  # Your processing logic
-    
-    if page >= response.total_pages:
-        break
-    page += 1
-```
+<Tabs>
+  <Tab title="Python">
+    ```python
+    # Process large documents in chunks
+    page = 1
+    while True:
+        response = client.sources.load_elements(
+            file_name="large_doc.pdf",
+            page=page,
+            page_size=50
+        )
+        
+        # Process this batch
+        for item in response.items:
+            process_element(item)  # Your processing logic
+        
+        if page >= response.total_pages:
+            break
+        page += 1
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    // Process large documents in chunks
+    let page = 1;
+    while (true) {
+      const response = await client.sources.loadElements({
+        file_name: 'large_doc.pdf',
+        page,
+        page_size: 50,
+      });
+
+      // Process this batch
+      for (const item of response.items) {
+        processElement(item); // Your processing logic
+      }
+
+      if (page >= (response.total_pages ?? 1)) break;
+      page++;
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ## Troubleshooting
 
@@ -748,10 +1475,19 @@ while True:
     - Reduce `page_size` to 25-50 elements
     - Use specific filters to reduce result set
     - Implement request timeouts
-    
+
+<Tabs>
+  <Tab title="Python">
     ```python
     client = Graphor(timeout=60.0)
     ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    const client = new Graphor({ timeout: 60 * 1000 });
+    ```
+  </Tab>
+</Tabs>
   </Accordion>
   
   <Accordion icon="list" title="Empty results">
