@@ -51,7 +51,8 @@
             "group": "Developers",
             "pages": [
               "api-overview",
-              "sdk-overview"
+              "sdk-overview",
+              "mcp-server"
             ]
           },
           {

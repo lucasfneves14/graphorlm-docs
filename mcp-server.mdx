@@ -1,0 +1,365 @@
+---
+title: 'MCP Server'
+description: 'Connect AI agents and coding assistants to your Graphor documents using the Model Context Protocol'
+---
+
+The **Graphor MCP Server** lets AI agents — such as Cursor, VS Code Copilot, Claude Code, and other MCP-compatible clients — interact with your Graphor project directly. Your agent can upload documents, ask questions, extract structured data, and perform semantic search, all without leaving your development environment.
+
+<CardGroup cols={2}>
+  <Card title="Upload & Manage" icon="arrow-up-from-bracket">
+    Upload files, URLs, GitHub repos, and YouTube videos to your project
+  </Card>
+  <Card title="Chat & Ask" icon="comments">
+    Ask questions about your documents with conversational memory
+  </Card>
+  <Card title="Extract Data" icon="table">
+    Extract structured data from documents using JSON Schema
+  </Card>
+  <Card title="Semantic Search" icon="magnifying-glass">
+    Retrieve relevant document chunks for custom RAG pipelines
+  </Card>
+</CardGroup>
+
+## How It Works
+
+The Graphor MCP Server uses a **Code Mode** tool scheme. Instead of exposing individual API endpoints as separate tools, it exposes two powerful tools to your agent:
+
+1. **Documentation Search** — The agent can query for documentation about the Graphor SDK, learning how to use any method on the fly.
+2. **Code Execution** — The agent writes TypeScript code against the Graphor SDK, which is then executed in an isolated sandbox. The results are returned to the agent.
+
+Using this approach, your agent can perform complex multi-step tasks — such as uploading a document, processing it, and extracting structured data — deterministically and repeatably.
+
+<Note>
+  The sandbox environment does not have web or filesystem access. All operations go through the Graphor SDK.
+</Note>
+
+## Installation
+
+### Prerequisites
+
+- **Node.js 20+** (LTS recommended)
+- **A Graphor API key** — [Create one in the dashboard](https://app.graphorlm.com) or see the [API Tokens guide](/guides/api-tokens)
+
+### Quick Start with npx
+
+You can run the MCP Server directly via `npx` without installing anything:
+
+```bash
+export GRAPHOR_API_KEY="grlm_your_api_key_here"
+npx -y graphor-mcp@latest
+```
+
+## Setup by Client
+
+### Cursor
+
+Install the MCP server directly in Cursor using the button below:
+
+[![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en-US/install-mcp?name=graphor-mcp&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsImdyYXBob3ItbWNwIl0sImVudiI6eyJHUkFQSE9SX0FQSV9LRVkiOiJNeSBBUEkgS2V5In19)
+
+Or manually add it to your Cursor `mcp.json` (found in **Cursor Settings > Tools & MCP > New MCP Server**):
+
+```json
+{
+  "mcpServers": {
+    "graphor_api": {
+      "command": "npx",
+      "args": ["-y", "graphor-mcp"],
+      "env": {
+        "GRAPHOR_API_KEY": "grlm_your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+### VS Code
+
+Install the MCP server in VS Code by clicking the link below:
+
+[Install Graphor MCP for VS Code](https://vscode.stainless.com/mcp/%7B%22name%22%3A%22graphor-mcp%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22graphor-mcp%22%5D%2C%22env%22%3A%7B%22GRAPHOR_API_KEY%22%3A%22My%20API%20Key%22%7D%7D)
+
+Or manually add it to your VS Code `mcp.json` (found via **Command Palette > MCP: Open User Configuration**):
+
+```json
+{
+  "mcpServers": {
+    "graphor_api": {
+      "command": "npx",
+      "args": ["-y", "graphor-mcp"],
+      "env": {
+        "GRAPHOR_API_KEY": "grlm_your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+### Claude Code
+
+Install the MCP server for Claude Code by running the following command in your terminal:
+
+```bash
+claude mcp add graphor_mcp_api --env GRAPHOR_API_KEY="grlm_your_api_key_here" -- npx -y graphor-mcp
+```
+
+You can also manually configure it in your `.claude.json` file (found in your home directory).
+
+### Other MCP Clients
+
+For any MCP-compatible client, use the following configuration:
+
+```json
+{
+  "mcpServers": {
+    "graphor_api": {
+      "command": "npx",
+      "args": ["-y", "graphor-mcp"],
+      "env": {
+        "GRAPHOR_API_KEY": "grlm_your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+<Note>
+  See the full list of MCP-compatible clients at [modelcontextprotocol.io/clients](https://modelcontextprotocol.io/clients).
+</Note>
+
+## Available Tools
+
+Once installed, your agent has access to **two tools** that together cover the entire Graphor API surface:
+
+### `search_docs`
+
+Search the Graphor SDK documentation to learn how to use any method.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `query` | `string` | What to search for (e.g., "how to upload a file", "extract structured data") |
+| `language` | `string` | SDK language to search for (`typescript`) |
+
+**Example agent prompt**: *"Search the Graphor docs for how to extract invoice data from a PDF."*
+
+### `execute`
+
+Write and execute TypeScript code against the Graphor SDK in an isolated sandbox.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `code` | `string` | TypeScript code defining an `async function run(client)` |
+| `intent` | `string` | Description of what the code does (used for analytics) |
+
+The code receives an initialized SDK client and runs in a sandboxed environment. Anything logged with `console.log` or returned from the function is sent back to the agent.
+
+**Example agent prompt**: *"Upload my-report.pdf and extract the title and author."*
+
+## What Your Agent Can Do
+
+With the MCP server, your agent can perform any operation available in the Graphor SDK:
+
+<AccordionGroup>
+  <Accordion icon="arrow-up-from-bracket" title="Upload Documents">
+    Upload local files, web pages, GitHub repositories, and YouTube videos.
+    
+    ```typescript
+    async function run(client) {
+      const source = await client.sources.upload({
+        file: fs.createReadStream('report.pdf'),
+      });
+      console.log(`Uploaded: ${source.file_name}`);
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="list" title="List & Manage Sources">
+    List all uploaded documents, check processing status, and delete files.
+    
+    ```typescript
+    async function run(client) {
+      const sources = await client.sources.list();
+      for (const source of sources) {
+        console.log(`${source.file_name} — ${source.status}`);
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="gears" title="Process Documents">
+    Reprocess documents with different parsing methods for better quality.
+    
+    ```typescript
+    async function run(client) {
+      const result = await client.sources.parse({
+        file_name: 'report.pdf',
+        partition_method: 'hi_res',
+      });
+      console.log(`Reprocessed: ${result.file_name}`);
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="comments" title="Chat with Documents">
+    Ask questions with conversational memory and structured output.
+    
+    ```typescript
+    async function run(client) {
+      const response = await client.sources.ask({
+        question: 'What are the key findings in this report?',
+      });
+      console.log(response.answer);
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="table" title="Extract Structured Data">
+    Extract structured data from documents using JSON Schema.
+    
+    ```typescript
+    async function run(client) {
+      const result = await client.sources.extract({
+        file_names: ['invoice.pdf'],
+        user_instruction: 'Extract invoice details',
+        output_schema: {
+          type: 'object',
+          properties: {
+            invoice_number: { type: 'string' },
+            total: { type: 'number' },
+          },
+        },
+      });
+      console.log(result.structured_output);
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="magnifying-glass" title="Semantic Search (RAG)">
+    Retrieve relevant document chunks for custom RAG pipelines.
+    
+    ```typescript
+    async function run(client) {
+      const result = await client.sources.retrieveChunks({
+        query: 'payment terms',
+      });
+      for (const chunk of result.chunks) {
+        console.log(`[${chunk.file_name}, p${chunk.page_number}] ${chunk.text}`);
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Running Remotely
+
+You can run the MCP server as a remote HTTP server using Streamable HTTP transport:
+
+```bash
+export GRAPHOR_API_KEY="grlm_your_api_key_here"
+npx -y graphor-mcp@latest --transport=http --port=3000
+```
+
+| Flag | Description |
+|------|-------------|
+| `--transport=http` | Enables remote HTTP mode (Streamable HTTP transport) |
+| `--port=<number>` | Port to listen on (e.g., `3000`) |
+| `--socket=<path>` | Run on a Unix socket instead of a TCP port |
+
+### Authentication for Remote Mode
+
+Authorization can be provided via the `Authorization` header using the Bearer scheme, or via the `x-graphor-api-key` header:
+
+| Header | Equivalent Client Option | Security Scheme |
+|--------|--------------------------|-----------------|
+| `x-graphor-api-key` | `apiKey` | HTTPBearer |
+
+### Remote Client Configuration
+
+For clients connecting to a remote server (e.g., hosted at `http://localhost:3000`):
+
+```json
+{
+  "mcpServers": {
+    "graphor_api": {
+      "url": "http://localhost:3000",
+      "headers": {
+        "Authorization": "Bearer grlm_your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion icon="key" title="Authentication errors">
+    **Causes**: Missing or invalid API key
+    
+    **Solutions**:
+    - Verify your `GRAPHOR_API_KEY` is set correctly in the MCP configuration
+    - Ensure the key starts with `grlm_`
+    - Generate a new key in the [Graphor dashboard](https://app.graphorlm.com)
+  </Accordion>
+  
+  <Accordion icon="plug" title="Server not connecting">
+    **Causes**: Node.js not installed, npx not available, or network issues
+    
+    **Solutions**:
+    - Verify Node.js 20+ is installed: `node --version`
+    - Ensure `npx` is available: `npx --version`
+    - Try running the server manually first: `npx -y graphor-mcp@latest`
+    - Check your MCP client logs for error messages
+  </Accordion>
+  
+  <Accordion icon="rotate" title="Server not responding">
+    **Causes**: Server crashed or timed out
+    
+    **Solutions**:
+    - Restart your MCP client
+    - Check if another process is using the same port (remote mode)
+    - Try a fresh install: `npx -y graphor-mcp@latest`
+  </Accordion>
+  
+  <Accordion icon="code" title="Agent execution errors">
+    **Causes**: Invalid code or SDK usage
+    
+    **Solutions**:
+    - Ask the agent to use the `search_docs` tool first to check the correct method signatures
+    - Ensure your documents have been uploaded and processed before querying
+    - Check that file names and IDs match what is in your project
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="SDK Overview"
+    icon="book"
+    href="/sdk/overview"
+  >
+    Learn the full SDK API that your agent can use via the MCP server
+  </Card>
+  <Card
+    title="Upload Sources"
+    icon="arrow-up-from-bracket"
+    href="/sdk/sources/upload"
+  >
+    Detailed guide on uploading documents, URLs, GitHub repos, and videos
+  </Card>
+  <Card
+    title="Chat with Documents"
+    icon="comments"
+    href="/sdk/chat"
+  >
+    Ask questions and have conversations about your documents
+  </Card>
+  <Card
+    title="Data Extraction"
+    icon="table"
+    href="/sdk/extract"
+  >
+    Extract structured data from documents with JSON Schema
+  </Card>
+</CardGroup>
