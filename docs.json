@@ -42,21 +42,25 @@
           {
             "group": "Get Started",
             "pages": [
+              "introduction",
+              "quickstart",
               {
-                "page": "Introduction",
-                "href": "/introduction"
+                "group": "API",
+                "pages": [
+                  {
+                    "page": "API Overview",
+                    "href": "/api-reference/overview"
+                  }
+                ]
               },
               {
-                "page": "Quickstart",
-                "href": "/quickstart"
-              },
-              {
-                "page": "API Overview",
-                "href": "/api-reference/overview"
-              },
-              {
-                "page": "SDK Overview",
-                "href": "/sdk/overview"
+                "group": "SDK",
+                "pages": [
+                  {
+                    "page": "SDK Overview",
+                    "href": "/sdk/overview"
+                  }
+                ]
               }
             ]
           },
