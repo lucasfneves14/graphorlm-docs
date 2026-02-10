@@ -50,7 +50,8 @@
           {
             "group": "Developers",
             "pages": [
-              "/api-reference/overview"
+              "api-overview",
+              "sdk-overview"
             ]
           },
           {
