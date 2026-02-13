@@ -110,12 +110,12 @@ Upload → Process → Query
 
 The skill enforces the three-step workflow:
 
-1. **Upload** a source — returns status `"New"`
-2. **Process** the source by calling parse — triggers async processing (`"New"` → `"Processing"` → `"Completed"`)
-3. **Query** the source (ask, extract, or retrieve chunks) — only works after status is `"Completed"`
+1. **Upload** a source — returns status `"New"`. If you set `partition_method` during upload, processing starts automatically.
+2. **Process** the source by calling parse — synchronous, returns when done (`"New"` → `"Processed"`). Only required if `partition_method` was not set during upload.
+3. **Query** the source (ask, extract, or retrieve chunks)
 
 <Warning>
-  Upload alone does **not** start processing. You must explicitly call parse after upload.
+  If you did not set `partition_method` during upload, you must explicitly call parse to process the document. Parse is **synchronous** — when it returns, the document is ready to query.
 </Warning>
 
 **Included rules**:
@@ -123,7 +123,7 @@ The skill enforces the three-step workflow:
 | Rule | Description |
 |------|-------------|
 | `upload-sources` | Upload files, URLs, GitHub repos, or YouTube videos |
-| `async-processing` | Process documents and poll for completion status |
+| `parsing` | Process documents and check processing status |
 | `ask-sources` | Ask questions about documents with conversational Q&A |
 | `extraction` | Extract structured data using JSON Schema |
 | `retrieve-chunks` | Retrieve chunks for custom RAG pipelines |
@@ -131,10 +131,10 @@ The skill enforces the three-step workflow:
 
 **Universal rules the agent follows**:
 
-1. Uses MCP tools for all non-upload operations (parse, ask, extract, list, delete)
+1. Uses MCP tools for all operations
 2. Uses `file_ids` over `file_names` (deprecated) — stores `file_id` from upload responses
-3. Always processes after upload
-4. Always checks status is `"Completed"` before querying
+3. Processes after upload if `partition_method` was not set during upload
+4. If auth errors occur, the `GRAPHOR_API_KEY` environment variable is not set correctly
 
 ### graphor-ts-sdk
 
@@ -158,7 +158,7 @@ Background knowledge skill for writing Python code with the Graphor SDK.
 **Covers**:
 - Sync (`Graphor`) and async (`AsyncGraphor`) clients
 - All SDK methods (`upload`, `upload_url`, `upload_github`, `upload_youtube`, `parse`, `list`, `delete`, `load_elements`, `ask`, `extract`, `retrieve_chunks`)
-- File upload patterns (`Path`, bytes, tuples)
+- File upload patterns (`open()` file objects)
 - Error handling (`graphor.BadRequestError`, `graphor.NotFoundError`, etc.)
 - Configuration (retries, timeouts, aiohttp)
 
@@ -190,9 +190,8 @@ Once installed, just talk to your agent naturally:
     
     **Agent will**:
     1. Upload the URL via MCP
-    2. Call parse to start processing
-    3. Poll until status is `"Completed"`
-    4. Ask the document for a summary
+    2. Call parse to process the document (synchronous)
+    3. Ask the document for a summary
   </Accordion>
   
   <Accordion icon="table" title="Extract structured data">
@@ -210,7 +209,7 @@ Once installed, just talk to your agent naturally:
     **Agent will**:
     1. Activate the `graphor-py-sdk` skill
     2. Write idiomatic Python using `Graphor()`, `upload()`, `parse()`, and `extract()`
-    3. Include proper error handling and async processing
+    3. Include proper error handling and synchronous processing
   </Accordion>
   
   <Accordion icon="magnifying-glass" title="Build a RAG pipeline">
