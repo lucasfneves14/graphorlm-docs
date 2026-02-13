@@ -64,7 +64,7 @@ Or manually add it to your Cursor `mcp.json` (found in **Cursor Settings > Tools
   "mcpServers": {
     "graphor_api": {
       "command": "npx",
-      "args": ["-y", "graphor-mcp"],
+      "args": ["-y", "graphor-mcp@latest"],
       "env": {
         "GRAPHOR_API_KEY": "grlm_your_api_key_here"
       }
@@ -86,7 +86,7 @@ Or manually add it to your VS Code `mcp.json` (found via **Command Palette > MCP
   "mcpServers": {
     "graphor_api": {
       "command": "npx",
-      "args": ["-y", "graphor-mcp"],
+      "args": ["-y", "graphor-mcp@latest"],
       "env": {
         "GRAPHOR_API_KEY": "grlm_your_api_key_here"
       }
@@ -114,7 +114,7 @@ For any MCP-compatible client, use the following configuration:
   "mcpServers": {
     "graphor_api": {
       "command": "npx",
-      "args": ["-y", "graphor-mcp"],
+      "args": ["-y", "graphor-mcp@latest"],
       "env": {
         "GRAPHOR_API_KEY": "grlm_your_api_key_here"
       }
@@ -125,6 +125,123 @@ For any MCP-compatible client, use the following configuration:
 
 <Note>
   See the full list of MCP-compatible clients at [modelcontextprotocol.io/clients](https://modelcontextprotocol.io/clients).
+</Note>
+
+## Remote MCP Server
+
+For web-based AI clients (e.g. Claude.ai) or agentic frameworks (e.g. LangChain, CrewAI) that cannot run local `npx` processes, use the hosted remote MCP server. Authentication is handled via **OAuth** — a browser window will open for you to log in.
+
+**Server URL:**
+
+```
+https://mcp.graphor.workers.dev/sse
+```
+
+### Claude.ai
+
+1. Go to **Settings > Connectors > Add custom connector**
+2. Fill in the **Name** (e.g. "Graphor")
+3. Set the **Remote MCP server URL** to:
+
+```
+https://mcp.graphor.workers.dev/sse
+```
+
+4. You will be redirected to log in through the OAuth flow
+5. Once authenticated, Graphor tools will be available in your conversations
+
+### Claude Desktop (Remote)
+
+Add the following to your Claude Desktop configuration file (**Settings > Developer > Edit Config**):
+
+```json
+{
+  "mcpServers": {
+    "graphor_api": {
+      "command": "npx",
+      "args": ["mcp-remote", "https://mcp.graphor.workers.dev/sse"]
+    }
+  }
+}
+```
+
+When you open Claude Desktop, a browser window will open for you to log in. After authenticating, the Graphor tools will appear in the bottom right of your conversation.
+
+### Cursor (Remote)
+
+Add the following to your Cursor MCP configuration (**Cursor Settings > Tools & MCP > New MCP Server**):
+
+```json
+{
+  "mcpServers": {
+    "graphor_api": {
+      "command": "npx",
+      "args": ["mcp-remote", "https://mcp.graphor.workers.dev/sse"]
+    }
+  }
+}
+```
+
+### Agentic Workflows (LangChain, CrewAI, etc.)
+
+For agentic frameworks that support MCP, connect to the remote server via SSE transport:
+
+**LangChain (Python):**
+
+```python
+from langchain_mcp_adapters.client import MultiServerMCPClient
+
+async with MultiServerMCPClient(
+    {
+        "graphor": {
+            "url": "https://mcp.graphor.workers.dev/sse",
+            "transport": "sse",
+        }
+    }
+) as client:
+    tools = client.get_tools()
+    # Use tools with your LangChain agent
+```
+
+**LangChain (TypeScript):**
+
+```typescript
+import { MultiServerMCPClient } from "@langchain/mcp-adapters";
+
+const client = new MultiServerMCPClient({
+  graphor: {
+    url: "https://mcp.graphor.workers.dev/sse",
+    transport: "sse",
+  }
+});
+
+const tools = await client.getTools();
+// Use tools with your LangChain agent
+```
+
+### Any MCP-compatible Client (Remote)
+
+For any client that supports remote MCP servers via SSE, use the URL:
+
+```
+https://mcp.graphor.workers.dev/sse
+```
+
+For clients that only support `stdio` transport, use [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) as a bridge:
+
+```json
+{
+  "mcpServers": {
+    "graphor_api": {
+      "command": "npx",
+      "args": ["mcp-remote", "https://mcp.graphor.workers.dev/sse"]
+    }
+  }
+}
+```
+
+<Note>
+  The OAuth flow will open a browser window on first connection. For headless environments, you may need to complete the OAuth flow beforehand or use [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) as a local proxy.
 </Note>
 
 ## Available Tools
