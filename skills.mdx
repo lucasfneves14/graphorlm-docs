@@ -3,7 +3,7 @@ title: 'Agent Skills'
 description: 'Give AI coding agents deep Graphor expertise with the Graphor Skills plugin for Claude Code and 27+ agent tools'
 ---
 
-**Graphor Skills** is a plugin that gives AI coding agents — such as Claude Code, Cursor, VS Code, GitHub Copilot, Gemini CLI, and more — deep domain expertise for working with Graphor. It bundles **MCP server connectivity** and **SDK coding knowledge** so your agent can upload, process, and query documents through natural language.
+**Graphor Skills** is a plugin that gives AI coding agents — such as Claude Code, Cursor, VS Code, GitHub Copilot, Gemini CLI, and more — deep domain expertise for working with Graphor. It bundles **MCP server connectivity** and **SDK coding knowledge** so your agent can ingest documents, poll build status, and query sources through natural language.
 
 <Card
   title="GitHub Repository"
@@ -19,7 +19,7 @@ The plugin bundles three skills and an MCP server configuration:
 
 <CardGroup cols={2}>
   <Card title="graphor-workflow" icon="diagram-project">
-    **Core skill** — teaches the agent the upload, process, query workflow using MCP tools. Auto-activates when relevant.
+    **Core skill** — teaches the agent the ingest → poll build status → query workflow using MCP tools. Auto-activates when relevant.
   </Card>
   <Card title="graphor-ts-sdk" icon="js">
     **TypeScript SDK patterns** — activates when writing TypeScript/JavaScript code with the `graphor` npm package.
@@ -36,7 +36,7 @@ The plugin bundles three skills and an MCP server configuration:
 
 The plugin follows the [Agent Skills](https://github.com/anthropics/agent-skills) open standard. When installed, the skills provide your agent with:
 
-1. **Contextual knowledge** — The agent learns Graphor's core workflow (upload, process, query), API patterns, and best practices automatically.
+1. **Contextual knowledge** — The agent learns Graphor's core workflow (ingest, poll build status, query), API patterns, and best practices automatically.
 2. **MCP server access** — The bundled `.mcp.json` configuration connects the agent to the Graphor MCP Server, giving it direct access to the API.
 3. **SDK coding assistance** — When writing code that uses the Graphor SDK, the agent gets language-specific patterns, method signatures, error handling, and type safety guidance.
 
@@ -100,40 +100,42 @@ Consult your agent tool's documentation for how to install Agent Skills plugins.
 
 The primary skill. It teaches the agent the complete Graphor workflow and activates automatically when you mention document operations.
 
-**Activation**: Auto-activates when the agent detects tasks related to uploading, processing, or querying documents in Graphor.
+**Activation**: Auto-activates when the agent detects tasks related to ingesting, polling build status, or querying documents in Graphor.
 
 **Core workflow**:
 
 ```
-Upload → Process → Query
+Ingest → Poll get_build_status → Query
 ```
 
-The skill enforces the three-step workflow:
+The skill enforces the async workflow:
 
-1. **Upload** a source — returns status `"New"`. If you set `partition_method` during upload, processing starts automatically.
-2. **Process** the source by calling parse — synchronous, returns when done (`"New"` → `"Processed"`). Only required if `partition_method` was not set during upload.
-3. **Query** the source (ask, extract, or retrieve chunks)
+1. **Ingest** a source (file, URL, GitHub, YouTube) via MCP — returns **build_id** immediately.
+2. **Poll get_build_status(build_id)** until **success** is true — status may be `Pending` (request received), then `Processing`, then `Completed`. Use the returned **file_id** for all subsequent operations.
+3. **Query** the source (ask, extract, retrieve_chunks, get_elements) or manage (list_sources, delete_source) using **file_id**.
+
+Optional: **Reprocess** an existing source with a different partition method — returns **build_id**; poll get_build_status again.
 
 <Warning>
-  If you did not set `partition_method` during upload, you must explicitly call parse to process the document. Parse is **synchronous** — when it returns, the document is ready to query.
+  Ingest and reprocess are **asynchronous**. Always poll **get_build_status** until **success** is true before using **file_id** for ask, extract, retrieve_chunks, or get_elements.
 </Warning>
 
 **Included rules**:
 
 | Rule | Description |
 |------|-------------|
-| `upload-sources` | Upload files, URLs, GitHub repos, or YouTube videos |
-| `parsing` | Process documents and check processing status |
+| `upload-sources` | Ingest files, URLs, GitHub repos, or YouTube videos (returns build_id; poll for file_id) |
+| `parsing` | Poll build status and reprocess documents |
 | `ask-sources` | Ask questions about documents with conversational Q&A |
 | `extraction` | Extract structured data using JSON Schema |
 | `retrieve-chunks` | Retrieve chunks for custom RAG pipelines |
-| `manage-sources` | List, inspect, or delete documents |
+| `manage-sources` | List sources, get elements, or delete documents |
 
 **Universal rules the agent follows**:
 
-1. Uses MCP tools for all operations
-2. Uses `file_ids` over `file_names` (deprecated) — stores `file_id` from upload responses
-3. Processes after upload if `partition_method` was not set during upload
+1. Uses MCP tools for all operations (ingest_file, ingest_url, ingest_github, ingest_youtube, get_build_status, list_sources, reprocess, get_elements, delete_source, ask, extract, retrieve_chunks)
+2. Uses **file_id** from get_build_status (when success is true) or list_sources — not from the ingest response (ingest returns build_id only)
+3. Polls get_build_status after ingest or reprocess until success is true
 4. If auth errors occur, the `GRAPHOR_API_KEY` environment variable is not set correctly
 
 ### graphor-ts-sdk
@@ -144,7 +146,8 @@ Background knowledge skill for writing TypeScript/JavaScript code with the Graph
 
 **Covers**:
 - Client setup and initialization
-- All SDK methods (`upload`, `uploadURL`, `uploadGitHub`, `uploadYoutube`, `parse`, `list`, `delete`, `loadElements`, `ask`, `extract`, `retrieveChunks`)
+- All SDK methods (`ingestFile`, `ingestURL`, `ingestGitHub`, `ingestYoutube`, `getBuildStatus`, `reprocess`, `list`, `delete`, `getElements`, `ask`, `extract`, `retrieveChunks`)
+- Async ingest workflow (build_id → poll getBuildStatus → file_id)
 - File upload patterns (`fs.createReadStream`, `toFile` helper)
 - Error handling (`Graphor.BadRequestError`, `Graphor.NotFoundError`, etc.)
 - Type safety and TypeScript interfaces
@@ -157,8 +160,9 @@ Background knowledge skill for writing Python code with the Graphor SDK.
 
 **Covers**:
 - Sync (`Graphor`) and async (`AsyncGraphor`) clients
-- All SDK methods (`upload`, `upload_url`, `upload_github`, `upload_youtube`, `parse`, `list`, `delete`, `load_elements`, `ask`, `extract`, `retrieve_chunks`)
-- File upload patterns (`open()` file objects)
+- All SDK methods (`ingest_file`, `ingest_url`, `ingest_github`, `ingest_youtube`, `get_build_status`, `reprocess`, `list`, `delete`, `get_elements`, `ask`, `extract`, `retrieve_chunks`)
+- Async ingest workflow (build_id → poll get_build_status → file_id)
+- File upload patterns (path, bytes, file-like objects)
 - Error handling (`graphor.BadRequestError`, `graphor.NotFoundError`, etc.)
 - Configuration (retries, timeouts, aiohttp)
 
@@ -185,39 +189,39 @@ The bundled `.mcp.json` uses `${GRAPHOR_API_KEY}` expansion to read this value a
 Once installed, just talk to your agent naturally:
 
 <AccordionGroup>
-  <Accordion icon="arrow-up-from-bracket" title="Upload and summarize a document">
-    **You say**: *"Upload https://example.com/report to Graphor and summarize it"*
+  <Accordion icon="arrow-up-from-bracket" title="Ingest and summarize a document">
+    **You say**: *"Ingest https://example.com/report into Graphor and summarize it"*
     
     **Agent will**:
-    1. Upload the URL via MCP
-    2. Call parse to process the document (synchronous)
-    3. Ask the document for a summary
+    1. Ingest the URL via MCP (ingest_url) → receives build_id
+    2. Poll get_build_status until success → obtains file_id
+    3. Ask the document for a summary using file_id
   </Accordion>
   
   <Accordion icon="table" title="Extract structured data">
     **You say**: *"Extract all invoice numbers and amounts from invoice.pdf in Graphor"*
     
     **Agent will**:
-    1. Look up the file in your project
-    2. Use the extract method with a JSON Schema
+    1. Look up the file in your project (or ingest it and poll for file_id)
+    2. Use the extract MCP tool with a JSON Schema and file_ids
     3. Return structured data
   </Accordion>
   
   <Accordion icon="code" title="Write SDK code">
-    **You say**: *"Write a Python script that uploads all PDFs in a folder to Graphor and extracts their titles"*
+    **You say**: *"Write a Python script that ingests all PDFs in a folder to Graphor and extracts their titles"*
     
     **Agent will**:
     1. Activate the `graphor-py-sdk` skill
-    2. Write idiomatic Python using `Graphor()`, `upload()`, `parse()`, and `extract()`
-    3. Include proper error handling and synchronous processing
+    2. Write idiomatic Python using `ingest_file()`, `get_build_status()` (poll), then `extract()` with file_id
+    3. Include proper error handling and async polling until success
   </Accordion>
   
   <Accordion icon="magnifying-glass" title="Build a RAG pipeline">
     **You say**: *"Retrieve the most relevant chunks about payment terms from my contract"*
     
     **Agent will**:
-    1. Use `retrieveChunks` via MCP
-    2. Return chunks with file names, page numbers, and relevance scores
+    1. Use the retrieve_chunks MCP tool (or SDK) with file_ids
+    2. Return chunks with file_id, page numbers, and relevance scores
   </Accordion>
 </AccordionGroup>
 
@@ -302,11 +306,11 @@ graphor-skills/
     Explore the full SDK documentation for Python and TypeScript
   </Card>
   <Card
-    title="Upload Sources"
+    title="Ingest Sources"
     icon="arrow-up-from-bracket"
     href="/sdk/sources/upload"
   >
-    Detailed guide on uploading documents, URLs, GitHub repos, and videos
+    Detailed guide on ingesting documents, URLs, GitHub repos, and videos
   </Card>
   <Card
     title="Data Extraction"
