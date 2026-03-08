@@ -249,7 +249,7 @@ Once installed, your agent has access to **12 tools** covering the full Graphor 
 | `ingest_url` | `url` | `crawlUrls`, `method` | `build_id` |
 | `ingest_github` | `url` | — | `build_id` |
 | `ingest_youtube` | `url` | — | `build_id` |
-| `get_build_status` | `build_id` | `suppress_elements`, `suppress_img_base64`, `page`, `page_size` | build status + `file_id` when complete |
+| `get_build_status` | `build_id` | `suppress_elements`, `suppress_img_base64`, `page`, `page_size` | build status + `file_id` when complete. Status can be `Pending` (not started), `Processing`, `Completed`, or `Processing failed` |
 
 The `method` parameter controls the partitioning strategy: `fast`, `balanced`, `accurate`, `vlm`, or `agentic`.
 
@@ -286,7 +286,7 @@ With the MCP server, your agent can perform any operation available in the Graph
 
     **Tool flow:**
     1. Call `ingest_file` (or `ingest_url` / `ingest_github` / `ingest_youtube`) → receive `build_id`
-    2. Call `get_build_status` with `build_id` repeatedly until `success: true`
+    2. Call `get_build_status` with `build_id` repeatedly until `success: true`. Status may be `Pending` (request received, build not started), then `Processing`, then `Completed`.
     3. Use the returned `file_id` for all subsequent operations
   </Accordion>
 

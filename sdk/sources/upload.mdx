@@ -189,7 +189,15 @@ Poll the status of an async ingestion (or reprocess). Use the **build_id** retur
 
 ### Return value
 
-When the build has been persisted, the response includes `success`, `status`, `file_id`, `file_name`, and optionally paginated `elements`. When the build is still in progress or not found, `success` is `false` and `status` may be `"not_found"`. Use `file_id` from a successful response for subsequent API calls.
+When the build has been persisted, the response includes `success`, `status`, `file_id`, `file_name`, and optionally paginated `elements`. Possible `status` values:
+
+- **`Completed`** — Build finished successfully; use `file_id` for subsequent calls.
+- **`Processing`** — Build is running; keep polling.
+- **`Pending`** — Request was received but the build has not started yet; keep polling.
+- **`Processing failed`** — Build failed; check `error` for details.
+- **`not_found`** — No history yet (build not started or invalid `build_id`).
+
+Use `file_id` from a response where `success` is `true` for subsequent API calls.
 
 ### Poll until complete
 
