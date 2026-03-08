@@ -1,58 +1,75 @@
 ---
 title: 'Upload Sources'
-description: 'Upload sources (files, web pages, GitHub, YouTube) to your project using the Graphor SDK'
+description: 'Ingest sources (files, URLs, GitHub, YouTube) and poll build status using the Graphor SDK'
 ---
 
-This page documents how to upload content to your Graphor project — whether that content is a **local file**, a **public web page URL**, a **public GitHub repository**, or a **public YouTube video**.
+This page documents how to **ingest** content into your Graphor project using the SDK. Ingestion is **asynchronous**: each method returns a **build_id** immediately; you then use **get build status** to poll until processing completes and get the **file_id** for use in other API calls.
+
+Supported sources: **local file**, **web page URL**, **GitHub repository**, and **YouTube video**.
+
+## Async flow
+
+1. Call one of the ingest methods (`ingest_file`, `ingest_url`, `ingest_github`, `ingest_youtube`). The method returns a **`build_id`**.
+2. Call **`get_build_status(build_id)`** to poll. When the returned status is completed, use the **`file_id`** for ask, extract, list elements, delete, etc.
 
 ## Available Methods
 
 <Tabs>
   <Tab title="Python">
     <CardGroup cols={2}>
-      <Card title="Upload a File" icon="arrow-up-from-bracket" href="#upload-a-file">
-        **`client.sources.upload()`**
+      <Card title="Get build status" icon="circle-info" href="#get-build-status">
+        **`client.sources.get_build_status(build_id)`**
         
-        Upload local files (PDF, DOCX, images, audio, video, etc.)
+        Poll status and optional elements for an async ingestion
       </Card>
-      <Card title="Upload Web Page" icon="link" href="#upload-from-url">
-        **`client.sources.upload_url()`**
+      <Card title="Ingest file" icon="arrow-up-from-bracket" href="#ingest-file">
+        **`client.sources.ingest_file()`**
         
-        Scrape and ingest a public web page by URL
+        Upload a local file; processing runs in the background
       </Card>
-      <Card title="Upload from GitHub" icon="code-branch" href="#upload-from-github">
-        **`client.sources.upload_github()`**
+      <Card title="Ingest URL" icon="link" href="#ingest-url">
+        **`client.sources.ingest_url()`**
         
-        Ingest content from a public GitHub repository
+        Ingest a public web page by URL (async)
       </Card>
-      <Card title="Upload from YouTube" icon="video" href="#upload-from-youtube">
-        **`client.sources.upload_youtube()`**
+      <Card title="Ingest GitHub" icon="code-branch" href="#ingest-github">
+        **`client.sources.ingest_github()`**
         
-        Ingest content from a public YouTube video URL
+        Ingest a public GitHub repository (async)
+      </Card>
+      <Card title="Ingest YouTube" icon="video" href="#ingest-youtube">
+        **`client.sources.ingest_youtube()`**
+        
+        Ingest a public YouTube video (async)
       </Card>
     </CardGroup>
   </Tab>
   <Tab title="TypeScript">
     <CardGroup cols={2}>
-      <Card title="Upload a File" icon="arrow-up-from-bracket" href="#upload-a-file">
-        **`client.sources.upload()`**
+      <Card title="Get build status" icon="circle-info" href="#get-build-status">
+        **`client.sources.getBuildStatus(buildId)`**
         
-        Upload local files (PDF, DOCX, images, audio, video, etc.)
+        Poll status and optional elements for an async ingestion
       </Card>
-      <Card title="Upload Web Page" icon="link" href="#upload-from-url">
-        **`client.sources.uploadURL()`**
+      <Card title="Ingest file" icon="arrow-up-from-bracket" href="#ingest-file">
+        **`client.sources.ingestFile()`**
         
-        Scrape and ingest a public web page by URL
+        Upload a local file; processing runs in the background
       </Card>
-      <Card title="Upload from GitHub" icon="code-branch" href="#upload-from-github">
-        **`client.sources.uploadGitHub()`**
+      <Card title="Ingest URL" icon="link" href="#ingest-url">
+        **`client.sources.ingestURL()`**
         
-        Ingest content from a public GitHub repository
+        Ingest a public web page by URL (async)
       </Card>
-      <Card title="Upload from YouTube" icon="video" href="#upload-from-youtube">
-        **`client.sources.uploadYoutube()`**
+      <Card title="Ingest GitHub" icon="code-branch" href="#ingest-github">
+        **`client.sources.ingestGitHub()`**
         
-        Ingest content from a public YouTube video URL
+        Ingest a public GitHub repository (async)
+      </Card>
+      <Card title="Ingest YouTube" icon="video" href="#ingest-youtube">
+        **`client.sources.ingestYoutube()`**
+        
+        Ingest a public YouTube video (async)
       </Card>
     </CardGroup>
   </Tab>
@@ -139,29 +156,107 @@ Then initialize the client without any arguments:
   Learn how to create and manage API tokens in the [API Tokens guide](/guides/api-tokens).
 </Note>
 
-## Upload a File
+## Get build status
 
-Upload a local file to your Graphor project for processing.
+Poll the status of an async ingestion (or reprocess). Use the **build_id** returned by any ingest method or by reprocess.
 
 ### Method Signature
 
 <Tabs>
   <Tab title="Python">
     ```python
-    client.sources.upload(
-        file: FileTypes,                              # Required
-        partition_method: PartitionMethod | None = None,  # Optional
+    client.sources.get_build_status(
+        build_id: str,                                    # Required
+        suppress_elements: bool = False,
+        suppress_img_base64: bool = False,
+        page: int | None = None,
+        page_size: int | None = None,
         timeout: float | None = None
-    ) -> PublicSource
+    ) -> BuildStatus
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    await client.sources.upload({
-      file: Uploadable,                                    // Required
-      partition_method?: 'basic' | 'hi_res' | 'hi_res_ft' | 'mai' | 'graphorlm' | null,
-    }): Promise<PublicSource>
+    await client.sources.getBuildStatus(buildId: string, options?: {
+      suppressElements?: boolean;
+      suppressImgBase64?: boolean;
+      page?: number;
+      pageSize?: number;
+    }): Promise<BuildStatus>
     ```
+  </Tab>
+</Tabs>
+
+### Return value
+
+When the build has been persisted, the response includes `success`, `status`, `file_id`, `file_name`, and optionally paginated `elements`. When the build is still in progress or not found, `success` is `false` and `status` may be `"not_found"`. Use `file_id` from a successful response for subsequent API calls.
+
+### Poll until complete
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+    import time
+
+    client = Graphor()
+
+    response = client.sources.ingest_file(file=Path("./document.pdf"))
+    build_id = response.build_id
+    while True:
+        status = client.sources.get_build_status(build_id)
+        if status.success:
+            file_id = status.file_id
+            print(f"Ready. file_id: {file_id}")
+            break
+        if status.error and status.status != "not_found":
+            raise RuntimeError(status.error)
+        time.sleep(2)
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    const client = new Graphor();
+    const { build_id: buildId } = await client.sources.ingestFile({ file: fs.createReadStream('./document.pdf') });
+
+    while (true) {
+      const status = await client.sources.getBuildStatus(buildId);
+      if (status.success) {
+        console.log('Ready. file_id:', status.file_id);
+        break;
+      }
+      if (status.error && status.status !== 'not_found') throw new Error(status.error);
+      await new Promise(r => setTimeout(r, 2000));
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Ingest file
+
+Upload a local file and schedule ingestion in the background. Returns a **build_id**; use [Get build status](#get-build-status) to poll until the source is ready.
+
+### Method Signature
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    client.sources.ingest_file(
+        file: FileTypes,                              # Required
+        method: str | None = None,                   # Optional: fast, balanced, accurate, vlm, agentic
+        timeout: float | None = None
+    ) -> SourceIngestFileResponse
+    ```
+    Returns **`SourceIngestFileResponse`** with `.build_id`.
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    await client.sources.ingestFile({
+      file: Uploadable,                                    // Required
+      method?: 'fast' | 'balanced' | 'accurate' | 'vlm' | 'agentic' | null,
+    }): Promise<SourceIngestFileResponse>
+    ```
+    Returns **`SourceIngestFileResponse`** with `.build_id`.
   </Tab>
 </Tabs>
 
@@ -172,100 +267,68 @@ Upload a local file to your Graphor project for processing.
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
     | `file` | `FileTypes` | The file to upload. Accepts `bytes`, `Path`, or tuple `(filename, contents, media_type)` | Yes |
-    | `partition_method` | `PartitionMethod` | Processing method to use (see [Partition Methods](#partition-methods) below) | No |
+    | `method` | `str \| None` | One of: `fast`, `balanced`, `accurate`, `vlm`, `agentic` (see [Partition methods](#partition-methods) below) | No |
     | `timeout` | `float` | Request timeout in seconds (default: 60) | No |
   </Tab>
   <Tab title="TypeScript">
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
     | `file` | `Uploadable` | The file to upload. Accepts `ReadStream`, `File`, `Response`, or `toFile()` helper | Yes |
-    | `partition_method` | `string \| null` | Processing method to use (see [Partition Methods](#partition-methods) below) | No |
+    | `method` | `string \| null` | One of: `fast`, `balanced`, `accurate`, `vlm`, `agentic` (see [Partition methods](#partition-methods) below) | No |
   </Tab>
 </Tabs>
 
-### Partition Methods
+### Partition methods
 
-When provided, the `partition_method` parameter allows you to process/parse the document immediately during upload. If not provided, the system uses the default method.
+When provided, `method` controls how the document is parsed. If omitted, the system default is used.
 
 | Value | Name | Description |
 |-------|------|-------------|
-| `"basic"` | Fast | Fast processing with heuristic classification. No OCR. |
-| `"hi_res"` | Balanced | OCR-based extraction with AI-powered structure classification. |
-| `"hi_res_ft"` | Accurate | Fine-tuned AI model for highest accuracy (Premium). |
-| `"mai"` | VLM | Best text-first parsing for manuscripts and handwritten documents. |
-| `"graphorlm"` | Agentic | Highest parsing setting for complex layouts, multi-page tables, and diagrams. |
+| `"fast"` | Fast | Fast processing with heuristic classification. No OCR. |
+| `"balanced"` | Balanced | OCR-based extraction with structure classification. |
+| `"accurate"` | Accurate | Fine-tuned model for highest accuracy (Premium). |
+| `"vlm"` | VLM | Best for manuscripts and handwritten content. |
+| `"agentic"` | Agentic | Highest accuracy for complex layouts, tables, and diagrams. |
 
 <Note>
-For more details about processing methods, see the [Parse Source](/sdk/sources/process) documentation.
+For more details, see [Reprocess source](/sdk/sources/process) documentation.
 </Note>
 
-### File Requirements
+### File requirements
 
 <AccordionGroup>
-  <Accordion icon="file-text" title="Supported File Types">
-    Graphor supports a wide range of document formats:
-    
-    **Documents**: PDF, DOC, DOCX, TXT, TEXT, MD, HTML, HTM
-    
-    **Presentations**: PPT, PPTX
-    
-    **Spreadsheets**: CSV, TSV, XLS, XLSX
-    
-    **Images**: PNG, JPG, JPEG, TIFF, BMP, HEIC
-    
-    **Audio**: MP3, WAV, M4A, OGG, FLAC
-    
-    **Video**: MP4, MOV, AVI, MKV, WEBM
+  <Accordion icon="file-text" title="Supported file types">
+    **Documents**: PDF, DOC, DOCX, ODT, TXT, TEXT, MD, HTML, HTM · **Presentations**: PPT, PPTX · **Spreadsheets**: CSV, TSV, XLS, XLSX · **Images**: PNG, JPG, JPEG, TIFF, BMP, HEIC · **Audio**: MP3, WAV, M4A, OGG, FLAC · **Video**: MP4, MOV, AVI, MKV, WEBM
   </Accordion>
-  
-  <Accordion icon="weight-scale" title="File Size Limits">
-    **Maximum file size**: 100MB per file
-    
-    For larger files, consider:
-    - Compressing the file if possible
-    - Splitting large documents into smaller sections
-    - Using file optimization tools before upload
+  <Accordion icon="weight-scale" title="File size limits">
+    **Maximum file size**: 100 MB per file. The request must include a Content-Length so the server can enforce the limit.
   </Accordion>
 </AccordionGroup>
 
-### Response Object
+### Code examples
 
-The method returns a `PublicSource` object with the following properties:
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `status` | `str` | Processing status (`New`, `Processing`, `Completed`, `Failed`) |
-| `message` | `str` | Human-readable success message |
-| `file_id` | `str \| None` | Unique identifier for the source (use this for subsequent API calls) |
-| `file_name` | `str` | Name of the uploaded file |
-| `file_size` | `int` | Size of the file in bytes |
-| `file_type` | `str` | File extension/type |
-| `file_source` | `str` | Source type (`local file`) |
-| `project_id` | `str` | UUID of the target project |
-| `project_name` | `str` | Name of the target project |
-| `partition_method` | `str \| None` | Document processing method used |
-
-### Code Examples
-
-#### Upload from File Path
+#### Ingest file and poll until ready
 
 <Tabs>
   <Tab title="Python">
     ```python
     from pathlib import Path
     from graphor import Graphor
+    import time
 
     client = Graphor()
 
-    # Upload using a Path object
-    source = client.sources.upload(
-        file=Path("./document.pdf")
-    )
+    build_id = client.sources.ingest_file(file=Path("./document.pdf"))
+    print(f"Build ID: {build_id}")
 
-    print(f"Uploaded: {source.file_name}")
-    print(f"File ID: {source.file_id}")
-    print(f"Status: {source.status}")
-    print(f"Project ID: {source.project_id}")
+    while True:
+        status = client.sources.get_build_status(build_id)
+        if status.success:
+            print(f"Ready. file_id: {status.file_id}")
+            break
+        if status.error and status.status != "not_found":
+            raise RuntimeError(status.error)
+        time.sleep(2)
     ```
   </Tab>
   <Tab title="TypeScript">
@@ -275,20 +338,25 @@ The method returns a `PublicSource` object with the following properties:
 
     const client = new Graphor();
 
-    // Upload using a ReadStream
-    const source = await client.sources.upload({
+    const { build_id: buildId } = await client.sources.ingestFile({
       file: fs.createReadStream('./document.pdf'),
     });
+    console.log('Build ID:', buildId);
 
-    console.log(`Uploaded: ${source.file_name}`);
-    console.log(`File ID: ${source.file_id}`);
-    console.log(`Status: ${source.status}`);
-    console.log(`Project ID: ${source.project_id}`);
+    while (true) {
+      const status = await client.sources.getBuildStatus(buildId);
+      if (status.success) {
+        console.log('Ready. file_id:', status.file_id);
+        break;
+      }
+      if (status.error && status.status !== 'not_found') throw new Error(status.error);
+      await new Promise(r => setTimeout(r, 2000));
+    }
     ```
   </Tab>
 </Tabs>
 
-#### Upload with Partition Method
+#### Ingest with partition method
 
 <Tabs>
   <Tab title="Python">
@@ -298,15 +366,11 @@ The method returns a `PublicSource` object with the following properties:
 
     client = Graphor()
 
-    # Upload and process with a specific partition method
-    source = client.sources.upload(
+    response = client.sources.ingest_file(
         file=Path("./document.pdf"),
-        partition_method="hi_res"  # Use Balanced processing
+        method="balanced"
     )
-
-    print(f"Uploaded: {source.file_name}")
-    print(f"File ID: {source.file_id}")
-    print(f"Partition Method: {source.partition_method}")
+    print(f"Build ID: {response.build_id}")
     ```
   </Tab>
   <Tab title="TypeScript">
@@ -316,148 +380,61 @@ The method returns a `PublicSource` object with the following properties:
 
     const client = new Graphor();
 
-    // Upload and process with a specific partition method
-    const source = await client.sources.upload({
+    const { build_id: buildId } = await client.sources.ingestFile({
       file: fs.createReadStream('./document.pdf'),
-      partition_method: 'hi_res', // Use Balanced processing
+      method: 'balanced',
     });
-
-    console.log(`Uploaded: ${source.file_name}`);
-    console.log(`File ID: ${source.file_id}`);
-    console.log(`Partition Method: ${source.partition_method}`);
+    console.log('Build ID:', buildId);
     ```
   </Tab>
 </Tabs>
 
-#### Upload from Bytes / Buffer
+#### Ingest from bytes / buffer
 
 <Tabs>
   <Tab title="Python">
     ```python
     from graphor import Graphor
-
     client = Graphor()
-
-    # Read file content as bytes
     with open("document.pdf", "rb") as f:
-        file_content = f.read()
-
-    # Upload raw bytes with filename tuple
-    source = client.sources.upload(
-        file=("document.pdf", file_content, "application/pdf")
-    )
-
-    print(f"Uploaded: {source.file_name}")
+        content = f.read()
+    build_id = client.sources.ingest_file(file=("document.pdf", content, "application/pdf"))
+    print(f"Build ID: {build_id}")
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
     import Graphor, { toFile } from 'graphor';
     import fs from 'fs';
-
     const client = new Graphor();
-
-    // Upload from a Buffer using the toFile helper
     const buffer = fs.readFileSync('document.pdf');
-    const source = await client.sources.upload({
+    const { build_id: buildId } = await client.sources.ingestFile({
       file: await toFile(buffer, 'document.pdf'),
     });
-
-    console.log(`Uploaded: ${source.file_name}`);
-
-    // Or upload from a fetch Response
-    const response = await fetch('https://example.com/document.pdf');
-    const source2 = await client.sources.upload({
-      file: await toFile(response, 'document.pdf'),
-    });
-
-    // Or upload using the File API (browsers)
-    // const source3 = await client.sources.upload({
-    //   file: new File(['my bytes'], 'document.txt'),
-    // });
+    console.log('Build ID:', buildId);
     ```
   </Tab>
 </Tabs>
 
-#### Async Upload
-
-<Tabs>
-  <Tab title="Python">
-    ```python
-    import asyncio
-    from pathlib import Path
-    from graphor import AsyncGraphor
-
-    async def upload_document():
-        client = AsyncGraphor()
-        
-        source = await client.sources.upload(
-            file=Path("./document.pdf")
-        )
-        
-        print(f"Uploaded: {source.file_name}")
-        print(f"Status: {source.status}")
-        
-        return source
-
-    # Run the async function
-    asyncio.run(upload_document())
-    ```
-  </Tab>
-  <Tab title="TypeScript">
-    ```typescript
-    import Graphor from 'graphor';
-    import fs from 'fs';
-
-    const client = new Graphor();
-
-    async function uploadDocument() {
-      const source = await client.sources.upload({
-        file: fs.createReadStream('./document.pdf'),
-      });
-
-      console.log(`Uploaded: ${source.file_name}`);
-      console.log(`Status: ${source.status}`);
-
-      return source;
-    }
-
-    await uploadDocument();
-    ```
-  </Tab>
-</Tabs>
-
-#### Batch Upload
+#### Batch ingest (returns build_ids)
 
 <Tabs>
   <Tab title="Python">
     ```python
     from pathlib import Path
     from graphor import Graphor
-
     client = Graphor()
-
-    def batch_upload(directory: str):
-        """Upload all supported documents from a directory."""
-        supported_extensions = {'.pdf', '.doc', '.docx', '.txt', '.md', '.html'}
-        uploaded_files = []
-        failed_files = []
-        
-        for file_path in Path(directory).iterdir():
-            if file_path.suffix.lower() in supported_extensions:
-                try:
-                    source = client.sources.upload(file=file_path)
-                    uploaded_files.append(source.file_name)
-                    print(f"OK - Uploaded: {file_path.name}")
-                except Exception as e:
-                    failed_files.append((file_path.name, str(e)))
-                    print(f"FAIL - {file_path.name}: {e}")
-        
-        print(f"\nSummary: {len(uploaded_files)} uploaded, {len(failed_files)} failed")
-        return uploaded_files, failed_files
-
-    # Usage
-    uploaded, failed = batch_upload("./documents/")
+    supported = {'.pdf', '.doc', '.docx', '.txt', '.md', '.html'}
+    build_ids = []
+    for path in Path("./documents").iterdir():
+        if path.suffix.lower() in supported:
+            try:
+                bid = client.sources.ingest_file(file=path)
+                build_ids.append(bid)
+                print(f"OK - Scheduled: {path.name} -> {bid}")
+            except Exception as e:
+                print(f"FAIL - {path.name}: {e}")
+    print(f"Summary: {len(build_ids)} scheduled")
     ```
   </Tab>
   <Tab title="TypeScript">
@@ -465,45 +442,29 @@ The method returns a `PublicSource` object with the following properties:
     import Graphor from 'graphor';
     import fs from 'fs';
     import path from 'path';
-
     const client = new Graphor();
-
-    async function batchUpload(directory: string) {
-      const supportedExtensions = new Set(['.pdf', '.doc', '.docx', '.txt', '.md', '.html']);
-      const uploadedFiles: string[] = [];
-      const failedFiles: { name: string; error: string }[] = [];
-
-      const files = fs.readdirSync(directory);
-
-      for (const file of files) {
-        const ext = path.extname(file).toLowerCase();
-        if (!supportedExtensions.has(ext)) continue;
-
-        const filePath = path.join(directory, file);
-        try {
-          const source = await client.sources.upload({
-            file: fs.createReadStream(filePath),
-          });
-          uploadedFiles.push(source.file_name);
-          console.log(`OK - Uploaded: ${file}`);
-        } catch (err) {
-          const message = err instanceof Graphor.APIError ? err.message : String(err);
-          failedFiles.push({ name: file, error: message });
-          console.log(`FAIL - ${file}: ${message}`);
-        }
+    const exts = new Set(['.pdf', '.doc', '.docx', '.txt', '.md', '.html']);
+    const buildIds: string[] = [];
+    for (const file of fs.readdirSync('./documents')) {
+      if (!exts.has(path.extname(file).toLowerCase())) continue;
+      try {
+        const { build_id: bid } = await client.sources.ingestFile({
+          file: fs.createReadStream(path.join('./documents', file)),
+        });
+        buildIds.push(bid);
+        console.log(`OK - Scheduled: ${file} -> ${bid}`);
+      } catch (err) {
+        console.log(`FAIL - ${file}:`, err);
       }
-
-      console.log(`\nSummary: ${uploadedFiles.length} uploaded, ${failedFiles.length} failed`);
-      return { uploadedFiles, failedFiles };
     }
-
-    // Usage
-    const { uploadedFiles, failedFiles } = await batchUpload('./documents/');
+    console.log(`Summary: ${buildIds.length} scheduled`);
     ```
   </Tab>
 </Tabs>
 
-### Error Handling
+### Error handling
+
+Ingest methods throw on invalid file type, missing Content-Length, size over 100 MB, or server errors. Use [Get build status](#get-build-status) to detect processing failures (e.g. `status.error`).
 
 <Tabs>
   <Tab title="Python">
@@ -511,49 +472,28 @@ The method returns a `PublicSource` object with the following properties:
     import graphor
     from graphor import Graphor
     from pathlib import Path
-
     client = Graphor()
-
     try:
-        source = client.sources.upload(
-            file=Path("./document.pdf")
-        )
-        print(f"Upload successful: {source.file_name}")
+        build_id = client.sources.ingest_file(file=Path("./document.pdf"))
+        print(f"Scheduled. Build ID: {build_id}")
     except graphor.BadRequestError as e:
         print(f"Invalid file type or request: {e}")
-    except graphor.AuthenticationError as e:
-        print(f"Invalid API key: {e}")
-    except graphor.RateLimitError as e:
-        print(f"Rate limit exceeded. Please wait and retry: {e}")
-    except graphor.APIConnectionError as e:
-        print(f"Connection error: {e}")
     except graphor.APIStatusError as e:
         print(f"API error (status {e.status_code}): {e}")
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    import Graphor from 'graphor';
-    import fs from 'fs';
-
-    const client = new Graphor();
-
     try {
-      const source = await client.sources.upload({
+      const { build_id: buildId } = await client.sources.ingestFile({
         file: fs.createReadStream('./document.pdf'),
       });
-      console.log(`Upload successful: ${source.file_name}`);
+      console.log('Scheduled. Build ID:', buildId);
     } catch (err) {
       if (err instanceof Graphor.BadRequestError) {
-        console.log(`Invalid file type or request: ${err.message}`);
-      } else if (err instanceof Graphor.AuthenticationError) {
-        console.log(`Invalid API key: ${err.message}`);
-      } else if (err instanceof Graphor.RateLimitError) {
-        console.log(`Rate limit exceeded. Please wait and retry: ${err.message}`);
-      } else if (err instanceof Graphor.APIConnectionError) {
-        console.log(`Connection error: ${err.message}`);
+        console.log('Invalid file type or request:', err.message);
       } else if (err instanceof Graphor.APIError) {
-        console.log(`API error (status ${err.status}): ${err.message}`);
+        console.log('API error (status ' + err.status + '):', err.message);
       } else {
         throw err;
       }
@@ -562,31 +502,33 @@ The method returns a `PublicSource` object with the following properties:
   </Tab>
 </Tabs>
 
-## Upload from URL
+## Ingest URL
 
-Ingest content by scraping a public web page.
+Ingest a web page by URL (async). Returns a **build_id**; use [Get build status](#get-build-status) to poll until ready.
 
-### Method Signature
+### Method signature
 
 <Tabs>
   <Tab title="Python">
     ```python
-    client.sources.upload_url(
+    client.sources.ingest_url(
         url: str,                                     # Required
         crawl_urls: bool = False,
-        partition_method: PartitionMethod | None = None,  # Optional
+        method: str | None = None,                   # Optional: fast, balanced, accurate, vlm, agentic
         timeout: float | None = None
-    ) -> PublicSource
+    ) -> SourceIngestURLResponse
     ```
+    Returns **`SourceIngestURLResponse`** with `.build_id`.
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    await client.sources.uploadURL({
+    await client.sources.ingestURL({
       url: string,                                         // Required
       crawlUrls?: boolean,
-      partition_method?: 'basic' | 'hi_res' | 'hi_res_ft' | 'mai' | 'graphorlm' | null,
-    }): Promise<PublicSource>
+      method?: 'fast' | 'balanced' | 'accurate' | 'vlm' | 'agentic' | null,
+    }): Promise<SourceIngestURLResponse>
     ```
+    Returns **`SourceIngestURLResponse`** with `.build_id`.
   </Tab>
 </Tabs>
 
@@ -596,17 +538,17 @@ Ingest content by scraping a public web page.
   <Tab title="Python">
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
-    | `url` | `str` | The URL of the web page to scrape | Yes |
-    | `crawl_urls` | `bool` | Whether to crawl and ingest links from the given URL (default: `False`) | No |
-    | `partition_method` | `PartitionMethod` | Processing method to use (see [Partition Methods](#partition-methods) above) | No |
+    | `url` | `str` | The web page URL to ingest | Yes |
+    | `crawl_urls` | `bool` | When true, follow and ingest links from the page (default: `False`) | No |
+    | `method` | `str \| None` | One of: `fast`, `balanced`, `accurate`, `vlm`, `agentic` | No |
     | `timeout` | `float` | Request timeout in seconds | No |
   </Tab>
   <Tab title="TypeScript">
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
-    | `url` | `string` | The URL of the web page to scrape | Yes |
-    | `crawlUrls` | `boolean` | Whether to crawl and ingest links from the given URL | No |
-    | `partition_method` | `string \| null` | Processing method to use (see [Partition Methods](#partition-methods) above) | No |
+    | `url` | `string` | The web page URL to ingest | Yes |
+    | `crawlUrls` | `boolean` | When true, follow and ingest links from the page | No |
+    | `method` | `string \| null` | One of: `fast`, `balanced`, `accurate`, `vlm`, `agentic` | No |
   </Tab>
 </Tabs>
 
@@ -626,7 +568,7 @@ Ingest content by scraping a public web page.
 
 ### Code Examples
 
-#### Basic Web Page Upload
+#### Basic URL ingest
 
 <Tabs>
   <Tab title="Python">
@@ -634,216 +576,63 @@ Ingest content by scraping a public web page.
     from graphor import Graphor
 
     client = Graphor()
-
-    # Scrape a single web page
-    source = client.sources.upload_url(
-        url="https://example.com/article"
-    )
-
-    print(f"Ingested: {source.file_name}")
-    print(f"Status: {source.status}")
+    build_id = client.sources.ingest_url(url="https://example.com/article")
+    print(f"Build ID: {build_id}")
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    import Graphor from 'graphor';
-
     const client = new Graphor();
-
-    // Scrape a single web page
-    const source = await client.sources.uploadURL({
-      url: 'https://example.com/article',
-    });
-
-    console.log(`Ingested: ${source.file_name}`);
-    console.log(`Status: ${source.status}`);
+    const { build_id: buildId } = await client.sources.ingestURL({ url: 'https://example.com/article' });
+    console.log('Build ID:', buildId);
     ```
   </Tab>
 </Tabs>
 
-#### Upload with Web Page Crawling
+#### Ingest with crawling
 
 <Tabs>
   <Tab title="Python">
     ```python
-    from graphor import Graphor
-
-    client = Graphor()
-
-    # Scrape a page and follow links
-    source = client.sources.upload_url(
+    build_id = client.sources.ingest_url(
         url="https://example.com/documentation",
         crawl_urls=True
     )
-
-    print(f"Ingested: {source.file_name}")
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    import Graphor from 'graphor';
-
-    const client = new Graphor();
-
-    // Scrape a page and follow links
-    const source = await client.sources.uploadURL({
+    const { build_id: buildId } = await client.sources.ingestURL({
       url: 'https://example.com/documentation',
       crawlUrls: true,
     });
-
-    console.log(`Ingested: ${source.file_name}`);
     ```
   </Tab>
 </Tabs>
 
-#### Upload with Partition Method
+## Ingest GitHub
+
+Ingest a public GitHub repository (async). Returns a **build_id**; use [Get build status](#get-build-status) to poll until ready.
+
+### Method signature
 
 <Tabs>
   <Tab title="Python">
     ```python
-    from graphor import Graphor
-
-    client = Graphor()
-
-    # Scrape a web page with a specific processing method
-    source = client.sources.upload_url(
-        url="https://example.com/article",
-        partition_method="hi_res"  # Use Balanced processing
-    )
-
-    print(f"Ingested: {source.file_name}")
-    print(f"File ID: {source.file_id}")
-    print(f"Partition Method: {source.partition_method}")
-    ```
-  </Tab>
-  <Tab title="TypeScript">
-    ```typescript
-    import Graphor from 'graphor';
-
-    const client = new Graphor();
-
-    // Scrape a web page with a specific processing method
-    const source = await client.sources.uploadURL({
-      url: 'https://example.com/article',
-      partition_method: 'hi_res', // Use Balanced processing
-    });
-
-    console.log(`Ingested: ${source.file_name}`);
-    console.log(`File ID: ${source.file_id}`);
-    console.log(`Partition Method: ${source.partition_method}`);
-    ```
-  </Tab>
-</Tabs>
-
-#### Async Web Page Upload
-
-<Tabs>
-  <Tab title="Python">
-    ```python
-    import asyncio
-    from graphor import AsyncGraphor
-
-    async def ingest_webpage(url: str):
-        client = AsyncGraphor()
-        
-        source = await client.sources.upload_url(
-            url=url,
-            crawl_urls=False
-        )
-        
-        print(f"Ingested: {source.file_name}")
-        return source
-
-    asyncio.run(ingest_webpage("https://example.com"))
-    ```
-  </Tab>
-  <Tab title="TypeScript">
-    ```typescript
-    import Graphor from 'graphor';
-
-    const client = new Graphor();
-
-    async function ingestWebpage(url: string) {
-      const source = await client.sources.uploadURL({
-        url,
-        crawlUrls: false,
-      });
-
-      console.log(`Ingested: ${source.file_name}`);
-      return source;
-    }
-
-    await ingestWebpage('https://example.com');
-    ```
-  </Tab>
-</Tabs>
-
-### Error Handling
-
-<Tabs>
-  <Tab title="Python">
-    ```python
-    import graphor
-    from graphor import Graphor
-
-    client = Graphor()
-
-    try:
-        source = client.sources.upload_url(
-            url="https://example.com/article"
-        )
-        print(f"URL ingested: {source.file_name}")
-    except graphor.BadRequestError as e:
-        print(f"Invalid URL: {e}")
-    except graphor.APIStatusError as e:
-        print(f"Failed to process URL (status {e.status_code}): {e}")
-    ```
-  </Tab>
-  <Tab title="TypeScript">
-    ```typescript
-    import Graphor from 'graphor';
-
-    const client = new Graphor();
-
-    try {
-      const source = await client.sources.uploadURL({
-        url: 'https://example.com/article',
-      });
-      console.log(`URL ingested: ${source.file_name}`);
-    } catch (err) {
-      if (err instanceof Graphor.BadRequestError) {
-        console.log(`Invalid URL: ${err.message}`);
-      } else if (err instanceof Graphor.APIError) {
-        console.log(`Failed to process URL (status ${err.status}): ${err.message}`);
-      } else {
-        throw err;
-      }
-    }
-    ```
-  </Tab>
-</Tabs>
-
-## Upload from GitHub
-
-Ingest content from a public GitHub repository.
-
-### Method Signature
-
-<Tabs>
-  <Tab title="Python">
-    ```python
-    client.sources.upload_github(
+    client.sources.ingest_github(
         url: str,              # Required
         timeout: float | None = None
-    ) -> PublicSource
+    ) -> str
     ```
+    Returns **build_id** (str).
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    await client.sources.uploadGitHub({
+    await client.sources.ingestGitHub({
       url: string,              // Required
-    }): Promise<PublicSource>
+    }): Promise<string>
     ```
+    Returns **build_id** (string).
   </Tab>
 </Tabs>
 
@@ -853,13 +642,13 @@ Ingest content from a public GitHub repository.
   <Tab title="Python">
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
-    | `url` | `str` | The GitHub repository URL (e.g., `https://github.com/org/repo`) | Yes |
+    | `url` | `str` | GitHub repo URL (e.g. `https://github.com/org/repo`) | Yes |
     | `timeout` | `float` | Request timeout in seconds | No |
   </Tab>
   <Tab title="TypeScript">
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
-    | `url` | `string` | The GitHub repository URL (e.g., `https://github.com/org/repo`) | Yes |
+    | `url` | `string` | GitHub repo URL (e.g. `https://github.com/org/repo`) | Yes |
   </Tab>
 </Tabs>
 
@@ -879,150 +668,51 @@ Ingest content from a public GitHub repository.
 
 ### Code Examples
 
-#### Basic GitHub Upload
+#### Basic GitHub ingest
 
 <Tabs>
   <Tab title="Python">
     ```python
     from graphor import Graphor
-
     client = Graphor()
-
-    # Ingest a public GitHub repository
-    source = client.sources.upload_github(
-        url="https://github.com/organization/repository"
-    )
-
-    print(f"Ingested: {source.file_name}")
-    print(f"Status: {source.status}")
-    print(f"Project: {source.project_name}")
+    build_id = client.sources.ingest_github(url="https://github.com/organization/repository")
+    print(f"Build ID: {build_id}")
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    import Graphor from 'graphor';
-
     const client = new Graphor();
-
-    // Ingest a public GitHub repository
-    const source = await client.sources.uploadGitHub({
+    const { build_id: buildId } = await client.sources.ingestGitHub({
       url: 'https://github.com/organization/repository',
     });
-
-    console.log(`Ingested: ${source.file_name}`);
-    console.log(`Status: ${source.status}`);
-    console.log(`Project: ${source.project_name}`);
+    console.log('Build ID:', buildId);
     ```
   </Tab>
 </Tabs>
 
-#### Async GitHub Upload
+## Ingest YouTube
+
+Ingest a public YouTube video (async). Returns a **build_id**; use [Get build status](#get-build-status) to poll until ready.
+
+### Method signature
 
 <Tabs>
   <Tab title="Python">
     ```python
-    import asyncio
-    from graphor import AsyncGraphor
-
-    async def ingest_github_repo(repo_url: str):
-        client = AsyncGraphor()
-        
-        source = await client.sources.upload_github(url=repo_url)
-        
-        print(f"Repository ingested: {source.file_name}")
-        return source
-
-    asyncio.run(ingest_github_repo("https://github.com/org/repo"))
-    ```
-  </Tab>
-  <Tab title="TypeScript">
-    ```typescript
-    import Graphor from 'graphor';
-
-    const client = new Graphor();
-
-    async function ingestGithubRepo(repoUrl: string) {
-      const source = await client.sources.uploadGitHub({ url: repoUrl });
-
-      console.log(`Repository ingested: ${source.file_name}`);
-      return source;
-    }
-
-    await ingestGithubRepo('https://github.com/org/repo');
-    ```
-  </Tab>
-</Tabs>
-
-### Error Handling
-
-<Tabs>
-  <Tab title="Python">
-    ```python
-    import graphor
-    from graphor import Graphor
-
-    client = Graphor()
-
-    try:
-        source = client.sources.upload_github(
-            url="https://github.com/org/repo"
-        )
-        print(f"GitHub repo ingested: {source.file_name}")
-    except graphor.BadRequestError as e:
-        print(f"Invalid GitHub URL: {e}")
-    except graphor.NotFoundError as e:
-        print(f"Repository not found or not accessible: {e}")
-    except graphor.APIStatusError as e:
-        print(f"Failed to process repository (status {e.status_code}): {e}")
-    ```
-  </Tab>
-  <Tab title="TypeScript">
-    ```typescript
-    import Graphor from 'graphor';
-
-    const client = new Graphor();
-
-    try {
-      const source = await client.sources.uploadGitHub({
-        url: 'https://github.com/org/repo',
-      });
-      console.log(`GitHub repo ingested: ${source.file_name}`);
-    } catch (err) {
-      if (err instanceof Graphor.BadRequestError) {
-        console.log(`Invalid GitHub URL: ${err.message}`);
-      } else if (err instanceof Graphor.NotFoundError) {
-        console.log(`Repository not found or not accessible: ${err.message}`);
-      } else if (err instanceof Graphor.APIError) {
-        console.log(`Failed to process repository (status ${err.status}): ${err.message}`);
-      } else {
-        throw err;
-      }
-    }
-    ```
-  </Tab>
-</Tabs>
-
-## Upload from YouTube
-
-Ingest content from a public YouTube video.
-
-### Method Signature
-
-<Tabs>
-  <Tab title="Python">
-    ```python
-    client.sources.upload_youtube(
+    client.sources.ingest_youtube(
         url: str,              # Required
         timeout: float | None = None
-    ) -> PublicSource
+    ) -> str
     ```
+    Returns **build_id** (str).
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    await client.sources.uploadYoutube({
+    await client.sources.ingestYoutube({
       url: string,              // Required
-    }): Promise<PublicSource>
+    }): Promise<string>
     ```
+    Returns **build_id** (string).
   </Tab>
 </Tabs>
 
@@ -1032,13 +722,13 @@ Ingest content from a public YouTube video.
   <Tab title="Python">
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
-    | `url` | `str` | The YouTube video URL (e.g., `https://www.youtube.com/watch?v=...`) | Yes |
+    | `url` | `str` | YouTube video URL (e.g. `https://www.youtube.com/watch?v=...`) | Yes |
     | `timeout` | `float` | Request timeout in seconds | No |
   </Tab>
   <Tab title="TypeScript">
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
-    | `url` | `string` | The YouTube video URL (e.g., `https://www.youtube.com/watch?v=...`) | Yes |
+    | `url` | `string` | YouTube video URL (e.g. `https://www.youtube.com/watch?v=...`) | Yes |
   </Tab>
 </Tabs>
 
@@ -1058,132 +748,33 @@ Ingest content from a public YouTube video.
 
 ### Code Examples
 
-#### Basic YouTube Upload
+#### Basic YouTube ingest
 
 <Tabs>
   <Tab title="Python">
     ```python
     from graphor import Graphor
-
     client = Graphor()
-
-    # Ingest a YouTube video
-    source = client.sources.upload_youtube(
-        url="https://www.youtube.com/watch?v=VIDEO_ID"
-    )
-
-    print(f"Ingested: {source.file_name}")
-    print(f"Status: {source.status}")
+    build_id = client.sources.ingest_youtube(url="https://www.youtube.com/watch?v=VIDEO_ID")
+    print(f"Build ID: {build_id}")
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    import Graphor from 'graphor';
-
     const client = new Graphor();
-
-    // Ingest a YouTube video
-    const source = await client.sources.uploadYoutube({
+    const { build_id: buildId } = await client.sources.ingestYoutube({
       url: 'https://www.youtube.com/watch?v=VIDEO_ID',
     });
-
-    console.log(`Ingested: ${source.file_name}`);
-    console.log(`Status: ${source.status}`);
-    ```
-  </Tab>
-</Tabs>
-
-#### Async YouTube Upload
-
-<Tabs>
-  <Tab title="Python">
-    ```python
-    import asyncio
-    from graphor import AsyncGraphor
-
-    async def ingest_youtube_video(video_url: str):
-        client = AsyncGraphor()
-        
-        source = await client.sources.upload_youtube(url=video_url)
-        
-        print(f"Video ingested: {source.file_name}")
-        return source
-
-    asyncio.run(ingest_youtube_video("https://www.youtube.com/watch?v=VIDEO_ID"))
-    ```
-  </Tab>
-  <Tab title="TypeScript">
-    ```typescript
-    import Graphor from 'graphor';
-
-    const client = new Graphor();
-
-    async function ingestYoutubeVideo(videoUrl: string) {
-      const source = await client.sources.uploadYoutube({ url: videoUrl });
-
-      console.log(`Video ingested: ${source.file_name}`);
-      return source;
-    }
-
-    await ingestYoutubeVideo('https://www.youtube.com/watch?v=VIDEO_ID');
-    ```
-  </Tab>
-</Tabs>
-
-### Error Handling
-
-<Tabs>
-  <Tab title="Python">
-    ```python
-    import graphor
-    from graphor import Graphor
-
-    client = Graphor()
-
-    try:
-        source = client.sources.upload_youtube(
-            url="https://www.youtube.com/watch?v=VIDEO_ID"
-        )
-        print(f"YouTube video ingested: {source.file_name}")
-    except graphor.BadRequestError as e:
-        print(f"Invalid YouTube URL: {e}")
-    except graphor.NotFoundError as e:
-        print(f"Video not found or not accessible: {e}")
-    except graphor.APIStatusError as e:
-        print(f"Failed to process video (status {e.status_code}): {e}")
-    ```
-  </Tab>
-  <Tab title="TypeScript">
-    ```typescript
-    import Graphor from 'graphor';
-
-    const client = new Graphor();
-
-    try {
-      const source = await client.sources.uploadYoutube({
-        url: 'https://www.youtube.com/watch?v=VIDEO_ID',
-      });
-      console.log(`YouTube video ingested: ${source.file_name}`);
-    } catch (err) {
-      if (err instanceof Graphor.BadRequestError) {
-        console.log(`Invalid YouTube URL: ${err.message}`);
-      } else if (err instanceof Graphor.NotFoundError) {
-        console.log(`Video not found or not accessible: ${err.message}`);
-      } else if (err instanceof Graphor.APIError) {
-        console.log(`Failed to process video (status ${err.status}): ${err.message}`);
-      } else {
-        throw err;
-      }
-    }
+    console.log('Build ID:', buildId);
     ```
   </Tab>
 </Tabs>
 
 ## Advanced Configuration
 
-### Custom Timeout
+### Custom timeout
 
-For large files or slow connections, you can increase the timeout:
+For large files or slow connections, increase the ingest request timeout. Use [Get build status](#get-build-status) with a suitable poll interval for long-running processing.
 
 <Tabs>
   <Tab title="Python">
@@ -1191,27 +782,19 @@ For large files or slow connections, you can increase the timeout:
     from graphor import Graphor
     from pathlib import Path
 
-    client = Graphor(
-        timeout=300.0  # 5 minutes
-    )
+    client = Graphor(timeout=300.0)  # 5 minutes
 
     # Or per-request
-    source = client.with_options(timeout=300.0).sources.upload(
+    build_id = client.with_options(timeout=300.0).sources.ingest_file(
         file=Path("./large-document.pdf")
     )
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    import Graphor from 'graphor';
-    import fs from 'fs';
+    const client = new Graphor({ timeout: 300 * 1000 }); // 5 minutes
 
-    const client = new Graphor({
-      timeout: 300 * 1000, // 5 minutes (milliseconds)
-    });
-
-    // Or per-request
-    const source = await client.sources.upload(
+    const { build_id: buildId } = await client.sources.ingestFile(
       { file: fs.createReadStream('./large-document.pdf') },
       { timeout: 300 * 1000 },
     );
@@ -1219,37 +802,22 @@ For large files or slow connections, you can increase the timeout:
   </Tab>
 </Tabs>
 
-### Retry Configuration
+### Retry configuration
 
-Configure automatic retries for transient errors:
+Configure automatic retries for transient errors on ingest or get_build_status:
 
 <Tabs>
   <Tab title="Python">
     ```python
-    from graphor import Graphor
-    from pathlib import Path
-
-    client = Graphor(
-        max_retries=5  # Default is 2
-    )
-
-    # Or per-request
-    source = client.with_options(max_retries=5).sources.upload(
-        file=Path("./document.pdf")
-    )
+    client = Graphor(max_retries=5)
+    response = client.with_options(max_retries=5).sources.ingest_file(file=Path("./document.pdf"))
+    build_id = response.build_id
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    import Graphor from 'graphor';
-    import fs from 'fs';
-
-    const client = new Graphor({
-      maxRetries: 5, // Default is 2
-    });
-
-    // Or per-request
-    const source = await client.sources.upload(
+    const client = new Graphor({ maxRetries: 5 });
+    const { build_id: buildId } = await client.sources.ingestFile(
       { file: fs.createReadStream('./document.pdf') },
       { maxRetries: 5 },
     );
@@ -1257,45 +825,26 @@ Configure automatic retries for transient errors:
   </Tab>
 </Tabs>
 
-### Accessing Raw Response (Python only)
-
-Access headers and other response metadata:
+### Accessing raw response (Python only)
 
 ```python
-from graphor import Graphor
-from pathlib import Path
-
-client = Graphor()
-
-response = client.sources.with_raw_response.upload(
-    file=Path("./document.pdf")
-)
-
-print(f"Headers: {response.headers}")
-source = response.parse()  # Get the PublicSource object
-print(f"Uploaded: {source.file_name}")
+response = client.sources.with_raw_response.ingest_file(file=Path("./document.pdf"))
+print("Headers:", response.headers)
+build_id = response.parse()  # str
 ```
 
-### Using aiohttp for Better Concurrency (Python only)
-
-For high-concurrency async operations:
+### Using aiohttp for concurrency (Python only)
 
 ```python
 import asyncio
 from graphor import AsyncGraphor, DefaultAioHttpClient
 
-async def upload_many_files(file_paths: list):
-    async with AsyncGraphor(
-        http_client=DefaultAioHttpClient()
-    ) as client:
-        tasks = [
-            client.sources.upload(file=path)
-            for path in file_paths
-        ]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        return results
+async def ingest_many_files(file_paths: list):
+    async with AsyncGraphor(http_client=DefaultAioHttpClient()) as client:
+        tasks = [client.sources.ingest_file(file=p) for p in file_paths]
+        return await asyncio.gather(*tasks, return_exceptions=True)
 
-# Install aiohttp first: pip install graphor[aiohttp]
+# pip install graphor[aiohttp]
 ```
 
 ## Error Reference
@@ -1313,35 +862,35 @@ async def upload_many_files(file_paths: list):
 
 ## Next Steps
 
-After successfully uploading your documents:
+After ingesting, use [Get build status](#get-build-status) to wait until processing completes, then:
 
 <CardGroup cols={2}>
   <Card
-    title="Parse Source"
+    title="Reprocess source"
     icon="gears"
     href="/sdk/sources/process"
   >
-    Reprocess documents with different parsing methods for optimal results
+    Reprocess a source with a different partition method
   </Card>
   <Card
-    title="List Sources"
+    title="List sources"
     icon="list"
     href="/sdk/sources/list"
   >
-    Retrieve information about all uploaded documents in your project
+    List all sources (optionally filter by file_ids)
   </Card>
   <Card
-    title="List Parse Results"
+    title="Get elements"
     icon="file-dashed-line"
     href="/sdk/sources/list-elements"
   >
-    Retrieve structured elements and partitions from processed documents
+    Retrieve parsed elements/chunks from a source
   </Card>
   <Card
-    title="Delete Source"
+    title="Delete source"
     icon="trash"
     href="/sdk/sources/delete"
   >
-    Remove documents that are no longer needed from your project
+    Remove a source by file_id
   </Card>
 </CardGroup>

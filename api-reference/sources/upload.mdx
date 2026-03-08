@@ -3,557 +3,311 @@ title: 'Upload Sources'
 description: 'Upload sources (files, web pages, GitHub, YouTube) to your project via the Graphor REST API'
 ---
 
-This page documents Graphor's **source ingestion** endpoints. Use it to upload content to your project via the REST API — whether that content is a **local file**, a **public web page URL**, a **public GitHub repository**, or a **public YouTube video**.
+This page documents Graphor's **source ingestion** endpoints. All ingestion is **asynchronous**: you send a request, receive a **build ID** immediately, and then poll the **build status** endpoint until processing completes. Use these endpoints to add content to your project — whether that content is a **local file**, a **public web page URL**, a **public GitHub repository**, or a **public YouTube video**.
 
 ## Endpoints
 
 <CardGroup cols={2}>
-  <Card title="Upload a File" icon="arrow-up-from-bracket" href="/api-reference/sources/upload#upload-a-file">
-    **POST** `https://sources.graphorlm.com/upload`
+  <Card title="Get build status" icon="circle-info" href="/api-reference/sources/upload#get-build-status">
+    **GET** `https://sources.graphorlm.com/builds/{build_id}`
     
-    Upload local files (PDF, DOCX, images, audio, video, etc.)
+    Poll status and optional parsed elements for an async ingestion
   </Card>
-  <Card title="Upload from URL" icon="link" href="/api-reference/sources/upload#upload-from-url">
-    **POST** `https://sources.graphorlm.com/upload-url-source`
+  <Card title="Ingest file" icon="arrow-up-from-bracket" href="/api-reference/sources/upload#ingest-file">
+    **POST** `https://sources.graphorlm.com/ingest-file`
     
-    Scrape and ingest a public web page by URL
+    Upload a local file; processing runs in the background
   </Card>
-  <Card title="Upload from GitHub" icon="code-branch" href="/api-reference/sources/upload#upload-from-github">
-    **POST** `https://sources.graphorlm.com/upload-github-source`
+  <Card title="Ingest URL" icon="link" href="/api-reference/sources/upload#ingest-url">
+    **POST** `https://sources.graphorlm.com/ingest-url`
     
-    Ingest content from a public GitHub repository
+    Ingest a public web page by URL (async)
   </Card>
-  <Card title="Upload from YouTube" icon="video" href="/api-reference/sources/upload#upload-from-youtube">
-    **POST** `https://sources.graphorlm.com/upload-youtube-source`
+  <Card title="Ingest GitHub" icon="code-branch" href="/api-reference/sources/upload#ingest-github">
+    **POST** `https://sources.graphorlm.com/ingest-github`
     
-    Ingest content from a public YouTube video URL
+    Ingest a public GitHub repository (async)
+  </Card>
+  <Card title="Ingest YouTube" icon="video" href="/api-reference/sources/upload#ingest-youtube">
+    **POST** `https://sources.graphorlm.com/ingest-youtube`
+    
+    Ingest a public YouTube video (async)
   </Card>
 </CardGroup>
 
 ## Authentication
 
-All endpoints on this page require authentication using an API token. You must include your API token as a Bearer token in the Authorization header.
+All endpoints on this page require authentication using an API token. Include your API token as a Bearer token in the `Authorization` header.
 
 <Note>
   Learn how to create and manage API tokens in the [API Tokens guide](/guides/api-tokens).
 </Note>
 
-## Upload a File
+## Async ingestion flow
 
-### Endpoint Overview
+1. **Call one of the ingest endpoints** (file, URL, GitHub, or YouTube). The request is validated and the job is scheduled; the response returns immediately with a **`build_id`**.
+2. **Poll GET `/builds/{build_id}`** to check status. When `status` is `Completed`, the source is ready; when `status` indicates failure, check the `error` field.
+3. **Use the returned `file_id`** (once the build has completed) for subsequent API calls (ask, extract, retrieve, delete, etc.).
+
+<Note>
+  The **Get build status** endpoint can also return paginated **parsed elements** (chunks) for a completed build when you do not set `suppress_elements=true`.
+</Note>
+
+## Get build status
+
+Use this endpoint to poll the result of an async ingestion (or re-process). The **build_id** is returned by:
+
+- **POST** `/ingest-file`
+- **POST** `/ingest-url`
+- **POST** `/ingest-github`
+- **POST** `/ingest-youtube`
+- **POST** `/reprocess` (re-process)
+
+### Endpoint overview
 
 <CardGroup cols={2}>
   <Card title="HTTP Method" icon="arrow-up">
-    **POST**
+    **GET**
   </Card>
   <Card title="Endpoint URL" icon="link">
-    **https://sources.graphorlm.com/upload**
+    **https://sources.graphorlm.com/builds/{build_id}**
   </Card>
 </CardGroup>
 
-### Authentication
+### Path parameter
 
-Uses the same API token authentication described in [Authentication](#authentication).
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `build_id` | string | The build identifier returned when the job was scheduled |
 
-### Request Format
+### Query parameters
 
-### Headers
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `suppress_elements` | boolean | `false` | When `true`, elements are omitted from the response |
+| `suppress_img_base64` | boolean | `false` | When `true`, `img_base64` is omitted from each element |
+| `page` | integer | — | 1-based page number (use with `page_size` for pagination) |
+| `page_size` | integer | — | Number of elements per page (max 100) |
 
-| Header | Value | Required |
-|--------|-------|----------|
-| `Authorization` | `Bearer YOUR_API_TOKEN` | ✅ Yes |
-| `Content-Type` | `multipart/form-data` | ✅ Yes |
+### Success response (200 OK)
 
-### Request Body
-
-The request must be sent as `multipart/form-data` with the following fields:
-
-| Field | Type | Description | Required |
-|-------|------|-------------|----------|
-| `file` | File | The document file to upload | ✅ Yes |
-| `partition_method` | string | Processing method to use (see [Partition Methods](#partition-methods) below) | No |
-
-### Partition Methods
-
-When provided, the `partition_method` parameter allows you to process/parse the document immediately during upload. If not provided, the system uses the default method.
-
-| Value | Name | Description |
-|-------|------|-------------|
-| `basic` | Fast | Fast processing with heuristic classification. No OCR. |
-| `hi_res` | Balanced | OCR-based extraction with AI-powered structure classification. |
-| `hi_res_ft` | Accurate | Fine-tuned AI model for highest accuracy (Premium). |
-| `mai` | VLM | Best text-first parsing for manuscripts and handwritten documents. |
-| `graphorlm` | Agentic | Highest parsing setting for complex layouts, multi-page tables, and diagrams. |
-
-<Note>
-For more details about processing methods, see the [Process Source](/api-reference/sources/process) documentation.
-</Note>
-
-### File Requirements
-
-<AccordionGroup>
-  <Accordion icon="file-text" title="Supported File Types">
-    Graphor supports a wide range of document formats:
-    
-    **Documents**: PDF, DOC, DOCX, TXT, TEXT, MD, HTML, HTM
-    
-    **Presentations**: PPT, PPTX
-    
-    **Spreadsheets**: CSV, TSV, XLS, XLSX
-    
-    **Images**: PNG, JPG, JPEG, TIFF, BMP, HEIC
-    
-    **Audio**: MP3, WAV, M4A, OGG, FLAC
-    
-    **Video**: MP4, MOV, AVI, MKV, WEBM
-  </Accordion>
-  
-  <Accordion icon="weight-scale" title="File Size Limits">
-    **Maximum file size**: 100MB per file
-    
-    For larger files, consider:
-    - Compressing the file if possible
-    - Splitting large documents into smaller sections
-    - Using file optimization tools before upload
-  </Accordion>
-  
-  <Accordion icon="file-signature" title="File Name Requirements">
-    - File must have a valid filename with extension
-    - Extension determines the processing method
-    - File names should be descriptive for easy identification
-  </Accordion>
-</AccordionGroup>
-
-### Response Format
-
-### Success Response (200 OK)
+When the build has been persisted (history exists), the response includes status and optional metadata:
 
 ```json
 {
-  "status": "New",
-  "message": "File document.pdf processed successfully",
-  "file_id": "file_abc123",
-  "file_name": "document.pdf",
-  "file_size": 2048576,
-  "file_type": "pdf",
-  "file_source": "local file",
-  "project_id": "550e8400-e29b-41d4-a716-446655440000",
-  "project_name": "My Project",
-  "partition_method": "basic"
+  "build_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "Completed",
+  "success": true,
+  "file_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "file_name": "report.pdf",
+  "error": null,
+  "method": "balanced",
+  "total_partitions": 42,
+  "total_pages": 10,
+  "created_at": "2025-03-07T12:00:00Z",
+  "updated_at": "2025-03-07T12:01:30Z",
+  "message": null,
+  "elements": null,
+  "total_elements": null,
+  "page": null,
+  "page_size": null,
+  "total_pages_elements": null
 }
 ```
 
-### Response Fields
+When the build is still in progress or the ID is invalid (no history yet):
+
+```json
+{
+  "build_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "not_found",
+  "success": false,
+  "file_id": null,
+  "file_name": null,
+  "error": null,
+  "message": "Build not found or not yet persisted"
+}
+```
+
+### Response fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `status` | string | Processing status (`New`, `Processing`, `Completed`, `Failed`) |
-| `message` | string | Human-readable success message |
-| `file_id` | string | Unique identifier for the source (use this for subsequent API calls) |
-| `file_name` | string | Name of the uploaded file |
-| `file_size` | integer | Size of the file in bytes |
-| `file_type` | string | File extension/type |
-| `file_source` | string | Source type (always "local file" for uploads) |
-| `project_id` | string | UUID of the target project |
-| `project_name` | string | Name of the target project |
-| `partition_method` | string | Document processing method used |
+| `build_id` | string | The requested build identifier |
+| `status` | string | `Completed`, `Processing`, `Processing failed`, or `not_found` when no history exists |
+| `success` | boolean | `true` only when `status` is `Completed` |
+| `file_id` | string \| null | Source file ID; present when the build has been persisted |
+| `file_name` | string \| null | Display name of the source; present when persisted |
+| `error` | string \| null | Error message from the pipeline when the build failed |
+| `method` | string \| null | Strategy used (e.g. `fast`, `balanced`, `accurate`, `vlm`, `agentic`) |
+| `total_partitions` | integer \| null | Number of partitions; present when history exists |
+| `total_pages` | integer \| null | Total pages in the source; present when history exists |
+| `created_at` | string \| null | ISO8601 timestamp when the build was created |
+| `updated_at` | string \| null | ISO8601 timestamp when the build was last updated |
+| `message` | string \| null | Human-readable message (e.g. when status is `not_found`) |
+| `elements` | array \| null | Parsed elements (chunks) when `suppress_elements=false` and build completed |
+| `total_elements` | integer \| null | Total number of elements (when elements are returned) |
+| `page` | integer \| null | Current page of elements (1-based) when pagination is used |
+| `page_size` | integer \| null | Elements per page when pagination is used |
+| `total_pages_elements` | integer \| null | Total pages of elements when pagination is used |
 
-### Code Examples
-
-### JavaScript/Node.js
+### Code example: poll until complete
 
 ```javascript
-const uploadDocument = async (apiToken, filePath) => {
-  const formData = new FormData();
-  const fileStream = fs.createReadStream(filePath);
-  formData.append('file', fileStream);
+const pollBuildStatus = async (apiToken, buildId, options = {}) => {
+  const { intervalMs = 2000, maxAttempts = 120 } = options;
+  const url = `https://sources.graphorlm.com/builds/${buildId}`;
 
-  const response = await fetch('https://sources.graphorlm.com/upload', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiToken}`
-    },
-    body: formData
-  });
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${apiToken}` },
+    });
+    const data = await response.json();
 
-  if (response.ok) {
-    const result = await response.json();
-    console.log('Upload successful:', result);
-    return result;
-  } else {
-    throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+    if (data.success) return data;
+    if (data.status === "Processing failed" || (data.error && data.status !== "not_found"))
+      throw new Error(data.error || data.message);
+
+    await new Promise((r) => setTimeout(r, intervalMs));
   }
-};
 
-// Usage
-uploadDocument('grlm_your_api_token_here', './document.pdf')
-  .then(result => console.log('Document uploaded:', result.file_name))
-  .catch(error => console.error('Error:', error));
-```
-
-### Python
-
-```python
-import requests
-
-def upload_document(api_token, file_path):
-    url = "https://sources.graphorlm.com/upload"
-    
-    headers = {
-        "Authorization": f"Bearer {api_token}"
-    }
-    
-    with open(file_path, "rb") as file:
-        files = {"file": (file_path, file)}
-        
-        response = requests.post(url, headers=headers, files=files, timeout=300)
-        
-        if response.status_code == 200:
-            result = response.json()
-            print(f"Upload successful: {result['file_name']}")
-            return result
-        else:
-            response.raise_for_status()
-
-# Usage
-try:
-    result = upload_document("grlm_your_api_token_here", "document.pdf")
-    print(f"Document uploaded: {result['file_name']}")
-except requests.exceptions.RequestException as e:
-    print(f"Error uploading document: {e}")
-```
-
-### cURL
-
-```bash
-curl -X POST https://sources.graphorlm.com/upload \
-  -H "Authorization: Bearer grlm_your_api_token_here" \
-  -F "file=@document.pdf"
-```
-
-### cURL with Partition Method
-
-```bash
-curl -X POST https://sources.graphorlm.com/upload \
-  -H "Authorization: Bearer grlm_your_api_token_here" \
-  -F "file=@document.pdf" \
-  -F "partition_method=hi_res"
-```
-
-### Error Responses
-
-### Common Error Codes
-
-| Status Code | Error Type | Description |
-|-------------|------------|-------------|
-| `400` | Bad Request | Invalid file type, missing filename, or malformed request |
-| `401` | Unauthorized | Invalid or missing API token |
-| `403` | Forbidden | Access denied to the specified project |
-| `404` | Not Found | Project not found |
-| `413` | Payload Too Large | File exceeds 100MB limit |
-| `500` | Internal Server Error | Server-side processing error |
-
-### Error Response Format
-
-```json
-{
-  "detail": "File type '.xyz' is not supported. Allowed types: .pdf, .md, .png, .jpg, ..."
-}
-```
-
-### Error Examples
-
-<AccordionGroup>
-  <Accordion icon="file-xmark" title="Unsupported File Type (400)">
-    ```json
-    {
-      "detail": "File type '.xyz' is not supported. Allowed types: .pdf, .md, .png, .jpg, .jpeg, .tiff, .bmp, .heic, .csv, .tsv, .xls, .xlsx, .ppt, .pptx, .doc, .docx, .html, .htm, .txt, .text, .mp3, .wav, .m4a, .ogg, .flac, .mp4, .mov, .avi, .mkv, .webm"
-    }
-    ```
-  </Accordion>
-  
-  <Accordion icon="key" title="Invalid API Token (401)">
-    ```json
-    {
-      "detail": "Invalid authentication credentials"
-    }
-    ```
-  </Accordion>
-  
-  <Accordion icon="weight-scale" title="File Too Large (413)">
-    ```json
-    {
-      "detail": "File size exceeds the maximum allowed limit of 100MB"
-    }
-    ```
-  </Accordion>
-</AccordionGroup>
-
-### Document Processing
-
-After a successful upload, Graphor automatically processes your document:
-
-### Processing Stages
-
-1. **Upload Complete** - File is securely stored in your project
-2. **Text Extraction** - Content is extracted using advanced OCR and parsing
-3. **Structure Recognition** - Document elements are identified and classified
-4. **Ready for Use** - Document is available for chunking and retrieval
-
-### Processing Methods
-
-The system automatically selects the optimal processing method based on file type:
-
-| File Type | Default Method | Description |
-|-----------|----------------|-------------|
-| PDF, Documents | Basic | Fast processing with heuristic classification |
-| Images | OCR | Optical character recognition for text extraction |
-| Text files | Basic | Direct text processing |
-| Spreadsheets | Basic | Table structure preservation |
-
-<Note>
-  You can reprocess documents with different methods using the [Process Source](/api-reference/sources/process) endpoint after upload.
-</Note>
-
-### Best Practices
-
-### File Preparation
-
-- **Optimize file size**: Compress large files when possible while maintaining quality
-- **Use descriptive names**: Include relevant keywords in filenames for easy identification
-- **Check file integrity**: Ensure files are not corrupted before upload
-
-### Error Handling
-
-- **Implement retry logic**: Handle temporary network issues with exponential backoff
-- **Validate before upload**: Check file types and sizes client-side before making requests
-- **Monitor upload status**: Use the response to track processing progress
-
-### Security
-
-- **Protect API tokens**: Never expose tokens in client-side code or public repositories
-- **Use HTTPS only**: All API requests are automatically secured with TLS encryption
-- **Rotate tokens regularly**: Update API tokens periodically for enhanced security
-
-### Integration Examples
-
-### Batch Upload Script
-
-```python
-import os
-import requests
-from pathlib import Path
-
-def batch_upload_documents(api_token, directory_path):
-    """Upload all supported documents from a directory."""
-    supported_extensions = {'.pdf', '.doc', '.docx', '.txt', '.md', '.html'}
-    uploaded_files = []
-    failed_files = []
-    
-    for file_path in Path(directory_path).iterdir():
-        if file_path.suffix.lower() in supported_extensions:
-            try:
-                result = upload_document(api_token, str(file_path))
-                uploaded_files.append(result['file_name'])
-                print(f"✅ Uploaded: {file_path.name}")
-            except Exception as e:
-                failed_files.append((file_path.name, str(e)))
-                print(f"❌ Failed: {file_path.name} - {e}")
-    
-    print(f"\nSummary: {len(uploaded_files)} uploaded, {len(failed_files)} failed")
-    return uploaded_files, failed_files
-
-# Usage
-uploaded, failed = batch_upload_documents("grlm_your_token", "./documents/")
-```
-
-### Upload with Progress Tracking
-
-```javascript
-const uploadWithProgress = async (apiToken, file, onProgress) => {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    const formData = new FormData();
-    formData.append('file', file);
-
-    xhr.upload.addEventListener('progress', (event) => {
-      if (event.lengthComputable) {
-        const percentComplete = (event.loaded / event.total) * 100;
-        onProgress(percentComplete);
-      }
-    });
-
-    xhr.addEventListener('load', () => {
-      if (xhr.status === 200) {
-        resolve(JSON.parse(xhr.responseText));
-      } else {
-        reject(new Error(`Upload failed: ${xhr.status}`));
-      }
-    });
-
-    xhr.addEventListener('error', () => reject(new Error('Upload failed')));
-
-    xhr.open('POST', 'https://sources.graphorlm.com/upload');
-    xhr.setRequestHeader('Authorization', `Bearer ${apiToken}`);
-    xhr.send(formData);
-  });
+  throw new Error("Polling timed out");
 };
 ```
 
-### Troubleshooting
+```python
+import time
+import requests
 
-<AccordionGroup>
-  <Accordion icon="clock" title="Upload timeouts">
-    **Causes**: Large files, slow connection, or server load
-    
-    **Solutions**:
-    - Increase request timeout (recommend 5+ minutes for large files)
-    - Retry failed uploads with exponential backoff
-    - Consider compressing large files before upload
-  </Accordion>
-  
-  <Accordion icon="file-xmark" title="File processing failures">
-    **Causes**: Corrupted files, unsupported formats, or complex layouts
-    
-    **Solutions**:
-    - Verify file integrity before upload
-    - Try converting to a more standard format
-    - Use the [Process Source](/api-reference/sources/process) endpoint with different methods
-  </Accordion>
-  
-  <Accordion icon="key" title="Authentication issues">
-    **Causes**: Invalid tokens, expired tokens, or incorrect headers
-    
-    **Solutions**:
-    - Verify token format starts with "grlm_"
-    - Check token hasn't been revoked in the dashboard
-    - Ensure correct Authorization header format
-  </Accordion>
-  
-  <Accordion icon="network-wired" title="Network connectivity">
-    **Causes**: DNS issues, firewall restrictions, or network timeouts
-    
-    **Solutions**:
-    - Test connectivity to sources.graphorlm.com
-    - Check firewall allows outbound HTTPS traffic
-    - Use appropriate timeout values for your network
-  </Accordion>
-</AccordionGroup>
+def poll_build_status(api_token, build_id, interval_seconds=2, max_attempts=120):
+    url = f"https://sources.graphorlm.com/builds/{build_id}"
+    headers = {"Authorization": f"Bearer {api_token}"}
 
-## Upload from URL
+    for _ in range(max_attempts):
+        response = requests.get(url, headers=headers)
+        data = response.json()
 
-Use this endpoint to ingest content by scraping a public web page. It fetches the page, extracts text, and creates a source in your project for downstream processing.
+        if data.get("success"):
+            return data
+        if data.get("status") == "Processing failed" or (data.get("error") and data.get("status") != "not_found"):
+            raise RuntimeError(data.get("error") or data.get("message", "Build failed"))
 
-### Endpoint Overview
+        time.sleep(interval_seconds)
+
+    raise TimeoutError("Polling timed out")
+```
+
+---
+
+## Ingest file
+
+Upload a local file and schedule ingestion in the background. The API validates size (max 100 MB) and extension, stores the file, then runs the full pipeline (partitioning, chunking, embedding) asynchronously.
+
+### Endpoint overview
 
 <CardGroup cols={2}>
   <Card title="HTTP Method" icon="arrow-up">
     **POST**
   </Card>
   <Card title="Endpoint URL" icon="link">
-    **https://sources.graphorlm.com/upload-url-source**
+    **https://sources.graphorlm.com/ingest-file**
   </Card>
 </CardGroup>
 
-### Request Format
+### Request format
 
 #### Headers
 
 | Header | Value | Required |
 |--------|-------|----------|
-| `Authorization` | `Bearer YOUR_API_TOKEN` | ✅ Yes |
-| `Content-Type` | `application/json` | ✅ Yes |
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+| `Content-Type` | `multipart/form-data` | Yes |
 
-#### Request Body
-
-Send a JSON body with the following fields:
+#### Request body (multipart/form-data)
 
 | Field | Type | Description | Required |
 |-------|------|-------------|----------|
-| `url` | string | The URL of the web page to scrape | ✅ Yes |
-| `crawlUrls` | boolean | Whether to crawl and ingest links from the given URL | No (default: `false`) |
-| `partition_method` | string | Processing method to use (see [Partition Methods](#partition-methods) above) | No |
+| `file` | File | The document file to upload | Yes |
+| `method` | string | Processing method: `fast`, `balanced`, `accurate`, `vlm`, or `agentic` (see [Partition methods](#partition-methods)) | No |
 
-#### URL Requirements
+### Partition methods
+
+When provided, `partition_method` controls how the document is parsed. If omitted, the system default is used.
+
+| Value | Name | Description |
+|-------|------|-------------|
+| `fast` | Fast | Fast processing with heuristic classification. No OCR. |
+| `balanced` | Balanced | OCR-based extraction with structure classification. |
+| `accurate` | Accurate | Fine-tuned model for highest accuracy (Premium). |
+| `vlm` | VLM | Best for manuscripts and handwritten content. |
+| `agentic` | Agentic | Highest accuracy for complex layouts, tables, and diagrams. |
+
+<Note>
+  For more details, see the [Process Source](/api-reference/sources/process) documentation.
+</Note>
+
+### File requirements
 
 <AccordionGroup>
-  <Accordion icon="link" title="Supported URL types">
-    - Public web pages
-    - Pages that render primary content server-side and are reachable without interaction
+  <Accordion icon="file-text" title="Supported file types">
+    **Documents**: PDF, DOC, DOCX, ODT, TXT, TEXT, MD, HTML, HTM  
+    **Presentations**: PPT, PPTX  
+    **Spreadsheets**: CSV, TSV, XLS, XLSX  
+    **Images**: PNG, JPG, JPEG, TIFF, BMP, HEIC  
+    **Audio**: MP3, WAV, M4A, OGG, FLAC  
+    **Video**: MP4, MOV, AVI, MKV, WEBM
   </Accordion>
-  
-  <Accordion icon="shield" title="Access requirements">
-    - The URL must be publicly reachable over HTTPS
-    - Authentication-protected pages are not supported by this endpoint
+  <Accordion icon="weight-scale" title="File size limits">
+    **Maximum file size**: 100 MB per file.  
+    The request must include a `Content-Length` header so the server can enforce the limit.
+  </Accordion>
+  <Accordion icon="file-signature" title="File name requirements">
+    The file must have a valid filename with extension; the extension determines allowed processing.
   </Accordion>
 </AccordionGroup>
 
-<Note>
-  This endpoint scrapes web pages. To ingest files (PDF, DOCX, etc.), use [Upload a File](/api-reference/sources/upload#upload-a-file).
-</Note>
-
-### Response Format
-
-#### Success Response (200 OK)
+### Success response (200 OK)
 
 ```json
 {
-  "status": "Processing",
-  "message": "Source processed successfully",
-  "file_id": "file_abc123",
-  "file_name": "https://example.com/",
-  "file_size": 0,
-  "file_type": "",
-  "file_source": "url",
-  "project_id": "550e8400-e29b-41d4-a716-446655440000",
-  "project_name": "My Project",
-  "partition_method": "basic"
+  "build_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "success": true,
+  "error": null
 }
 ```
 
-#### Response Fields
+### Response fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `status` | string | Processing status (`New`, `Processing`, `Completed`, `Failed`, etc.) |
-| `message` | string | Human-readable status message |
-| `file_id` | string | Unique identifier for the source (use this for subsequent API calls) |
-| `file_name` | string | Name or URL for the ingested source |
-| `file_size` | integer | Size in bytes (0 for URL-based initial record) |
-| `file_type` | string | Detected type when applicable |
-| `file_source` | string | Source type (`url`) |
-| `project_id` | string | UUID of the project |
-| `project_name` | string | Name of the project |
-| `partition_method` | string | Document processing method used |
+| `build_id` | string | Use this ID to poll [Get build status](#get-build-status) |
+| `success` | boolean | Whether the request was successfully scheduled |
+| `error` | string \| null | Error message if the request was not scheduled successfully |
 
-### Code Examples
+### Code examples
 
 #### JavaScript/Node.js
 
 ```javascript
-import fetch from 'node-fetch';
+const ingestFile = async (apiToken, filePath) => {
+  const formData = new FormData();
+  const fileStream = fs.createReadStream(filePath);
+  formData.append("file", fileStream);
 
-const uploadUrlSource = async (apiToken, url, crawlUrls = false) => {
-  const response = await fetch('https://sources.graphorlm.com/upload-url-source', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiToken}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ url, crawlUrls })
+  const response = await fetch("https://sources.graphorlm.com/ingest-file", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiToken}` },
+    body: formData,
   });
 
-  if (!response.ok) {
-    throw new Error(`Upload from URL failed: ${response.status} ${response.statusText}`);
-  }
-
-  const result = await response.json();
-  console.log('URL upload accepted:', result);
-  return result;
+  if (!response.ok) throw new Error(`Ingest failed: ${response.status} ${response.statusText}`);
+  const { build_id } = await response.json();
+  return build_id;
 };
 
-// Usage (scrapes the page content)
-uploadUrlSource('grlm_your_api_token_here', 'https://example.com/');
+// Usage: get build_id, then poll get_build_status until success
+const buildId = await ingestFile("grlm_your_api_token_here", "./document.pdf");
+console.log("Build ID:", buildId);
 ```
 
 #### Python
@@ -561,200 +315,225 @@ uploadUrlSource('grlm_your_api_token_here', 'https://example.com/');
 ```python
 import requests
 
-def upload_url_source(api_token, url, crawl_urls=False):
-    endpoint = "https://sources.graphorlm.com/upload-url-source"
-    headers = {"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"}
-    payload = {"url": url, "crawlUrls": crawl_urls}
-
-    response = requests.post(endpoint, headers=headers, json=payload, timeout=300)
+def ingest_file(api_token, file_path, partition_method=None):
+    url = "https://sources.graphorlm.com/ingest-file"
+    headers = {"Authorization": f"Bearer {api_token}"}
+    with open(file_path, "rb") as f:
+        files = {"file": (file_path, f)}
+        data = {}
+        if partition_method:
+            data["method"] = partition_method
+        response = requests.post(url, headers=headers, files=files, data=data or None, timeout=300)
     response.raise_for_status()
-    return response.json()
+    return response.json()["build_id"]
 
-# Usage (scrapes the page content)
-result = upload_url_source("grlm_your_api_token_here", "https://example.com")
-print("URL scraping accepted:", result["file_name"])  # typically echoes the URL
+# Usage
+build_id = ingest_file("grlm_your_api_token_here", "document.pdf")
+print("Build ID:", build_id)
 ```
 
 #### cURL
 
 ```bash
-curl -X POST https://sources.graphorlm.com/upload-url-source \
+curl -X POST https://sources.graphorlm.com/ingest-file \
+  -H "Authorization: Bearer grlm_your_api_token_here" \
+  -F "file=@document.pdf"
+```
+
+#### cURL with partition method
+
+```bash
+curl -X POST https://sources.graphorlm.com/ingest-file \
+  -H "Authorization: Bearer grlm_your_api_token_here" \
+  -F "file=@document.pdf" \
+  -F "method=balanced"
+```
+
+### Error responses
+
+| Status Code | Description |
+|-------------|-------------|
+| `400` | Unsupported file type or missing file name |
+| `411` | Missing Content-Length header |
+| `413` | File exceeds 100 MB limit |
+| `500` | Internal server error |
+
+Example error body:
+
+```json
+{
+  "detail": "File type 'exe' is not supported. Allowed types: csv, doc, docx, pdf, txt, ..."
+}
+```
+
+```json
+{
+  "detail": "File size exceeds the maximum allowed limit of 100MB"
+}
+```
+
+---
+
+## Ingest URL
+
+Ingest a web page (or multiple pages via crawling) as a source. The job runs in the background; use the returned **build_id** to poll [Get build status](#get-build-status). If the URL points to a downloadable file (by extension or Content-Type), the file is downloaded and then processed in the background.
+
+### Endpoint overview
+
+<CardGroup cols={2}>
+  <Card title="HTTP Method" icon="arrow-up">
+    **POST**
+  </Card>
+  <Card title="Endpoint URL" icon="link">
+    **https://sources.graphorlm.com/ingest-url**
+  </Card>
+</CardGroup>
+
+### Request format
+
+#### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+| `Content-Type` | `application/json` | Yes |
+
+#### Request body (JSON)
+
+| Field | Type | Description | Required |
+|-------|------|-------------|----------|
+| `url` | string | The web page URL to ingest | Yes |
+| `crawlUrls` | boolean | When `true`, follow and ingest links found on the page (ignored when URL resolves to a file) | No (default: `false`) |
+| `method` | string | One of: `fast`, `balanced`, `accurate`, `vlm`, `agentic` | No |
+
+### Success response (200 OK)
+
+```json
+{
+  "build_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "success": true,
+  "error": null
+}
+```
+
+### Code examples
+
+#### JavaScript/Node.js
+
+```javascript
+const ingestUrl = async (apiToken, url, crawlUrls = false) => {
+  const response = await fetch("https://sources.graphorlm.com/ingest-url", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ url, crawlUrls }),
+  });
+  if (!response.ok) throw new Error(`Ingest URL failed: ${response.status}`);
+  const { build_id } = await response.json();
+  return build_id;
+};
+```
+
+#### Python
+
+```python
+import requests
+
+def ingest_url(api_token, url, crawl_urls=False, partition_method=None):
+    payload = {"url": url, "crawlUrls": crawl_urls}
+    if partition_method:
+        payload["method"] = partition_method
+    response = requests.post(
+        "https://sources.graphorlm.com/ingest-url",
+        headers={"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"},
+        json=payload,
+        timeout=300,
+    )
+    response.raise_for_status()
+    return response.json()["build_id"]
+```
+
+#### cURL
+
+```bash
+curl -X POST https://sources.graphorlm.com/ingest-url \
   -H "Authorization: Bearer grlm_your_api_token_here" \
   -H "Content-Type: application/json" \
   -d '{"url":"https://example.com/","crawlUrls":false}'
 ```
 
-### Error Responses
+### Error responses
 
-#### Common Error Codes
-
-| Status Code | Error Type | Description |
-|-------------|------------|-------------|
-| `400` | Bad Request | Invalid or missing URL, malformed JSON |
-| `401` | Unauthorized | Invalid or missing API token |
-| `403` | Forbidden | Access denied to the specified project |
-| `404` | Not Found | Project or source not found |
-| `500` | Internal Server Error | Error during URL processing |
-
-#### Error Response Format
-
-```json
-{
-  "detail": "Invalid input: URL is required"
-}
-```
-
-#### Error Examples
-
-<AccordionGroup>
-  <Accordion icon="link-slash" title="Invalid URL (400)">
-    ```json
-    { "detail": "Invalid input: URL is required" }
-    ```
-  </Accordion>
-  
-  <Accordion icon="key" title="Invalid API Token (401)">
-    ```json
-    { "detail": "Invalid authentication credentials" }
-    ```
-  </Accordion>
-</AccordionGroup>
-
-### Document Processing
-
-After a successful request, Graphor begins fetching and scraping the web page in the background.
-
-#### Processing Stages
-
-1. **URL Accepted** - The request is validated and scheduled
-2. **Content Retrieval** - The page is fetched over HTTPS
-3. **Text Extraction** - Visible text is extracted and normalized
-4. **Structure Recognition** - Document elements are identified and classified
-5. **Ready for Use** - Document is available for chunking and retrieval
-
-#### Processing Methods
-
-The system selects the optimal processing method based on the detected content. You can reprocess with a different method after ingestion.
+| Status Code | Description |
+|-------------|-------------|
+| `400` | Unsupported file type detected from a file URL |
+| `500` | Internal server error during URL processing |
 
 <Note>
-  You can reprocess sources using the [Process Source](/api-reference/sources/process) endpoint after ingestion.
+  To ingest local files (PDF, DOCX, etc.), use [Ingest file](#ingest-file).
 </Note>
 
-### Best Practices
+---
 
-- **Provide reachable URLs**: Ensure the page is publicly accessible over HTTPS
-- **Disable crawling when unneeded**: Set `crawlUrls` to `false` to ingest only the provided URL
-- **Respect site policies**: Only scrape pages you are permitted to and consider website rate limits
-- **Retry logic**: Implement retries for transient network issues
+## Ingest GitHub
 
-## Upload from GitHub
+Ingest a public GitHub repository as a source. Processing runs in the background; use the returned **build_id** with [Get build status](#get-build-status).
 
-Use this endpoint to ingest content directly from a public GitHub repository into your Graphor project.
-
-### Endpoint Overview
+### Endpoint overview
 
 <CardGroup cols={2}>
   <Card title="HTTP Method" icon="arrow-up">
     **POST**
   </Card>
   <Card title="Endpoint URL" icon="link">
-    **https://sources.graphorlm.com/upload-github-source**
+    **https://sources.graphorlm.com/ingest-github**
   </Card>
 </CardGroup>
 
-### Request Format
+### Request format
 
 #### Headers
 
 | Header | Value | Required |
 |--------|-------|----------|
-| `Authorization` | `Bearer YOUR_API_TOKEN` | ✅ Yes |
-| `Content-Type` | `application/json` | ✅ Yes |
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+| `Content-Type` | `application/json` | Yes |
 
-#### Request Body
-
-Send a JSON body with the following field:
+#### Request body (JSON)
 
 | Field | Type | Description | Required |
 |-------|------|-------------|----------|
-| `url` | string | The GitHub repository URL to ingest (e.g., `https://github.com/org/repo`) | ✅ Yes |
+| `url` | string | GitHub repository URL (e.g. `https://github.com/owner/repo`) | Yes |
 
-#### Repository Requirements
-
-<AccordionGroup>
-  <Accordion icon="link" title="Supported URLs">
-    - Public GitHub repositories
-    - HTTPS URLs (`https://github.com/...`)
-  </Accordion>
-  
-  <Accordion icon="shield" title="Access requirements">
-    - Only public repositories are supported via this endpoint
-    - Private repository ingestion is not supported
-  </Accordion>
-</AccordionGroup>
-
-### Response Format
-
-#### Success Response (200 OK)
+### Success response (200 OK)
 
 ```json
 {
-  "status": "Processing",
-  "message": "Source processed successfully",
-  "file_id": "file_abc123",
-  "file_name": "https://github.com/org/repo",
-  "file_size": 0,
-  "file_type": "",
-  "file_source": "github",
-  "project_id": "550e8400-e29b-41d4-a716-446655440000",
-  "project_name": "My Project",
-  "partition_method": "basic"
+  "build_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "success": true,
+  "error": null
 }
 ```
 
-#### Response Fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `status` | string | Processing status (`New`, `Processing`, `Completed`, `Failed`, etc.) |
-| `message` | string | Human-readable status message |
-| `file_id` | string | Unique identifier for the source (use this for subsequent API calls) |
-| `file_name` | string | The repository URL |
-| `file_size` | integer | Size in bytes (0 for initial GitHub record) |
-| `file_type` | string | Detected file type (when applicable) |
-| `file_source` | string | Source type (`github`) |
-| `project_id` | string | UUID of the project |
-| `project_name` | string | Name of the project |
-| `partition_method` | string | Document processing method used |
-
-### Code Examples
+### Code examples
 
 #### JavaScript/Node.js
 
 ```javascript
-import fetch from 'node-fetch';
-
-const uploadGithubSource = async (apiToken, repoUrl) => {
-  const response = await fetch('https://sources.graphorlm.com/upload-github-source', {
-    method: 'POST',
+const ingestGithub = async (apiToken, repoUrl) => {
+  const response = await fetch("https://sources.graphorlm.com/ingest-github", {
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${apiToken}`,
-      'Content-Type': 'application/json'
+      Authorization: `Bearer ${apiToken}`,
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({ url: repoUrl })
+    body: JSON.stringify({ url: repoUrl }),
   });
-
-  if (!response.ok) {
-    throw new Error(`GitHub upload failed: ${response.status} ${response.statusText}`);
-  }
-
-  const result = await response.json();
-  console.log('GitHub upload accepted:', result);
-  return result;
+  if (!response.ok) throw new Error(`GitHub ingest failed: ${response.status}`);
+  return (await response.json()).build_id;
 };
-
-// Usage
-uploadGithubSource('grlm_your_api_token_here', 'https://github.com/org/repo');
 ```
 
 #### Python
@@ -762,192 +541,95 @@ uploadGithubSource('grlm_your_api_token_here', 'https://github.com/org/repo');
 ```python
 import requests
 
-def upload_github_source(api_token, repo_url):
-    endpoint = "https://sources.graphorlm.com/upload-github-source"
-    headers = {"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"}
-    payload = {"url": repo_url}
-
-    response = requests.post(endpoint, headers=headers, json=payload, timeout=300)
+def ingest_github(api_token, repo_url):
+    response = requests.post(
+        "https://sources.graphorlm.com/ingest-github",
+        headers={"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"},
+        json={"url": repo_url},
+        timeout=300,
+    )
     response.raise_for_status()
-    return response.json()
-
-# Usage
-result = upload_github_source("grlm_your_api_token_here", "https://github.com/org/repo")
-print("GitHub upload accepted:", result["file_name"])  # echoes the repo URL
+    return response.json()["build_id"]
 ```
 
 #### cURL
 
 ```bash
-curl -X POST https://sources.graphorlm.com/upload-github-source \
+curl -X POST https://sources.graphorlm.com/ingest-github \
   -H "Authorization: Bearer grlm_your_api_token_here" \
   -H "Content-Type: application/json" \
-  -d '{"url":"https://github.com/org/repo"}'
+  -d '{"url":"https://github.com/owner/repo"}'
 ```
 
-### Error Responses
+### Error responses
 
-#### Common Error Codes
-
-| Status Code | Error Type | Description |
-|-------------|------------|-------------|
-| `400` | Bad Request | Invalid or missing URL, malformed JSON |
-| `401` | Unauthorized | Invalid or missing API token |
-| `403` | Forbidden | Access denied to the specified project |
-| `404` | Not Found | Project or source not found |
-| `500` | Internal Server Error | Error during repository processing |
-
-#### Error Response Format
-
-```json
-{
-  "detail": "Invalid input: URL is required"
-}
-```
-
-#### Error Examples
-
-<AccordionGroup>
-  <Accordion icon="link-slash" title="Invalid URL (400)">
-    ```json
-    { "detail": "Invalid input: URL is required" }
-    ```
-  </Accordion>
-  
-  <Accordion icon="key" title="Invalid API Token (401)">
-    ```json
-    { "detail": "Invalid authentication credentials" }
-    ```
-  </Accordion>
-</AccordionGroup>
-
-### Document Processing
-
-After a successful request, Graphor begins processing the GitHub source in the background.
-
-#### Processing Stages
-
-1. **Request Accepted** - The request is validated and scheduled
-2. **Repository Fetch** - Repository content is retrieved
-3. **Text Extraction** - Content is extracted and normalized
-4. **Structure Recognition** - Document elements are identified and classified
-5. **Ready for Use** - Content is available for chunking and retrieval
+| Status Code | Description |
+|-------------|-------------|
+| `500` | Internal server error during GitHub processing |
 
 <Note>
-  You can reprocess sources using the [Process Source](/api-reference/sources/process) endpoint after ingestion.
+  Only **public** repositories are supported.
 </Note>
 
-### Best Practices
+---
 
-- **Provide valid repository URLs**: Use the canonical HTTPS GitHub URL
-- **Public repositories only**: Private repositories are not supported
-- **Retry logic**: Implement retries for transient network issues
+## Ingest YouTube
 
-## Upload from YouTube
+Ingest a public YouTube video (transcript/captions) as a source. Processing runs in the background; use the returned **build_id** with [Get build status](#get-build-status).
 
-Use this endpoint to ingest content from a public YouTube video URL into your Graphor project.
-
-### Endpoint Overview
+### Endpoint overview
 
 <CardGroup cols={2}>
   <Card title="HTTP Method" icon="arrow-up">
     **POST**
   </Card>
   <Card title="Endpoint URL" icon="link">
-    **https://sources.graphorlm.com/upload-youtube-source**
+    **https://sources.graphorlm.com/ingest-youtube**
   </Card>
 </CardGroup>
 
-### Request Format
+### Request format
 
 #### Headers
 
 | Header | Value | Required |
 |--------|-------|----------|
-| `Authorization` | `Bearer YOUR_API_TOKEN` | ✅ Yes |
-| `Content-Type` | `application/json` | ✅ Yes |
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+| `Content-Type` | `application/json` | Yes |
 
-#### Request Body
-
-Send a JSON body with the following field:
+#### Request body (JSON)
 
 | Field | Type | Description | Required |
 |-------|------|-------------|----------|
-| `url` | string | The YouTube video URL to ingest (e.g., `https://www.youtube.com/watch?v=...`) | ✅ Yes |
+| `url` | string | YouTube video URL (e.g. `https://www.youtube.com/watch?v=...`) | Yes |
 
-#### Video Requirements
-
-<AccordionGroup>
-  <Accordion icon="link" title="Supported URLs">
-    - Public YouTube video URLs (HTTPS)
-  </Accordion>
-  
-  <Accordion icon="shield" title="Access requirements">
-    - The video must be publicly accessible
-    - Private or access-restricted videos are not supported
-  </Accordion>
-</AccordionGroup>
-
-### Response Format
-
-#### Success Response (200 OK)
+### Success response (200 OK)
 
 ```json
 {
-  "status": "Processing",
-  "message": "Source processed successfully",
-  "file_id": "file_abc123",
-  "file_name": "https://www.youtube.com/watch?v=VIDEO_ID",
-  "file_size": 0,
-  "file_type": "",
-  "file_source": "youtube",
-  "project_id": "550e8400-e29b-41d4-a716-446655440000",
-  "project_name": "My Project",
-  "partition_method": "basic"
+  "build_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "success": true,
+  "error": null
 }
 ```
 
-#### Response Fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `status` | string | Processing status (`New`, `Processing`, `Completed`, `Failed`, etc.) |
-| `message` | string | Human-readable status message |
-| `file_id` | string | Unique identifier for the source (use this for subsequent API calls) |
-| `file_name` | string | The video URL (echoed back) |
-| `file_size` | integer | Size in bytes (0 for URL-based initial record) |
-| `file_type` | string | Detected type (when applicable) |
-| `file_source` | string | Source type (`youtube`) |
-| `project_id` | string | UUID of the project |
-| `project_name` | string | Name of the project |
-| `partition_method` | string | Document processing method used |
-
-### Code Examples
+### Code examples
 
 #### JavaScript/Node.js
 
 ```javascript
-import fetch from 'node-fetch';
-
-const uploadYoutubeSource = async (apiToken, videoUrl) => {
-  const response = await fetch('https://sources.graphorlm.com/upload-youtube-source', {
-    method: 'POST',
+const ingestYoutube = async (apiToken, videoUrl) => {
+  const response = await fetch("https://sources.graphorlm.com/ingest-youtube", {
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${apiToken}`,
-      'Content-Type': 'application/json'
+      Authorization: `Bearer ${apiToken}`,
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({ url: videoUrl })
+    body: JSON.stringify({ url: videoUrl }),
   });
-
-  if (!response.ok) {
-    throw new Error(`YouTube upload failed: ${response.status} ${response.statusText}`);
-  }
-
-  return response.json();
+  if (!response.ok) throw new Error(`YouTube ingest failed: ${response.status}`);
+  return (await response.json()).build_id;
 };
-
-// Usage
-uploadYoutubeSource('grlm_your_api_token_here', 'https://www.youtube.com/watch?v=VIDEO_ID');
 ```
 
 #### Python
@@ -955,102 +637,62 @@ uploadYoutubeSource('grlm_your_api_token_here', 'https://www.youtube.com/watch?v
 ```python
 import requests
 
-def upload_youtube_source(api_token, video_url):
-    endpoint = "https://sources.graphorlm.com/upload-youtube-source"
-    headers = {"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"}
-    payload = {"url": video_url}
-
-    response = requests.post(endpoint, headers=headers, json=payload, timeout=300)
+def ingest_youtube(api_token, video_url):
+    response = requests.post(
+        "https://sources.graphorlm.com/ingest-youtube",
+        headers={"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"},
+        json={"url": video_url},
+        timeout=300,
+    )
     response.raise_for_status()
-    return response.json()
-
-# Usage
-result = upload_youtube_source("grlm_your_api_token_here", "https://www.youtube.com/watch?v=VIDEO_ID")
-print("YouTube ingestion accepted:", result["file_name"])
+    return response.json()["build_id"]
 ```
 
 #### cURL
 
 ```bash
-curl -X POST https://sources.graphorlm.com/upload-youtube-source \
+curl -X POST https://sources.graphorlm.com/ingest-youtube \
   -H "Authorization: Bearer grlm_your_api_token_here" \
   -H "Content-Type: application/json" \
   -d '{"url":"https://www.youtube.com/watch?v=VIDEO_ID"}'
 ```
 
-### Error Responses
+### Error responses
 
-#### Common Error Codes
-
-| Status Code | Error Type | Description |
-|-------------|------------|-------------|
-| `400` | Bad Request | Invalid or missing URL, malformed JSON |
-| `401` | Unauthorized | Invalid or missing API token |
-| `403` | Forbidden | Access denied to the specified project |
-| `404` | Not Found | Project or source not found |
-| `500` | Internal Server Error | Error during video processing |
-
-#### Error Response Format
-
-```json
-{
-  "detail": "Invalid input: URL is required"
-}
-```
-
-### Document Processing
-
-After a successful request, Graphor begins processing the YouTube source.
-
-#### Processing Stages
-
-1. **Request Accepted** - The request is validated and scheduled
-2. **Content Retrieval** - The video is fetched
-3. **Transcription / Text Extraction** - Audio is transcribed and normalized
-4. **Structure Recognition** - Content is segmented and classified
-5. **Ready for Use** - Content is available for chunking and retrieval
+| Status Code | Description |
+|-------------|-------------|
+| `500` | Internal server error during YouTube processing |
 
 <Note>
-  You can reprocess sources using the [Process Source](/api-reference/sources/process) endpoint after ingestion.
+  The video must be **public**; transcripts/captions are downloaded and processed in the background.
 </Note>
 
-### Best Practices
+---
 
-- **Prefer clear audio**: Better audio quality improves transcription accuracy
-- **Keep URLs stable**: Use the canonical YouTube URL format when possible
-- **Retry logic**: Implement retries for transient network issues
+## Best practices
 
-## Next Steps
+- **Poll with backoff**: When polling [Get build status](#get-build-status), use a reasonable interval (e.g. 2–5 seconds) and a timeout to avoid tight loops.
+- **Store `file_id`**: Once the build completes (`success: true`), store `file_id` for use with ask, extract, retrieve, delete, and list elements.
+- **Validate before upload**: Check file type and size client-side before calling [Ingest file](#ingest-file).
+- **Protect API tokens**: Never expose tokens in client-side code or public repositories; use HTTPS only.
 
-After successfully uploading your documents:
+---
+
+## Next steps
+
+After ingestion completes (build status `Completed`):
 
 <CardGroup cols={2}>
-  <Card
-    title="Parse Source"
-    icon="gears"
-    href="/api-reference/sources/process"
-  >
-    Reprocess documents with different parsing methods for optimal results
+  <Card title="Parse source" icon="gears" href="/api-reference/sources/process">
+    Re-process a source with a different partition method (async; returns a new build_id)
   </Card>
-  <Card
-    title="List Sources"
-    icon="list"
-    href="/api-reference/sources/list"
-  >
-    Retrieve information about all uploaded documents in your project
+  <Card title="List sources" icon="list" href="/api-reference/sources/list">
+    List all sources in your project
   </Card>
-  <Card
-    title="List Parse Results"
-    icon="file-dashed-line"
-    href="/api-reference/sources/list-elements"
-  >
-    Retrieve structured elements and partitions from processed documents
+  <Card title="Get elements" icon="file-dashed-line" href="/api-reference/sources/list-elements">
+    Retrieve parsed elements (chunks) for a source
   </Card>
-  <Card
-    title="Delete Source"
-    icon="trash"
-    href="/api-reference/sources/delete"
-  >
-    Remove documents that are no longer needed from your project
+  <Card title="Delete source" icon="trash" href="/api-reference/sources/delete">
+    Remove a source from your project
   </Card>
 </CardGroup>

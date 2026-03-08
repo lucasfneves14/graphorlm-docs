@@ -1,45 +1,37 @@
 ---
 title: 'List Sources'
-description: 'Retrieve all documents in your project using the Graphor SDK'
+description: 'List all sources in your project using the Graphor SDK'
 ---
 
-The `list` method allows you to retrieve information about all documents in your Graphor project. This method provides comprehensive details about each document's status, processing information, and metadata, enabling you to monitor and manage your document collection programmatically.
+The **`list`** method returns every source in the project. Each item includes file metadata (ID, name, size, type, origin), current processing status, and a human-readable message. You can optionally filter by `file_ids`.
 
-## Method Overview
+## Method overview
 
 <Tabs>
   <Tab title="Python">
-    <CardGroup cols={2}>
-      <Card title="Sync Method" icon="code">
-        **`client.sources.list()`**
-      </Card>
-      <Card title="Async Method" icon="code">
-        **`await client.sources.list()`**
-      </Card>
-    </CardGroup>
+    **`client.sources.list()`**
   </Tab>
   <Tab title="TypeScript">
-    <CardGroup cols={2}>
-      <Card title="Async Method" icon="code">
-        **`await client.sources.list()`**
-      </Card>
-    </CardGroup>
+    **`await client.sources.list()`**
   </Tab>
 </Tabs>
 
-## Method Signature
+## Method signature
 
 <Tabs>
   <Tab title="Python">
     ```python
     client.sources.list(
+        file_ids: list[str] | None = None,   # Optional: filter by these file IDs
         timeout: float | None = None
     ) -> list[PublicSource]
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    await client.sources.list(): Promise<PublicSource[]>
+    await client.sources.list({
+      fileIds?: string[] | null,   // Optional: filter by these file IDs
+    }): Promise<PublicSource[]>
     ```
   </Tab>
 </Tabs>
@@ -50,67 +42,49 @@ The `list` method allows you to retrieve information about all documents in your
   <Tab title="Python">
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
+    | `file_ids` | `list[str] \| None` | If provided, only sources whose `file_id` is in this list are returned | No |
     | `timeout` | `float` | Request timeout in seconds | No |
   </Tab>
   <Tab title="TypeScript">
-    This method takes no parameters. You can pass request options (e.g., `timeout`) as a second argument.
+    | Parameter | Type | Description | Required |
+    |-----------|------|-------------|----------|
+    | `fileIds` | `string[] \| null` | If provided, only sources with these `file_id`s are returned | No |
   </Tab>
 </Tabs>
 
 <Note>
-  This method returns all sources in the project associated with your API key. No filtering parameters are required.
+  When `file_ids` is omitted, the method returns all sources in the project.
 </Note>
 
-## Response Object
+## Response
 
-The method returns a list of `PublicSource` objects with the following properties:
+The method returns a list of source objects. Each has:
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `status` | `str` | Current processing status (see status values below) |
-| `message` | `str` | Human-readable status description |
-| `file_id` | `str \| None` | Unique identifier for the source (use this for subsequent API calls) |
-| `file_name` | `str` | Name of the source file or identifier |
-| `file_size` | `int` | Size of the file in bytes (0 for URLs) |
+| `status` | `str` | Current processing status (capitalized: e.g. `New`, `Processing`, `Processed`, `Completed`, `Failed`) |
+| `message` | `str` | Human-readable status message |
+| `file_id` | `str` | Unique identifier for the source (use for reprocess, get elements, delete, ask, extract) |
+| `file_name` | `str` | Display name of the source file or identifier |
+| `file_size` | `int` | Size in bytes (0 for URL/GitHub/YouTube) |
 | `file_type` | `str` | File extension or type |
-| `file_source` | `str` | Source type: `local file`, `url`, `github`, or `youtube` |
+| `file_source` | `str` | Origin: `local file`, `url`, `github`, or `youtube` |
 | `project_id` | `str` | UUID of the project |
 | `project_name` | `str` | Name of the project |
-| `partition_method` | `str \| None` | Processing method used or applied |
+| `partition_method` | `str \| null` | Partition method: `fast`, `balanced`, `accurate`, `vlm`, or `agentic` (when available) |
 
-### Status Values
+### Status values
 
-<AccordionGroup>
-  <Accordion icon="clock" title="New">
-    **Description**: Document has been uploaded but processing hasn't started yet
-    
-    **Next Steps**: Processing will begin automatically or can be triggered manually
-  </Accordion>
-  
-  <Accordion icon="gear" title="Processing">
-    **Description**: Document is currently being processed
-    
-    **Duration**: Can take from minutes to hours depending on document complexity and method
-  </Accordion>
-  
-  <Accordion icon="check-circle" title="Completed">
-    **Description**: Document has been successfully processed and is ready for use
-    
-    **Ready for**: Chunking, retrieval, and integration in RAG pipelines
-  </Accordion>
-  
-  <Accordion icon="exclamation-triangle" title="Failed">
-    **Description**: Document processing encountered an error
-    
-    **Actions**: Check document format, try different processing method, or contact support
-  </Accordion>
-  
-  <Accordion icon="question-circle" title="Unknown">
-    **Description**: Status information is not available
-    
-    **Causes**: System error or data inconsistency
-  </Accordion>
-</AccordionGroup>
+Backend returns status with capital letters. Typical values:
+
+| Status | Description |
+|--------|-------------|
+| `New` | Upload/ingestion accepted; processing has not started yet |
+| `Processing` | Pipeline is running |
+| `Processed` | Source has been processed (intermediate or final state) |
+| `Completed` | Ready for ask, extract, retrieve, and get elements |
+| `Failed` / `Processing failed` | Processing encountered an error; consider reprocessing |
+| `unknown` | Status could not be determined |
 
 ### File Source Types
 
@@ -205,7 +179,30 @@ The method returns a list of `PublicSource` objects with the following propertie
   </Tab>
 </Tabs>
 
-### Filter by Status
+### Filter by file_ids
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+
+    client = Graphor()
+    file_ids = ["file_abc123", "file_def456"]
+    sources = client.sources.list(file_ids=file_ids)
+    print(f"Found {len(sources)} sources")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    const client = new Graphor();
+    const fileIds = ['file_abc123', 'file_def456'];
+    const sources = await client.sources.list({ fileIds });
+    console.log(`Found ${sources.length} sources`);
+    ```
+  </Tab>
+</Tabs>
+
+### Filter by status
 
 <Tabs>
   <Tab title="Python">
@@ -711,7 +708,7 @@ Perform a comprehensive health check of your project:
             failed_count = health_report["status_summary"].get("Failed", 0)
             if failed_count > 0:
                 health_report["recommendations"].append(
-                    f"Reprocess {failed_count} failed documents using client.sources.parse()"
+                    f"Reprocess {failed_count} failed documents using client.sources.reprocess(file_id)"
                 )
             
             processing_count = health_report["status_summary"].get("Processing", 0)
@@ -782,7 +779,7 @@ Perform a comprehensive health check of your project:
         const failedCount = statusSummary['Failed'] ?? 0;
         if (failedCount > 0) {
           recommendations.push(
-            `Reprocess ${failedCount} failed documents using client.sources.parse()`,
+            `Reprocess ${failedCount} failed documents using client.sources.reprocess(file_id)`,
           );
         }
 
@@ -848,7 +845,7 @@ Use the list to perform batch operations efficiently:
     from graphor import AsyncGraphor
     import graphor
 
-    async def reprocess_failed_sources(method: str = "hi_res"):
+    async def reprocess_failed_sources(method: str = "balanced"):
         """Find and reprocess all failed sources."""
         client = AsyncGraphor(timeout=300.0)
         
@@ -864,25 +861,25 @@ Use the list to perform batch operations efficiently:
         
         print(f"Found {len(failed)} failed sources to reprocess")
         
-        # Reprocess each failed source
+        # Reprocess each failed source (returns build_id; poll get_build_status to wait)
         results = []
         for source in failed:
             try:
-                print(f"Reprocessing: {source.file_name}...")
-                result = await client.sources.parse(
-                    file_name=source.file_name,
+                print(f"Reprocessing: {source.file_name} ({source.file_id})...")
+                build_id = await client.sources.reprocess(
+                    file_id=source.file_id,
                     partition_method=method
                 )
-                results.append({"file_name": source.file_name, "status": "success"})
-                print(f"  OK - {source.file_name} reprocessed")
+                results.append({"file_id": source.file_id, "build_id": build_id, "status": "scheduled"})
+                print(f"  OK - build_id: {build_id}")
             except graphor.APIStatusError as e:
-                results.append({"file_name": source.file_name, "status": "failed", "error": str(e)})
-                print(f"  FAIL - {source.file_name}: {e}")
+                results.append({"file_id": source.file_id, "status": "failed", "error": str(e)})
+                print(f"  FAIL - {source.file_id}: {e}")
         
         return results
 
     # Usage
-    results = asyncio.run(reprocess_failed_sources("hi_res"))
+    results = asyncio.run(reprocess_failed_sources("balanced"))
     ```
   </Tab>
   <Tab title="TypeScript">
@@ -891,7 +888,7 @@ Use the list to perform batch operations efficiently:
 
     const client = new Graphor({ timeout: 300 * 1000 });
 
-    async function reprocessFailedSources(method = 'hi_res') {
+    async function reprocessFailedSources(method = 'balanced') {
       // Get all sources
       const sources = await client.sources.list();
 
@@ -905,21 +902,21 @@ Use the list to perform batch operations efficiently:
 
       console.log(`Found ${failed.length} failed sources to reprocess`);
 
-      // Reprocess each failed source
-      const results: { fileName: string; status: string; error?: string }[] = [];
+      // Reprocess each failed source (returns build_id; poll getBuildStatus to wait)
+      const results: { fileId: string; buildId?: string; status: string; error?: string }[] = [];
       for (const source of failed) {
         try {
-          console.log(`Reprocessing: ${source.file_name}...`);
-          await client.sources.parse({
-            file_name: source.file_name,
-            partition_method: method as any,
+          console.log(`Reprocessing: ${source.file_name} (${source.file_id})...`);
+          const buildId = await client.sources.reprocess({
+            fileId: source.file_id,
+            partitionMethod: method as any,
           });
-          results.push({ fileName: source.file_name, status: 'success' });
-          console.log(`  OK - ${source.file_name} reprocessed`);
+          results.push({ fileId: source.file_id, buildId, status: 'scheduled' });
+          console.log(`  OK - build_id: ${buildId}`);
         } catch (err) {
           const message = err instanceof Graphor.APIError ? err.message : String(err);
-          results.push({ fileName: source.file_name, status: 'failed', error: message });
-          console.log(`  FAIL - ${source.file_name}: ${message}`);
+          results.push({ fileId: source.file_id, status: 'failed', error: message });
+          console.log(`  FAIL - ${source.file_id}: ${message}`);
         }
       }
 
@@ -927,7 +924,7 @@ Use the list to perform batch operations efficiently:
     }
 
     // Usage
-    const results = await reprocessFailedSources('hi_res');
+    const results = await reprocessFailedSources('balanced');
     ```
   </Tab>
 </Tabs>
@@ -1367,37 +1364,21 @@ Set up continuous monitoring of your sources:
   </Accordion>
 </AccordionGroup>
 
-## Next Steps
+## Next steps
 
-After successfully listing your sources:
+After listing your sources:
 
 <CardGroup cols={2}>
-  <Card
-    title="Upload Source"
-    icon="arrow-up-from-bracket"
-    href="/sdk/sources/upload"
-  >
-    Add new documents to your project for processing
+  <Card title="Upload" icon="arrow-up-from-bracket" href="/sdk/sources/upload">
+    Ingest new files, URLs, GitHub repos, or YouTube videos
   </Card>
-  <Card
-    title="Parse Source"
-    icon="gears"
-    href="/sdk/sources/process"
-  >
-    Reprocess existing documents with different methods
+  <Card title="Reprocess source" icon="gears" href="/sdk/sources/process">
+    Reprocess a source with a different partition method
   </Card>
-  <Card
-    title="Delete Source"
-    icon="trash"
-    href="/sdk/sources/delete"
-  >
-    Remove unwanted documents from your project
+  <Card title="Get elements" icon="file-dashed-line" href="/sdk/sources/list-elements">
+    Retrieve parsed elements from a source
   </Card>
-  <Card
-    title="List Parse Results"
-    icon="file-dashed-line"
-    href="/sdk/sources/list-elements"
-  >
-    Retrieve structured elements from processed documents
+  <Card title="Delete source" icon="trash" href="/sdk/sources/delete">
+    Remove a source by file_id
   </Card>
 </CardGroup>

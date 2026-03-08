@@ -1,29 +1,28 @@
 ---
 title: 'Delete Source'
-description: 'Remove documents from your project using the Graphor SDK'
+description: 'Remove a source from your project using the Graphor SDK'
 ---
 
-The `delete` method allows you to permanently remove documents from your Graphor project. This method provides a secure way to clean up your document collection, automatically updating related flows and removing all associated data including partition nodes and metadata.
+The **`delete`** method (same name as the API endpoint) permanently removes a source from your project. You must pass the source's **`file_id`** (from [list](/sdk/sources/list) or [get build status](/sdk/sources/upload#get-build-status)). The operation is irreversible and removes all associated data including partition nodes and metadata.
 
-## Method Overview
+## Method overview
 
-<CardGroup cols={2}>
-  <Card title="Sync Method" icon="code">
+<Tabs>
+  <Tab title="Python">
     **`client.sources.delete()`**
-  </Card>
-  <Card title="Async Method" icon="code">
+  </Tab>
+  <Tab title="TypeScript">
     **`await client.sources.delete()`**
-  </Card>
-</CardGroup>
+  </Tab>
+</Tabs>
 
-## Method Signature
+## Method signature
 
 <Tabs>
   <Tab title="Python">
     ```python
     client.sources.delete(
-        file_id: str | None = None,  # Preferred
-        file_name: str | None = None, # Deprecated
+        file_id: str,                    # Required
         timeout: float | None = None
     ) -> SourceDeleteResponse
     ```
@@ -31,8 +30,7 @@ The `delete` method allows you to permanently remove documents from your Graphor
   <Tab title="TypeScript">
     ```typescript
     await client.sources.delete({
-      file_id?: string | null,  // Preferred
-      file_name?: string | null, // Deprecated
+      fileId: string,                    // Required
     }): Promise<SourceDeleteResponse>
     ```
   </Tab>
@@ -44,69 +42,56 @@ The `delete` method allows you to permanently remove documents from your Graphor
   <Tab title="Python">
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
-    | `file_id` | `str` | Unique identifier for the source (preferred) | No* |
-    | `file_name` | `str` | Name of the file to delete (deprecated, use `file_id`) | No* |
+    | `file_id` | `str` | Unique identifier of the source to delete | Yes |
     | `timeout` | `float` | Request timeout in seconds | No |
   </Tab>
   <Tab title="TypeScript">
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
-    | `file_id` | `string \| null` | Unique identifier for the source (preferred) | No* |
-    | `file_name` | `string \| null` | Name of the file to delete (deprecated, use `file_id`) | No* |
+    | `fileId` | `string` | Unique identifier of the source to delete | Yes |
   </Tab>
 </Tabs>
 
-<Note>
-*At least one of `file_id` or `file_name` must be provided. `file_id` is preferred.
-</Note>
-
-## Important Considerations
+## Important considerations
 
 <AccordionGroup>
-  <Accordion icon="warning" title="Permanent Deletion">
-    **Warning**: This operation is irreversible
+  <Accordion icon="warning" title="Permanent deletion">
+    **Warning**: This operation is irreversible.
     
-    - All document content and metadata will be permanently removed
-    - Associated partition nodes and embeddings will be deleted
-    - Flows using this document will be automatically updated
-    - No backup or recovery options are available
+    - All document content and metadata are permanently removed
+    - Associated partition nodes and embeddings are deleted
+    - Flows using this document are automatically updated
+    - No backup or recovery is available
   </Accordion>
   
-  <Accordion icon="file-text" title="File Name Requirements">
-    **Exact match required**
-    
-    - File names are case-sensitive
-    - Must match the exact name from upload or list methods
-    - Include the full filename with extension
-    - Use `client.sources.list()` to verify file names
+  <Accordion icon="fingerprint" title="Using file_id">
+    - Use the source's unique `file_id` from [list](/sdk/sources/list) or [get build status](/sdk/sources/upload#get-build-status)
+    - Do not rely on file name; only `file_id` is supported
   </Accordion>
   
-  <Accordion icon="warning" title="Flow Impact">
-    **Automatic flow updates**
-    
-    - Dataset nodes using this document will be updated automatically
-    - Successor nodes in affected flows will be marked as outdated
+  <Accordion icon="warning" title="Flow impact">
+    - Dataset nodes using this document are updated automatically
+    - Successor nodes in affected flows may be marked as outdated
     - Flow execution may be impacted until nodes are reconfigured
-    - Multiple flows can be affected by a single deletion
   </Accordion>
 </AccordionGroup>
 
-## Response Object
+## Response
 
-The method returns a `SourceDeleteResponse` object:
+The method returns a response object with:
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `status` | `str` | Deletion result (typically "success") |
-| `message` | `str` | Human-readable confirmation message |
-| `file_id` | `str \| None` | Unique identifier for the deleted source |
+| `status` | `str` | Deletion result (e.g. "success") |
+| `message` | `str` | Human-readable confirmation |
+| `file_id` | `str` | Identifier of the deleted source |
 | `file_name` | `str` | Name of the deleted file |
-| `project_id` | `str` | UUID of the project the file was removed from |
+| `project_id` | `str` | UUID of the project |
 | `project_name` | `str` | Name of the project |
 
-## Code Examples
+## Code examples
 
-### Basic Usage
+### Basic usage
 
 <Tabs>
   <Tab title="Python">
@@ -114,38 +99,28 @@ The method returns a `SourceDeleteResponse` object:
     from graphor import Graphor
 
     client = Graphor()
+    file_id = "file_abc123"  # from list() or get_build_status
 
-    # Delete a document
-    result = client.sources.delete(
-        file_name="document.pdf"
-    )
+    result = client.sources.delete(file_id=file_id)
 
     print(f"Status: {result.status}")
-    print(f"Message: {result.message}")
     print(f"Deleted: {result.file_name}")
-    print(f"Project: {result.project_name}")
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    import Graphor from 'graphor';
-
     const client = new Graphor();
+    const fileId = 'file_abc123';
 
-    // Delete a document
-    const result = await client.sources.delete({
-      file_name: 'document.pdf',
-    });
+    const result = await client.sources.delete({ fileId });
 
-    console.log(`Status: ${result.status}`);
-    console.log(`Message: ${result.message}`);
-    console.log(`Deleted: ${result.file_name}`);
-    console.log(`Project: ${result.project_name}`);
+    console.log('Status:', result.status);
+    console.log('Deleted:', result.file_name);
     ```
   </Tab>
 </Tabs>
 
-### Async Usage
+### Async usage
 
 <Tabs>
   <Tab title="Python">
@@ -153,42 +128,30 @@ The method returns a `SourceDeleteResponse` object:
     import asyncio
     from graphor import AsyncGraphor
 
-    async def delete_document(file_name: str):
+    async def delete_document(file_id: str):
         client = AsyncGraphor()
-        
-        result = await client.sources.delete(file_name=file_name)
-        
+        result = await client.sources.delete(file_id=file_id)
         print(f"Deleted: {result.file_name}")
-        print(f"Status: {result.status}")
-        
         return result
 
-    asyncio.run(delete_document("document.pdf"))
+    asyncio.run(delete_document("file_abc123"))
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    import Graphor from 'graphor';
-
-    const client = new Graphor();
-
-    async function deleteDocument(fileName: string) {
-      const result = await client.sources.delete({ file_name: fileName });
-
-      console.log(`Deleted: ${result.file_name}`);
-      console.log(`Status: ${result.status}`);
-
+    async function deleteDocument(fileId: string) {
+      const result = await client.sources.delete({ fileId });
+      console.log('Deleted:', result.file_name);
       return result;
     }
-
-    await deleteDocument('document.pdf');
+    await deleteDocument('file_abc123');
     ```
   </Tab>
 </Tabs>
 
-### Delete with Verification
+### Delete with verification
 
-Always verify the file exists before deletion:
+Verify the source exists (by `file_id`) before deleting:
 
 <Tabs>
   <Tab title="Python">
@@ -198,168 +161,51 @@ Always verify the file exists before deletion:
 
     client = Graphor()
 
-    def safe_delete(file_name: str) -> bool:
-        """Safely delete a document with verification."""
-        
-        # First, check if the file exists
+    def safe_delete(file_id: str) -> bool:
         sources = client.sources.list()
-        available_files = [s.file_name for s in sources]
-        
-        if file_name not in available_files:
-            print(f"File '{file_name}' not found in project")
-            print(f"Available files: {available_files[:5]}...")  # Show first 5
+        file_ids = [s.file_id for s in sources]
+        if file_id not in file_ids:
+            print(f"Source '{file_id}' not found")
             return False
-        
-        # Find and display file info
-        file_info = next(s for s in sources if s.file_name == file_name)
-        print(f"File to delete: {file_info.file_name}")
-        print(f"  Size: {file_info.file_size:,} bytes")
-        print(f"  Type: {file_info.file_type}")
-        print(f"  Status: {file_info.status}")
-        
-        # Confirm deletion
-        confirm = input("\nProceed with deletion? (yes/no): ")
+        info = next(s for s in sources if s.file_id == file_id)
+        print(f"Source to delete: {info.file_name} ({info.file_id})")
+        confirm = input("Proceed? (yes/no): ")
         if confirm.lower() != "yes":
-            print("Deletion cancelled")
             return False
-        
-        # Perform deletion
         try:
-            result = client.sources.delete(file_name=file_name)
+            result = client.sources.delete(file_id=file_id)
             print(f"Success: {result.message}")
             return True
         except graphor.APIStatusError as e:
             print(f"Deletion failed: {e}")
             return False
 
-    # Usage
-    safe_delete("old_document.pdf")
+    safe_delete("file_abc123")
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    import Graphor from 'graphor';
-    import * as readline from 'readline';
-
-    const client = new Graphor();
-
-    async function safeDelete(fileName: string): Promise<boolean> {
-      // First, check if the file exists
-      const sources = await client.sources.list();
-      const availableFiles = sources.map((s) => s.file_name);
-
-      if (!availableFiles.includes(fileName)) {
-        console.log(`File '${fileName}' not found in project`);
-        console.log(`Available files: ${availableFiles.slice(0, 5).join(', ')}...`);
-        return false;
-      }
-
-      // Find and display file info
-      const fileInfo = sources.find((s) => s.file_name === fileName)!;
-      console.log(`File to delete: ${fileInfo.file_name}`);
-      console.log(`  Size: ${fileInfo.file_size.toLocaleString()} bytes`);
-      console.log(`  Type: ${fileInfo.file_type}`);
-      console.log(`  Status: ${fileInfo.status}`);
-
-      // Perform deletion
-      try {
-        const result = await client.sources.delete({ file_name: fileName });
-        console.log(`Success: ${result.message}`);
-        return true;
-      } catch (err) {
-        if (err instanceof Graphor.APIError) {
-          console.log(`Deletion failed: ${err.message}`);
-        }
-        return false;
-      }
+    const sources = await client.sources.list();
+    const fileIds = sources.map((s) => s.file_id);
+    if (!fileIds.includes(fileId)) {
+      console.log('Source not found');
+      return;
     }
-
-    // Usage
-    await safeDelete('old_document.pdf');
+    const info = sources.find((s) => s.file_id === fileId)!;
+    console.log(`Source to delete: ${info.file_name} (${info.file_id})`);
+    const result = await client.sources.delete({ fileId });
+    console.log('Success:', result.message);
     ```
   </Tab>
 </Tabs>
 
-### Delete with Confirmation Prompt
+### Error handling
 
 <Tabs>
   <Tab title="Python">
     ```python
-    from graphor import Graphor
-    import graphor
-
-    client = Graphor()
-
-    def delete_with_confirmation(file_name: str):
-        """Delete a document with a safety confirmation."""
-        print(f"WARNING: This will permanently delete '{file_name}'")
-        print("This action cannot be undone!")
-        
-        confirmation = input("Type 'DELETE' to confirm: ")
-        
-        if confirmation != "DELETE":
-            print("Deletion cancelled")
-            return None
-        
-        try:
-            result = client.sources.delete(file_name=file_name)
-            print(f"Document '{file_name}' deleted successfully")
-            return result
-        except graphor.NotFoundError:
-            print(f"File '{file_name}' not found")
-            return None
-        except graphor.APIStatusError as e:
-            print(f"Error deleting document: {e}")
-            return None
-
-    # Usage
-    result = delete_with_confirmation("document.pdf")
-    ```
-  </Tab>
-  <Tab title="TypeScript">
-    ```typescript
-    import Graphor from 'graphor';
-    import * as readline from 'readline';
-
-    const client = new Graphor();
-
-    async function deleteWithConfirmation(fileName: string) {
-      console.log(`WARNING: This will permanently delete '${fileName}'`);
-      console.log('This action cannot be undone!');
-
-      // In a real app, add a confirmation prompt here
-      try {
-        const result = await client.sources.delete({ file_name: fileName });
-        console.log(`Document '${fileName}' deleted successfully`);
-        return result;
-      } catch (err) {
-        if (err instanceof Graphor.NotFoundError) {
-          console.log(`File '${fileName}' not found`);
-        } else if (err instanceof Graphor.APIError) {
-          console.log(`Error deleting document: ${err.message}`);
-        }
-        return null;
-      }
-    }
-
-    // Usage
-    const result = await deleteWithConfirmation('document.pdf');
-    ```
-  </Tab>
-</Tabs>
-
-### Error Handling
-
-<Tabs>
-  <Tab title="Python">
-    ```python
-    import graphor
-    from graphor import Graphor
-
-    client = Graphor()
-
     try:
-        result = client.sources.delete(file_name="document.pdf")
+        result = client.sources.delete(file_id="file_abc123")
         print(f"Deleted: {result.file_name}")
         
     except graphor.NotFoundError as e:
@@ -391,7 +237,7 @@ Always verify the file exists before deletion:
     const client = new Graphor();
 
     try {
-      const result = await client.sources.delete({ file_name: 'document.pdf' });
+      const result = await client.sources.delete({ fileId: 'file_abc123' });
       console.log(`Deleted: ${result.file_name}`);
     } catch (err) {
       if (err instanceof Graphor.NotFoundError) {
@@ -431,74 +277,34 @@ Delete multiple files with safety checks:
 
     client = Graphor()
 
-    def batch_delete(file_names: list[str], confirm: bool = True) -> dict:
-        """Delete multiple files with comprehensive checks."""
-        
-        # Verify all files exist
-        print("Verifying files exist before deletion...")
+    def batch_delete(file_ids: list[str], confirm: bool = True) -> dict:
+        """Delete multiple sources by file_id."""
         sources = client.sources.list()
-        available_files = {s.file_name: s for s in sources}
-        
-        # Check for missing files
-        missing = [f for f in file_names if f not in available_files]
+        by_id = {s.file_id: s for s in sources}
+        missing = [f for f in file_ids if f not in by_id]
         if missing:
-            print(f"Files not found: {missing}")
-            return {"error": f"Missing files: {missing}"}
-        
-        # Show summary
-        total_size = sum(available_files[f].file_size for f in file_names)
-        total_size_mb = total_size / (1024 * 1024)
-        
-        print(f"\nDeletion Summary:")
-        print(f"  Files to delete: {len(file_names)}")
-        print(f"  Total size: {total_size_mb:.2f} MB")
-        
-        for file_name in file_names:
-            info = available_files[file_name]
-            print(f"  - {file_name} ({info.file_type}, {info.status})")
-        
-        # Confirm deletion
+            print(f"Sources not found: {missing}")
+            return {"error": f"Missing: {missing}"}
+        total_size = sum(by_id[f].file_size for f in file_ids)
+        print(f"Deletion: {len(file_ids)} sources, {total_size / (1024*1024):.2f} MB")
+        for fid in file_ids:
+            print(f"  - {by_id[fid].file_name} ({by_id[fid].file_id})")
         if confirm:
-            confirmation = input(f"\nDelete {len(file_names)} files permanently? (type 'DELETE'): ")
-            if confirmation != "DELETE":
-                print("Batch deletion cancelled")
+            if input("Type 'DELETE' to confirm: ") != "DELETE":
                 return {"cancelled": True}
-        
-        # Perform deletions
         results = {"successful": [], "failed": []}
-        
-        for i, file_name in enumerate(file_names, 1):
-            print(f"\n[{i}/{len(file_names)}] Deleting {file_name}...")
-            
+        for i, fid in enumerate(file_ids, 1):
             try:
-                result = client.sources.delete(file_name=file_name)
-                results["successful"].append({
-                    "file_name": file_name,
-                    "message": result.message
-                })
-                print(f"  Deleted successfully")
-                
+                result = client.sources.delete(file_id=fid)
+                results["successful"].append({"file_id": fid, "message": result.message})
             except graphor.APIStatusError as e:
-                results["failed"].append({
-                    "file_name": file_name,
-                    "error": str(e)
-                })
-                print(f"  Failed: {e}")
-            
-            # Small delay between deletions
-            if i < len(file_names):
+                results["failed"].append({"file_id": fid, "error": str(e)})
+            if i < len(file_ids):
                 time.sleep(0.5)
-        
-        # Final summary
-        print(f"\nBatch deletion complete:")
-        print(f"  Successful: {len(results['successful'])}")
-        print(f"  Failed: {len(results['failed'])}")
-        
         return results
 
-    # Usage
-    files_to_delete = ["old_doc1.pdf", "temp_file.txt", "archive.docx"]
-    results = batch_delete(files_to_delete)
+    file_ids_to_delete = ["file_1", "file_2", "file_3"]
+    results = batch_delete(file_ids_to_delete)
     ```
   </Tab>
   <Tab title="TypeScript">
@@ -507,68 +313,32 @@ Delete multiple files with safety checks:
 
     const client = new Graphor();
 
-    async function batchDelete(fileNames: string[]) {
-      // Verify all files exist
-      console.log('Verifying files exist before deletion...');
+    async function batchDelete(fileIds: string[]) {
       const sources = await client.sources.list();
-      const availableFiles = new Map(sources.map((s) => [s.file_name, s]));
-
-      // Check for missing files
-      const missing = fileNames.filter((f) => !availableFiles.has(f));
+      const byId = new Map(sources.map((s) => [s.file_id, s]));
+      const missing = fileIds.filter((f) => !byId.has(f));
       if (missing.length > 0) {
-        console.log(`Files not found: ${missing.join(', ')}`);
-        return { error: `Missing files: ${missing}` };
+        console.log('Sources not found:', missing);
+        return { error: `Missing: ${missing}` };
       }
-
-      // Show summary
-      const totalSize = fileNames.reduce((sum, f) => sum + availableFiles.get(f)!.file_size, 0);
-      const totalSizeMb = totalSize / (1024 * 1024);
-
-      console.log(`\nDeletion Summary:`);
-      console.log(`  Files to delete: ${fileNames.length}`);
-      console.log(`  Total size: ${totalSizeMb.toFixed(2)} MB`);
-
-      for (const fileName of fileNames) {
-        const info = availableFiles.get(fileName)!;
-        console.log(`  - ${fileName} (${info.file_type}, ${info.status})`);
-      }
-
-      // Perform deletions
-      const results: { successful: string[]; failed: { fileName: string; error: string }[] } = {
+      const results: { successful: { fileId: string }[]; failed: { fileId: string; error: string }[] } = {
         successful: [],
         failed: [],
       };
-
-      for (let i = 0; i < fileNames.length; i++) {
-        const fileName = fileNames[i];
-        console.log(`\n[${i + 1}/${fileNames.length}] Deleting ${fileName}...`);
-
+      for (const fileId of fileIds) {
         try {
-          await client.sources.delete({ file_name: fileName });
-          results.successful.push(fileName);
-          console.log('  Deleted successfully');
+          await client.sources.delete({ fileId });
+          results.successful.push({ fileId });
         } catch (err) {
           const message = err instanceof Graphor.APIError ? err.message : String(err);
-          results.failed.push({ fileName, error: message });
-          console.log(`  Failed: ${message}`);
+          results.failed.push({ fileId, error: message });
         }
-
-        // Small delay between deletions
-        if (i < fileNames.length - 1) {
-          await new Promise((r) => setTimeout(r, 500));
-        }
+        await new Promise((r) => setTimeout(r, 500));
       }
-
-      // Final summary
-      console.log(`\nBatch deletion complete:`);
-      console.log(`  Successful: ${results.successful.length}`);
-      console.log(`  Failed: ${results.failed.length}`);
-
       return results;
     }
 
-    // Usage
-    const results = await batchDelete(['old_doc1.pdf', 'temp_file.txt', 'archive.docx']);
+    const results = await batchDelete(['file_1', 'file_2', 'file_3']);
     ```
   </Tab>
 </Tabs>
@@ -584,41 +354,27 @@ Delete multiple files concurrently:
     from graphor import AsyncGraphor
     import graphor
 
-    async def delete_single(client: AsyncGraphor, file_name: str) -> dict:
-        """Delete a single file and return result."""
+    async def delete_single(client: AsyncGraphor, file_id: str) -> dict:
         try:
-            result = await client.sources.delete(file_name=file_name)
-            return {"file_name": file_name, "status": "success", "message": result.message}
+            result = await client.sources.delete(file_id=file_id)
+            return {"file_id": file_id, "status": "success", "message": result.message}
         except graphor.APIStatusError as e:
-            return {"file_name": file_name, "status": "failed", "error": str(e)}
+            return {"file_id": file_id, "status": "failed", "error": str(e)}
 
-    async def batch_delete_async(file_names: list[str], max_concurrent: int = 3):
-        """Delete multiple files with controlled concurrency."""
+    async def batch_delete_async(file_ids: list[str], max_concurrent: int = 3):
         client = AsyncGraphor()
-        
-        # Use semaphore to limit concurrent deletions
         semaphore = asyncio.Semaphore(max_concurrent)
-        
-        async def delete_with_semaphore(file_name: str):
-            async with semaphore:
-                print(f"Deleting: {file_name}")
-                result = await delete_single(client, file_name)
-                status_icon = "OK" if result["status"] == "success" else "FAIL"
-                print(f"{status_icon} {file_name}: {result['status']}")
-                return result
-        
-        tasks = [delete_with_semaphore(f) for f in file_names]
-        results = await asyncio.gather(*tasks)
-        
-        successful = [r for r in results if r["status"] == "success"]
-        failed = [r for r in results if r["status"] == "failed"]
-        
-        print(f"\nSummary: {len(successful)} successful, {len(failed)} failed")
-        return results
 
-    # Usage
-    files = ["doc1.pdf", "doc2.pdf", "doc3.pdf"]
-    results = asyncio.run(batch_delete_async(files, max_concurrent=2))
+        async def delete_with_semaphore(fid: str):
+            async with semaphore:
+                result = await delete_single(client, fid)
+                print(f"{'OK' if result['status'] == 'success' else 'FAIL'} {fid}")
+                return result
+
+        tasks = [delete_with_semaphore(f) for f in file_ids]
+        return await asyncio.gather(*tasks)
+
+    results = asyncio.run(batch_delete_async(["file_1", "file_2", "file_3"], max_concurrent=2))
     ```
   </Tab>
   <Tab title="TypeScript">
@@ -627,46 +383,31 @@ Delete multiple files concurrently:
 
     const client = new Graphor();
 
-    async function deleteSingle(fileName: string) {
+    async function deleteSingle(fileId: string) {
       try {
-        const result = await client.sources.delete({ file_name: fileName });
-        return { fileName, status: 'success' as const, message: result.message };
+        const result = await client.sources.delete({ fileId });
+        return { fileId, status: 'success' as const, message: result.message };
       } catch (err) {
         const message = err instanceof Graphor.APIError ? err.message : String(err);
-        return { fileName, status: 'failed' as const, error: message };
+        return { fileId, status: 'failed' as const, error: message };
       }
     }
 
-    async function batchDeleteAsync(fileNames: string[], maxConcurrent = 3) {
+    async function batchDeleteAsync(fileIds: string[], maxConcurrent = 3) {
       // Simple concurrency limiter
       const results: Awaited<ReturnType<typeof deleteSingle>>[] = [];
 
-      for (let i = 0; i < fileNames.length; i += maxConcurrent) {
-        const batch = fileNames.slice(i, i + maxConcurrent);
-        console.log(`Processing batch ${Math.floor(i / maxConcurrent) + 1}...`);
-
+      for (let i = 0; i < fileIds.length; i += maxConcurrent) {
+        const batch = fileIds.slice(i, i + maxConcurrent);
         const batchResults = await Promise.all(
-          batch.map(async (fileName) => {
-            console.log(`Deleting: ${fileName}`);
-            const result = await deleteSingle(fileName);
-            const status = result.status === 'success' ? 'OK' : 'FAIL';
-            console.log(`${status} ${fileName}: ${result.status}`);
-            return result;
-          }),
+          batch.map((fileId) => deleteSingle(fileId)),
         );
-
         results.push(...batchResults);
       }
-
-      const successful = results.filter((r) => r.status === 'success');
-      const failed = results.filter((r) => r.status === 'failed');
-
-      console.log(`\nSummary: ${successful.length} successful, ${failed.length} failed`);
       return results;
     }
 
-    // Usage
-    const results = await batchDeleteAsync(['doc1.pdf', 'doc2.pdf', 'doc3.pdf'], 2);
+    const results = await batchDeleteAsync(['file_1', 'file_2', 'file_3'], 2);
     ```
   </Tab>
 </Tabs>
@@ -714,7 +455,7 @@ Automatically clean up sources that failed processing:
         
         for source in failed_sources:
             try:
-                client.sources.delete(file_name=source.file_name)
+                client.sources.delete(file_id=source.file_id)
                 deleted.append(source.file_name)
                 print(f"Deleted: {source.file_name}")
             except graphor.APIStatusError as e:
@@ -758,7 +499,7 @@ Automatically clean up sources that failed processing:
 
       for (const source of failedSources) {
         try {
-          await client.sources.delete({ file_name: source.file_name });
+          await client.sources.delete({ fileId: source.file_id });
           deleted.push(source.file_name);
           console.log(`Deleted: ${source.file_name}`);
         } catch (err) {
@@ -805,50 +546,36 @@ A complete class for managing document lifecycle:
             """Get all sources."""
             return self.client.sources.list()
         
-        def find_source(self, file_name: str):
-            """Find a source by name."""
+        def find_source(self, file_id: str):
+            """Find a source by file_id."""
             sources = self.list_sources()
             for source in sources:
-                if source.file_name == file_name:
+                if source.file_id == file_id:
                     return source
             return None
-        
-        def delete(self, file_name: str, verify: bool = True) -> DeletionResult:
-            """Delete a source with optional verification."""
-            
-            # Verify file exists
+
+        def delete(self, file_id: str, verify: bool = True) -> DeletionResult:
+            """Delete a source by file_id with optional verification."""
             if verify:
-                source = self.find_source(file_name)
+                source = self.find_source(file_id)
                 if not source:
                     return DeletionResult(
                         success=False,
-                        file_name=file_name,
-                        message="File not found",
+                        file_name=file_id,
+                        message="Source not found",
                         error="NotFoundError"
                     )
-            
-            # Perform deletion
             try:
-                result = self.client.sources.delete(file_name=file_name)
+                result = self.client.sources.delete(file_id=file_id)
                 return DeletionResult(
                     success=True,
                     file_name=result.file_name,
                     message=result.message
                 )
             except graphor.NotFoundError as e:
-                return DeletionResult(
-                    success=False,
-                    file_name=file_name,
-                    message="File not found",
-                    error=str(e)
-                )
+                return DeletionResult(success=False, file_name=file_id, message="Source not found", error=str(e))
             except graphor.APIStatusError as e:
-                return DeletionResult(
-                    success=False,
-                    file_name=file_name,
-                    message=f"API error: {e.status_code}",
-                    error=str(e)
-                )
+                return DeletionResult(success=False, file_name=file_id, message=f"API error: {e.status_code}", error=str(e))
         
         def delete_by_type(self, file_type: str, confirm: bool = True) -> list[DeletionResult]:
             """Delete all sources of a specific type."""
@@ -871,7 +598,7 @@ A complete class for managing document lifecycle:
             
             results = []
             for source in targets:
-                result = self.delete(source.file_name, verify=False)
+                result = self.delete(source.file_id, verify=False)
                 results.append(result)
                 status = "OK" if result.success else "FAIL"
                 print(f"{status} {source.file_name}: {result.message}")
@@ -899,7 +626,7 @@ A complete class for managing document lifecycle:
             
             results = []
             for source in targets:
-                result = self.delete(source.file_name, verify=False)
+                result = self.delete(source.file_id, verify=False)
                 results.append(result)
                 status_icon = "OK" if result.success else "FAIL"
                 print(f"{status_icon} {source.file_name}: {result.message}")
@@ -910,7 +637,7 @@ A complete class for managing document lifecycle:
     manager = DocumentManager()
 
     # Delete a single file
-    result = manager.delete("old_document.pdf")
+    result = manager.delete("file_abc123")
     print(f"Deleted: {result.success}")
 
     # Delete all PDFs
@@ -942,35 +669,27 @@ A complete class for managing document lifecycle:
         return this.client.sources.list();
       }
 
-      async findSource(fileName: string) {
+      async findSource(fileId: string) {
         const sources = await this.listSources();
-        return sources.find((s) => s.file_name === fileName) ?? null;
+        return sources.find((s) => s.file_id === fileId) ?? null;
       }
 
-      async delete(fileName: string, verify = true): Promise<DeletionResult> {
-        // Verify file exists
+      async delete(fileId: string, verify = true): Promise<DeletionResult> {
         if (verify) {
-          const source = await this.findSource(fileName);
+          const source = await this.findSource(fileId);
           if (!source) {
-            return { success: false, fileName, message: 'File not found', error: 'NotFoundError' };
+            return { success: false, fileName: fileId, message: 'Source not found', error: 'NotFoundError' };
           }
         }
-
-        // Perform deletion
         try {
-          const result = await this.client.sources.delete({ file_name: fileName });
+          const result = await this.client.sources.delete({ fileId });
           return { success: true, fileName: result.file_name, message: result.message };
         } catch (err) {
           if (err instanceof Graphor.NotFoundError) {
-            return { success: false, fileName, message: 'File not found', error: err.message };
+            return { success: false, fileName: fileId, message: 'Source not found', error: err.message };
           }
           if (err instanceof Graphor.APIError) {
-            return {
-              success: false,
-              fileName,
-              message: `API error: ${err.status}`,
-              error: err.message,
-            };
+            return { success: false, fileName: fileId, message: `API error: ${err.status}`, error: err.message };
           }
           throw err;
         }
@@ -992,7 +711,7 @@ A complete class for managing document lifecycle:
 
         const results: DeletionResult[] = [];
         for (const source of targets) {
-          const result = await this.delete(source.file_name, false);
+          const result = await this.delete(source.file_id, false);
           results.push(result);
           const status = result.success ? 'OK' : 'FAIL';
           console.log(`${status} ${source.file_name}: ${result.message}`);
@@ -1017,7 +736,7 @@ A complete class for managing document lifecycle:
 
         const results: DeletionResult[] = [];
         for (const source of targets) {
-          const result = await this.delete(source.file_name, false);
+          const result = await this.delete(source.file_id, false);
           results.push(result);
           const statusIcon = result.success ? 'OK' : 'FAIL';
           console.log(`${statusIcon} ${source.file_name}: ${result.message}`);
@@ -1031,7 +750,7 @@ A complete class for managing document lifecycle:
     const manager = new DocumentManager();
 
     // Delete a single file
-    const result = await manager.delete('old_document.pdf');
+    const result = await manager.delete('file_abc123');
     console.log(`Deleted: ${result.success}`);
 
     // Delete all PDFs
@@ -1127,7 +846,7 @@ Test deletions before executing them:
         
         for source in candidates:
             try:
-                client.sources.delete(file_name=source.file_name)
+                client.sources.delete(file_id=source.file_id)
                 deleted.append(source.file_name)
                 print(f"Archived: {source.file_name}")
             except graphor.APIStatusError as e:
@@ -1238,7 +957,7 @@ Test deletions before executing them:
 
       for (const source of candidates) {
         try {
-          await client.sources.delete({ file_name: source.file_name });
+          await client.sources.delete({ fileId: source.file_id });
           deleted.push(source.file_name);
           console.log(`Archived: ${source.file_name}`);
         } catch (err) {
@@ -1281,7 +1000,7 @@ Test deletions before executing them:
 | `BadRequestError` | 400 | Invalid request format or missing file name |
 | `AuthenticationError` | 401 | Invalid or missing API key |
 | `PermissionDeniedError` | 403 | Access denied to the specified project |
-| `NotFoundError` | 404 | File not found in the project |
+| `NotFoundError` | 404 | Source not found for the given file_id |
 | `RateLimitError` | 429 | Too many requests, please retry after waiting |
 | `InternalServerError` | ≥500 | Server-side error during deletion |
 | `APIConnectionError` | N/A | Network connectivity issues |
@@ -1289,33 +1008,29 @@ Test deletions before executing them:
 
 ## Best Practices
 
-### Pre-Deletion Verification
+### Pre-deletion verification
 
-Always verify files exist before deletion:
+Verify the source exists (by `file_id`) before deleting:
 
 <Tabs>
   <Tab title="Python">
     ```python
-    # Verify file exists before deleting
     sources = client.sources.list()
-    file_names = [s.file_name for s in sources]
-
-    if "document.pdf" in file_names:
-        client.sources.delete(file_name="document.pdf")
+    file_ids = [s.file_id for s in sources]
+    if file_id in file_ids:
+        client.sources.delete(file_id=file_id)
     else:
-        print("File not found")
+        print("Source not found")
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    // Verify file exists before deleting
     const sources = await client.sources.list();
-    const fileNames = sources.map((s) => s.file_name);
-
-    if (fileNames.includes('document.pdf')) {
-      await client.sources.delete({ file_name: 'document.pdf' });
+    const fileIds = sources.map((s) => s.file_id);
+    if (fileIds.includes(fileId)) {
+      await client.sources.delete({ fileId });
     } else {
-      console.log('File not found');
+      console.log('Source not found');
     }
     ```
   </Tab>
@@ -1331,7 +1046,7 @@ Always verify files exist before deletion:
 ### Error Handling
 
 - **Implement retry logic** for transient network errors (not for 404/403 errors)
-- **Validate file names** before making deletion requests
+- **Validate file_id** (e.g. from list) before deleting
 - **Handle batch operations** carefully to avoid partial failures
 
 <Tabs>
@@ -1344,7 +1059,7 @@ Always verify files exist before deletion:
     client = Graphor(max_retries=3)  # Automatic retries for transient errors
 
     try:
-        result = client.sources.delete(file_name="document.pdf")
+        result = client.sources.delete(file_id="file_abc123")
     except graphor.NotFoundError:
         # Don't retry - file doesn't exist
         pass
@@ -1361,7 +1076,7 @@ Always verify files exist before deletion:
     const client = new Graphor({ maxRetries: 3 }); // Automatic retries for transient errors
 
     try {
-      const result = await client.sources.delete({ file_name: 'document.pdf' });
+      const result = await client.sources.delete({ fileId: 'file_abc123' });
     } catch (err) {
       if (err instanceof Graphor.NotFoundError) {
         // Don't retry - file doesn't exist
@@ -1376,29 +1091,26 @@ Always verify files exist before deletion:
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion icon="file-xmark" title="File not found errors">
-    **Causes**: File doesn't exist, wrong name, or already deleted
-    
+  <Accordion icon="file-xmark" title="Source not found (404)">
+    **Causes**: Source doesn't exist for the given `file_id`, wrong `file_id`, or already deleted.
+
     **Solutions**:
-    - Use `client.sources.list()` to verify exact file names
-    - Check for case sensitivity (file names are case-sensitive)
+    - Use `client.sources.list()` to get current `file_id`s before deleting
     - Verify you're using the correct project/API key
 
 <Tabs>
   <Tab title="Python">
     ```python
-    # List all files to find the correct name
     sources = client.sources.list()
     for s in sources:
-        print(s.file_name)
+        print(s.file_id, s.file_name)
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    // List all files to find the correct name
     const sources = await client.sources.list();
     for (const s of sources) {
-      console.log(s.file_name);
+      console.log(s.fileId, s.fileName);
     }
     ```
   </Tab>
@@ -1425,14 +1137,14 @@ Always verify files exist before deletion:
     ```python
     client = Graphor(timeout=120.0)
     # Or per-request
-    client.with_options(timeout=120.0).sources.delete(file_name="large_doc.pdf")
+    client.with_options(timeout=120.0).sources.delete(file_id=file_id)
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
     const client = new Graphor({ timeout: 120 * 1000 });
     // Or per-request
-    await client.sources.delete({ file_name: 'large_doc.pdf' }, { timeout: 120 * 1000 });
+    await client.sources.delete({ fileId }, { timeout: 120 * 1000 });
     ```
   </Tab>
 </Tabs>
@@ -1448,37 +1160,21 @@ Always verify files exist before deletion:
   </Accordion>
 </AccordionGroup>
 
-## Next Steps
+## Next steps
 
-After successfully deleting your documents:
+After deleting a source:
 
 <CardGroup cols={2}>
-  <Card
-    title="List Sources"
-    icon="list"
-    href="/sdk/sources/list"
-  >
-    Verify the deletion and view remaining documents in your project
+  <Card title="List sources" icon="list" href="/sdk/sources/list">
+    View remaining sources and their file_ids
   </Card>
-  <Card
-    title="Upload Source"
-    icon="arrow-up-from-bracket"
-    href="/sdk/sources/upload"
-  >
-    Add new documents to replace the deleted ones
+  <Card title="Upload" icon="arrow-up-from-bracket" href="/sdk/sources/upload">
+    Ingest new files, URLs, GitHub, or YouTube
   </Card>
-  <Card
-    title="Parse Source"
-    icon="gears"
-    href="/sdk/sources/process"
-  >
-    Reprocess remaining documents with different methods
+  <Card title="Reprocess source" icon="gears" href="/sdk/sources/process">
+    Re-process a source with a different partition method
   </Card>
-  <Card
-    title="List Parse Results"
-    icon="file-dashed-line"
-    href="/sdk/sources/list-elements"
-  >
-    Retrieve structured elements from your documents
+  <Card title="Get elements" icon="file-dashed-line" href="/sdk/sources/list-elements">
+    Retrieve parsed elements from a source
   </Card>
 </CardGroup>

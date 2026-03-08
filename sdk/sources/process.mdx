@@ -1,53 +1,49 @@
 ---
-title: 'Parse Source'
-description: 'Reprocess uploaded documents with different parsing methods using the Graphor SDK'
+title: 'Reprocess Source'
+description: 'Re-process an existing source with a different partition method using the Graphor SDK (async)'
 ---
 
-The `parse` method allows you to reprocess previously uploaded documents using different parsing and classification methods. This enables you to optimize document processing for better text extraction, structure recognition, and retrieval performance without re-uploading the file.
+The **`reprocess`** method (same name as the API endpoint) re-runs the ingestion pipeline on an existing source using a different partition method. Processing is **asynchronous**: the method returns a **`build_id`** immediately; poll [Get build status](/sdk/sources/upload#get-build-status) until the job completes.
 
-## Method Overview
+## Method overview
 
 <Tabs>
   <Tab title="Python">
     <CardGroup cols={2}>
-      <Card title="Sync Method" icon="code">
-        **`client.sources.parse()`**
+      <Card title="Sync" icon="code">
+        **`client.sources.reprocess()`**
       </Card>
-      <Card title="Async Method" icon="code">
-        **`await client.sources.parse()`**
+      <Card title="Async" icon="code">
+        **`await client.sources.reprocess()`**
       </Card>
     </CardGroup>
   </Tab>
   <Tab title="TypeScript">
-    <CardGroup cols={2}>
-      <Card title="Async Method" icon="code">
-        **`await client.sources.parse()`**
-      </Card>
-    </CardGroup>
+    **`await client.sources.reprocess()`**
   </Tab>
 </Tabs>
 
-## Method Signature
+## Method signature
 
 <Tabs>
   <Tab title="Python">
     ```python
-    client.sources.parse(
-        file_id: str | None = None,          # Preferred
-        file_name: str | None = None,        # Deprecated
-        partition_method: PartitionMethod,   # Optional
+    client.sources.reprocess(
+        file_id: str,                           # Required
+        method: str | None = None,             # Optional: fast, balanced, accurate, vlm, agentic
         timeout: float | None = None
-    ) -> PublicSource
+    ) -> SourceReprocessResponse
     ```
+    Returns **`SourceReprocessResponse`** with `.build_id`.
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    await client.sources.parse({
-      file_id?: string | null,          // Preferred
-      file_name?: string | null,        // Deprecated
-      partition_method?: 'basic' | 'hi_res' | 'hi_res_ft' | 'mai' | 'graphorlm',
-    }): Promise<PublicSource>
+    await client.sources.reprocess({
+      file_id: string,                                   // Required
+      method?: 'fast' | 'balanced' | 'accurate' | 'vlm' | 'agentic',
+    }): Promise<SourceReprocessResponse>
     ```
+    Returns **`SourceReprocessResponse`** with `.build_id`.
   </Tab>
 </Tabs>
 
@@ -57,128 +53,45 @@ The `parse` method allows you to reprocess previously uploaded documents using d
   <Tab title="Python">
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
-    | `file_id` | `str` | Unique identifier for the source (preferred) | No* |
-    | `file_name` | `str` | Name of the previously uploaded file to reprocess (deprecated, use `file_id`) | No* |
-    | `partition_method` | `PartitionMethod` | Processing method to use (see available methods below) | No |
+    | `file_id` | `str` | Unique identifier of the source to re-process | Yes |
+    | `method` | `str \| None` | One of: `fast`, `balanced`, `accurate`, `vlm`, `agentic`. Default: `fast` | No |
     | `timeout` | `float` | Request timeout in seconds | No |
   </Tab>
   <Tab title="TypeScript">
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
-    | `file_id` | `string \| null` | Unique identifier for the source (preferred) | No* |
-    | `file_name` | `string \| null` | Name of the previously uploaded file to reprocess (deprecated, use `file_id`) | No* |
-    | `partition_method` | `string` | Processing method to use (see available methods below) | No |
+    | `file_id` | `string` | Unique identifier of the source to re-process | Yes |
+    | `method` | `string` | One of: `fast`, `balanced`, `accurate`, `vlm`, `agentic` | No |
   </Tab>
 </Tabs>
 
-<Note>
-*At least one of `file_id` or `file_name` must be provided. `file_id` is preferred.
-</Note>
+### Partition method values (v2)
 
-### Available Processing Methods
+| Value | Name | Description |
+|-------|------|-------------|
+| `fast` | Fast | Fast processing with heuristic classification. No OCR. |
+| `balanced` | Balanced | OCR-based extraction with structure classification. |
+| `accurate` | Accurate | Fine-tuned model for highest accuracy (Premium). |
+| `vlm` | VLM | Best for manuscripts and handwritten content. |
+| `agentic` | Agentic | Highest accuracy for complex layouts, tables, and diagrams. |
 
-The `PartitionMethod` type accepts the following literal values:
+### Method comparison
 
-<AccordionGroup>
-  <Accordion icon="gauge-simple" title="Fast (basic)">
-    **Value**: `"basic"`
-    
-    **Best for**: Simple text documents, quick processing
-    
-    - Fast processing with heuristic classification
-    - No OCR processing
-    - Suitable for plain text files and well-structured documents
-    - Recommended for testing and development
-  </Accordion>
-  
-  <Accordion icon="brain" title="Balanced (hi_res)">
-    **Value**: `"hi_res"`
-    
-    **Best for**: Complex documents with varied layouts
-    
-    - OCR-based text extraction
-    - AI-powered document structure classification using Hi-Res model
-    - Better recognition of tables, figures, and document elements
-    - Enhanced accuracy for complex layouts
-  </Accordion>
-  
-  <Accordion icon="sparkles" title="Accurate (hi_res_ft)">
-    **Value**: `"hi_res_ft"`
-    
-    **Best for**: Premium accuracy, specialized documents
-    
-    - OCR-based text extraction
-    - Fine-tuned AI model for document classification
-    - Highest accuracy for document structure recognition
-    - Optimized for specialized and complex document types
-    - **Note**: Premium feature
-  </Accordion>
-  
-  <Accordion icon="bars" title="VLM (mai)">
-    **Value**: `"mai"`
-    
-    **Best for**: Text-first parsing, manuscripts, and handwritten documents
-    
-    - Our best text-first parsing with high-quality output
-    - Does not output bounding boxes or page layout (no bbox)
-    - Best for MANUSCRIPT and HANDWRITTEN documents
-    - Performs page annotation (page-level labels and context)
-    - Performs document annotation (document-level labels and summaries)
-    - Performs image annotation when images are present in the document
-    - Best-in-class text parsing quality; element classification is limited
-  </Accordion>
-  
-  <Accordion icon="robot" title="Agentic (graphorlm)">
-    **Value**: `"graphorlm"`
-    
-    **Best for**: Complex layouts, multi-page tables, diagrams, and images
-    
-    - Our highest parsing setting for complex layouts
-    - Rich annotations for images and complex elements
-    - Uses agentic processing for enhanced understanding
-    - Advanced document understanding capabilities
-  </Accordion>
-</AccordionGroup>
+| Method | Speed | Text parsing | Element classification | Best use cases | OCR |
+|--------|-------|--------------|-------------------------|----------------|-----|
+| **Fast** | High | Good | Good | Simple text files, testing | No |
+| **Balanced** | Medium | Very good | Very good | Complex layouts, mixed content | Yes |
+| **Accurate** | Medium | Excellent | Excellent | Premium accuracy needed | Yes |
+| **VLM** | High | Excellent | Good | Manuscripts, handwritten | Yes |
+| **Agentic** | Medium | Excellent | Excellent | Complex layouts, multi-page tables, diagrams | Yes |
 
-### Method Reference
+### Return value
 
-| Method | `partition_method` Value |
-|--------|--------------------------|
-| Fast | `"basic"` |
-| Balanced | `"hi_res"` |
-| Accurate | `"hi_res_ft"` |
-| VLM | `"mai"` |
-| Agentic | `"graphorlm"` |
+The method returns a **`build_id`** (string). Use it with [Get build status](/sdk/sources/upload#get-build-status) to poll until processing completes (`Completed` or failure). The **`file_id`** does not change.
 
-## Processing Method Comparison
+## Code examples
 
-| Method | Speed | Text Parsing | Element Classification | Bounding Boxes | Best Use Cases | OCR |
-|--------|-------|--------------|------------------------|----------------|----------------|-----|
-| **Fast** | ⚡⚡⚡ | ⭐⭐ | ⭐⭐ | ✅ (limited) | Simple text files, testing | ❌ |
-| **Balanced** | ⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ✅ | Complex layouts, mixed content | ✅ |
-| **Accurate** | ⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ | Premium accuracy needed | ✅ |
-| **VLM** | ⚡⚡⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ❌ | Manuscripts, handwritten documents | ✅ |
-| **Agentic** | ⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ✅ | Complex layouts, multi-page tables, diagrams | ✅ |
-
-## Response Object
-
-The method returns a `PublicSource` object with the following properties:
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `status` | `str` | Processing result (typically "success") |
-| `message` | `str` | Human-readable success message |
-| `file_name` | `str` | Name of the processed file |
-| `file_size` | `int` | Size of the file in bytes |
-| `file_type` | `str` | File extension/type |
-| `file_source` | `str` | Source type of the original file |
-| `project_id` | `str` | UUID of the project containing the file |
-| `project_name` | `str` | Name of the project |
-| `partition_method` | `str \| None` | Processing method that was applied |
-
-## Code Examples
-
-### Basic Usage
+### Basic usage
 
 <Tabs>
   <Tab title="Python">
@@ -186,214 +99,96 @@ The method returns a `PublicSource` object with the following properties:
     from graphor import Graphor
 
     client = Graphor()
+    file_id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"  # from list() or get_build_status
 
-    # Reprocess a document with the Balanced method
-    source = client.sources.parse(
-        file_name="document.pdf",
-        partition_method="hi_res"
+    response = client.sources.reprocess(
+        file_id=file_id,
+        method="balanced"
     )
-
-    print(f"Processed: {source.file_name}")
-    print(f"Method: {source.partition_method}")
-    print(f"Status: {source.status}")
+    print(f"Build ID: {response.build_id}")
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    import Graphor from 'graphor';
-
     const client = new Graphor();
+    const fileId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
-    // Reprocess a document with the Balanced method
-    const source = await client.sources.parse({
-      file_name: 'document.pdf',
-      partition_method: 'hi_res',
+    const { build_id: buildId } = await client.sources.reprocess({
+      file_id: fileId,
+      method: 'balanced',
     });
-
-    console.log(`Processed: ${source.file_name}`);
-    console.log(`Method: ${source.partition_method}`);
-    console.log(`Status: ${source.status}`);
+    console.log('Build ID:', buildId);
     ```
   </Tab>
 </Tabs>
 
-### Using Different Methods
+### Reprocess and poll until complete
 
 <Tabs>
   <Tab title="Python">
     ```python
+    import time
     from graphor import Graphor
 
     client = Graphor()
+    file_id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 
-    # Fast processing for simple documents
-    source = client.sources.parse(
-        file_name="simple-text.txt",
-        partition_method="basic"
-    )
+    response = client.sources.reprocess(file_id=file_id, method="balanced")
+    build_id = response.build_id
 
-    # Balanced for complex layouts
-    source = client.sources.parse(
-        file_name="report.pdf",
-        partition_method="hi_res"
-    )
-
-    # Accurate for premium quality
-    source = client.sources.parse(
-        file_name="legal-contract.pdf",
-        partition_method="hi_res_ft"
-    )
-
-    # VLM for handwritten documents
-    source = client.sources.parse(
-        file_name="handwritten-notes.pdf",
-        partition_method="mai"
-    )
-
-    # Agentic for complex diagrams and tables
-    source = client.sources.parse(
-        file_name="technical-manual.pdf",
-        partition_method="graphorlm"
-    )
+    while True:
+        status = client.sources.get_build_status(build_id)
+        if status.status == "Completed":
+            print("Done. file_id:", status.file_id)
+            break
+        if status.error and status.status != "not_found":
+            raise RuntimeError(status.error)
+        time.sleep(2)
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    import Graphor from 'graphor';
-
     const client = new Graphor();
+    const fileId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+    const { build_id: buildId } = await client.sources.reprocess({ file_id: fileId, method: 'balanced' });
 
-    // Fast processing for simple documents
-    const basic = await client.sources.parse({
-      file_name: 'simple-text.txt',
-      partition_method: 'basic',
-    });
-
-    // Balanced for complex layouts
-    const hiRes = await client.sources.parse({
-      file_name: 'report.pdf',
-      partition_method: 'hi_res',
-    });
-
-    // Accurate for premium quality
-    const hiResFt = await client.sources.parse({
-      file_name: 'legal-contract.pdf',
-      partition_method: 'hi_res_ft',
-    });
-
-    // VLM for handwritten documents
-    const mai = await client.sources.parse({
-      file_name: 'handwritten-notes.pdf',
-      partition_method: 'mai',
-    });
-
-    // Agentic for complex diagrams and tables
-    const graphorlm = await client.sources.parse({
-      file_name: 'technical-manual.pdf',
-      partition_method: 'graphorlm',
-    });
-    ```
-  </Tab>
-</Tabs>
-
-### Async Usage
-
-<Tabs>
-  <Tab title="Python">
-    ```python
-    import asyncio
-    from graphor import AsyncGraphor
-
-    async def process_document(file_name: str, method: str):
-        client = AsyncGraphor()
-        
-        source = await client.sources.parse(
-            file_name=file_name,
-            partition_method=method
-        )
-        
-        print(f"Processed: {source.file_name}")
-        print(f"Method: {source.partition_method}")
-        
-        return source
-
-    # Run the async function
-    asyncio.run(process_document("document.pdf", "hi_res"))
-    ```
-  </Tab>
-  <Tab title="TypeScript">
-    ```typescript
-    import Graphor from 'graphor';
-
-    const client = new Graphor();
-
-    async function processDocument(fileName: string, method: string) {
-      const source = await client.sources.parse({
-        file_name: fileName,
-        partition_method: method as any,
-      });
-
-      console.log(`Processed: ${source.file_name}`);
-      console.log(`Method: ${source.partition_method}`);
-
-      return source;
+    while (true) {
+      const status = await client.sources.getBuildStatus(buildId);
+      if (status.status === 'Completed') {
+        console.log('Done. file_id:', status.file_id);
+        break;
+      }
+      if (status.error && status.status !== 'not_found') throw new Error(status.error);
+      await new Promise((r) => setTimeout(r, 2000));
     }
-
-    await processDocument('document.pdf', 'hi_res');
     ```
   </Tab>
 </Tabs>
 
-### With Extended Timeout
-
-Processing complex documents can take several minutes. Configure appropriate timeouts:
+### With partition method
 
 <Tabs>
   <Tab title="Python">
     ```python
-    from graphor import Graphor
-
-    # Configure default timeout for all requests
-    client = Graphor(timeout=300.0)  # 5 minutes
-
-    source = client.sources.parse(
-        file_name="large-document.pdf",
-        partition_method="graphorlm"
-    )
-
-    # Or per-request timeout
-    source = client.with_options(timeout=600.0).sources.parse(
-        file_name="very-large-document.pdf",
-        partition_method="hi_res_ft"
-    )
+    response = client.sources.reprocess(file_id=file_id, method="agentic")
+    build_id = response.build_id
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    import Graphor from 'graphor';
-
-    // Configure default timeout for all requests
-    const client = new Graphor({ timeout: 300 * 1000 }); // 5 minutes
-
-    const source = await client.sources.parse({
-      file_name: 'large-document.pdf',
-      partition_method: 'graphorlm',
+    const { build_id: buildId } = await client.sources.reprocess({
+      file_id: fileId,
+      method: 'agentic',
     });
-
-    // Or per-request timeout
-    const source2 = await client.sources.parse(
-      { file_name: 'very-large-document.pdf', partition_method: 'hi_res_ft' },
-      { timeout: 600 * 1000 },
-    );
     ```
   </Tab>
 </Tabs>
 
 <Warning>
-  Processing can take several minutes depending on document size, complexity, and the selected processing method. Advanced methods like Balanced, Accurate, VLM and Agentic typically require more time for analysis.
+  Reprocessing runs in the background and can take several minutes. Use [Get build status](/sdk/sources/upload#get-build-status) to poll until completion.
 </Warning>
 
-### Error Handling
+### Error handling
 
 <Tabs>
   <Tab title="Python">
@@ -402,63 +197,27 @@ Processing complex documents can take several minutes. Configure appropriate tim
     from graphor import Graphor
 
     client = Graphor()
-
     try:
-        source = client.sources.parse(
-            file_name="document.pdf",
-            partition_method="hi_res"
-        )
-        print(f"Processing successful: {source.file_name}")
-        
+        response = client.sources.reprocess(file_id=file_id, method="balanced")
+        print("Scheduled. Build ID:", response.build_id)
     except graphor.NotFoundError as e:
-        print(f"File not found: {e}")
-        
+        print("Source not found:", e)
     except graphor.BadRequestError as e:
-        print(f"Invalid request (check partition_method): {e}")
-        
-    except graphor.AuthenticationError as e:
-        print(f"Invalid API key: {e}")
-        
-    except graphor.RateLimitError as e:
-        print(f"Rate limit exceeded. Please wait and retry: {e}")
-        
-    except graphor.InternalServerError as e:
-        print(f"Processing failed on server: {e}")
-        
-    except graphor.APIConnectionError as e:
-        print(f"Connection error: {e}")
-        
-    except graphor.APITimeoutError as e:
-        print(f"Request timed out. Try increasing timeout: {e}")
+        print("Invalid request:", e)
+    except graphor.APIStatusError as e:
+        print("API error:", e)
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    import Graphor from 'graphor';
-
-    const client = new Graphor();
-
     try {
-      const source = await client.sources.parse({
-        file_name: 'document.pdf',
-        partition_method: 'hi_res',
-      });
-      console.log(`Processing successful: ${source.file_name}`);
+      const { build_id: buildId } = await client.sources.reprocess({ file_id: fileId, method: 'balanced' });
+      console.log('Scheduled. Build ID:', buildId);
     } catch (err) {
       if (err instanceof Graphor.NotFoundError) {
-        console.log(`File not found: ${err.message}`);
-      } else if (err instanceof Graphor.BadRequestError) {
-        console.log(`Invalid request (check partition_method): ${err.message}`);
-      } else if (err instanceof Graphor.AuthenticationError) {
-        console.log(`Invalid API key: ${err.message}`);
-      } else if (err instanceof Graphor.RateLimitError) {
-        console.log(`Rate limit exceeded. Please wait and retry: ${err.message}`);
-      } else if (err instanceof Graphor.InternalServerError) {
-        console.log(`Processing failed on server: ${err.message}`);
-      } else if (err instanceof Graphor.APIConnectionError) {
-        console.log(`Connection error: ${err.message}`);
+        console.log('Source not found:', err.message);
       } else if (err instanceof Graphor.APIError) {
-        console.log(`API error (status ${err.status}): ${err.message}`);
+        console.log('API error:', err.message);
       } else {
         throw err;
       }
@@ -467,532 +226,71 @@ Processing complex documents can take several minutes. Configure appropriate tim
   </Tab>
 </Tabs>
 
-## Advanced Examples
+### Batch reprocess
 
-### Automatic Quality Improvement
-
-Progressively try more advanced processing methods until quality is satisfactory:
+Reprocess multiple sources by `file_id`; each call returns a `build_id`. Poll [Get build status](/sdk/sources/upload#get-build-status) for each until complete.
 
 <Tabs>
   <Tab title="Python">
     ```python
     from graphor import Graphor
-    import graphor
 
-    client = Graphor(timeout=300.0)
-
-    def improve_processing_quality(file_name: str):
-        """Automatically upgrade processing method for better quality."""
-        methods = ["basic", "hi_res", "hi_res_ft", "mai", "graphorlm"]
-        
-        for method in methods:
-            try:
-                print(f"Trying {method} method...")
-                source = client.sources.parse(
-                    file_name=file_name,
-                    partition_method=method
-                )
-                
-                # Add your quality assessment logic here
-                if assess_quality(source):
-                    print(f"Success with {method} method")
-                    return source
-                else:
-                    print(f"Quality insufficient with {method}, trying next...")
-                    
-            except graphor.APIStatusError as e:
-                print(f"Failed with {method}: {e}")
-                continue
-        
-        raise Exception("All processing methods failed or produced insufficient quality")
-
-    def assess_quality(source) -> bool:
-        """Add your quality assessment logic here."""
-        return source.status == "success"
-
-    # Usage
-    try:
-        result = improve_processing_quality("complex-document.pdf")
-        print(f"Final result: {result.partition_method}")
-    except Exception as e:
-        print(f"Error: {e}")
-    ```
-  </Tab>
-  <Tab title="TypeScript">
-    ```typescript
-    import Graphor from 'graphor';
-
-    const client = new Graphor({ timeout: 300 * 1000 });
-
-    type PartitionMethod = 'basic' | 'hi_res' | 'hi_res_ft' | 'mai' | 'graphorlm';
-
-    async function improveProcessingQuality(fileName: string) {
-      const methods: PartitionMethod[] = ['basic', 'hi_res', 'hi_res_ft', 'mai', 'graphorlm'];
-
-      for (const method of methods) {
-        try {
-          console.log(`Trying ${method} method...`);
-          const source = await client.sources.parse({
-            file_name: fileName,
-            partition_method: method,
-          });
-
-          // Add your quality assessment logic here
-          if (assessQuality(source)) {
-            console.log(`Success with ${method} method`);
-            return source;
-          } else {
-            console.log(`Quality insufficient with ${method}, trying next...`);
-          }
-        } catch (err) {
-          if (err instanceof Graphor.APIError) {
-            console.log(`Failed with ${method}: ${err.message}`);
-            continue;
-          }
-          throw err;
-        }
-      }
-
-      throw new Error('All processing methods failed or produced insufficient quality');
-    }
-
-    function assessQuality(source: { status: string }) {
-      return source.status === 'success';
-    }
-
-    // Usage
-    try {
-      const result = await improveProcessingQuality('complex-document.pdf');
-      console.log(`Final result: ${result.partition_method}`);
-    } catch (err) {
-      console.log(`Error: ${err}`);
-    }
-    ```
-  </Tab>
-</Tabs>
-
-### Batch Reprocessing
-
-Reprocess multiple files with the same method:
-
-<Tabs>
-  <Tab title="Python">
-    ```python
-    from graphor import Graphor
-    import graphor
-    import time
-
-    client = Graphor(timeout=300.0)
-
-    def batch_reprocess(file_names: list[str], method: str):
-        """Reprocess multiple files with the same method."""
-        results = []
-        failed = []
-        
-        for file_name in file_names:
-            try:
-                print(f"Processing {file_name} with {method}...")
-                source = client.sources.parse(
-                    file_name=file_name,
-                    partition_method=method
-                )
-                results.append(source)
-                print(f"OK - {file_name} processed successfully")
-                
-                # Small delay between requests
-                time.sleep(1.0)
-                
-            except graphor.APIStatusError as e:
-                print(f"FAIL - {file_name}: {e}")
-                failed.append({"file_name": file_name, "error": str(e)})
-        
-        print(f"\nSummary: {len(results)} successful, {len(failed)} failed")
-        return results, failed
-
-    # Usage
-    files = ["doc1.pdf", "doc2.pdf", "doc3.pdf"]
-    successful, failed = batch_reprocess(files, "hi_res")
-    ```
-  </Tab>
-  <Tab title="TypeScript">
-    ```typescript
-    import Graphor from 'graphor';
-
-    const client = new Graphor({ timeout: 300 * 1000 });
-
-    async function batchReprocess(fileNames: string[], method: string) {
-      const results: Awaited<ReturnType<typeof client.sources.parse>>[] = [];
-      const failed: { fileName: string; error: string }[] = [];
-
-      for (const fileName of fileNames) {
-        try {
-          console.log(`Processing ${fileName} with ${method}...`);
-          const source = await client.sources.parse({
-            file_name: fileName,
-            partition_method: method as any,
-          });
-          results.push(source);
-          console.log(`OK - ${fileName} processed successfully`);
-
-          // Small delay between requests
-          await new Promise((r) => setTimeout(r, 1000));
-        } catch (err) {
-          const message = err instanceof Graphor.APIError ? err.message : String(err);
-          console.log(`FAIL - ${fileName}: ${message}`);
-          failed.push({ fileName, error: message });
-        }
-      }
-
-      console.log(`\nSummary: ${results.length} successful, ${failed.length} failed`);
-      return { results, failed };
-    }
-
-    // Usage
-    const { results, failed } = await batchReprocess(['doc1.pdf', 'doc2.pdf', 'doc3.pdf'], 'hi_res');
-    ```
-  </Tab>
-</Tabs>
-
-### Async Batch Processing
-
-Process multiple files concurrently for better performance:
-
-<Tabs>
-  <Tab title="Python">
-    ```python
-    import asyncio
-    from graphor import AsyncGraphor
-    import graphor
-
-    async def process_single(client: AsyncGraphor, file_name: str, method: str):
-        """Process a single file."""
+    client = Graphor()
+    file_ids = ["id1", "id2", "id3"]
+    build_ids = []
+    for fid in file_ids:
         try:
-            source = await client.sources.parse(
-                file_name=file_name,
-                partition_method=method
-            )
-            return {"file_name": file_name, "status": "success", "source": source}
-        except graphor.APIStatusError as e:
-            return {"file_name": file_name, "status": "failed", "error": str(e)}
-
-    async def batch_reprocess_async(file_names: list[str], method: str, max_concurrent: int = 3):
-        """Reprocess multiple files with controlled concurrency."""
-        client = AsyncGraphor(timeout=300.0)
-        
-        # Use semaphore to limit concurrent requests
-        semaphore = asyncio.Semaphore(max_concurrent)
-        
-        async def process_with_semaphore(file_name: str):
-            async with semaphore:
-                print(f"Processing {file_name}...")
-                result = await process_single(client, file_name, method)
-                status = "OK" if result["status"] == "success" else "FAIL"
-                print(f"{status} {file_name}: {result['status']}")
-                return result
-        
-        tasks = [process_with_semaphore(f) for f in file_names]
-        results = await asyncio.gather(*tasks)
-        
-        successful = [r for r in results if r["status"] == "success"]
-        failed = [r for r in results if r["status"] == "failed"]
-        
-        print(f"\nSummary: {len(successful)} successful, {len(failed)} failed")
-        return results
-
-    # Usage
-    files = ["doc1.pdf", "doc2.pdf", "doc3.pdf", "doc4.pdf", "doc5.pdf"]
-    results = asyncio.run(batch_reprocess_async(files, "hi_res", max_concurrent=3))
+            resp = client.sources.reprocess(file_id=fid, method="balanced")
+            build_ids.append(resp.build_id)
+            print(f"Scheduled: {fid} -> {resp.build_id}")
+        except Exception as e:
+            print(f"FAIL - {fid}: {e}")
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    import Graphor from 'graphor';
-
-    const client = new Graphor({ timeout: 300 * 1000 });
-
-    async function processSingle(fileName: string, method: string) {
+    const client = new Graphor();
+    const fileIds = ['id1', 'id2', 'id3'];
+    const buildIds: string[] = [];
+    for (const fid of fileIds) {
       try {
-        const source = await client.sources.parse({
-          file_name: fileName,
-          partition_method: method as any,
-        });
-        return { fileName, status: 'success' as const, source };
+        const { build_id: bid } = await client.sources.reprocess({ file_id: fid, method: 'balanced' });
+        buildIds.push(bid);
+        console.log(`Scheduled: ${fid} -> ${bid}`);
       } catch (err) {
-        const message = err instanceof Graphor.APIError ? err.message : String(err);
-        return { fileName, status: 'failed' as const, error: message };
+        console.log(`FAIL - ${fid}:`, err);
       }
     }
-
-    async function batchReprocessAsync(fileNames: string[], method: string, maxConcurrent = 3) {
-      const results: Awaited<ReturnType<typeof processSingle>>[] = [];
-
-      for (let i = 0; i < fileNames.length; i += maxConcurrent) {
-        const batch = fileNames.slice(i, i + maxConcurrent);
-        console.log(`Processing batch ${Math.floor(i / maxConcurrent) + 1}...`);
-
-        const batchResults = await Promise.all(
-          batch.map(async (fileName) => {
-            console.log(`Processing ${fileName}...`);
-            const result = await processSingle(fileName, method);
-            const status = result.status === 'success' ? 'OK' : 'FAIL';
-            console.log(`${status} ${fileName}: ${result.status}`);
-            return result;
-          }),
-        );
-
-        results.push(...batchResults);
-      }
-
-      const successful = results.filter((r) => r.status === 'success');
-      const failed = results.filter((r) => r.status === 'failed');
-
-      console.log(`\nSummary: ${successful.length} successful, ${failed.length} failed`);
-      return results;
-    }
-
-    // Usage
-    const results = await batchReprocessAsync(
-      ['doc1.pdf', 'doc2.pdf', 'doc3.pdf', 'doc4.pdf', 'doc5.pdf'],
-      'hi_res',
-      3,
-    );
     ```
   </Tab>
 </Tabs>
 
-### Processing with Progress Tracking
-
-<Tabs>
-  <Tab title="Python">
-    ```python
-    from graphor import Graphor
-    import graphor
-    import time
-    from typing import TypedDict
-
-    class ProcessingTask(TypedDict):
-        file_name: str
-        method: str
-
-    client = Graphor(timeout=300.0)
-
-    def process_with_progress(tasks: list[ProcessingTask]):
-        """Process multiple files with progress tracking."""
-        total = len(tasks)
-        completed = 0
-        results = []
-        
-        print(f"Starting batch processing of {total} files...\n")
-        
-        for task in tasks:
-            file_name = task["file_name"]
-            method = task["method"]
-            
-            try:
-                print(f"[{completed + 1}/{total}] Processing {file_name} with {method}...")
-                start_time = time.time()
-                
-                source = client.sources.parse(
-                    file_name=file_name,
-                    partition_method=method
-                )
-                
-                duration = time.time() - start_time
-                completed += 1
-                
-                results.append({
-                    "file_name": file_name,
-                    "method": method,
-                    "status": "success",
-                    "duration": duration,
-                    "source": source
-                })
-                
-                print(f"OK - Completed {file_name} in {duration:.1f}s")
-                
-            except graphor.APIStatusError as e:
-                completed += 1
-                results.append({
-                    "file_name": file_name,
-                    "method": method,
-                    "status": "failed",
-                    "error": str(e)
-                })
-                print(f"FAIL - {file_name}: {e}")
-            
-            # Progress update
-            progress = (completed / total) * 100
-            print(f"Progress: {progress:.1f}% ({completed}/{total})\n")
-            
-            # Small delay between requests
-            time.sleep(0.5)
-        
-        return results
-
-    # Usage
-    processing_queue = [
-        {"file_name": "document1.pdf", "method": "hi_res"},
-        {"file_name": "document2.pdf", "method": "hi_res_ft"},
-        {"file_name": "document3.pdf", "method": "mai"}
-    ]
-
-    results = process_with_progress(processing_queue)
-
-    # Print final summary
-    successful = [r for r in results if r["status"] == "success"]
-    failed = [r for r in results if r["status"] == "failed"]
-    print(f"\n{'='*50}")
-    print(f"Final Summary: {len(successful)} successful, {len(failed)} failed")
-    ```
-  </Tab>
-  <Tab title="TypeScript">
-    ```typescript
-    import Graphor from 'graphor';
-
-    const client = new Graphor({ timeout: 300 * 1000 });
-
-    interface ProcessingTask {
-      fileName: string;
-      method: string;
-    }
-
-    async function processWithProgress(tasks: ProcessingTask[]) {
-      const total = tasks.length;
-      let completed = 0;
-      const results: {
-        fileName: string;
-        method: string;
-        status: string;
-        duration?: number;
-        error?: string;
-      }[] = [];
-
-      console.log(`Starting batch processing of ${total} files...\n`);
-
-      for (const task of tasks) {
-        try {
-          console.log(`[${completed + 1}/${total}] Processing ${task.fileName} with ${task.method}...`);
-          const startTime = Date.now();
-
-          const source = await client.sources.parse({
-            file_name: task.fileName,
-            partition_method: task.method as any,
-          });
-
-          const duration = (Date.now() - startTime) / 1000;
-          completed++;
-
-          results.push({
-            fileName: task.fileName,
-            method: task.method,
-            status: 'success',
-            duration,
-          });
-
-          console.log(`OK - Completed ${task.fileName} in ${duration.toFixed(1)}s`);
-        } catch (err) {
-          completed++;
-          const message = err instanceof Graphor.APIError ? err.message : String(err);
-          results.push({
-            fileName: task.fileName,
-            method: task.method,
-            status: 'failed',
-            error: message,
-          });
-          console.log(`FAIL - ${task.fileName}: ${message}`);
-        }
-
-        // Progress update
-        const progress = ((completed / total) * 100).toFixed(1);
-        console.log(`Progress: ${progress}% (${completed}/${total})\n`);
-
-        // Small delay between requests
-        await new Promise((r) => setTimeout(r, 500));
-      }
-
-      return results;
-    }
-
-    // Usage
-    const processingQueue: ProcessingTask[] = [
-      { fileName: 'document1.pdf', method: 'hi_res' },
-      { fileName: 'document2.pdf', method: 'hi_res_ft' },
-      { fileName: 'document3.pdf', method: 'mai' },
-    ];
-
-    const results = await processWithProgress(processingQueue);
-
-    // Print final summary
-    const successful = results.filter((r) => r.status === 'success');
-    const failed = results.filter((r) => r.status === 'failed');
-    console.log(`\n${'='.repeat(50)}`);
-    console.log(`Final Summary: ${successful.length} successful, ${failed.length} failed`);
-    ```
-  </Tab>
-</Tabs>
-
-## When to Reprocess
+## When to reprocess
 
 <AccordionGroup>
   <Accordion icon="eye" title="Poor text extraction">
-    **Symptoms**: Missing text, garbled characters, incomplete content
-    
-    **Recommended methods**: 
-    - `"hi_res"` or `"hi_res_ft"` for complex layouts
-    - `"mai"` for text-only documents when bounding boxes are not required
+    **Symptoms**: Missing text, garbled characters, incomplete content  
+    **Recommended**: `balanced` or `accurate` for complex layouts; `vlm` for text-only when bounding boxes are not needed.
   </Accordion>
-  
   <Accordion icon="table" title="Table detection issues">
-    **Symptoms**: Tables not properly recognized, merged cells, structure lost
-    
-    **Recommended methods**:
-    - `"hi_res"` for better table detection
-    - `"hi_res_ft"` for complex table structures
-    - `"graphorlm"` for multi-page tables
+    **Symptoms**: Tables not recognized, merged cells, structure lost  
+    **Recommended**: `balanced`, `accurate`, or `agentic` for multi-page tables.
   </Accordion>
-  
   <Accordion icon="image" title="Image and figure handling">
-    **Symptoms**: Missing captions, poor figure recognition
-    
-    **Recommended methods**:
-    - `"hi_res"` for figure detection
-    - `"hi_res_ft"` for comprehensive image analysis
-    - `"graphorlm"` for rich image annotations
+    **Symptoms**: Missing captions, poor figure recognition  
+    **Recommended**: `balanced`, `accurate`, or `agentic` for rich image annotations.
   </Accordion>
-  
   <Accordion icon="list" title="Document structure problems">
-    **Symptoms**: Headers/footers mixed with content, poor section detection
-    
-    **Recommended methods**:
-    - `"hi_res"` for structure recognition
-    - `"hi_res_ft"` for complex document hierarchies
-    - `"graphorlm"` for enhanced semantic structure and relationships
+    **Symptoms**: Headers/footers mixed with content, poor section detection  
+    **Recommended**: `balanced`, `accurate`, or `agentic` for better structure and semantics.
   </Accordion>
 </AccordionGroup>
 
-## Best Practices
+## Best practices
 
-### Processing Strategy
-
-- **Start with Fast (`"basic"`)**: For testing and simple documents
-- **Upgrade gradually**: Move to `"hi_res"` → `"hi_res_ft"` → `"mai"` → `"graphorlm"` based on needs
-- **Monitor results**: Use document preview to evaluate processing quality
-- **Consider efficiency vs. quality**: Advanced methods take longer but provide better results
-
-### Performance Optimization
-
-- **Batch processing**: Process multiple files sequentially rather than simultaneously
-- **Method selection**: Choose the appropriate method for your document types
-- **Timeout handling**: Allow sufficient time for complex processing methods (5+ minutes)
-- **Error recovery**: Implement retry logic for transient failures
-
-### Quality Assessment
-
-After processing, evaluate the results by:
-- Checking text extraction completeness
-- Verifying table and figure recognition
-- Reviewing document structure classification
-- Testing retrieval quality in your RAG pipeline
+- **Use `file_id`**: Always use the source’s `file_id` (from list sources or build status).
+- **Poll build status**: After calling `reprocess`, poll [Get build status](/sdk/sources/upload#get-build-status) with a reasonable interval (e.g. 2–5 seconds) and timeout.
+- **Choose method by need**: Start with `fast` for testing; use `balanced` or `accurate` for better quality; use `vlm` for manuscripts; use `agentic` for complex layouts and tables.
 
 ## Error Reference
 
@@ -1001,7 +299,7 @@ After processing, evaluate the results by:
 | `BadRequestError` | 400 | Invalid request format or partition method |
 | `AuthenticationError` | 401 | Invalid or missing API key |
 | `PermissionDeniedError` | 403 | Access denied to the specified project |
-| `NotFoundError` | 404 | File not found in the project |
+| `NotFoundError` | 404 | Source not found for the given file_id |
 | `RateLimitError` | 429 | Too many requests, please retry after waiting |
 | `InternalServerError` | ≥500 | Processing failure or server error |
 | `APIConnectionError` | N/A | Network connectivity issues |
@@ -1032,29 +330,26 @@ After processing, evaluate the results by:
 </Tabs>
   </Accordion>
   
-  <Accordion icon="file-xmark" title="File not found errors">
-    **Causes**: Incorrect file name, file deleted, or wrong project
+  <Accordion icon="file-xmark" title="Source not found (404)">
+    **Causes**: Invalid `file_id`, source deleted, or wrong project
     
     **Solutions**:
-    - Verify exact file name (case-sensitive)
-    - Use `client.sources.list()` to check available files
+    - Use `client.sources.list()` to get valid `file_id`s
     - Ensure you're using the correct API key for the project
 
 <Tabs>
   <Tab title="Python">
     ```python
-    # List all sources to find the correct file name
     sources = client.sources.list()
-    for source in sources:
-        print(source.file_name)
+    for s in sources:
+        print(s.file_id, s.file_name)
     ```
   </Tab>
   <Tab title="TypeScript">
     ```typescript
-    // List all sources to find the correct file name
     const sources = await client.sources.list();
-    for (const source of sources) {
-      console.log(source.file_name);
+    for (const s of sources) {
+      console.log(s.file_id, s.file_name);
     }
     ```
   </Tab>
@@ -1062,56 +357,39 @@ After processing, evaluate the results by:
   </Accordion>
   
   <Accordion icon="exclamation-triangle" title="Processing failures">
-    **Causes**: Corrupted files, unsupported content, or method incompatibility
+    **Causes**: Corrupted file, unsupported content, or method incompatibility
     
     **Solutions**:
-    - Try a different processing method
-    - Check file integrity
-    - Re-upload the file if necessary using `client.sources.upload()`
+    - Try a different `method` (e.g. `balanced`, `agentic`)
+    - Check file integrity; re-ingest if necessary using `client.sources.ingest_file()`
   </Accordion>
   
   <Accordion icon="gauge" title="Poor processing quality">
-    **Causes**: Method not suitable for document type, or complex layout
-    
     **Solutions**:
-    - Upgrade to `"hi_res"` or `"hi_res_ft"` method
-    - Use `"mai"` for manuscripts and handwritten documents
-    - Use `"graphorlm"` for complex layouts with tables and diagrams
-    - Ensure document quality is good
+    - Use `balanced` or `accurate` for complex layouts
+    - Use `vlm` for manuscripts and handwritten documents
+    - Use `agentic` for complex layouts with tables and diagrams
   </Accordion>
 </AccordionGroup>
 
-## Next Steps
+## Next steps
 
-After successfully processing your documents:
+After reprocessing, poll [Get build status](/sdk/sources/upload#get-build-status) until complete, then:
 
 <CardGroup cols={2}>
-  <Card
-    title="List Sources"
-    icon="list"
-    href="/sdk/sources/list"
-  >
-    View all your processed documents and their current status
+  <Card title="Get build status" icon="circle-info" href="/sdk/sources/upload#get-build-status">
+    Poll status and get parsed elements for a build
   </Card>
-  <Card
-    title="Upload Source"
-    icon="arrow-up-from-bracket"
-    href="/sdk/sources/upload"
-  >
-    Upload new documents to your project
+  <Card title="List sources" icon="list" href="/sdk/sources/list">
+    View all sources and their status
   </Card>
-  <Card
-    title="List Parse Results"
-    icon="file-dashed-line"
-    href="/sdk/sources/list-elements"
-  >
-    Retrieve structured elements from processed documents
+  <Card title="Upload" icon="arrow-up-from-bracket" href="/sdk/sources/upload">
+    Ingest new files, URLs, GitHub repos, or YouTube videos
   </Card>
-  <Card
-    title="Delete Source"
-    icon="trash"
-    href="/sdk/sources/delete"
-  >
-    Remove documents that are no longer needed from your project
+  <Card title="Get elements" icon="file-dashed-line" href="/sdk/sources/list-elements">
+    Retrieve parsed elements from a source
+  </Card>
+  <Card title="Delete source" icon="trash" href="/sdk/sources/delete">
+    Remove a source by file_id
   </Card>
 </CardGroup>

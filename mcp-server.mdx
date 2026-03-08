@@ -6,8 +6,8 @@ description: 'Connect AI agents and coding assistants to your Graphor documents 
 The **Graphor MCP Server** lets AI agents — such as Cursor, VS Code Copilot, Claude Code, and other MCP-compatible clients — interact with your Graphor project directly. Your agent can upload documents, ask questions, extract structured data, and perform semantic search, all without leaving your development environment.
 
 <CardGroup cols={2}>
-  <Card title="Upload & Manage" icon="arrow-up-from-bracket">
-    Upload files, URLs, GitHub repos, and YouTube videos to your project
+  <Card title="Ingest & Manage" icon="arrow-up-from-bracket">
+    Ingest files, URLs, GitHub repos, and YouTube videos; poll build status for file_id
   </Card>
   <Card title="Chat & Ask" icon="comments">
     Ask questions about your documents with conversational memory
@@ -22,16 +22,9 @@ The **Graphor MCP Server** lets AI agents — such as Cursor, VS Code Copilot, C
 
 ## How It Works
 
-The Graphor MCP Server uses a **Code Mode** tool scheme. Instead of exposing individual API endpoints as separate tools, it exposes two powerful tools to your agent:
+The Graphor MCP Server exposes **12 individual tools**, one per SDK operation. Each tool maps directly to a Graphor API call and your agent calls them by name with typed parameters.
 
-1. **Documentation Search** — The agent can query for documentation about the Graphor SDK, learning how to use any method on the fly.
-2. **Code Execution** — The agent writes TypeScript code against the Graphor SDK, which is then executed in an isolated sandbox. The results are returned to the agent.
-
-Using this approach, your agent can perform complex multi-step tasks — such as uploading a document, processing it, and extracting structured data — deterministically and repeatably.
-
-<Note>
-  The sandbox environment does not have web or filesystem access. All operations go through the Graphor SDK.
-</Note>
+The ingestion tools (`ingest_file`, `ingest_url`, `ingest_github`, `ingest_youtube`, and `reprocess`) are **asynchronous**: they return a `build_id` immediately, and you poll `get_build_status` until the job completes to obtain the `file_id`. All other operations (`ask`, `extract`, `retrieve_chunks`, `get_elements`, `delete_source`, `list_sources`) use `file_id` directly.
 
 ## Installation
 
@@ -246,124 +239,120 @@ For clients that only support `stdio` transport, use [`mcp-remote`](https://www.
 
 ## Available Tools
 
-Once installed, your agent has access to **two tools** that together cover the entire Graphor API surface:
+Once installed, your agent has access to **12 tools** covering the full Graphor API surface:
 
-### `search_docs`
+### Ingestion
 
-Search the Graphor SDK documentation to learn how to use any method.
+| Tool | Required params | Optional params | Returns |
+|------|----------------|-----------------|---------|
+| `ingest_file` | `file_path` **or** (`file_content` + `file_name`) | `method` | `build_id` |
+| `ingest_url` | `url` | `crawlUrls`, `method` | `build_id` |
+| `ingest_github` | `url` | — | `build_id` |
+| `ingest_youtube` | `url` | — | `build_id` |
+| `get_build_status` | `build_id` | `suppress_elements`, `suppress_img_base64`, `page`, `page_size` | build status + `file_id` when complete |
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `query` | `string` | What to search for (e.g., "how to upload a file", "extract structured data") |
-| `language` | `string` | SDK language to search for (`typescript`) |
+The `method` parameter controls the partitioning strategy: `fast`, `balanced`, `accurate`, `vlm`, or `agentic`.
 
-**Example agent prompt**: *"Search the Graphor docs for how to extract invoice data from a PDF."*
+### Source Management
 
-### `execute`
+| Tool | Required params | Optional params | Returns |
+|------|----------------|-----------------|---------|
+| `list_sources` | — | `file_ids` | list of sources with metadata |
+| `reprocess` | `file_id` | `method` | `build_id` |
+| `get_elements` | `file_id` | `page`, `page_size`, `suppress_img_base64`, `type`, `page_numbers`, `elementsToRemove` | paginated elements |
+| `delete_source` | `file_id` | — | confirmation |
 
-Write and execute TypeScript code against the Graphor SDK in an isolated sandbox.
+### Chat, Extraction & RAG
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `code` | `string` | TypeScript code defining an `async function run(client)` |
-| `intent` | `string` | Description of what the code does (used for analytics) |
-
-The code receives an initialized SDK client and runs in a sandboxed environment. Anything logged with `console.log` or returned from the function is sent back to the agent.
-
-**Example agent prompt**: *"Upload my-report.pdf and extract the title and author."*
+| Tool | Required params | Optional params | Returns |
+|------|----------------|-----------------|---------|
+| `ask` | `question` | `file_ids`, `file_names`, `conversation_id`, `reset`, `output_schema`, `thinking_level` | answer + `conversation_id` |
+| `extract` | `user_instruction`, `output_schema` | `file_ids`, `file_names`, `thinking_level` | `structured_output` |
+| `retrieve_chunks` | `query` | `file_ids`, `file_names` | ranked text chunks |
 
 ## What Your Agent Can Do
 
-With the MCP server, your agent can perform any operation available in the Graphor SDK:
+With the MCP server, your agent can perform any operation available in the Graphor API:
 
 <AccordionGroup>
-  <Accordion icon="arrow-up-from-bracket" title="Upload Documents">
-    Upload local files, web pages, GitHub repositories, and YouTube videos.
-    
-    ```typescript
-    async function run(client) {
-      const source = await client.sources.upload({
-        file: fs.createReadStream('report.pdf'),
-      });
-      console.log(`Uploaded: ${source.file_name}`);
-    }
-    ```
+  <Accordion icon="arrow-up-from-bracket" title="Ingest Documents">
+    Use `ingest_file`, `ingest_url`, `ingest_github`, or `ingest_youtube` to add sources. Each returns a `build_id` immediately — poll `get_build_status` to track progress and retrieve the `file_id` when processing completes.
+
+    **Example agent prompts:**
+    - *"Ingest /Users/me/report.pdf using the agentic method."*
+    - *"Ingest https://example.com/whitepaper.pdf and tell me when it's ready."*
+    - *"Ingest the GitHub repo https://github.com/owner/repo."*
+    - *"Ingest this YouTube video: https://www.youtube.com/watch?v=abc123."*
+
+    **Tool flow:**
+    1. Call `ingest_file` (or `ingest_url` / `ingest_github` / `ingest_youtube`) → receive `build_id`
+    2. Call `get_build_status` with `build_id` repeatedly until `success: true`
+    3. Use the returned `file_id` for all subsequent operations
   </Accordion>
-  
+
   <Accordion icon="list" title="List & Manage Sources">
-    List all uploaded documents, check processing status, and delete files.
-    
-    ```typescript
-    async function run(client) {
-      const sources = await client.sources.list();
-      for (const source of sources) {
-        console.log(`${source.file_name} — ${source.status}`);
-      }
-    }
-    ```
+    Use `list_sources` to see all ingested documents with their `file_id`, `file_name`, status, and metadata. Use `delete_source` to permanently remove a source by `file_id`.
+
+    **Example agent prompts:**
+    - *"List all my sources and show their status."*
+    - *"Find the file_id for the document named 'Q3 Report'."*
+    - *"Delete the source with file_id file_abc123."*
   </Accordion>
-  
-  <Accordion icon="gears" title="Process Documents">
-    Reprocess documents with different parsing methods for better quality.
-    
-    ```typescript
-    async function run(client) {
-      const result = await client.sources.parse({
-        file_name: 'report.pdf',
-        partition_method: 'hi_res',
-      });
-      console.log(`Reprocessed: ${result.file_name}`);
-    }
-    ```
+
+  <Accordion icon="gears" title="Reprocess Documents">
+    Use `reprocess` to re-run the ingestion pipeline on an existing source with a different partitioning strategy. Returns a `build_id` — poll `get_build_status` as usual.
+
+    **Example agent prompts:**
+    - *"Reprocess file_abc123 using the 'agentic' method for better accuracy."*
+    - *"Re-parse this PDF with the 'vlm' method to extract tables better."*
+
+    **Available methods:** `fast`, `balanced`, `accurate`, `vlm`, `agentic`
   </Accordion>
-  
+
+  <Accordion icon="file-text" title="Inspect Parsed Elements">
+    Use `get_elements` to retrieve the structured chunks/partitions of a processed source. Filter by element type, page numbers, or exclude unwanted types.
+
+    **Example agent prompts:**
+    - *"Get the first 20 elements of file_abc123."*
+    - *"Show only the 'Table' elements from file_abc123."*
+    - *"Get elements from pages 3 to 5 of file_abc123."*
+  </Accordion>
+
   <Accordion icon="comments" title="Chat with Documents">
-    Ask questions with conversational memory and structured output.
-    
-    ```typescript
-    async function run(client) {
-      const response = await client.sources.ask({
-        question: 'What are the key findings in this report?',
-      });
-      console.log(response.answer);
-    }
-    ```
+    Use `ask` to pose natural-language questions about your sources. Maintain conversation memory by passing the `conversation_id` returned in each response. Scope to specific files using `file_ids`.
+
+    **Example agent prompts:**
+    - *"Ask: what are the key findings in the ingested report?"*
+    - *"Follow up: can you elaborate on the second finding?"*
+    - *"Ask a question scoped to file_ids ['file_abc123', 'file_def456']."*
   </Accordion>
-  
+
   <Accordion icon="table" title="Extract Structured Data">
-    Extract structured data from documents using JSON Schema.
-    
-    ```typescript
-    async function run(client) {
-      const result = await client.sources.extract({
-        file_names: ['invoice.pdf'],
-        user_instruction: 'Extract invoice details',
-        output_schema: {
-          type: 'object',
-          properties: {
-            invoice_number: { type: 'string' },
-            total: { type: 'number' },
-          },
-        },
-      });
-      console.log(result.structured_output);
+    Use `extract` to pull typed data from documents by providing a natural-language instruction and a JSON Schema defining the output shape.
+
+    **Example agent prompts:**
+    - *"Extract the invoice number and total amount from file_abc123."*
+    - *"From the contract, extract the parties, start date, and renewal terms."*
+
+    **Example schema:**
+    ```json
+    {
+      "type": "object",
+      "properties": {
+        "invoice_number": { "type": "string" },
+        "total_amount": { "type": "number" }
+      },
+      "required": ["invoice_number", "total_amount"]
     }
     ```
   </Accordion>
-  
+
   <Accordion icon="magnifying-glass" title="Semantic Search (RAG)">
-    Retrieve relevant document chunks for custom RAG pipelines.
-    
-    ```typescript
-    async function run(client) {
-      const result = await client.sources.retrieveChunks({
-        query: 'payment terms',
-      });
-      for (const chunk of result.chunks) {
-        console.log(`[${chunk.file_name}, p${chunk.page_number}] ${chunk.text}`);
-      }
-    }
-    ```
+    Use `retrieve_chunks` to find the most relevant text chunks for a query without generating an answer. Useful for building custom RAG pipelines or inspecting what context the model would use.
+
+    **Example agent prompts:**
+    - *"Find chunks about payment terms in file_abc123."*
+    - *"Search across all sources for mentions of 'data retention policy'."*
   </Accordion>
 </AccordionGroup>
 
@@ -459,11 +448,11 @@ For clients connecting to a remote server (e.g., hosted at `http://localhost:300
     Learn the full SDK API that your agent can use via the MCP server
   </Card>
   <Card
-    title="Upload Sources"
+    title="Ingest Sources"
     icon="arrow-up-from-bracket"
     href="/sdk/sources/upload"
   >
-    Detailed guide on uploading documents, URLs, GitHub repos, and videos
+    Detailed guide on ingesting documents, URLs, GitHub repos, and videos
   </Card>
   <Card
     title="Chat with Documents"
