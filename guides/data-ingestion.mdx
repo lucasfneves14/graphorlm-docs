@@ -3,7 +3,7 @@ title: 'Ingestion'
 description: 'Import and process documents from multiple sources with state-of-the-art parsing, OCR, and intelligent content classification'
 ---
 
-Graphor transforms unstructured documents into structured, queryable data using state-of-the-art parsing technology. Ingest files from local storage, web pages, GitHub repositories, and YouTube videos — then extract insights through Document Chat, Data Extraction, or RAG pipelines.
+Graphor transforms unstructured documents into structured, queryable data using state-of-the-art parsing technology. Ingest files from local storage, web pages, GitHub repositories, and YouTube videos — then extract insights through Document Chat or Data Extraction.
 
 <img
   className="block border rounded-2xl border-gray-950\/10 ring-2 ring-transparent"
@@ -242,7 +242,7 @@ Version management features:
 - **Automatic activation** — When a new parsing completes successfully, it's automatically set as the active version
 - **Preserve history** — Previous versions are never deleted, allowing you to revert at any time
 
-The active version (marked with a green "active" badge) is the one used for Document Chat and RAG pipelines.
+The active version (marked with a green "active" badge) is the one used for Document Chat and Data Extraction.
 
 ## Content Classification
 
@@ -315,7 +315,7 @@ To delete multiple sources at once:
 2. Click the **Delete** button in the toolbar
 3. Confirm the deletion
 
-**Note**: Deleting sources will also remove them from any RAG pipelines that reference them.
+**Note**: Deleting sources permanently removes the document and its derived data (parsed elements, embeddings, and metadata).
 
 ## Programmatic Integration
 
@@ -489,13 +489,6 @@ After successfully ingesting your documents, explore these next steps:
     href="/guides/document-chat"
   >
     Ask questions and get answers grounded in your document content
-  </Card>
-  <Card
-    title="RAG Quickstart"
-    icon="bolt"
-    href="/guides/rag-quickstart"
-  >
-    Build your first RAG pipeline with Dataset, Chunking, Retrieval, and LLM nodes
   </Card>
   <Card
     title="API Tokens"

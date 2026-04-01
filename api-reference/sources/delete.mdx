@@ -3,7 +3,7 @@ title: 'Delete Source'
 description: 'Remove documents from your project via the Graphor REST API'
 ---
 
-The Delete Source endpoint allows you to permanently remove documents from your Graphor project using the REST API. This endpoint provides a secure way to clean up your document collection, automatically updating related flows and removing all associated data including partition nodes and metadata.
+The Delete Source endpoint allows you to permanently remove documents from your Graphor project using the REST API. This endpoint provides a secure way to clean up your document collection and remove all associated data including parsed elements (partitions), embeddings, and metadata.
 
 ## Endpoint Overview
 
@@ -51,7 +51,6 @@ You can obtain `file_id` from [List sources](/api-reference/sources/list) or fro
     
     - All document content and metadata will be permanently removed
     - Associated partition nodes and embeddings will be deleted
-    - Flows using this document will be automatically updated
     - No backup or recovery options are available
   </Accordion>
   
@@ -62,14 +61,6 @@ You can obtain `file_id` from [List sources](/api-reference/sources/list) or fro
     - Use [List sources](/api-reference/sources/list) to see all sources and their `file_id`s
   </Accordion>
   
-  <Accordion icon="warning" title="Flow Impact">
-    **Automatic flow updates**
-    
-    - Dataset nodes using this document will be updated automatically
-    - Successor nodes in affected flows will be marked as outdated
-    - Flow execution may be impacted until nodes are reconfigured
-    - Multiple flows can be affected by a single deletion
-  </Accordion>
 </AccordionGroup>
 
 ## Request Example
@@ -299,13 +290,13 @@ curl -X DELETE https://sources.graphorlm.com/delete \
     - Monitor processing status using the [List Sources](/api-reference/sources/list) endpoint
   </Accordion>
   
-  <Accordion icon="flow-chart" title="Review flow dependencies">
+  <Accordion icon="flow-chart" title="Review downstream dependencies">
     Before deletion, consider:
     
-    - Which flows use this document
+    - Which systems depend on this document
     - Impact on downstream processing
     - Whether alternative documents can serve the same purpose
-    - Need to reconfigure affected flows after deletion
+    - Whether you need to re-ingest or reprocess replacement sources
   </Accordion>
 </AccordionGroup>
 
@@ -664,16 +655,6 @@ result = manager.archive_by_criteria(
     - Retry the operation after a short delay
     - Contact support for persistent timeout issues
     - Consider deleting files during off-peak hours
-  </Accordion>
-  
-  <Accordion icon="flow-chart" title="Flow synchronization issues">
-    **Causes**: Flows updating asynchronously after deletion
-    
-    **Solutions**:
-    - Allow time for flow updates to propagate
-    - Refresh flow data in your application
-    - Reconfigure affected flows manually if needed
-    - Monitor flow status after bulk deletions
   </Accordion>
   
   <Accordion icon="network-wired" title="Network connectivity">

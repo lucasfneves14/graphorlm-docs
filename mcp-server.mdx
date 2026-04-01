@@ -16,7 +16,7 @@ The **Graphor MCP Server** lets AI agents — such as Cursor, VS Code Copilot, C
     Extract structured data from documents using JSON Schema
   </Card>
   <Card title="Semantic Search" icon="magnifying-glass">
-    Retrieve relevant document chunks for custom RAG pipelines
+    Retrieve relevant document chunks via semantic search
   </Card>
 </CardGroup>
 
@@ -347,8 +347,8 @@ With the MCP server, your agent can perform any operation available in the Graph
     ```
   </Accordion>
 
-  <Accordion icon="magnifying-glass" title="Semantic Search (RAG)">
-    Use `retrieve_chunks` to find the most relevant text chunks for a query without generating an answer. Useful for building custom RAG pipelines or inspecting what context the model would use.
+  <Accordion icon="magnifying-glass" title="Semantic Search">
+    Use `retrieve_chunks` to find the most relevant text chunks for a query without generating an answer. Useful for inspecting what context a downstream system might use.
 
     **Example agent prompts:**
     - *"Find chunks about payment terms in file_abc123."*

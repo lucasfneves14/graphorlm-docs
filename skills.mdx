@@ -128,7 +128,7 @@ Optional: **Reprocess** an existing source with a different partition method —
 | `parsing` | Poll build status and reprocess documents |
 | `ask-sources` | Ask questions about documents with conversational Q&A |
 | `extraction` | Extract structured data using JSON Schema |
-| `retrieve-chunks` | Retrieve chunks for custom RAG pipelines |
+| `retrieve-chunks` | Retrieve relevant chunks via semantic search |
 | `manage-sources` | List sources, get elements, or delete documents |
 
 **Universal rules the agent follows**:
@@ -216,7 +216,7 @@ Once installed, just talk to your agent naturally:
     3. Include proper error handling and async polling until success
   </Accordion>
   
-  <Accordion icon="magnifying-glass" title="Build a RAG pipeline">
+  <Accordion icon="magnifying-glass" title="Semantic search for relevant chunks">
     **You say**: *"Retrieve the most relevant chunks about payment terms from my contract"*
     
     **Agent will**:

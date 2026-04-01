@@ -512,7 +512,7 @@ def analyze_documents(documents: List[str]):
 - **Batch Operations**: Group multiple related requests when possible
 - **Asynchronous Processing**: Use async/await for multiple concurrent requests
 - **Retry Logic**: Implement exponential backoff for transient failures
-- **Caching**: Cache frequently accessed data like flow configurations
+- **Caching**: Cache frequently accessed data like source metadata and parsed elements
 
 ### Error Handling Best Practices
 
@@ -667,13 +667,6 @@ The Graphor API follows semantic versioning principles:
   >
     Best practices for document upload and processing
   </Card>
-  <Card
-    title="Flows Overview"
-    icon="diagram-project"
-    href="/api-reference/flows/overview"
-  >
-    Master comprehensive RAG pipeline and node management
-  </Card>
 </CardGroup>
 
 ### Community and Updates
@@ -712,37 +705,4 @@ Ready to start building with Graphor APIs? Choose your path:
   </Card>
 </CardGroup>
 
-### For Advanced Users
-
-<CardGroup cols={2}>
-  <Card
-    title="Flows Overview"
-    icon="diagram-project"
-    href="/api-reference/flows/overview"
-  >
-    Master comprehensive RAG pipeline and node management
-  </Card>
-  <Card
-    title="LLM Integration"
-    icon="robot"
-    href="/api-reference/flows/nodes/llm/overview"
-  >
-    Advanced language model configuration and optimization
-  </Card>
-  <Card
-    title="Advanced RAG"
-    icon="brain"
-    href="/api-reference/flows/nodes/smart-rag/overview"
-  >
-    Explore Smart RAG, Graph RAG, and RAPTOR capabilities
-  </Card>
-  <Card
-    title="Integration Patterns"
-    icon="plug"
-    href="/guides/integrate-workflow"
-  >
-    Build production-ready integrations
-  </Card>
-</CardGroup>
-
-The Graphor REST API provides the foundation for building intelligent, document-driven applications. With comprehensive support for advanced RAG implementations, multiple node types (chunking, retrieval, reranking, Smart RAG, Graph RAG, RAPTOR RAG, and LLM), and flexible pipeline management, these APIs give you the power and flexibility to build sophisticated AI workflows that scale from simple document search to complex research analysis systems.
+The Graphor REST API provides the foundation for building intelligent, document-driven applications. These APIs give you the building blocks to ingest documents, chat with them, and extract structured data at scale.

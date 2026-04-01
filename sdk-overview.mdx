@@ -1,6 +1,6 @@
 ---
 title: 'SDK Overview'
-description: 'Complete overview of the Graphor SDKs for Python and TypeScript: Sources, Chat, Extraction, and RAG'
+description: 'Complete overview of the Graphor SDKs for Python and TypeScript: Sources, Chat, Extraction, and Retrieval'
 ---
 
 The Graphor SDKs provide convenient access to the Graphor REST API from Python and TypeScript/JavaScript applications. Both libraries include type definitions for all request params and response fields.
@@ -19,7 +19,7 @@ This page provides a comprehensive overview of the SDK. It covers the full lifec
 1. **Data Ingestion (Sources)**: Ingest, poll status, list, get elements, and manage documents by file_id
 2. **Document Chat**: Ask questions about your documents with conversational memory
 3. **Data Extraction**: Extract structured data using JSON Schema
-4. **Prebuilt RAG**: Retrieve relevant document chunks for custom RAG pipelines
+4. **Prebuilt Retrieval**: Retrieve relevant document chunks via semantic search
 
 <CardGroup cols={2}>
   <Card
@@ -145,9 +145,9 @@ Extract specific structured data from your documents using schemas:
   </Card>
 </CardGroup>
 
-## Prebuilt RAG
+## Prebuilt Retrieval
 
-Build custom RAG pipelines with semantic document retrieval:
+Retrieve relevant document chunks via semantic search:
 
 <CardGroup cols={1}>
   <Card
@@ -320,7 +320,7 @@ export GRAPHOR_API_KEY="grlm_your_api_key_here"
 
 ## Complete Workflow Example
 
-Here's the full "happy path": **ingest → get_build_status (poll) → list → get_elements → chat/extract/rag**; optionally **reprocess** by `file_id`.
+Here's the full "happy path": **ingest → get_build_status (poll) → list → get_elements → chat/extract/retrieve_chunks**; optionally **reprocess** by `file_id`.
 
 ### 1. Ingest a source
 
@@ -611,12 +611,12 @@ Here's the full "happy path": **ingest → get_build_status (poll) → list → 
             )
             return {"data": result.structured_output, "raw": result.raw_json}
         
-        # ==================== RAG ====================
+        # ==================== Retrieval ====================
         
         def retrieve(
             self, query: str, file_ids: list[str] | None = None
         ) -> dict[str, Any]:
-            """Retrieve relevant chunks for RAG."""
+            """Retrieve relevant chunks via semantic search."""
             kwargs = {"query": query}
             if file_ids:
                 kwargs["file_ids"] = file_ids
@@ -732,7 +732,7 @@ Here's the full "happy path": **ingest → get_build_status (poll) → list → 
         return { data: result.structured_output, raw: result.raw_json };
       }
 
-      // ==================== RAG ====================
+      // ==================== Retrieval ====================
 
       async retrieve(query: string, fileIds?: string[]) {
         const result = await this.client.sources.retrieveChunks({ query, fileIds });
@@ -1343,7 +1343,7 @@ asyncio.run(main())
   </Tab>
 </Tabs>
 
-### Custom RAG with Your LLM
+### Semantic search with your LLM
 
 <Tabs>
   <Tab title="Python">
@@ -1354,8 +1354,8 @@ asyncio.run(main())
     graphor_client = Graphor()
     openai_client = OpenAI()
 
-    def custom_rag(question: str, file_ids: list[str] | None = None) -> dict:
-        """Custom RAG pipeline with OpenAI."""
+    def custom_search(question: str, file_ids: list[str] | None = None) -> dict:
+        """Retrieve relevant chunks and use them as context."""
         chunks = graphor_client.sources.retrieve_chunks(
             query=question, file_ids=file_ids
         )
@@ -1376,7 +1376,7 @@ asyncio.run(main())
         }
 
     # Usage (pass file_ids from list())
-    result = custom_rag("What are the payment terms?", ["file_abc123"])
+    result = custom_search("What are the payment terms?", ["file_abc123"])
     print(result["answer"])
     print("Sources:", result["sources"])
     ```
@@ -1389,7 +1389,7 @@ asyncio.run(main())
     const graphorClient = new Graphor();
     const openaiClient = new OpenAI();
 
-    async function customRag(question: string, fileIds?: string[]) {
+    async function customSearch(question: string, fileIds?: string[]) {
       const chunks = await graphorClient.sources.retrieveChunks({
         query: question,
         fileIds,
@@ -1411,7 +1411,7 @@ asyncio.run(main())
     }
 
     // Usage (pass fileIds from list())
-    const result = await customRag('What are the payment terms?', ['file_abc123']);
+    const result = await customSearch('What are the payment terms?', ['file_abc123']);
     console.log(result.answer);
     console.log('Sources:', result.sources);
     ```
@@ -1494,11 +1494,11 @@ Ready to start building with the Graphor SDK? Choose your path:
     Extract structured data using JSON Schema
   </Card>
   <Card
-    title="Prebuilt RAG"
+    title="Prebuilt Retrieval"
     icon="magnifying-glass"
     href="/sdk/prebuilt-rag"
   >
-    Build custom RAG pipelines with semantic search
+    Retrieve relevant chunks via semantic search
   </Card>
   <Card
     title="Reprocess Source"
@@ -1516,4 +1516,4 @@ Ready to start building with the Graphor SDK? Choose your path:
   </Card>
 </CardGroup>
 
-The Graphor SDKs provide a powerful foundation for building intelligent, document-driven applications. With comprehensive support for document ingestion, conversational AI, structured extraction, and custom RAG pipelines, both the Python and TypeScript SDKs give you the flexibility to build sophisticated AI workflows that scale from simple document search to complex analysis systems.
+The Graphor SDKs provide a powerful foundation for building intelligent, document-driven applications. With comprehensive support for document ingestion, conversational AI, structured extraction, and semantic search, both the Python and TypeScript SDKs give you the flexibility to build sophisticated AI workflows that scale from simple document search to complex analysis systems.

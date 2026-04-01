@@ -60,7 +60,6 @@ The **`delete`** method (same name as the API endpoint) permanently removes a so
     
     - All document content and metadata are permanently removed
     - Associated partition nodes and embeddings are deleted
-    - Flows using this document are automatically updated
     - No backup or recovery is available
   </Accordion>
   
@@ -69,11 +68,6 @@ The **`delete`** method (same name as the API endpoint) permanently removes a so
     - Do not rely on file name; only `file_id` is supported
   </Accordion>
   
-  <Accordion icon="warning" title="Flow impact">
-    - Dataset nodes using this document are updated automatically
-    - Successor nodes in affected flows may be marked as outdated
-    - Flow execution may be impacted until nodes are reconfigured
-  </Accordion>
 </AccordionGroup>
 
 ## Response
@@ -1150,14 +1144,6 @@ Verify the source exists (by `file_id`) before deleting:
 </Tabs>
   </Accordion>
   
-  <Accordion icon="flow-chart" title="Flow synchronization issues">
-    **Causes**: Flows updating asynchronously after deletion
-    
-    **Solutions**:
-    - Allow time for flow updates to propagate
-    - Refresh flow data in your application
-    - Reconfigure affected flows manually if needed
-  </Accordion>
 </AccordionGroup>
 
 ## Next steps

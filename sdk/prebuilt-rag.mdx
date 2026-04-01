@@ -3,7 +3,7 @@ title: 'Prebuilt RAG'
 description: 'Retrieve relevant document chunks using semantic search with the Graphor SDK'
 ---
 
-The `retrieveChunks` / `retrieve_chunks` method allows you to retrieve relevant document chunks from your ingested documents using semantic search. It returns the most relevant content for your query, making it ideal for building custom RAG (Retrieval-Augmented Generation) applications with your preferred LLM.
+The `retrieveChunks` / `retrieve_chunks` method allows you to retrieve relevant document chunks from your ingested documents using semantic search. It returns the most relevant content for your query, making it ideal for building custom applications with your preferred LLM.
 
 ## Method Overview
 
@@ -333,9 +333,9 @@ Each chunk in the `chunks` list contains:
   </Tab>
 </Tabs>
 
-## Building Custom RAG Pipelines
+## Using Retrieved Chunks with Your LLM
 
-The prebuilt RAG method is designed to give you full control over your RAG pipeline. Here's how to integrate it with your preferred LLM.
+This method is designed to give you full control over how retrieved chunks are used as context. Here's how to integrate it with your preferred LLM.
 
 ### With OpenAI
 
@@ -382,7 +382,7 @@ The prebuilt RAG method is designed to give you full control over your RAG pipel
         return response.choices[0].message.content
 
     def ask_question(question: str, file_names: list[str] | None = None) -> dict:
-        """Complete RAG pipeline."""
+        """Retrieve chunks and generate an answer."""
         chunks = retrieve_chunks(question, file_names)
         context = build_context(chunks)
         answer = generate_answer(question, context)
@@ -443,7 +443,7 @@ The prebuilt RAG method is designed to give you full control over your RAG pipel
       return response.choices[0].message.content ?? '';
     }
 
-    /** Complete RAG pipeline. */
+    /** Retrieve chunks and generate an answer. */
     async function askQuestion(question: string, fileNames?: string[]) {
       const chunks = await retrieveChunks(question, fileNames);
       const context = buildContext(chunks);
@@ -479,7 +479,7 @@ The prebuilt RAG method is designed to give you full control over your RAG pipel
     claude_client = anthropic.Anthropic()
 
     def rag_with_claude(question: str, file_names: list[str] | None = None) -> str:
-        """RAG pipeline using Claude."""
+        """Use retrieved chunks as context with Claude."""
         # Retrieve chunks
         result = graphor_client.sources.retrieve_chunks(
             query=question,
@@ -581,7 +581,7 @@ The prebuilt RAG method is designed to give you full control over your RAG pipel
     model = genai.GenerativeModel("gemini-pro")
 
     def rag_with_gemini(question: str, file_names: list[str] | None = None) -> str:
-        """RAG pipeline using Google Gemini."""
+        """Use retrieved chunks as context with Google Gemini."""
         # Retrieve chunks
         result = graphor_client.sources.retrieve_chunks(
             query=question,
@@ -1238,7 +1238,7 @@ Build a system that retrieves, reasons, and retrieves again if needed:
 
 ### Custom RAG Applications
 
-Use this method to build custom RAG pipelines with your preferred LLM:
+Use this method to build custom LLM features with full control over retrieval + generation:
 
 1. **Retrieve** — Get relevant chunks using semantic search
 2. **Build context** — Format chunks for your LLM prompt
@@ -1271,7 +1271,7 @@ Create custom Q&A systems with full control over:
     | LLM Integration | Bring your own | Built-in |
     | Conversation Memory | No | Yes (with `conversation_id`) |
     | Customization | Full control | Limited |
-    | Use Case | Custom RAG pipelines | Quick Q&A |
+    | Use Case | Custom retrieval + generation | Quick Q&A |
   </Tab>
   <Tab title="TypeScript">
     | Feature | `retrieveChunks()` | `ask()` |
@@ -1280,12 +1280,12 @@ Create custom Q&A systems with full control over:
     | LLM Integration | Bring your own | Built-in |
     | Conversation Memory | No | Yes (with `conversation_id`) |
     | Customization | Full control | Limited |
-    | Use Case | Custom RAG pipelines | Quick Q&A |
+    | Use Case | Custom retrieval + generation | Quick Q&A |
   </Tab>
 </Tabs>
 
 <Note>
-  Use `retrieveChunks()` / `retrieve_chunks()` when you need full control over your RAG pipeline. Use `ask()` for quick Q&A with built-in answer generation.
+  Use `retrieveChunks()` / `retrieve_chunks()` when you need full control over retrieval + generation. Use `ask()` for quick Q&A with built-in answer generation.
 </Note>
 
 ## Best Practices
@@ -1497,12 +1497,5 @@ After mastering document retrieval:
     href="/sdk/sources/upload"
   >
     Add more documents to your knowledge base
-  </Card>
-  <Card
-    title="RAG Quickstart Guide"
-    icon="bolt"
-    href="/guides/rag-quickstart"
-  >
-    Learn best practices for building RAG applications
   </Card>
 </CardGroup>

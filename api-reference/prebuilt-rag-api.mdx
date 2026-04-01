@@ -5,7 +5,7 @@ description: 'Retrieve relevant document chunks using semantic search'
 
 ## Overview
 
-The Prebuilt RAG API allows you to retrieve relevant document chunks from your ingested documents using semantic search. It returns the most relevant content for your query, making it ideal for building custom RAG (Retrieval-Augmented Generation) applications.
+The Prebuilt RAG API allows you to retrieve relevant document chunks from your ingested documents using semantic search. It returns the most relevant content for your query, making it ideal for building custom applications.
 
 ## Endpoint
 
@@ -315,9 +315,9 @@ console.log("Sources:", result.sources.map(s => s.file_name));
 
 ## Use Cases
 
-### Custom RAG Applications
+### Custom Applications with Your LLM
 
-Use this API to build custom RAG pipelines with your preferred LLM:
+Use this API to build custom features with your preferred LLM:
 
 1. **Retrieve** relevant chunks using semantic search
 2. **Build context** from the retrieved chunks
@@ -356,7 +356,7 @@ Create custom Q&A systems with full control over:
 | LLM Integration | Bring your own | Built-in |
 | Conversation Memory | No | Yes |
 | Customization | Full control | Limited |
-| Use Case | Custom RAG pipelines | Quick Q&A |
+| Use Case | Custom retrieval + generation | Quick Q&A |
 
 ## Related
 
@@ -381,13 +381,6 @@ Create custom Q&A systems with full control over:
     href="/api-reference/extract-api"
   >
     Extract structured data from documents
-  </Card>
-  <Card
-    title="RAG Quickstart"
-    icon="bolt"
-    href="/guides/rag-quickstart"
-  >
-    Build your first RAG pipeline with Graphor
   </Card>
 </CardGroup>
 
