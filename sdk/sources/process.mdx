@@ -30,7 +30,7 @@ The **`reprocess`** method (same name as the API endpoint) re-runs the ingestion
     ```python
     client.sources.reprocess(
         file_id: str,                           # Required
-        method: str | None = None,             # Optional: fast, balanced, accurate, vlm, agentic
+        method: str | None = None,             # Optional: fast, balanced, accurate, agentic
         timeout: float | None = None
     ) -> SourceReprocessResponse
     ```
@@ -40,7 +40,7 @@ The **`reprocess`** method (same name as the API endpoint) re-runs the ingestion
     ```typescript
     await client.sources.reprocess({
       file_id: string,                                   // Required
-      method?: 'fast' | 'balanced' | 'accurate' | 'vlm' | 'agentic',
+      method?: 'fast' | 'balanced' | 'accurate' | 'agentic',
     }): Promise<SourceReprocessResponse>
     ```
     Returns **`SourceReprocessResponse`** with `.build_id`.
@@ -54,14 +54,14 @@ The **`reprocess`** method (same name as the API endpoint) re-runs the ingestion
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
     | `file_id` | `str` | Unique identifier of the source to re-process | Yes |
-    | `method` | `str \| None` | One of: `fast`, `balanced`, `accurate`, `vlm`, `agentic`. Default: `fast` | No |
+    | `method` | `str \| None` | One of: `fast`, `balanced`, `accurate`, `agentic`. Default: `fast` | No |
     | `timeout` | `float` | Request timeout in seconds | No |
   </Tab>
   <Tab title="TypeScript">
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
     | `file_id` | `string` | Unique identifier of the source to re-process | Yes |
-    | `method` | `string` | One of: `fast`, `balanced`, `accurate`, `vlm`, `agentic` | No |
+    | `method` | `string` | One of: `fast`, `balanced`, `accurate`, `agentic` | No |
   </Tab>
 </Tabs>
 
@@ -72,7 +72,6 @@ The **`reprocess`** method (same name as the API endpoint) re-runs the ingestion
 | `fast` | Fast | Fast processing with heuristic classification. No OCR. |
 | `balanced` | Balanced | OCR-based extraction with structure classification. |
 | `accurate` | Accurate | Fine-tuned model for highest accuracy (Premium). |
-| `vlm` | VLM | Best for manuscripts and handwritten content. |
 | `agentic` | Agentic | Highest accuracy for complex layouts, tables, and diagrams. |
 
 ### Method comparison
@@ -82,7 +81,6 @@ The **`reprocess`** method (same name as the API endpoint) re-runs the ingestion
 | **Fast** | High | Good | Good | Simple text files, testing | No |
 | **Balanced** | Medium | Very good | Very good | Complex layouts, mixed content | Yes |
 | **Accurate** | Medium | Excellent | Excellent | Premium accuracy needed | Yes |
-| **VLM** | High | Excellent | Good | Manuscripts, handwritten | Yes |
 | **Agentic** | Medium | Excellent | Excellent | Complex layouts, multi-page tables, diagrams | Yes |
 
 ### Return value
@@ -270,7 +268,7 @@ Reprocess multiple sources by `file_id`; each call returns a `build_id`. Poll [G
 <AccordionGroup>
   <Accordion icon="eye" title="Poor text extraction">
     **Symptoms**: Missing text, garbled characters, incomplete content  
-    **Recommended**: `balanced` or `accurate` for complex layouts; `vlm` for text-only when bounding boxes are not needed.
+    **Recommended**: `balanced` or `accurate` for complex layouts.
   </Accordion>
   <Accordion icon="table" title="Table detection issues">
     **Symptoms**: Tables not recognized, merged cells, structure lost  
@@ -290,7 +288,7 @@ Reprocess multiple sources by `file_id`; each call returns a `build_id`. Poll [G
 
 - **Use `file_id`**: Always use the source’s `file_id` (from list sources or build status).
 - **Poll build status**: After calling `reprocess`, poll [Get build status](/sdk/sources/upload#get-build-status) with a reasonable interval (e.g. 2–5 seconds) and timeout.
-- **Choose method by need**: Start with `fast` for testing; use `balanced` or `accurate` for better quality; use `vlm` for manuscripts; use `agentic` for complex layouts and tables.
+- **Choose method by need**: Start with `fast` for testing; use `balanced` or `accurate` for better quality; use `agentic` for complex layouts and tables.
 
 ## Error Reference
 
@@ -367,7 +365,6 @@ Reprocess multiple sources by `file_id`; each call returns a `build_id`. Poll [G
   <Accordion icon="gauge" title="Poor processing quality">
     **Solutions**:
     - Use `balanced` or `accurate` for complex layouts
-    - Use `vlm` for manuscripts and handwritten documents
     - Use `agentic` for complex layouts with tables and diagrams
   </Accordion>
 </AccordionGroup>

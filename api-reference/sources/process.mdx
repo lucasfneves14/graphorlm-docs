@@ -46,7 +46,7 @@ Send a JSON body with the following fields:
 | Field | Type | Description | Required |
 |-------|------|-------------|----------|
 | `file_id` | string | Unique identifier of the source to re-process | Yes |
-| `method` | string | Partitioning strategy. One of: `fast`, `balanced`, `accurate`, `vlm`, `agentic`. Default: `fast` | No |
+| `method` | string | Partitioning strategy. One of: `fast`, `balanced`, `accurate`, `agentic`. Default: `fast` | No |
 
 ### Partition method values (v2)
 
@@ -57,7 +57,6 @@ Use these values for the `partition_method` field:
 | `fast` | Fast | Fast processing with heuristic classification. No OCR. |
 | `balanced` | Balanced | OCR-based extraction with structure classification. |
 | `accurate` | Accurate | Fine-tuned model for highest accuracy (Premium). |
-| `vlm` | VLM | Best for manuscripts and handwritten content. |
 | `agentic` | Agentic | Highest accuracy for complex layouts, tables, and diagrams. |
 
 ### Available processing methods
@@ -89,14 +88,6 @@ Use these values for the `partition_method` field:
     - Highest accuracy for document structure recognition
     - **Note**: Premium feature
   </Accordion>
-  <Accordion icon="bars" title="VLM">
-    **Best for**: Text-first parsing, manuscripts, and handwritten documents
-    
-    - Best text-first parsing; no bounding boxes or page layout
-    - Best for manuscript and handwritten documents
-    - Performs page and document annotation
-    - Best-in-class text parsing quality
-  </Accordion>
   <Accordion icon="robot" title="Agentic">
     **Best for**: Complex layouts, multi-page tables, diagrams, and images
     
@@ -113,7 +104,6 @@ Use these values for the `partition_method` field:
 | **Fast** | High | Good | Good | Yes (limited) | Simple text files, testing | No |
 | **Balanced** | Medium | Very good | Very good | Yes | Complex layouts, mixed content | Yes |
 | **Accurate** | Medium | Excellent | Excellent | Yes | Premium accuracy needed | Yes |
-| **VLM** | High | Excellent | Good | No | Manuscripts, handwritten | Yes |
 | **Agentic** | Medium | Excellent | Excellent | Yes | Complex layouts, multi-page tables, diagrams | Yes |
 
 ## Request example
@@ -309,7 +299,7 @@ def reprocess_and_wait(api_token, file_id, partition_method="balanced", poll_int
 <AccordionGroup>
   <Accordion icon="eye" title="Poor text extraction">
     **Symptoms**: Missing text, garbled characters, incomplete content  
-    **Recommended**: `balanced` or `accurate` for complex layouts; `vlm` for text-only when bounding boxes are not needed.
+    **Recommended**: `balanced` or `accurate` for complex layouts.
   </Accordion>
   <Accordion icon="table" title="Table detection issues">
     **Symptoms**: Tables not recognized, merged cells, structure lost  
@@ -329,7 +319,7 @@ def reprocess_and_wait(api_token, file_id, partition_method="balanced", poll_int
 
 - **Use `file_id`**: Always use the source’s `file_id` (from list sources or build status); do not rely on file name.
 - **Poll build status**: After calling reprocess, poll [Get build status](/api-reference/sources/upload#get-build-status) with a reasonable interval (e.g. 2–5 seconds) and timeout.
-- **Choose method by need**: Start with `fast` for testing; use `balanced` or `accurate` for better quality; use `vlm` for manuscripts; use `agentic` for complex layouts and tables.
+- **Choose method by need**: Start with `fast` for testing; use `balanced` or `accurate` for better quality; use `agentic` for complex layouts and tables.
 - **Timeout**: Allow sufficient time for large documents and heavier methods when polling.
 
 ## Next steps

@@ -251,7 +251,7 @@ Upload a local file and schedule ingestion in the background. Returns a **build_
     ```python
     client.sources.ingest_file(
         file: FileTypes,                              # Required
-        method: str | None = None,                   # Optional: fast, balanced, accurate, vlm, agentic
+        method: str | None = None,                   # Optional: fast, balanced, accurate, agentic
         timeout: float | None = None
     ) -> SourceIngestFileResponse
     ```
@@ -261,7 +261,7 @@ Upload a local file and schedule ingestion in the background. Returns a **build_
     ```typescript
     await client.sources.ingestFile({
       file: Uploadable,                                    // Required
-      method?: 'fast' | 'balanced' | 'accurate' | 'vlm' | 'agentic' | null,
+      method?: 'fast' | 'balanced' | 'accurate' | 'agentic' | null,
     }): Promise<SourceIngestFileResponse>
     ```
     Returns **`SourceIngestFileResponse`** with `.build_id`.
@@ -275,14 +275,14 @@ Upload a local file and schedule ingestion in the background. Returns a **build_
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
     | `file` | `FileTypes` | The file to upload. Accepts `bytes`, `Path`, or tuple `(filename, contents, media_type)` | Yes |
-    | `method` | `str \| None` | One of: `fast`, `balanced`, `accurate`, `vlm`, `agentic` (see [Partition methods](#partition-methods) below) | No |
+    | `method` | `str \| None` | One of: `fast`, `balanced`, `accurate`, `agentic` (see [Partition methods](#partition-methods) below) | No |
     | `timeout` | `float` | Request timeout in seconds (default: 60) | No |
   </Tab>
   <Tab title="TypeScript">
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
     | `file` | `Uploadable` | The file to upload. Accepts `ReadStream`, `File`, `Response`, or `toFile()` helper | Yes |
-    | `method` | `string \| null` | One of: `fast`, `balanced`, `accurate`, `vlm`, `agentic` (see [Partition methods](#partition-methods) below) | No |
+    | `method` | `string \| null` | One of: `fast`, `balanced`, `accurate`, `agentic` (see [Partition methods](#partition-methods) below) | No |
   </Tab>
 </Tabs>
 
@@ -295,7 +295,6 @@ When provided, `method` controls how the document is parsed. If omitted, the sys
 | `"fast"` | Fast | Fast processing with heuristic classification. No OCR. |
 | `"balanced"` | Balanced | OCR-based extraction with structure classification. |
 | `"accurate"` | Accurate | Fine-tuned model for highest accuracy (Premium). |
-| `"vlm"` | VLM | Best for manuscripts and handwritten content. |
 | `"agentic"` | Agentic | Highest accuracy for complex layouts, tables, and diagrams. |
 
 <Note>
@@ -522,7 +521,7 @@ Ingest a web page by URL (async). Returns a **build_id**; use [Get build status]
     client.sources.ingest_url(
         url: str,                                     # Required
         crawl_urls: bool = False,
-        method: str | None = None,                   # Optional: fast, balanced, accurate, vlm, agentic
+        method: str | None = None,                   # Optional: fast, balanced, accurate, agentic
         timeout: float | None = None
     ) -> SourceIngestURLResponse
     ```
@@ -533,7 +532,7 @@ Ingest a web page by URL (async). Returns a **build_id**; use [Get build status]
     await client.sources.ingestURL({
       url: string,                                         // Required
       crawlUrls?: boolean,
-      method?: 'fast' | 'balanced' | 'accurate' | 'vlm' | 'agentic' | null,
+      method?: 'fast' | 'balanced' | 'accurate' | 'agentic' | null,
     }): Promise<SourceIngestURLResponse>
     ```
     Returns **`SourceIngestURLResponse`** with `.build_id`.
@@ -548,7 +547,7 @@ Ingest a web page by URL (async). Returns a **build_id**; use [Get build status]
     |-----------|------|-------------|----------|
     | `url` | `str` | The web page URL to ingest | Yes |
     | `crawl_urls` | `bool` | When true, follow and ingest links from the page (default: `False`) | No |
-    | `method` | `str \| None` | One of: `fast`, `balanced`, `accurate`, `vlm`, `agentic` | No |
+    | `method` | `str \| None` | One of: `fast`, `balanced`, `accurate`, `agentic` | No |
     | `timeout` | `float` | Request timeout in seconds | No |
   </Tab>
   <Tab title="TypeScript">
@@ -556,7 +555,7 @@ Ingest a web page by URL (async). Returns a **build_id**; use [Get build status]
     |-----------|------|-------------|----------|
     | `url` | `string` | The web page URL to ingest | Yes |
     | `crawlUrls` | `boolean` | When true, follow and ingest links from the page | No |
-    | `method` | `string \| null` | One of: `fast`, `balanced`, `accurate`, `vlm`, `agentic` | No |
+    | `method` | `string \| null` | One of: `fast`, `balanced`, `accurate`, `agentic` | No |
   </Tab>
 </Tabs>
 

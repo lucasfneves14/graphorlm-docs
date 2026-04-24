@@ -102,7 +102,6 @@ The quality of your RAG pipeline starts with parsing quality:
 | **Fast** | Basic element classification, suitable for simple documents |
 | **Balanced** | Better structure recognition, improved element boundaries |
 | **Accurate** | Highest accuracy for specialized documents |
-| **VLM** | Best text quality for manuscripts, handwritten documents |
 | **Agentic** | Rich annotations for tables, diagrams, images |
 
 <Tip>
@@ -187,7 +186,7 @@ The Dataset provides source documents for testing retrieval quality against grou
   <Accordion icon="triangle-exclamation" title="Poor quality elements">
     If elements appear incorrectly classified or fragmented:
     - Review the source document's parsing results
-    - Use a more advanced parsing method (Balanced, VLM, or Agentic)
+    - Use a more advanced parsing method (Balanced or Agentic)
     - Check if element types are being properly identified
   </Accordion>
   <Accordion icon="clock" title="Slow pipeline performance">

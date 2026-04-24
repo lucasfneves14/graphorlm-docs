@@ -153,7 +153,7 @@ When the build is still in progress (running):
 | `file_id` | string \| null | Source file ID; present when the build has been persisted |
 | `file_name` | string \| null | Display name of the source; present when persisted |
 | `error` | string \| null | Error message from the pipeline when the build failed |
-| `method` | string \| null | Strategy used (e.g. `fast`, `balanced`, `accurate`, `vlm`, `agentic`) |
+| `method` | string \| null | Strategy used (e.g. `fast`, `balanced`, `accurate`, `agentic`) |
 | `total_partitions` | integer \| null | Number of partitions; present when history exists |
 | `total_pages` | integer \| null | Total pages in the source; present when history exists |
 | `created_at` | string \| null | ISO8601 timestamp when the build was created |
@@ -244,7 +244,7 @@ Upload a local file and schedule ingestion in the background. The API validates 
 | Field | Type | Description | Required |
 |-------|------|-------------|----------|
 | `file` | File | The document file to upload | Yes |
-| `method` | string | Processing method: `fast`, `balanced`, `accurate`, `vlm`, or `agentic` (see [Partition methods](#partition-methods)) | No |
+| `method` | string | Processing method: `fast`, `balanced`, `accurate`, or `agentic` (see [Partition methods](#partition-methods)) | No |
 
 ### Partition methods
 
@@ -255,7 +255,6 @@ When provided, `partition_method` controls how the document is parsed. If omitte
 | `fast` | Fast | Fast processing with heuristic classification. No OCR. |
 | `balanced` | Balanced | OCR-based extraction with structure classification. |
 | `accurate` | Accurate | Fine-tuned model for highest accuracy (Premium). |
-| `vlm` | VLM | Best for manuscripts and handwritten content. |
 | `agentic` | Agentic | Highest accuracy for complex layouts, tables, and diagrams. |
 
 <Note>
@@ -420,7 +419,7 @@ Ingest a web page (or multiple pages via crawling) as a source. The job runs in 
 |-------|------|-------------|----------|
 | `url` | string | The web page URL to ingest | Yes |
 | `crawlUrls` | boolean | When `true`, follow and ingest links found on the page (ignored when URL resolves to a file) | No (default: `false`) |
-| `method` | string | One of: `fast`, `balanced`, `accurate`, `vlm`, `agentic` | No |
+| `method` | string | One of: `fast`, `balanced`, `accurate`, `agentic` | No |
 
 ### Success response (200 OK)
 

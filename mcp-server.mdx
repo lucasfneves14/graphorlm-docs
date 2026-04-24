@@ -251,7 +251,7 @@ Once installed, your agent has access to **12 tools** covering the full Graphor 
 | `ingest_youtube` | `url` | — | `build_id` |
 | `get_build_status` | `build_id` | `suppress_elements`, `suppress_img_base64`, `page`, `page_size` | build status + `file_id` when complete. Status can be `Pending` (not started), `Processing`, `Completed`, or `Processing failed` |
 
-The `method` parameter controls the partitioning strategy: `fast`, `balanced`, `accurate`, `vlm`, or `agentic`.
+The `method` parameter controls the partitioning strategy: `fast`, `balanced`, `accurate`, or `agentic`.
 
 ### Source Management
 
@@ -304,9 +304,9 @@ With the MCP server, your agent can perform any operation available in the Graph
 
     **Example agent prompts:**
     - *"Reprocess file_abc123 using the 'agentic' method for better accuracy."*
-    - *"Re-parse this PDF with the 'vlm' method to extract tables better."*
+    - *"Re-parse this PDF with the 'accurate' method to extract tables better."*
 
-    **Available methods:** `fast`, `balanced`, `accurate`, `vlm`, `agentic`
+    **Available methods:** `fast`, `balanced`, `accurate`, `agentic`
   </Accordion>
 
   <Accordion icon="file-text" title="Inspect Parsed Elements">
