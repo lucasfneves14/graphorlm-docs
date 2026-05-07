@@ -1,0 +1,187 @@
+---
+title: 'Get Page Screenshot'
+description: 'Fetch a base64-encoded PNG screenshot of a single page from a source via the Graphor REST API'
+---
+
+The **Get Page Screenshot** endpoint renders one page of a source file (PDF, image, or Office document) as a base64-encoded PNG. Use it to lazily fetch the visual preview of a citation returned by [`/ask-sources`](/api-reference/chat-api) without paying the payload cost of inlining base64 in the answer.
+
+## Endpoint overview
+
+<CardGroup cols={2}>
+  <Card title="HTTP Method" icon="image">
+    **GET**
+  </Card>
+  <Card title="Endpoint URL" icon="link">
+    **https://sources.graphorlm.com/\{file_id\}/pages/\{page_number\}/screenshot**
+  </Card>
+</CardGroup>
+
+## Authentication
+
+This endpoint requires authentication using an API token. Include your API token as a Bearer token in the `Authorization` header.
+
+<Note>
+  Learn how to create and manage API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## When to use this endpoint
+
+This is the **recommended** way to display page previews for citations returned by `/ask-sources`.
+
+- The default `/ask-sources` response does **not** include `image_base64` — clients should call this endpoint per citation, only when the user actually needs to see the page (e.g. on hover, on click, or when rendering a side panel).
+- Each render is keyed by `(file_id, page_number)` and returns a `Cache-Control: public, max-age=3600` hint so browsers and CDNs can cache the image bytes.
+- Prefer this endpoint over passing `include_citation_images=true` to `/ask-sources` whenever the answer may cite many pages, or when latency / payload size matters.
+
+## Request format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+
+### Path parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `file_id` | string | Yes | UUID of the source file. Same value returned in `citations[].file_id` from `/ask-sources`. |
+| `page_number` | integer | Yes | 1-based page number. For image-type files, must be `1`. |
+
+### Query parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `max_width` | integer | No | Pixel width cap for the rendered image. Clamped to `300`-`1600`. Default: `900`. |
+
+### Supported file types
+
+| Type | Extensions | Notes |
+|------|------------|-------|
+| PDFs | `pdf` | Any 1-based page number. |
+| Images | `png`, `jpg`, `jpeg`, `webp`, `gif`, etc. | `page_number` must be `1`. |
+| Office documents | `doc`, `docx`, `ppt`, `pptx`, `odt` | Rendered from the auto-converted PDF. |
+
+Plain-text and other non-visual formats are not supported and will return `404`.
+
+## Response format
+
+### Success response (200 OK)
+
+```json
+{
+  "file_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "file_name": "annual-report-2025.pdf",
+  "page_number": 42,
+  "mime_type": "image/png",
+  "width": 900,
+  "height": 1163,
+  "image_base64": "iVBORw0KGgoAAAANSUhEUgAA…"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `file_id` | string | UUID of the source file. |
+| `file_name` | string | Display name of the source file. May be `null`. |
+| `page_number` | integer | 1-based page number that was rendered. |
+| `mime_type` | string | MIME type of the encoded image (always `"image/png"`). |
+| `width` | integer | Pixel width of the rendered image. |
+| `height` | integer | Pixel height of the rendered image. |
+| `image_base64` | string | Base64-encoded PNG image bytes. |
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `401` | Unauthorized — invalid or missing API token. |
+| `404` | File not found, unsupported file type, or invalid page number. |
+| `500` | Unexpected internal error while rendering. |
+
+## Examples
+
+### cURL
+
+```bash
+curl "https://sources.graphorlm.com/a1b2c3d4-e5f6-7890-abcd-ef1234567890/pages/42/screenshot?max_width=1200" \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+### Python (rendering and saving a citation)
+
+```python
+import base64
+import requests
+
+API_TOKEN = "YOUR_API_TOKEN"
+BASE_URL = "https://sources.graphorlm.com"
+
+# 1. Ask a question
+ask = requests.post(
+    f"{BASE_URL}/ask-sources",
+    headers={"Authorization": f"Bearer {API_TOKEN}"},
+    json={"question": "What was the revenue in 2025?"},
+).json()
+
+# 2. For each citation the user wants to inspect, fetch the page image
+for citation in (ask.get("citations") or []):
+    file_id = citation["file_id"]
+    page_number = citation["page_number"]
+
+    img = requests.get(
+        f"{BASE_URL}/{file_id}/pages/{page_number}/screenshot",
+        headers={"Authorization": f"Bearer {API_TOKEN}"},
+        params={"max_width": 1200},
+    ).json()
+
+    png_bytes = base64.b64decode(img["image_base64"])
+    with open(f"page_{file_id}_{page_number}.png", "wb") as f:
+        f.write(png_bytes)
+```
+
+### JavaScript (decoding and rendering inline)
+
+```javascript
+const API_URL = "https://sources.graphorlm.com";
+const API_TOKEN = "YOUR_API_TOKEN";
+
+async function fetchCitationImage(fileId, pageNumber) {
+  const url = `${API_URL}/${fileId}/pages/${pageNumber}/screenshot?max_width=900`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${API_TOKEN}` },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  // Use directly as <img src="data:image/png;base64,...">
+  return `data:${data.mime_type};base64,${data.image_base64}`;
+}
+
+// Usage from a citation returned by /ask-sources
+const src = await fetchCitationImage(citation.file_id, citation.page_number);
+imgEl.src = src;
+```
+
+## Best practices
+
+1. **Lazy-load on user interaction** — call this endpoint only when the user hovers, clicks, or expands a citation. Most citations are never inspected.
+2. **Cache by `(file_id, page_number)`** — the response is deterministic for a given key. The endpoint returns `Cache-Control: public, max-age=3600`; respect it on the client to avoid re-rendering the same page.
+3. **Pick `max_width` for the surface you're rendering** — `500` for tooltips/popovers, `900` (default) for inline cards, `1200`+ only when the user opens a full preview.
+4. **Combine with `/ask-sources` citations** — pair this endpoint with the structured `citations` array from `/ask-sources` rather than parsing the inline `[N]` markup.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card
+    title="Chat API"
+    icon="comments"
+    href="/api-reference/chat-api"
+  >
+    Ask questions and receive grounded answers with citations
+  </Card>
+  <Card
+    title="List Sources"
+    icon="folder"
+    href="/api-reference/sources/list"
+  >
+    Discover the `file_id` values you can pass here
+  </Card>
+</CardGroup>

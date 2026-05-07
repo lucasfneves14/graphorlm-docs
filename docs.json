@@ -85,7 +85,8 @@
                   "sdk/sources/process",
                   "sdk/sources/list",
                   "sdk/sources/delete",
-                  "sdk/sources/list-elements"
+                  "sdk/sources/list-elements",
+                  "sdk/sources/page-screenshot"
                 ]
               },
               "sdk/chat",
@@ -115,7 +116,8 @@
                   "api-reference/sources/process",
                   "api-reference/sources/list",
                   "api-reference/sources/delete",
-                  "api-reference/sources/list-elements"
+                  "api-reference/sources/list-elements",
+                  "api-reference/sources/page-screenshot"
                 ]
               },
               "api-reference/chat-api",

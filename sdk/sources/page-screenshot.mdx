@@ -1,0 +1,318 @@
+---
+title: 'Get page screenshot'
+description: 'Render a single page of a source as a base64-encoded PNG screenshot using the Graphor SDK'
+---
+
+The **`get_page_screenshot`** method renders one page of a source file (PDF, image, or Office document) as a base64-encoded PNG. It is the recommended way to display visual previews for citations returned by [`ask`](/sdk/chat) — call it lazily, only when the user actually wants to inspect a citation.
+
+## Method overview
+
+<Tabs>
+  <Tab title="Python">
+    <CardGroup cols={2}>
+      <Card title="Sync Method" icon="code">
+        **`client.sources.get_page_screenshot()`**
+      </Card>
+      <Card title="Async Method" icon="code">
+        **`await client.sources.get_page_screenshot()`** (using `AsyncGraphor`)
+      </Card>
+    </CardGroup>
+  </Tab>
+  <Tab title="TypeScript">
+    <CardGroup cols={2}>
+      <Card title="Async Method" icon="code">
+        **`await client.sources.getPageScreenshot()`**
+
+        All TypeScript methods are async and return a `Promise`.
+      </Card>
+    </CardGroup>
+  </Tab>
+</Tabs>
+
+## Method signature
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    client.sources.get_page_screenshot(
+        page_number: int,                     # Required (path)
+        file_id: str,                         # Required
+        max_width: int | None = None,
+        timeout: float | None = None
+    ) -> SourceGetPageScreenshotResponse
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    await client.sources.getPageScreenshot(
+      pageNumber: number,                     // Required (path)
+      params: {
+        file_id: string,                      // Required
+        max_width?: number | null,
+      },
+    ): Promise<SourceGetPageScreenshotResponse>
+    ```
+  </Tab>
+</Tabs>
+
+## Parameters
+
+<Tabs>
+  <Tab title="Python">
+    | Parameter | Type | Description | Required |
+    |-----------|------|-------------|----------|
+    | `page_number` | `int` | 1-based page number. For image-type files, must be `1`. | Yes |
+    | `file_id` | `str` | UUID of the source file. Same value returned in `citations[].file_id` from `ask`. | Yes |
+    | `max_width` | `int \| None` | Pixel width cap. Clamped to `300`-`1600`. Default: `900`. | No |
+    | `timeout` | `float` | Request timeout in seconds | No |
+  </Tab>
+  <Tab title="TypeScript">
+    | Parameter | Type | Description | Required |
+    |-----------|------|-------------|----------|
+    | `pageNumber` | `number` | 1-based page number. For image-type files, must be `1`. | Yes |
+    | `file_id` | `string` | UUID of the source file. | Yes |
+    | `max_width` | `number \| null` | Pixel width cap. Clamped to `300`-`1600`. Default: `900`. | No |
+  </Tab>
+</Tabs>
+
+## Supported file types
+
+| Type | Extensions | Notes |
+|------|------------|-------|
+| PDFs | `pdf` | Any 1-based page number. |
+| Images | `png`, `jpg`, `jpeg`, `webp`, `gif`, etc. | `page_number` must be `1`. |
+| Office documents | `doc`, `docx`, `ppt`, `pptx`, `odt` | Rendered from the auto-converted PDF. |
+
+Plain-text and other non-visual formats are not supported and will raise `NotFoundError`.
+
+## Response
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `file_id` | `str` | UUID of the source file. |
+| `file_name` | `str \| None` | Display name of the source file. |
+| `page_number` | `int` | 1-based page number that was rendered. |
+| `mime_type` | `str` | MIME type of the encoded image (always `"image/png"`). |
+| `width` | `int \| None` | Pixel width of the rendered image. |
+| `height` | `int \| None` | Pixel height of the rendered image. |
+| `image_base64` | `str` | Base64-encoded PNG image bytes. |
+
+## Code examples
+
+### Basic — render and save a page
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import base64
+    from graphor import Graphor
+
+    client = Graphor()
+
+    screenshot = client.sources.get_page_screenshot(
+        page_number=42,
+        file_id="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    )
+
+    png_bytes = base64.b64decode(screenshot.image_base64)
+    with open("page-42.png", "wb") as f:
+        f.write(png_bytes)
+
+    print(f"Rendered {screenshot.width}x{screenshot.height} PNG")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import fs from 'node:fs/promises';
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    const screenshot = await client.sources.getPageScreenshot(42, {
+      file_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    });
+
+    await fs.writeFile('page-42.png', Buffer.from(screenshot.image_base64, 'base64'));
+
+    console.log(`Rendered ${screenshot.width}x${screenshot.height} PNG`);
+    ```
+  </Tab>
+</Tabs>
+
+### Lazy-loading citations from `ask`
+
+The recommended pattern: call `ask`, render only the pages the user inspects.
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+
+    client = Graphor()
+
+    response = client.sources.ask(
+        question="What was the revenue in 2025?",
+        file_ids=["file_abc123"],
+    )
+
+    print(response.answer)
+
+    # When the user hovers/clicks on a [N] marker, fetch the screenshot
+    def fetch_citation_image(citation):
+        return client.sources.get_page_screenshot(
+            page_number=citation.page_number,
+            file_id=citation.file_id,
+            max_width=500,  # smaller for tooltip/popover
+        )
+
+    # Example: render only the first cited page
+    if response.citations:
+        screenshot = fetch_citation_image(response.citations[0])
+        # screenshot.image_base64 → display in <img src="data:image/png;base64,...">
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    const response = await client.sources.ask({
+      question: 'What was the revenue in 2025?',
+      file_ids: ['file_abc123'],
+    });
+
+    console.log(response.answer);
+
+    // When the user hovers/clicks on a [N] marker, fetch the screenshot
+    async function fetchCitationImage(citation: { file_id: string; page_number: number }) {
+      return client.sources.getPageScreenshot(citation.page_number, {
+        file_id: citation.file_id,
+        max_width: 500, // smaller for tooltip/popover
+      });
+    }
+
+    if (response.citations?.length) {
+      const screenshot = await fetchCitationImage({
+        file_id: response.citations[0].file_id!,
+        page_number: response.citations[0].page_number!,
+      });
+      // screenshot.image_base64 → display via `data:image/png;base64,${...}`
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Async usage
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import asyncio
+    from graphor import AsyncGraphor
+
+    async def render_pages(file_id: str, pages: list[int]):
+        client = AsyncGraphor()
+        results = await asyncio.gather(*[
+            client.sources.get_page_screenshot(page_number=p, file_id=file_id)
+            for p in pages
+        ])
+        return [r.image_base64 for r in results]
+
+    asyncio.run(render_pages("file_abc123", [1, 2, 3]))
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    async function renderPages(fileId: string, pages: number[]) {
+      const results = await Promise.all(
+        pages.map((p) =>
+          client.sources.getPageScreenshot(p, { file_id: fileId }),
+        ),
+      );
+      return results.map((r) => r.image_base64);
+    }
+
+    await renderPages('file_abc123', [1, 2, 3]);
+    ```
+  </Tab>
+</Tabs>
+
+## Best practices
+
+1. **Lazy-load on user interaction** — call this method only when the user hovers, clicks, or expands a citation. Most citations are never inspected.
+2. **Cache by `(file_id, page_number)`** — the response is deterministic for a given key. Cache the base64 string in memory for the duration of the session to avoid re-rendering.
+3. **Pick `max_width` for the surface you're rendering** — `500` for tooltips/popovers, `900` (default) for inline cards, `1200`+ only when the user opens a full preview.
+4. **Prefer this over `include_citation_images=True` in `ask`** — embedding base64 inline bloats the JSON payload by hundreds of KB per cited page and runs all renders synchronously before the answer returns. See [When to use `include_citation_images`](/sdk/chat#when-to-use-include-citation-images).
+
+## Error handling
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import graphor
+    from graphor import Graphor
+
+    client = Graphor()
+
+    try:
+        screenshot = client.sources.get_page_screenshot(
+            page_number=42,
+            file_id="file_abc123",
+        )
+    except graphor.NotFoundError:
+        # File not found, unsupported file type, or invalid page number
+        screenshot = None
+    except graphor.AuthenticationError as e:
+        print(f"Invalid API key: {e}")
+    except graphor.APIStatusError as e:
+        print(f"API error (status {e.status_code}): {e}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    try {
+      const screenshot = await client.sources.getPageScreenshot(42, {
+        file_id: 'file_abc123',
+      });
+    } catch (err) {
+      if (err instanceof Graphor.NotFoundError) {
+        // File not found, unsupported file type, or invalid page number
+      } else if (err instanceof Graphor.AuthenticationError) {
+        console.log(`Invalid API key: ${err.message}`);
+      } else if (err instanceof Graphor.APIError) {
+        console.log(`API error (status ${err.status}): ${err.message}`);
+      } else {
+        throw err;
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card
+    title="Chat"
+    icon="comments"
+    href="/sdk/chat"
+  >
+    Ask questions and receive grounded answers with citations
+  </Card>
+  <Card
+    title="List Sources"
+    icon="folder"
+    href="/sdk/sources/list"
+  >
+    Discover the `file_id` values you can pass here
+  </Card>
+</CardGroup>

@@ -35,13 +35,15 @@ The `ask` method allows you to ask questions about your ingested documents and r
   <Tab title="Python">
     ```python
     client.sources.ask(
-        question: str,                            # Required
+        question: str,                                # Required
         conversation_id: str | None = None,
         reset: bool | None = None,
         file_ids: list[str] | None = None,
-        file_names: list[str] | None = None,      # Deprecated
+        file_names: list[str] | None = None,          # Deprecated
         output_schema: dict | None = None,
         thinking_level: str | None = None,
+        include_citation_images: bool | None = None,
+        include_citation_markup: bool | None = None,
         timeout: float | None = None
     ) -> SourceAskResponse
     ```
@@ -56,6 +58,8 @@ The `ask` method allows you to ask questions about your ingested documents and r
       file_names?: string[] | null,                              // Deprecated
       output_schema?: Record<string, unknown> | null,
       thinking_level?: 'fast' | 'balanced' | 'accurate' | null,
+      include_citation_images?: boolean | null,
+      include_citation_markup?: boolean | null,
     }): Promise<SourceAskResponse>
     ```
   </Tab>
@@ -74,6 +78,8 @@ The `ask` method allows you to ask questions about your ingested documents and r
     | `file_names` | `list[str]` | Restrict search to specific documents by file name (deprecated, use `file_ids`) | No |
     | `output_schema` | `dict` | JSON Schema to request structured output (see below) | No |
     | `thinking_level` | `str` | Controls model and thinking configuration: `"fast"`, `"balanced"`, `"accurate"` (default) | No |
+    | `include_citation_images` | `bool` | When `True`, populates `image_base64` (base64 PNG of the cited page) inside each `citations` entry. Default `False`. See [When to use `include_citation_images`](#when-to-use-include-citation-images). | No |
+    | `include_citation_markup` | `bool` | When `True`, the `answer` field keeps the raw structured citation markup `[N](file_id\|pX\|sY\|eZ\|fNAME)` instead of stripping it down to plain `[N]` markers. Default `False`. The markup is an implementation detail — prefer parsing `citations`. Has no effect when `output_schema` is set. | No |
     | `timeout` | `float` | Request timeout in seconds | No |
   </Tab>
   <Tab title="TypeScript">
@@ -86,6 +92,8 @@ The `ask` method allows you to ask questions about your ingested documents and r
     | `file_names` | `string[] \| null` | Restrict search to specific documents by file name (deprecated, use `file_ids`) | No |
     | `output_schema` | `Record<string, unknown> \| null` | JSON Schema to request structured output (see below) | No |
     | `thinking_level` | `'fast' \| 'balanced' \| 'accurate' \| null` | Controls model and thinking configuration (default: `"accurate"`) | No |
+    | `include_citation_images` | `boolean \| null` | When `true`, populates `image_base64` inside each `citations` entry. Default `false`. See [When to use `include_citation_images`](#when-to-use-include-citation-images). | No |
+    | `include_citation_markup` | `boolean \| null` | When `true`, the `answer` field keeps the raw structured citation markup `[N](file_id\|pX\|sY\|eZ\|fNAME)`. Default `false`. Has no effect when `output_schema` is set. | No |
   </Tab>
 </Tabs>
 
@@ -105,10 +113,40 @@ The method returns a `SourceAskResponse` object:
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `answer` | `str` | The answer to your question. When `output_schema` is provided, this will be a short status message. |
+| `answer` | `str` | The answer to your question, with inline `[N]` markers pointing to entries in `citations`. When `output_schema` is provided, this will be a short status message. |
 | `conversation_id` | `str \| None` | Conversation identifier for follow-up questions |
 | `structured_output` | `dict \| None` | Structured output validated against the requested `output_schema`. Present only when `output_schema` is provided. |
 | `raw_json` | `str \| None` | Raw JSON-text produced by the model before validation. Present only when `output_schema` is provided. |
+| `citations` | `list[Citation] \| None` | Structured references resolving each `[N]` marker in `answer`. May be empty/`None` when the agent did not ground its answer (e.g. small-talk follow-ups). See [Citations](#citations). |
+| `usage` | `Usage \| None` | Token usage breakdown for the request |
+| `elapsed_s` | `float \| None` | Wall-clock time in seconds |
+
+### Citations
+
+Each entry in `citations` corresponds to one `[N]` marker that appears in the `answer` text. Use `index` to map a marker to its citation.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `index` | `int` | The 1-based citation number that appears as `[N]` in `answer` |
+| `file_id` | `str` | Unique identifier of the source file |
+| `file_name` | `str` | Display name of the source file |
+| `page_number` | `int` | 1-based page number where the cited content appears |
+| `section_number` | `int \| None` | Optional section number within the page |
+| `element_id` | `str \| None` | Optional element identifier (e.g. specific paragraph or table) |
+| `text_preview` | `str \| None` | Short text excerpt around the cited content |
+| `image_base64` | `str \| None` | Base64-encoded PNG of the cited page. Populated only when the call used `include_citation_images=True`. May be `None` if the source is not visualizable (e.g. plain text). |
+
+### When to use `include_citation_images`
+
+The `include_citation_images` flag is convenient for quick prototyping or one-off requests where you want both the answer and the visual previews in a single round-trip.
+
+For real applications — especially when answers commonly cite many pages — **prefer leaving the flag as `False` (the default) and lazy-load the screenshots on demand** via the dedicated [`get_page_screenshot`](/sdk/sources/page-screenshot) method. Reasons:
+
+- **Payload size**: each base64 PNG is typically 100-400 KB. Five citations can push the JSON response above a megabyte.
+- **Latency**: rendering screenshots adds seconds to the response. Without the flag, the answer comes back as soon as the model finishes.
+- **Cache locality**: the screenshot endpoint is keyed by `(file_id, page_number)` and emits a `Cache-Control` hint. Lazy-loading lets browsers and CDNs cache the bytes; inlining base64 prevents that.
+
+Rule of thumb: enable `include_citation_images=True` only when you control both ends and know the answer will cite at most 1-2 pages. Otherwise, ship the answer with structured `citations` and fetch images on hover/click.
 
 ## Code Examples
 
@@ -312,6 +350,103 @@ Restrict the search to specific files using `file_ids` (preferred):
     });
 
     console.log(`Answer: ${response2.answer}`);
+    ```
+  </Tab>
+</Tabs>
+
+### Working with Citations
+
+Every grounded answer comes back with a structured `citations` array. The default flow is **fetch screenshots on demand** — only render images for the citations the user actually inspects.
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+
+    client = Graphor()
+
+    # Default: lazy-load screenshots when needed
+    response = client.sources.ask(
+        question="What was the revenue in 2025?",
+        file_ids=["file_abc123"]
+    )
+
+    print(response.answer)
+    # -> "Revenue grew 23% year-over-year, reaching $4.2B [1]…"
+
+    for c in (response.citations or []):
+        print(f"[{c.index}] {c.file_name} p{c.page_number}")
+        # When the user hovers/clicks on [N], fetch the page screenshot
+        screenshot = client.sources.get_page_screenshot(
+            page_number=c.page_number,
+            file_id=c.file_id,
+            max_width=900,
+        )
+        # screenshot.image_base64 is a ready-to-render PNG
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Default: lazy-load screenshots when needed
+    const response = await client.sources.ask({
+      question: 'What was the revenue in 2025?',
+      file_ids: ['file_abc123'],
+    });
+
+    console.log(response.answer);
+    // -> "Revenue grew 23% year-over-year, reaching $4.2B [1]…"
+
+    for (const c of response.citations ?? []) {
+      console.log(`[${c.index}] ${c.file_name} p${c.page_number}`);
+      // When the user hovers/clicks on [N], fetch the page screenshot
+      const screenshot = await client.sources.getPageScreenshot(
+        c.page_number!,
+        { file_id: c.file_id!, max_width: 900 },
+      );
+      // screenshot.image_base64 is a ready-to-render PNG
+    }
+    ```
+  </Tab>
+</Tabs>
+
+#### Inlining citation images in the response
+
+When you really do want the screenshots in the same round-trip — for example, a one-off batch job that won't be re-rendered — set `include_citation_images=true`. **Avoid this in interactive UIs** and any flow where the answer typically cites many pages.
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    response = client.sources.ask(
+        question="Confirm the invoice number and due date.",
+        file_ids=["invoice_abc123"],
+        include_citation_images=True,  # base64 PNG embedded per citation
+    )
+
+    for c in (response.citations or []):
+        if c.image_base64:
+            with open(f"page_{c.page_number}.png", "wb") as f:
+                import base64
+                f.write(base64.b64decode(c.image_base64))
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    const response = await client.sources.ask({
+      question: 'Confirm the invoice number and due date.',
+      file_ids: ['invoice_abc123'],
+      include_citation_images: true, // base64 PNG embedded per citation
+    });
+
+    for (const c of response.citations ?? []) {
+      if (c.image_base64) {
+        const bytes = Buffer.from(c.image_base64, 'base64');
+        await fs.promises.writeFile(`page_${c.page_number}.png`, bytes);
+      }
+    }
     ```
   </Tab>
 </Tabs>
@@ -1338,7 +1473,11 @@ When using `output_schema`, follow these guidelines:
 
 5. **Reset when changing topics** — Set `reset=True` when switching to unrelated questions
 
-6. **Handle errors gracefully** — Implement proper error handling for production applications
+6. **Lazy-load citation images** — Keep `include_citation_images=False` (the default) and call [`get_page_screenshot`](/sdk/sources/page-screenshot) on demand. Inlining base64 only makes sense for low-citation, low-frequency requests — for typical chat UIs it bloats the payload by hundreds of KB per cited page.
+
+7. **Parse `citations`, not the markup** — Use the structured `citations` array. The inline `[N](file_id|pX|...)` markup is hidden by default and is an implementation detail that may change.
+
+8. **Handle errors gracefully** — Implement proper error handling for production applications
 
 <Tabs>
   <Tab title="Python">
@@ -1376,6 +1515,13 @@ When using `output_schema`, follow these guidelines:
 ## Next Steps
 
 <CardGroup cols={2}>
+  <Card
+    title="Get Page Screenshot"
+    icon="image"
+    href="/sdk/sources/page-screenshot"
+  >
+    Lazy-load citation page previews on demand
+  </Card>
   <Card
     title="Document Chat Guide"
     icon="comments"

@@ -41,6 +41,8 @@ Authorization: Bearer YOUR_API_TOKEN
 | `file_names` | string[] | No | Restrict search to specific documents by file name (deprecated, use `file_ids`) |
 | `output_schema` | object (JSON Schema) | No | Optional JSON Schema to request a structured output. When provided, the API returns validated structured data in `structured_output` and the raw JSON-text candidate in `raw_json`. |
 | `thinking_level` | string | No | Controls model and thinking configuration. Values: `"fast"`, `"balanced"`, `"accurate"` (default). See [Thinking Level](#thinking-level) for details. |
+| `include_citation_images` | boolean | No | When `true`, populates `image_base64` (base64-encoded PNG of the cited page) inside each entry of `citations`. Default: `false`. See [Citations](#citations) for guidance. |
+| `include_citation_markup` | boolean | No | When `true`, the `answer` field keeps the raw structured citation markup `[N](file_id\|pX\|sY\|eZ\|fNAME)` emitted by the agent instead of stripping it down to plain `[N]` markers. Default: `false`. The structured markup format is an implementation detail and may change — prefer parsing the `citations` array. Has no effect when `output_schema` is set. |
 
 ### Thinking Level
 
@@ -123,6 +125,35 @@ curl -X POST "https://sources.graphorlm.com/ask-sources" \
   }'
 ```
 
+### Example with Citations and Inline Images
+
+Set `include_citation_images: true` to get base64 screenshots of every cited page in the same response. **Use sparingly** — see [Should I use `include_citation_images`?](#should-i-use-include_citation_images).
+
+```bash
+curl -X POST "https://sources.graphorlm.com/ask-sources" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "What was the revenue in 2025?",
+    "file_ids": ["a1b2c3d4-e5f6-7890-abcd-ef1234567890"],
+    "include_citation_images": true
+  }'
+```
+
+For most cases, leave the flag off and fetch screenshots on demand:
+
+```bash
+# 1. Ask the question
+curl -X POST "https://sources.graphorlm.com/ask-sources" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{ "question": "What was the revenue in 2025?" }'
+
+# 2. For each citation the user actually inspects, fetch the page image
+curl "https://sources.graphorlm.com/{file_id}/pages/{page_number}/screenshot" \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
 ### Example with Structured Output (JSON Schema)
 
 When you pass `output_schema`, the API will attempt to return a schema-conformant JSON object/array in `structured_output`.
@@ -156,17 +187,69 @@ curl -X POST "https://sources.graphorlm.com/ask-sources" \
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `answer` | string | The answer to your question. When `output_schema` is provided, this will be a short status message and the structured data will be in `structured_output` (and the raw JSON-text candidate in `raw_json`). |
+| `answer` | string | The answer to your question, with inline `[N]` markers pointing to entries in `citations`. When `output_schema` is provided, this is a short status message and the structured data is in `structured_output` (raw JSON-text in `raw_json`). |
 | `structured_output` | any | Optional structured output validated against the requested `output_schema`. Present only when `output_schema` is provided. |
 | `raw_json` | string | Optional raw JSON-text produced by the model before validation/correction. Present only when `output_schema` is provided. |
 | `conversation_id` | string | Conversation identifier for follow-up questions |
+| `citations` | object[] | Structured citations resolving each `[N]` marker in `answer`. See [Citations](#citations). May be `null`/empty when the agent did not ground its answer (e.g. small-talk follow-ups). |
+| `usage` | object | Token usage breakdown for the request |
+| `elapsed_s` | number | Wall-clock time in seconds |
+
+### Citations
+
+Each entry in `citations` corresponds to one `[N]` marker that appears in the `answer` text. Use `index` to map markers to citation entries.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `index` | integer | The 1-based citation number that appears as `[N]` in `answer` |
+| `file_id` | string | Unique identifier of the source file |
+| `file_name` | string | Display name of the source file |
+| `page_number` | integer | 1-based page number where the cited content appears |
+| `section_number` | integer | Optional section number within the page |
+| `element_id` | string | Optional element identifier (e.g. specific paragraph or table) |
+| `text_preview` | string | Short text excerpt around the cited content |
+| `image_base64` | string | Base64-encoded PNG screenshot of the cited page. Populated only when the request used `include_citation_images=true`. May be `null` if the source is not visualizable (e.g. plain text). |
+
+#### Should I use `include_citation_images`?
+
+The flag is convenient for quick prototyping or one-off requests where the client wants the answer **and** the visual previews in a single round-trip.
+
+For real applications — especially when answers commonly cite many pages — **prefer `include_citation_images=false` (the default) and lazy-load the screenshots on demand** via the dedicated endpoint described in [Get Page Screenshot](/api-reference/sources/page-screenshot). Reasons:
+
+- **Payload size**: each base64 PNG is typically 100-400 KB. Five citations can push the JSON response above a megabyte and slow down clients.
+- **Latency**: rendering screenshots is parallel but still adds seconds to the response — every page render is I/O + image processing. With the default flag off, the answer comes back as soon as the model finishes.
+- **Cache locality**: the screenshot endpoint sets `Cache-Control: public, max-age=3600` and is keyed by `(file_id, page_number)`. Lazy-loading lets browsers and CDNs cache the bytes; inlining base64 prevents that.
+
+A good rule of thumb: enable `include_citation_images=true` only when you control both ends and know the answer will cite at most 1-2 pages (e.g. a confirmation step in a workflow). Otherwise, ship the answer with structured `citations` and fetch images on hover/click.
 
 ### Example Response
 
 ```json
 {
-  "answer": "The main findings in the report indicate that revenue increased by 15% year-over-year, with the strongest growth in the digital services segment. The report also highlights three key challenges: supply chain disruptions, increased competition, and regulatory changes.",
-  "conversation_id": "conv_abc123"
+  "answer": "Revenue grew 23% year-over-year, reaching $4.2B [1]. The strongest segment was digital services, which contributed 38% of total revenue [2].",
+  "conversation_id": "conv_abc123",
+  "citations": [
+    {
+      "index": 1,
+      "file_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "file_name": "annual-report-2025.pdf",
+      "page_number": 12,
+      "section_number": 2,
+      "element_id": "p-7",
+      "text_preview": "Revenue grew by 23% year-over-year, reaching $4.2 billion…",
+      "image_base64": null
+    },
+    {
+      "index": 2,
+      "file_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "file_name": "annual-report-2025.pdf",
+      "page_number": 18,
+      "section_number": null,
+      "element_id": null,
+      "text_preview": "Digital services contributed 38% of total revenue…",
+      "image_base64": null
+    }
+  ]
 }
 ```
 
@@ -278,13 +361,22 @@ console.log(followUp.answer);
 
 1. **Use conversation memory** — Pass `conversation_id` for follow-up questions to maintain context
 2. **Be specific** — Clear, specific questions get better answers
-3. **Scope when needed** — Use `file_names` to focus on specific documents
+3. **Scope when needed** — Use `file_ids` to focus on specific documents
 4. **Use structured output when integrating** — Provide `output_schema` to get JSON you can reliably parse in code
 5. **Reset when changing topics** — Set `reset: true` when switching to unrelated questions
+6. **Lazy-load citation images** — Keep `include_citation_images=false` (the default) and fetch page screenshots on demand via [Get Page Screenshot](/api-reference/sources/page-screenshot). Inlining base64 only makes sense for low-citation, low-frequency requests — for typical chat UIs it bloats the payload by hundreds of KB per cited page.
+7. **Parse `citations`, not the markup** — Use the structured `citations` array to render references. The inline `[N](file_id|pX|...)` markup is hidden by default and is an implementation detail that may change.
 
 ## Related
 
 <CardGroup cols={2}>
+  <Card
+    title="Get Page Screenshot"
+    icon="image"
+    href="/api-reference/sources/page-screenshot"
+  >
+    Fetch base64 screenshots for citations on demand
+  </Card>
   <Card
     title="Document Chat Guide"
     icon="comments"
