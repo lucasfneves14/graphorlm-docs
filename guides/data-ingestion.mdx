@@ -130,6 +130,14 @@ When you upload a source, Graphor automatically applies the **Fast** parsing met
 
 Graphor offers five parsing methods to optimize document processing based on your needs:
 
+### Auto
+
+- **Per-page routing** — classifies each page and runs the cheapest parser that fits
+- Body pages run on Fast, table pages on Accurate, scanned/image pages on Agentic — automatically
+- Billed per page on the **effective** method used, not a flat per-document price
+- Best balance of cost and quality on **mixed PDFs** (covers + body + tables + scans in one document)
+- **PDF-only** today. Non-PDF sources fall back to Fast.
+
 ### Fast
 
 - Heuristic classification for text documents
@@ -180,6 +188,7 @@ Processing time varies based on the parsing method and document complexity:
 
 | Method | Typical Processing Time | Best For |
 |--------|------------------------|----------|
+| **Auto** | Mixed (per page) | Mixed PDFs with body + tables + scans |
 | **Fast** | Seconds | Simple text documents, quick iteration |
 | **Balanced** | 10-30 seconds per page | Complex layouts requiring OCR |
 | **Accurate** | 15-45 seconds per page | Specialized documents needing highest accuracy |
@@ -406,6 +415,7 @@ To optimize data ingestion results:
 
 ### Processing Method Selection
 
+- **Auto**: Use for mixed PDFs (body + tables + scans in one document) — routes each page to the cheapest parser that fits. PDF-only.
 - **Fast**: Use for simple text documents and fastest processing (applied by default)
 - **Balanced**: Ideal for complex layouts and mixed content types with OCR
 - **Accurate**: Best for specialized document types requiring highest layout accuracy

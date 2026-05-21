@@ -30,7 +30,7 @@ The **`reprocess`** method (same name as the API endpoint) re-runs the ingestion
     ```python
     client.sources.reprocess(
         file_id: str,                           # Required
-        method: str | None = None,             # Optional: fast, balanced, accurate, agentic
+        method: str | None = None,             # Optional: auto, fast, balanced, accurate, agentic
         timeout: float | None = None
     ) -> SourceReprocessResponse
     ```
@@ -40,7 +40,7 @@ The **`reprocess`** method (same name as the API endpoint) re-runs the ingestion
     ```typescript
     await client.sources.reprocess({
       file_id: string,                                   // Required
-      method?: 'fast' | 'balanced' | 'accurate' | 'agentic',
+      method?: 'auto' | 'fast' | 'balanced' | 'accurate' | 'agentic',
     }): Promise<SourceReprocessResponse>
     ```
     Returns **`SourceReprocessResponse`** with `.build_id`.
@@ -54,14 +54,14 @@ The **`reprocess`** method (same name as the API endpoint) re-runs the ingestion
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
     | `file_id` | `str` | Unique identifier of the source to re-process | Yes |
-    | `method` | `str \| None` | One of: `fast`, `balanced`, `accurate`, `agentic`. Default: `fast` | No |
+    | `method` | `str \| None` | One of: `auto`, `fast`, `balanced`, `accurate`, `agentic`. Default: `fast` | No |
     | `timeout` | `float` | Request timeout in seconds | No |
   </Tab>
   <Tab title="TypeScript">
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
     | `file_id` | `string` | Unique identifier of the source to re-process | Yes |
-    | `method` | `string` | One of: `fast`, `balanced`, `accurate`, `agentic` | No |
+    | `method` | `string` | One of: `auto`, `fast`, `balanced`, `accurate`, `agentic` | No |
   </Tab>
 </Tabs>
 
@@ -69,6 +69,7 @@ The **`reprocess`** method (same name as the API endpoint) re-runs the ingestion
 
 | Value | Name | Description |
 |-------|------|-------------|
+| `auto` | Auto | Per-page routing: classifies each page and runs the cheapest parser that fits. Best for mixed PDFs (body + tables + scans in one document). **PDF-only.** |
 | `fast` | Fast | Fast processing with heuristic classification. No OCR. |
 | `balanced` | Balanced | OCR-based extraction with structure classification. |
 | `accurate` | Accurate | Fine-tuned model for highest accuracy (Premium). |
@@ -78,6 +79,7 @@ The **`reprocess`** method (same name as the API endpoint) re-runs the ingestion
 
 | Method | Speed | Text parsing | Element classification | Best use cases | OCR |
 |--------|-------|--------------|-------------------------|----------------|-----|
+| **Auto** | Mixed (per page) | Best for the page | Best for the page | Mixed PDFs with body + tables + scans | When needed |
 | **Fast** | High | Good | Good | Simple text files, testing | No |
 | **Balanced** | Medium | Very good | Very good | Complex layouts, mixed content | Yes |
 | **Accurate** | Medium | Excellent | Excellent | Premium accuracy needed | Yes |

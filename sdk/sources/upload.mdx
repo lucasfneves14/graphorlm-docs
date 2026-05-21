@@ -275,14 +275,14 @@ Upload a local file and schedule ingestion in the background. Returns a **build_
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
     | `file` | `FileTypes` | The file to upload. Accepts `bytes`, `Path`, or tuple `(filename, contents, media_type)` | Yes |
-    | `method` | `str \| None` | One of: `fast`, `balanced`, `accurate`, `agentic` (see [Partition methods](#partition-methods) below) | No |
+    | `method` | `str \| None` | One of: `auto`, `fast`, `balanced`, `accurate`, `agentic` (see [Partition methods](#partition-methods) below) | No |
     | `timeout` | `float` | Request timeout in seconds (default: 60) | No |
   </Tab>
   <Tab title="TypeScript">
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
     | `file` | `Uploadable` | The file to upload. Accepts `ReadStream`, `File`, `Response`, or `toFile()` helper | Yes |
-    | `method` | `string \| null` | One of: `fast`, `balanced`, `accurate`, `agentic` (see [Partition methods](#partition-methods) below) | No |
+    | `method` | `string \| null` | One of: `auto`, `fast`, `balanced`, `accurate`, `agentic` (see [Partition methods](#partition-methods) below) | No |
   </Tab>
 </Tabs>
 
@@ -292,6 +292,7 @@ When provided, `method` controls how the document is parsed. If omitted, the sys
 
 | Value | Name | Description |
 |-------|------|-------------|
+| `"auto"` | Auto | Per-page routing: classifies each page and runs the cheapest parser that fits. Best for mixed PDFs (body + tables + scans in one document). **PDF-only.** |
 | `"fast"` | Fast | Fast processing with heuristic classification. No OCR. |
 | `"balanced"` | Balanced | OCR-based extraction with structure classification. |
 | `"accurate"` | Accurate | Fine-tuned model for highest accuracy (Premium). |
@@ -547,7 +548,7 @@ Ingest a web page by URL (async). Returns a **build_id**; use [Get build status]
     |-----------|------|-------------|----------|
     | `url` | `str` | The web page URL to ingest | Yes |
     | `crawl_urls` | `bool` | When true, follow and ingest links from the page (default: `False`) | No |
-    | `method` | `str \| None` | One of: `fast`, `balanced`, `accurate`, `agentic` | No |
+    | `method` | `str \| None` | One of: `auto`, `fast`, `balanced`, `accurate`, `agentic`. `auto` is PDF-only and only effective when the URL resolves to a PDF. | No |
     | `timeout` | `float` | Request timeout in seconds | No |
   </Tab>
   <Tab title="TypeScript">
@@ -555,7 +556,7 @@ Ingest a web page by URL (async). Returns a **build_id**; use [Get build status]
     |-----------|------|-------------|----------|
     | `url` | `string` | The web page URL to ingest | Yes |
     | `crawlUrls` | `boolean` | When true, follow and ingest links from the page | No |
-    | `method` | `string \| null` | One of: `fast`, `balanced`, `accurate`, `agentic` | No |
+    | `method` | `string \| null` | One of: `auto`, `fast`, `balanced`, `accurate`, `agentic`. `auto` is PDF-only and only effective when the URL resolves to a PDF. | No |
   </Tab>
 </Tabs>
 
