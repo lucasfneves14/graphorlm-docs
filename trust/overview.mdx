@@ -18,37 +18,37 @@ This page summarizes the posture across nine dimensions in one place. Each row l
 | Dimension | Posture | Detail |
 |-----------|---------|--------|
 | **Region** | All production resources in `us-central1` (Iowa, USA). AI model inference served from US AWS regions only (with São Paulo configured as inactive failover). Stg is out of scope — no real customer data. | [Data Residency](/trust/data-residency) |
-| **Architecture** | Single GCP project; logical multi-tenancy. Public surface limited to the marketing site, documentation, application UI, REST + WebSocket API, and per-project MCP endpoints. No SSH, no admin console, no direct database access path. | [Architecture](/trust/architecture) |
-| **Subprocessors** | Versioned list of every third party that may process customer data — GCP services, AWS Bedrock (Anthropic), OpenAI (embeddings), Cerebras (chunk enrichment + fast tier), Stripe (billing), Firebase Auth, Neo4j AuraDB, self-hosted Langfuse. Marketing-site analytics (Google Analytics) consent-gated and absent from legal routes. Subscribe to [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) for change notifications. | [Subprocessors](/trust/subprocessors) |
-| **Model use and training** | Customer Content is never used to train any AI model — Graphor's or any subprocessor's. Verbatim citations from AWS Bedrock, Anthropic, OpenAI, and Cerebras back the commitment. Tier-based provider declaration (`thinking_level=fast` → Cerebras; `balanced`/`accurate`/`max` → Anthropic on Bedrock). | [Model Use and Training](/trust/model-use-and-training) |
-| **Encryption** | At-rest: Google-managed AES-256 by default (Cloud KMS, FIPS 140-2 validated, automatic rotation). Customer-managed keys (CMEK) available on request for enterprise customers — no committed delivery date. In-transit: TLS 1.2+ on every public surface; older protocol versions rejected at the load balancer. | This page §3 + [Architecture §5](/trust/architecture#5-public-network-surface) |
+| **Architecture** | Single cloud project; logical multi-tenancy. Public surface limited to the marketing site, documentation, application UI, REST + streaming API, and per-project MCP endpoints. No SSH, no admin console, no direct database access path. | [Architecture](/trust/architecture) |
+| **Subprocessors** | Versioned list of every third party that may process customer data. Marketing-site analytics is consent-gated and absent from legal routes. Subscribe to [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) for change notifications. | [Subprocessors](/trust/subprocessors) |
+| **Model use and training** | Customer Content is never used to train any AI model — Graphor's or any subprocessor's. Verbatim citations from each AI provider back the commitment. Tier-based provider declaration via the `thinking_level` request parameter. | [Model Use and Training](/trust/model-use-and-training) |
+| **Encryption** | At-rest: cloud-provider-managed AES-256 by default (FIPS 140-2 validated, automatic rotation). Customer-managed encryption keys available on request for enterprise customers — no committed delivery date. In-transit: TLS 1.2+ on every public surface; older protocol versions rejected at the load balancer. | This page §3 + [Architecture §5](/trust/architecture#5-public-network-surface) |
 | **Tenant isolation** | Single-tenant logical isolation on shared infrastructure. Per-project API tokens with TTL + last-used auditing. Tier-aware observability (Enterprise default OFF; Free/Pro default ON with Brazilian PII mask). Per-org tokens and IP allowlist are conscious non-decisions. | [Tenant Isolation](/trust/tenant-isolation) |
-| **Retention and deletion** | Indefinite retention until the customer explicitly deletes. Every delete cascades end-to-end (Postgres + Neo4j + GCS + observability traces). Customer-callable DSR API satisfies LGPD art. 18 / GDPR art. 17. Observability traces additionally have bounded server-side TTL (90 days Free/Pro, 30 days for Enterprise-opted-in). Postgres backups + PITR enabled with a 7-day window. | [Data Retention](/trust/data-retention) |
+| **Retention and deletion** | Indefinite retention until the customer explicitly deletes. Every delete cascades end-to-end across the primary database, the managed graph store, object storage, and observability traces. Customer-callable DSR API satisfies LGPD art. 18 / GDPR art. 17. Observability traces additionally have bounded server-side TTL (90 days Free/Pro, 30 days for Enterprise-opted-in). Database backups + point-in-time recovery enabled with a 7-day window. | [Data Retention](/trust/data-retention) |
 | **Incident response** | 72-hour breach notification to the affected customer after Graphor internally confirms a customer-data incident. Channel: [privacy@graphorlm.com](mailto:privacy@graphorlm.com). Post-mortem to affected customer within 14 days. | [Incident Response](/trust/incident-response) |
-| **Compliance posture** | Synapse does not yet hold its own SOC 2 Type II or ISO 27001 certifications — honest, no aspirational dates. Inherited certifications from subprocessors (Google ISO 27001/27017/27018 + SOC 1/2/3; AWS SOC/ISO; OpenAI SOC 2 Type 2; Cerebras SOC 2 Type 2; Stripe PCI DSS + SOC 1/2/ISO 27001; Neo4j AuraDB SOC 2 + ISO 27001) cover the upstream-cert chain. | [Compliance](/trust/compliance) |
+| **Compliance posture** | Synapse does not yet hold its own SOC 2 Type II or ISO 27001 certifications — honest, no aspirational dates. Inherited certifications from subprocessors are summarized in [Compliance §3](/trust/compliance#3-inherited-certifications). | [Compliance](/trust/compliance) |
 
 ## 2. Data flow at a glance
 
-The customer interacts with Graphor through one of four authenticated surfaces (UI, REST API, WebSocket, MCP transports). Each request is authenticated and scoped to a single Project before any customer-content store is touched.
+The customer interacts with Graphor through one of four authenticated surfaces (UI, REST API, streaming, MCP transports). Each request is authenticated and scoped to a single Project before any customer-content store is touched.
 
 ```mermaid
 flowchart LR
     C[Customer<br/>API token + project context]
-    C -->|HTTPS| API[Graphor backend · Cloud Run]
-    API -->|customer-scoped queries| PG[(Postgres + Neo4j)]
-    API -->|signed URLs| GCS[(Cloud Storage)]
-    API -->|tier-based| LLM[AI providers · Bedrock · OpenAI · Cerebras]
-    API -. tier-aware .-> OBS[Self-hosted Langfuse]
+    C -->|HTTPS| API[Application backend]
+    API -->|project-scoped queries| DB[(Customer data stores)]
+    API -->|signed URLs| STORE[(Object storage)]
+    API -->|tier-based| LLM[AI providers]
+    API -. tier-aware .-> OBS[Self-hosted observability]
 ```
 
-The complete ingestion and query sequences (with sub-component and provider-level detail) are in [Architecture §2](/trust/architecture#2-ingestion-flow) and [§3](/trust/architecture#3-query-flow-chat-and-structured-extraction).
+The complete ingestion and query sequences (with sub-component detail) are in [Architecture §2](/trust/architecture#2-ingestion-flow) and [§3](/trust/architecture#3-query-flow).
 
 ## 3. Encryption posture
 
 | Layer | Default | Available |
 |-------|---------|-----------|
-| At-rest, all stores | Google-managed AES-256 via Cloud KMS (FIPS 140-2, automatic rotation) | **CMEK** (customer-managed encryption keys via Cloud KMS) on request for the enterprise tier. No committed delivery date — enterprise customers needing CMEK can scope the request via [privacy@graphorlm.com](mailto:privacy@graphorlm.com) and receive a per-customer IaC change. |
-| In-transit, every public surface | TLS 1.2+; older protocols rejected at the load balancer; Google-managed certificates | mTLS for customer-to-Graphor on request for enterprise contracts |
+| At-rest, all stores | Cloud-provider-managed AES-256 (FIPS 140-2 validated, automatic rotation) | **Customer-managed encryption keys** on request for the enterprise tier. No committed delivery date — enterprise customers needing customer-managed keys can scope the request via [privacy@graphorlm.com](mailto:privacy@graphorlm.com) and receive a per-customer IaC change. |
+| In-transit, every public surface | TLS 1.2+; older protocols rejected at the load balancer; managed certificates | mTLS for customer-to-Graphor on request for enterprise contracts |
 | Per-record / column-level encryption | Not applied | Not on the roadmap — application-layer tenant isolation is the primary control |
 
 Encryption posture for the AI-provider subprocessors is governed by each provider's own commitments — see [Model Use and Training §4](/trust/model-use-and-training#4-per-provider-evidence-verbatim) for the verbatim citations.
@@ -57,7 +57,7 @@ Encryption posture for the AI-provider subprocessors is governed by each provide
 
 | Page | Topic |
 |------|-------|
-| [Architecture](/trust/architecture) | Public sanitized architecture, component map, ingestion and query sequences, public network surface |
+| [Architecture](/trust/architecture) | Conceptual architecture, layer map, ingestion and query sequences, public network surface |
 | [Subprocessors](/trust/subprocessors) | Versioned list of every third-party that may process customer data, with related-party disclosure and inherited certifications |
 | [Model Use and Training](/trust/model-use-and-training) | Non-training commitment, tier-based provider declaration, verbatim citation table, currently-running model annex |
 | [Data Retention](/trust/data-retention) | Per-category retention table, end-to-end delete cascade, DSR API, observability TTL, backup posture |

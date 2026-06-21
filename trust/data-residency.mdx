@@ -13,27 +13,21 @@ This single-region posture is intentional. Regulated customers benefit from a re
 
 ## 1. Per-component residency
 
-The table below covers every component of the Graphor production environment that touches customer data, including derived content and operational telemetry. Anything not listed here does not process customer data.
+The table below covers every layer of the Graphor production environment that touches customer data, including derived content and operational telemetry. Anything not listed here does not process customer data.
 
-| Component | Service | Region | Notes |
-|-----------|---------|--------|-------|
-| Backend API | Cloud Run | `us-central1` | Serves the REST + WebSocket API and the MCP transports. |
-| Ingestion / processing / post-processing workers | GKE (Google Kubernetes Engine) | `us-central1` | Three Temporal worker pools handle ingestion orchestration, document partitioning, and post-processing (chunking + embedding + indexing). |
-| Data-processing service (GPU) | Cloud Run with NVIDIA L4 GPU | `us-central1` | Hosts the document-parsing pipeline (OCR, partitioning, visual embedding). |
-| Model-serving microservices | Cloud Run | `us-central1` | In-house parsing models (Chandra, PaddleOCR VL) used by the data-processing service. |
-| Primary database | Cloud SQL PostgreSQL 17 (Enterprise) | `us-central1` | Stores Account Information, Conversations, Datasets metadata, ApiTokens, and billing-record identifiers. **Automated backups + point-in-time recovery enabled** ([Data Retention §5](/trust/data-retention#5-backups-and-disaster-recovery)). |
-| Knowledge graph | Managed Neo4j (AuraDB) | North American region under AuraDB's managed footprint | Holds source nodes, document partitions, source chunks (with embedding vectors), and per-dataset vector + full-text indexes. See [Subprocessors §2](/trust/subprocessors#2-cloud-infrastructure-production). |
-| In-memory cache + WebSocket pub/sub | Memorystore for Redis | `us-central1` | Ephemeral cache, WebSocket fan-out, idempotency keys. No customer Content persisted. |
-| Message queue | Cloud Pub/Sub | `us-central1` | Carries operational events for analytics and health checks. No Customer Content. |
-| Analytics warehouse | BigQuery | `us-central1` | Holds question/flow execution analytics rows derived from Pub/Sub events (no Customer Content; metadata + counters only). |
-| Cloud functions | Cloud Run functions | `us-central1` | Process analytics events into BigQuery and run periodic health checks. No Customer Content. |
-| Object storage — Customer documents | Cloud Storage bucket `graphorlm-prd-datasets-uc1` | **`us-central1`** (single-region; migrated from US multi-region) | Raw uploaded sources (PDFs, DOCX, audio, video, etc.). |
-| Object storage — Model artifacts | Cloud Storage bucket `graphorlm-prd-models` | `us-central1` (single-region) | Model weights for the in-house parsing services. No Customer Content. |
-| Object storage — Public assets | Cloud Storage bucket `graphorlm-prd-public-assets` | `us-central1` | Public marketing assets only. No Customer Content. |
-| Object storage — Certificates | Cloud Storage bucket `graphorlm-prd-certificates` | `us-central1` | TLS certificate artifacts. No Customer Content. |
-| Container registry | Artifact Registry | `us-central1` | Production Docker images. No Customer Content. |
-| Observability store | Self-hosted Langfuse on the same GKE cluster, ClickHouse + Cloud Storage bucket `graphorlm-prd-langfuse-data` | `us-central1` | Tier-aware (Enterprise default OFF, Free/Pro default ON with PII mask). See [Data Retention §4](/trust/data-retention#4-observability-traces). |
-| Encryption keys | Cloud KMS (Google-managed by default; CMEK available on enterprise request) | `us-central1` | Encrypts data at rest across the components above. See [Trust Center Overview](/trust/overview). |
+| Layer | Region | Notes |
+|-------|--------|-------|
+| Authenticated application backend (REST, streaming, MCP transports) | `us-central1` | Stateless. No customer data persisted on the backend instances. |
+| Asynchronous ingestion workers | `us-central1` | Long-running ingestion workflow — parsing, chunking, enrichment, embedding, indexing. |
+| Document parsing service (GPU-accelerated) | `us-central1` | Hosts the in-house parsing pipeline (OCR, partitioning, visual embedding). Runs in-house parsing models — no document content sent to an external parsing provider. |
+| Primary relational database | `us-central1` | Stores Account Information, Conversations, dataset metadata, API tokens, and billing-record identifiers. **Automated backups + point-in-time recovery enabled** ([Data Retention §5](/trust/data-retention#5-backups-and-disaster-recovery)). |
+| Managed graph store | North American region under the managed graph provider's footprint | Holds source nodes, document partitions, retrievable units (with embedding vectors), and per-dataset indexes. See [Subprocessors §2](/trust/subprocessors#2-cloud-infrastructure-production). |
+| In-memory cache + streaming fan-out | `us-central1` | Ephemeral cache, streaming notifications, idempotency keys. No Customer Content persisted. |
+| Internal message bus + analytics warehouse | `us-central1` | Carries operational events and aggregates them into an analytics warehouse (counters and metadata only — no Customer Content). |
+| Object storage — Customer documents | **`us-central1`** (single-region; migrated from US multi-region) | Raw uploaded sources (PDFs, DOCX, audio, video, etc.). |
+| Object storage — internal artifacts (model weights, public marketing assets, TLS certificate artifacts) | `us-central1` (single-region) | No Customer Content. |
+| Self-hosted observability store | `us-central1` | Tier-aware (Enterprise default OFF, Free/Pro default ON with PII mask). See [Data Retention §4](/trust/data-retention#4-observability-traces). |
+| Encryption keys | `us-central1` | Cloud-provider-managed by default; customer-managed encryption keys available on enterprise request. See [Trust Center Overview](/trust/overview). |
 
 ## 2. AI model providers
 
@@ -54,41 +48,41 @@ Synapse is incorporated in Brazil and the catalyzing pilot customers are subject
 | Transfer leg | Legal basis | Source of contract |
 |--------------|-------------|---------------------|
 | Customer → Synapse | Direct controller-to-processor relationship under the Graphor [Data Processing Addendum](/legal/dpa-template). | Synapse–Customer DPA. |
-| Synapse → Google Cloud (`us-central1`) | LGPD art. 33 + 35 (international transfer to a country with adequate protection or under contractual safeguards). Inherited via the Google Cloud DPA, which incorporates Standard Contractual Clauses 2021/914. | [Google Cloud Data Processing Addendum](https://cloud.google.com/terms/data-processing-addendum). |
-| Synapse → AWS Bedrock (US regions) | LGPD art. 33 + 35; AWS DPA incorporates Standard Contractual Clauses. | [AWS Data Processing Addendum](https://aws.amazon.com/compliance/gdpr-center/). |
-| Synapse → OpenAI | LGPD art. 33 + 35; OpenAI DPA incorporates Standard Contractual Clauses; ZDR addendum signed. | OpenAI DPA + ZDR addendum. |
-| Synapse → Cerebras | LGPD art. 33 + 35; subject to Cerebras Terms of Use and Privacy Policy commitments cited in [Model Use and Training §4.4](/trust/model-use-and-training#44-cerebras-systems-inc--chunk-enrichment-and-fast-tier). | Cerebras Terms of Use + Privacy Policy. |
-| Synapse → Neo4j AuraDB | LGPD art. 33 + 35; Neo4j AuraDB DPA incorporates Standard Contractual Clauses. | [Neo4j AuraDB DPA](https://neo4j.com/legal/data-protection-addendum/). |
-| Synapse → Stripe | LGPD art. 33 + 35; Stripe DPA incorporates Standard Contractual Clauses. Stripe processes only billing identifiers, not Customer Content. | [Stripe DPA](https://stripe.com/legal/dpa). |
+| Synapse → cloud infrastructure provider (`us-central1`) | LGPD art. 33 + 35 (international transfer to a country with adequate protection or under contractual safeguards). Inherited via the cloud-provider DPA, which incorporates Standard Contractual Clauses 2021/914. | Cloud-provider Data Processing Addendum (linked from [Subprocessors §2](/trust/subprocessors#2-cloud-infrastructure-production)). |
+| Synapse → AWS Bedrock (US regions) | LGPD art. 33 + 35; AWS DPA incorporates Standard Contractual Clauses. | AWS Data Processing Addendum (linked from [Subprocessors §3](/trust/subprocessors#3-ai-model-providers)). |
+| Synapse → OpenAI | LGPD art. 33 + 35; OpenAI DPA incorporates Standard Contractual Clauses; ZDR addendum signed. | OpenAI DPA + ZDR addendum (linked from [Subprocessors §3](/trust/subprocessors#3-ai-model-providers)). |
+| Synapse → Cerebras | LGPD art. 33 + 35; subject to Cerebras Terms of Use and Privacy Policy commitments cited in [Model Use and Training §4.4](/trust/model-use-and-training#44-cerebras-systems-inc--chunk-enrichment-and-fast-tier). | Cerebras Terms of Use + Privacy Policy (linked from [Subprocessors §3](/trust/subprocessors#3-ai-model-providers)). |
+| Synapse → managed graph store provider | LGPD art. 33 + 35; provider DPA incorporates Standard Contractual Clauses. | Provider DPA (linked from [Subprocessors §2](/trust/subprocessors#2-cloud-infrastructure-production)). |
+| Synapse → payment processor | LGPD art. 33 + 35; payment-processor DPA incorporates Standard Contractual Clauses. Payment processor handles only billing identifiers, not Customer Content. | Payment-processor DPA (linked from [Subprocessors §5](/trust/subprocessors#5-payment-and-billing)). |
 
 Every transfer is governed by a contract that incorporates Standard Contractual Clauses or an equivalent. The complete set of clauses is referenced and made available to enterprise customers under NDA via [privacy@graphorlm.com](mailto:privacy@graphorlm.com).
 
 ## 4. Why us-central1
 
-A single GCP region was chosen rather than a multi-region GCS deployment or a cross-region active-active design for three reasons:
+A single cloud region was chosen rather than a multi-region storage deployment or a cross-region active-active design for three reasons:
 
-1. **Auditability.** A regulated customer can verify the residency claim by running a single command per component (`gcloud run services describe`, `gcloud sql instances describe`, `gsutil ls -L`, etc.) and confirming the region. A multi-region claim demands provider-level trust that data does not move between sub-regions.
-2. **Predictable latency for the Brazilian user base.** `us-central1` (Iowa) is one of the lower-latency US regions for traffic originating in Brazil over public-internet routes. The latency tradeoff vs `southamerica-east1` (São Paulo) is acceptable for current traffic patterns; see [§5](#5-roadmap) for the Brazil-region roadmap.
+1. **Auditability.** A regulated customer can verify the residency claim by running a single command per layer against the cloud-provider CLI and confirming the region. A multi-region claim demands provider-level trust that data does not move between sub-regions.
+2. **Predictable latency for the Brazilian user base.** `us-central1` (Iowa) is one of the lower-latency US regions for traffic originating in Brazil over public-internet routes. The latency tradeoff vs a São Paulo region is acceptable for current traffic patterns; see [§5](#5-roadmap) for the Brazil-region roadmap.
 3. **Subprocessor co-location with AWS US regions.** Bedrock-hosted inference returns to Graphor over public network paths; co-locating the Graphor backend with the Bedrock regions reduces round-trip variance.
 
-The migration of the GCS datasets and models buckets from US multi-region to `us-central1` single-region was completed as part of this trust-documentation initiative. Stg is intentionally not migrated — it does not host real customer data.
+The migration of the customer-content storage from US multi-region to `us-central1` single-region was completed as part of this trust-documentation initiative. Stg is intentionally not migrated — it does not host real customer data.
 
 ## 5. Roadmap
 
 Two alternative regions are on the roadmap. Neither has a committed delivery date — both unlock on customer request for the enterprise tier, subject to a cost/timeline review per customer.
 
-**EU region (`europe-west1` or equivalent)** — for GDPR-bound customers that require EU-only residency end-to-end. Tradeoffs:
+**EU region** — for GDPR-bound customers that require EU-only residency end-to-end. Tradeoffs:
 
-- Requires migrating GCP-native components (Cloud Run, Cloud SQL, GCS, GKE, Memorystore, BigQuery, Cloud Functions, Artifact Registry, KMS) to an EU region.
-- Requires switching the Bedrock region to `eu-central-1` or `eu-west-3`. Anthropic Claude availability in EU Bedrock regions varies by model; the Standard tier model would be pinned to whichever Opus version is GA in the chosen EU Bedrock region at the time of provisioning.
-- OpenAI does not pin a residency region today; the EU posture would rely on the OpenAI ZDR addendum (zero retention) as the compensating control, or replace OpenAI embeddings with a self-hosted embedding model on the EU GKE cluster.
-- Neo4j AuraDB supports EU regions natively.
+- Requires migrating every component in the [per-layer residency table](#1-per-component-residency) to an EU region.
+- Requires switching the Bedrock region to an EU Bedrock region. Anthropic Claude availability in EU Bedrock regions varies by model; the Standard tier model would be pinned to whichever Opus version is GA in the chosen EU Bedrock region at the time of provisioning.
+- OpenAI does not pin a residency region today; the EU posture would rely on the OpenAI ZDR addendum (zero retention) as the compensating control, or replace OpenAI embeddings with a self-hosted embedding model on the EU footprint.
+- The managed graph store supports EU regions natively.
 
-**Brazil region (`southamerica-east1`, São Paulo)** — for LGPD-bound customers that prefer Brazilian residency, or for customers in regulated sectors where Brazilian residency is explicitly required (some federal-government workloads, certain Bacen guidelines). Tradeoffs:
+**Brazil region (São Paulo)** — for LGPD-bound customers that prefer Brazilian residency, or for customers in regulated sectors where Brazilian residency is explicitly required (some federal-government workloads, certain Bacen guidelines). Tradeoffs:
 
-- GCP supports the full Graphor stack in `southamerica-east1`.
+- The cloud infrastructure provider supports the full Graphor stack in the São Paulo region.
 - AWS Bedrock is **already available in `sa-east-1`** (São Paulo) — Anthropic Claude on Bedrock is GA in this region as of 2025. The Standard tier could be served entirely from Brazilian regions if the customer requires it; this is the lightest-lift alternative residency option.
-- Neo4j AuraDB does not currently offer a São Paulo region; the Brazil deployment would either accept a North-American AuraDB managed instance (with the contractual residency commitment from Neo4j) or migrate to a self-hosted Neo4j on the São Paulo GKE cluster.
+- The managed graph store does not currently offer a São Paulo region; the Brazil deployment would either accept a North-American managed instance (with the contractual residency commitment from the provider) or migrate to a self-hosted graph store on the São Paulo footprint.
 - OpenAI embeddings remain non-region-pinned; same compensating control as the EU case.
 
 Customers interested in either region should email [privacy@graphorlm.com](mailto:privacy@graphorlm.com) with a brief description of the residency requirement (regulatory citation, contractual obligation, internal policy). A scoping conversation establishes feasibility, timeline, and any incremental cost surcharge for the alternative region's infrastructure.
@@ -97,16 +91,16 @@ Customers interested in either region should email [privacy@graphorlm.com](mailt
 
 Stating these explicitly removes ambiguity for security and privacy reviewers:
 
-- **No cross-region replication of Customer Content.** The GCS datasets bucket is single-region; the Postgres primary has no cross-region replica; backups stay within the GCP region's redundancy posture.
-- **No CDN caching of authenticated responses.** Cloud Run responses to authenticated API calls are not cached in any edge location. Public marketing assets on `graphorlm-prd-public-assets` may be edge-cached but contain no Customer Content.
-- **No content sent to a multi-region or global resource by default.** The legacy multi-region `US` datasets bucket has been migrated; no production component routes customer data through a multi-region resource.
+- **No cross-region replication of Customer Content.** The customer-content storage is single-region; the primary relational database has no cross-region replica; backups stay within the cloud-provider region's redundancy posture.
+- **No CDN caching of authenticated responses.** Authenticated application responses are not cached in any edge location. Public marketing assets may be edge-cached but contain no Customer Content.
+- **No content sent to a multi-region or global resource by default.** The legacy multi-region customer-content store has been migrated; no production component routes customer data through a multi-region resource.
 - **No silent regional failover.** AWS Bedrock has configured failover regions (US-only) that activate on quota or availability events; the failover regions are all US. The configured São Paulo failover slot is currently disabled — a future activation will be published on the [Subprocessors](/trust/subprocessors) page before it takes effect.
 
 ## 7. Change history
 
 | Version | Date | Change |
 |---------|------|--------|
-| 1.0 | 2026-06-21 | Initial publication. Documents the single-region `us-central1` posture post-migration of the datasets and models GCS buckets. |
+| 1.0 | 2026-06-21 | Initial publication. Documents the single-region `us-central1` posture post-migration of the customer-content storage. |
 
 When the production region, the subprocessor region inventory, or the alternative-region roadmap status changes, this table is updated and subscribers to [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) receive an email.
 

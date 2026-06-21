@@ -80,7 +80,7 @@ Compartilhamos dados pessoais com os suboperadores listados na nossa página de 
 
 Em resumo, os suboperadores estão organizados nos seguintes grupos:
 
-- **Infraestrutura em nuvem** — Google Cloud Platform (hospedagem em produção), Amazon Web Services (servir modelos de IA via Bedrock), Neo4j AuraDB (grafo de conhecimento gerenciado).
+- **Infraestrutura em nuvem** — Google Cloud Platform (hospedagem em produção), Amazon Web Services (servir modelos de IA via Bedrock), Neo4j AuraDB (banco de grafo gerenciado).
 - **Provedores de modelos de IA** — Anthropic (via AWS Bedrock), OpenAI (embeddings), Cerebras (enriquecimento de trechos e tier rápido).
 - **Pagamento** — Stripe (assinaturas e faturamento).
 - **Autenticação** — Firebase Authentication (login Google).
@@ -139,7 +139,7 @@ Processamos dados pessoais nos Estados Unidos. A região de produção relevante
 
 Nos termos da LGPD art. 33 e do GDPR art. 44–49, as transferências internacionais são cobertas por:
 
-- **Google Cloud Data Processing Addendum**, incorporando as Standard Contractual Clauses 2021/914 (cobre Cloud Run, Cloud SQL, GKE, GCS, Memorystore, Pub/Sub, BigQuery, Cloud Functions, Artifact Registry, Cloud KMS e Firebase Authentication).
+- **Google Cloud Data Processing Addendum**, incorporando as Standard Contractual Clauses 2021/914 (cobre a infraestrutura em nuvem de produção, incluindo identidade).
 - **AWS Data Processing Addendum**, incorporando as Standard Contractual Clauses (cobre AWS Bedrock).
 - **OpenAI Data Processing Addendum**, com inscrição no Zero Data Retention.
 - **Termos e Política de Privacidade da Cerebras**, com compromisso explícito de zero retenção.
@@ -150,7 +150,7 @@ Clientes no Espaço Econômico Europeu, Suíça ou Reino Unido: as Standard Cont
 
 ## 11. Segurança
 
-Protegemos os dados pessoais com controles padrão de indústria — incluindo criptografia em repouso (AES-256 com chaves gerenciadas pelo Google por padrão; CMEK mediante solicitação na tier enterprise), criptografia em trânsito (TLS 1.2+), isolamento lógico de tenants, tokens de API por projeto com TTL e auditoria, e SLA de notificação de incidentes de 72 horas. O inventário completo está no [Trust Center](/trust/overview).
+Protegemos os dados pessoais com controles padrão de indústria — incluindo criptografia em repouso (AES-256 com chaves gerenciadas pelo provedor de nuvem por padrão; chaves de criptografia gerenciadas pelo cliente mediante solicitação na tier enterprise), criptografia em trânsito (TLS 1.2+), isolamento lógico de tenants, tokens de API por projeto com TTL e auditoria, e SLA de notificação de incidentes de 72 horas. O inventário completo está no [Trust Center](/trust/overview).
 
 Nenhum sistema é completamente seguro. Quando sofremos um incidente de segurança confirmado que afete seus dados pessoais, notificamos você em até 72 horas após a confirmação interna, conforme nosso compromisso em [Incident Response](/trust/incident-response).
 

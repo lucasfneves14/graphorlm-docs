@@ -16,11 +16,11 @@ This page is the canonical record so SI reviewers do not have to infer what is a
 | Surface | Where it lives | What you can see | How to access |
 |---------|---------------|------------------|----------------|
 | **API token last-used metadata** (per [Tenant Isolation §2](/trust/tenant-isolation#2-api-tokens)) | Project settings → API Tokens | The `last_used_at` timestamp and `last_used_ip` for each token. Indicates which tokens are active and from which source IP they were last used. Helpful for detecting stale tokens (revoke them) and tokens used from unexpected IPs (investigate). | Project owner / project admin UI; tokens are scoped to a single Project. |
-| **Stripe billing events** | Stripe customer portal | Every billing event Stripe issues for the customer's subscription — invoice generation, payment attempt, refund, subscription change. | Customer accesses their Stripe portal directly via the link in their Graphor account; events on the Stripe side are owned by Stripe. |
+| **Payment-processor billing events** | Payment-processor customer portal | Every billing event the payment processor issues for the customer's subscription — invoice generation, payment attempt, refund, subscription change. | Customer accesses the payment-processor portal directly via the link in their Graphor account; events on the payment-processor side are owned by the payment processor. |
 | **Usage metering** (token in / token out, dataset-scoped) | Graphor billing surface | Aggregate usage per project per billing period, for the purpose of plan-limit visibility. Not a per-request audit log; it is an aggregation. | Project owner / billing admin UI. |
 | **Source and conversation deletion confirmations** | DSR API response payload + audit follow-up email | When a customer issues a `DELETE /api/v1/sources/{file_id}`, `DELETE /api/v1/conversations/{conversation_id}`, or `DELETE /api/v1/dsr/traces`, the response payload lists every backing store that was acted upon. A confirmation is also persisted for 90 days so the customer can verify the action after the fact. | Returned in the API response; persisted server-side per [Data Retention §3](/trust/data-retention#3-the-dsr-api). |
 
-The above is the **full inventory** of customer-visible activity surfaces as of the effective date in the front matter. Internal Cloud Logging captures detailed operational logs (every request, every error, every authentication event), but these are Synapse-internal and not customer-exposed. Synapse personnel access them under the Project-scoped access controls described in [Tenant Isolation §6](/trust/tenant-isolation#6-things-that-explicitly-do-happen-at-the-synapse-personnel-layer).
+The above is the **full inventory** of customer-visible activity surfaces as of the effective date in the front matter. Internal operational logs capture detailed information (every request, every error, every authentication event), but these are Synapse-internal and not customer-exposed. Synapse personnel access them under the Project-scoped access controls described in [Tenant Isolation §6](/trust/tenant-isolation#6-things-that-explicitly-do-happen-at-the-synapse-personnel-layer).
 
 ## 2. How to request a specific audit query in the interim
 
@@ -31,7 +31,7 @@ Until the customer-visible activity log API in [§3](#3-on-the-roadmap) ships, c
 - "List all `sources.ask` requests in project `<project_id>` between dates `<start>` and `<end>`."
 - "Confirm whether observability tracing was enabled for project `<project_id>` on date `<date>`."
 
-Synapse responds within **5 business days** with the answer (or with an explanation if the query cannot be answered from available logs — for example, if it predates the Cloud Logging retention window for the relevant log source). For incident-related audit queries, the standard 72-hour SLA in [Incident Response](/trust/incident-response) applies instead.
+Synapse responds within **5 business days** with the answer (or with an explanation if the query cannot be answered from available logs — for example, if it predates the operational log retention window for the relevant log source). For incident-related audit queries, the standard 72-hour SLA in [Incident Response](/trust/incident-response) applies instead.
 
 ## 3. On the roadmap
 
@@ -43,9 +43,9 @@ The following audit log capabilities are committed to the roadmap. None has a fi
 | **Customer-visible activity feed UI** | A "Activity" tab in the Project settings showing the same events as the API, with a search and filter UI. | Roadmap |
 | **Audit log export** | Bulk export of project-scoped audit events as CSV. | Roadmap |
 | **Webhook delivery for selected events** | Optional customer-configurable webhooks for high-signal events (token created/revoked, source deleted, conversation deleted, tier change). | Roadmap |
-| **BigQuery share for enterprise tier** | Optional read-only BigQuery share of the customer's project events for customers that maintain their own data warehouse. | Roadmap, enterprise-tier |
-| **Login history visible to the user** | A view of the user's own Google sign-in history (timestamp, IP, user agent). | Roadmap |
-| **Audit log retention guarantee** | A published retention window for the customer-visible audit log (current internal Cloud Logging window is 30 days; the customer-visible log will have its own retention SLA when shipped). | Roadmap, ties to the activity log API |
+| **Analytics warehouse share for enterprise tier** | Optional read-only analytics warehouse share of the customer's project events for customers that maintain their own data warehouse. | Roadmap, enterprise-tier |
+| **Login history visible to the user** | A view of the user's own identity-provider sign-in history (timestamp, IP, user agent). | Roadmap |
+| **Audit log retention guarantee** | A published retention window for the customer-visible audit log (current internal operational log window is 30 days; the customer-visible log will have its own retention SLA when shipped). | Roadmap, ties to the activity log API |
 
 Customer-relevant roadmap items are coordinated with the [Compliance](/trust/compliance) roadmap — a SOC 2 Type II audit, when committed, will accelerate the activity-log surfaces above because the auditor will need them.
 
@@ -53,8 +53,8 @@ Customer-relevant roadmap items are coordinated with the [Compliance](/trust/com
 
 For transparency:
 
-- **Database-level audit logging exposed to the customer** (Cloud SQL audit logs, Postgres `pgaudit`-style row-level access logs). The Cloud SQL audit logs exist on the Synapse side for incident investigation; exposing them per-customer would conflict with the logical-isolation model on shared infrastructure. Not on the roadmap.
-- **Cloud Logging direct access for the customer.** The Synapse-internal Cloud Logging stream contains operational data from every customer interspersed; per-customer slicing is not exposed and is not on the roadmap. Customer queries are served via [§2](#2-how-to-request-a-specific-audit-query-in-the-interim).
+- **Database-level audit logging exposed to the customer** (database audit logs, row-level access logs). Database audit logs exist on the Synapse side for incident investigation; exposing them per-customer would conflict with the logical-isolation model on shared infrastructure. Not on the roadmap.
+- **Operational log direct access for the customer.** The Synapse-internal operational log stream contains operational data from every customer interspersed; per-customer slicing is not exposed and is not on the roadmap. Customer queries are served via [§2](#2-how-to-request-a-specific-audit-query-in-the-interim).
 - **Full request/response capture of every API call.** Capturing every prompt and completion long-term would conflict with the [Data Retention](/trust/data-retention) posture (zero-retention on AI providers via OpenAI ZDR + Cerebras commitments; tier-aware observability) and would create a privacy and storage liability without a customer-side benefit that the [DSR API](/trust/data-retention#3-the-dsr-api) and the planned activity log do not already provide.
 
 ## 5. Customer-side compensating practices

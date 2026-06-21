@@ -80,7 +80,7 @@ We share personal data with the third-party subprocessors listed on our [Subproc
 
 In summary, subprocessors fall into the following groups:
 
-- **Cloud infrastructure** — Google Cloud Platform (production hosting), Amazon Web Services (AI model serving via Bedrock), Neo4j AuraDB (managed knowledge graph).
+- **Cloud infrastructure** — Google Cloud Platform (production hosting), Amazon Web Services (AI model serving via Bedrock), Neo4j AuraDB (managed graph store).
 - **AI model providers** — Anthropic (via AWS Bedrock), OpenAI (embeddings), Cerebras (chunk enrichment and fast tier).
 - **Payment** — Stripe (subscriptions and invoicing).
 - **Authentication** — Firebase Authentication (Google sign-in).
@@ -139,7 +139,7 @@ We process personal data in the United States. The relevant production region (`
 
 Under LGPD art. 33 and GDPR art. 44–49, international transfers are covered by:
 
-- **Google Cloud Data Processing Addendum**, incorporating Standard Contractual Clauses 2021/914 (covers Cloud Run, Cloud SQL, GKE, GCS, Memorystore, Pub/Sub, BigQuery, Cloud Functions, Artifact Registry, Cloud KMS, and Firebase Authentication).
+- **Google Cloud Data Processing Addendum**, incorporating Standard Contractual Clauses 2021/914 (covers the production cloud infrastructure including identity).
 - **AWS Data Processing Addendum**, incorporating Standard Contractual Clauses (covers AWS Bedrock).
 - **OpenAI Data Processing Addendum**, with Zero Data Retention enrollment.
 - **Cerebras Terms of Use and Privacy Policy**, with explicit zero-retention commitment.
@@ -150,7 +150,7 @@ Customers in the European Economic Area, Switzerland, or the United Kingdom: the
 
 ## 11. Security
 
-We protect personal data using industry-standard controls — including encryption at rest (Google-managed AES-256 by default; CMEK on enterprise request), encryption in transit (TLS 1.2+), logical tenant isolation, per-project API tokens with TTL and audit, and a 72-hour breach-notification SLA. The full inventory is on the [Trust Center](/trust/overview).
+We protect personal data using industry-standard controls — including encryption at rest (cloud-provider-managed AES-256 by default; customer-managed encryption keys on enterprise request), encryption in transit (TLS 1.2+), logical tenant isolation, per-project API tokens with TTL and audit, and a 72-hour breach-notification SLA. The full inventory is on the [Trust Center](/trust/overview).
 
 No system is completely secure. Where we suffer a confirmed security incident that affects your personal data, we notify you within 72 hours of internal confirmation per our [Incident Response](/trust/incident-response) commitment.
 

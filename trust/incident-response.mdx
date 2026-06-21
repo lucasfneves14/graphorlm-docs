@@ -28,7 +28,7 @@ For the purposes of this page, "incident" means any event that does or may compr
 | **Integrity breach** | Unauthorized modification or destruction of customer data. Cascade of a delete operation to the wrong project. Data corruption that cannot be restored from backup within the recovery objective. | 72 hours from internal confirmation. |
 | **Availability incident affecting customer data** | Total or partial loss of access to customer data for the customer (not a Graphor product outage that resolves without data loss). Backup restore that loses recently written data. | 72 hours from internal confirmation. |
 | **Subprocessor incident affecting customer data** | A confirmed breach reported by AWS, Google Cloud, OpenAI, Cerebras, Stripe, Firebase Auth, Neo4j AuraDB, or any other [subprocessor](/trust/subprocessors) that materially affects customer data on Graphor. | 72 hours from Graphor's receipt of the subprocessor's confirmed notification, plus any time required to identify which customers are affected on Graphor's side. |
-| Product outage that does NOT affect customer data | Cloud Run unavailability, ingestion queue backlog, model-provider throttling, certificate renewal issues. | Not subject to the 72-hour SLA — communicated through the standard support channel and the Graphor status surface. |
+| Product outage that does NOT affect customer data | Application backend unavailability, ingestion queue backlog, model-provider throttling, certificate renewal issues. | Not subject to the 72-hour SLA — communicated through the standard support channel and the Graphor status surface. |
 
 Severity is determined during triage. Severity 1 (Critical) and Severity 2 (High) incidents always trigger this page's notification path; Severity 3 (Medium) and Severity 4 (Low) follow the standard support channel unless triage escalates them.
 
@@ -38,7 +38,7 @@ Incidents reach Synapse through one of three paths:
 
 | Path | Description |
 |------|-------------|
-| **Internal monitoring** | Cloud Logging-based alerts on authentication anomalies, IAM policy changes, rate-limit spikes, error-rate elevations, and Secret Manager access events. The on-call engineer receives an alert and opens the triage runbook. |
+| **Internal monitoring** | Cloud-provider operational log-based alerts on authentication anomalies, IAM policy changes, rate-limit spikes, error-rate elevations, and secret-store access events. The on-call engineer receives an alert and opens the triage runbook. |
 | **Subprocessor notification** | Inbound from a subprocessor's own incident-response program. The subprocessor's notification is logged in the [privacy@graphorlm.com](mailto:privacy@graphorlm.com) inbox and triggers the triage runbook regardless of the subprocessor's own severity rating. |
 | **Customer report** | Inbound to [privacy@graphorlm.com](mailto:privacy@graphorlm.com) (or, for non-security reports, [support@graphorlm.com](mailto:support@graphorlm.com)) from a customer who has spotted something they think is wrong. Customer reports are taken seriously by default; triage decides whether the report constitutes an incident. |
 
@@ -61,10 +61,10 @@ Containment runs in parallel with notification preparation; the 72-hour clock do
 
 Typical containment actions:
 
-- Revoke compromised credentials (API tokens, service account keys, Stripe webhooks, OAuth tokens).
-- Rotate affected encryption keys via Cloud KMS.
+- Revoke compromised credentials (API tokens, service account keys, payment-processor webhooks, OAuth tokens).
+- Rotate affected encryption keys via the cloud-provider key management.
 - Disable user accounts that are the source of unauthorized access.
-- Restrict network access via VPC firewall rules and Cloud Run ingress controls.
+- Restrict network access via cloud-provider firewall rules and application ingress controls.
 - Hold a database restore until containment is verified, to avoid re-introducing compromised data.
 
 Remediation actions and timelines are documented in the post-mortem ([§6](#6-post-mortem)).

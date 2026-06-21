@@ -23,8 +23,8 @@ For enterprise customers that contractually require Graphor itself to hold a spe
 |---------------|----------------|---------------------|-----------------------------------------------------------------------|
 | **SOC 2 Type II** | Evaluating; no committed date | None today | Full set in [§3](#3-compensating-controls-inventory) |
 | **ISO/IEC 27001** | Evaluating; no committed date | None today | Full set in [§3](#3-compensating-controls-inventory) |
-| **ISO/IEC 27017** (cloud services security) | Evaluating; no committed date | None today | Inherited from Google Cloud (Cloud Run, Cloud SQL, GKE, GCS) — see [§2](#2-inherited-certifications) |
-| **ISO/IEC 27018** (PII in public cloud) | Evaluating; no committed date | None today | Inherited from Google Cloud — see [§2](#2-inherited-certifications) |
+| **ISO/IEC 27017** (cloud services security) | Evaluating; no committed date | None today | Inherited from the cloud infrastructure provider — see [§2](#2-inherited-certifications) |
+| **ISO/IEC 27018** (PII in public cloud) | Evaluating; no committed date | None today | Inherited from the cloud infrastructure provider — see [§2](#2-inherited-certifications) |
 | **ISO/IEC 27701** (privacy information management) | Not evaluated | None today | Compensated by LGPD / GDPR alignment per [§4](#4-regime-based-posture) |
 | **PCI DSS** | Not applicable to Synapse directly | n/a | Payment-card data is processed by Stripe — see [Subprocessors §5](/trust/subprocessors#5-payment-and-billing); Graphor stores only payment metadata |
 | **HIPAA** | Not in scope today | n/a | Graphor is not currently positioned as a HIPAA-Business-Associate; healthcare customers should discuss the gap before contract |
@@ -38,12 +38,12 @@ Graphor's operational stack runs on subprocessors that carry the certifications 
 
 | Subprocessor | Certifications and audit reports |
 |--------------|----------------------------------|
-| **Google Cloud Platform** (Cloud Run, Cloud SQL, GKE, GCS, KMS, Pub/Sub, BigQuery, Memorystore, Artifact Registry, Cloud Functions, Firebase Auth) | ISO/IEC 27001, 27017, 27018, 27701; SOC 1, SOC 2, SOC 3; PCI DSS Level 1; FedRAMP High; HIPAA BAA available. Reports: [Google Cloud compliance offerings](https://cloud.google.com/security/compliance/offerings). |
+| **Google Cloud Platform** (production cloud infrastructure including identity) | ISO/IEC 27001, 27017, 27018, 27701; SOC 1, SOC 2, SOC 3; PCI DSS Level 1; FedRAMP High; HIPAA BAA available. Reports: [Google Cloud compliance offerings](https://cloud.google.com/security/compliance/offerings). |
 | **Amazon Web Services** (Bedrock) | ISO/IEC 27001, 27017, 27018, 27701; SOC 1, SOC 2, SOC 3; PCI DSS Level 1; FedRAMP. Reports: [AWS compliance programs](https://aws.amazon.com/compliance/programs/). |
 | **OpenAI** (embeddings) | SOC 2 Type 2. Reports: [OpenAI Trust Portal](https://trust.openai.com/). |
 | **Cerebras** (chunk enrichment + fast tier) | SOC 2 Type 2. Reports: available on request from Cerebras under NDA. |
 | **Stripe** (payment processing) | PCI DSS Level 1; SOC 1, SOC 2 Type 2; ISO/IEC 27001. Reports: [Stripe Privacy and Compliance](https://stripe.com/privacy). |
-| **Neo4j AuraDB** (managed knowledge graph) | SOC 2 Type 2; ISO/IEC 27001. Reports: [Neo4j Trust Center](https://neo4j.com/trust-center/). |
+| **Neo4j AuraDB** (managed graph store) | SOC 2 Type 2; ISO/IEC 27001. Reports: [Neo4j Trust Center](https://neo4j.com/trust-center/). |
 
 Each subprocessor's audit reports can be requested through Synapse via [privacy@graphorlm.com](mailto:privacy@graphorlm.com); the report itself is delivered by the subprocessor under their own NDA terms.
 
@@ -55,17 +55,17 @@ In the absence of Synapse's own SOC 2 or ISO 27001 certification, the following 
 |-------------------------------------------|--------------------|------------------------|
 | Asset inventory and architecture | Public, sanitized architecture published; every component and data flow documented; production region pinned and verifiable per component. | [Architecture](/trust/architecture), [Data Residency](/trust/data-residency) |
 | Vendor and subprocessor management | Versioned subprocessor list; 30-day prior-notice commitment for material additions; inherited-certification inventory; related-party disclosure for Synapse Consultoria. | [Subprocessors](/trust/subprocessors) |
-| Encryption at rest and in transit | Google-managed AES-256 default; CMEK available on enterprise request; TLS 1.2+ enforced on every public surface. | [Trust Center Overview §3](/trust/overview#3-encryption-posture) |
-| Identity and access management | Per-project API tokens with TTL + last-used auditing; tier-aware observability access; Project-scoped Synapse-personnel access via Langfuse role assignment. | [Tenant Isolation](/trust/tenant-isolation) |
-| Logical tenant isolation | Single-tenant logical model with application-layer scoping at API, Postgres, Neo4j, Storage, and observability layers; per-layer failure-mode analysis published. | [Tenant Isolation §1](/trust/tenant-isolation#1-isolation-by-layer) |
-| Data retention and disposal | Infinite-until-DELETE posture; end-to-end delete cascade; customer-callable DSR API; bounded TTL on observability traces; 7-day Postgres backup + PITR window. | [Data Retention](/trust/data-retention) |
+| Encryption at rest and in transit | Cloud-provider-managed AES-256 default; customer-managed encryption keys available on enterprise request; TLS 1.2+ enforced on every public surface. | [Trust Center Overview §3](/trust/overview#3-encryption-posture) |
+| Identity and access management | Per-project API tokens with TTL + last-used auditing; tier-aware observability access; Project-scoped Synapse-personnel access via role assignment on the observability store. | [Tenant Isolation](/trust/tenant-isolation) |
+| Logical tenant isolation | Single-tenant logical model with application-layer scoping at the API, database, graph store, storage, and observability layers; per-layer failure-mode analysis published. | [Tenant Isolation §1](/trust/tenant-isolation#1-isolation-by-layer) |
+| Data retention and disposal | Infinite-until-DELETE posture; end-to-end delete cascade; customer-callable DSR API; bounded TTL on observability traces; 7-day database backup + point-in-time recovery window. | [Data Retention](/trust/data-retention) |
 | AI / model governance | Contractual no-training commitment from every active provider, with verbatim citations; tier-based provider declaration; explicit non-commitments around training-program opt-in, fine-tuning, and human review of customer content. | [Model Use and Training](/trust/model-use-and-training) |
 | Incident response and breach notification | 72-hour customer notification SLA after internal confirmation; 14-day post-mortem commitment; customer-side reporting path with safe-harbor. | [Incident Response](/trust/incident-response) |
 | Privacy program and DSR | Privacy policy published in English and Portuguese; DSR API satisfies LGPD art. 18 and GDPR art. 17; privacy contact channel monitored. | [Privacy Policy](/legal/privacy-policy), [Data Retention §3](/trust/data-retention#3-the-dsr-api) |
 | Contractual instruments | DPA template available for customer counter-signature; SCC-equivalent international transfer clauses; pass-through clauses referencing upstream DPAs. | [DPA Template](/legal/dpa-template) |
 | Audit logging | Customer-visible activity log surface (ingestion events, query events, API token use, deletes), with export path. | [Audit Logs](/trust/audit-logs) |
 | Vulnerability management | Container images built on official base images; dependency scanning in CI; security advisories monitored for every active subprocessor; quarterly review of patch posture. | Not yet published as a standalone Trust Center page — request via [privacy@graphorlm.com](mailto:privacy@graphorlm.com) |
-| Disaster recovery | Cloud SQL automated backups + PITR window; documented restore procedure that preserves customer DSR actions across recoveries. | [Data Retention §5](/trust/data-retention#5-backups-and-disaster-recovery), [Incident Response](/trust/incident-response) |
+| Disaster recovery | Cloud-provider automated backups + point-in-time recovery window; documented restore procedure that preserves customer DSR actions across recoveries. | [Data Retention §5](/trust/data-retention#5-backups-and-disaster-recovery), [Incident Response](/trust/incident-response) |
 | Business continuity | Single-region deployment is intentional; failure-mode planning documented; provider redundancy for AI inference (Cerebras + Bedrock both available). | [Data Residency §4](/trust/data-residency#4-why-us-central1), [Model Use and Training](/trust/model-use-and-training) |
 
 Enterprise customers performing a Graphor-specific security questionnaire can use this table as a cross-reference: for each line item on the questionnaire, identify the relevant control area and follow the link to the implementation detail.
