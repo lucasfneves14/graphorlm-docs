@@ -81,7 +81,7 @@ Synapse Processes Customer Personal Data only on the Customer's documented instr
 
 ### 3.2 Confidentiality
 
-Synapse ensures that all personnel authorized to Process Customer Personal Data are bound by appropriate confidentiality obligations (LGPD art. 47 / GDPR art. 28(3)(b)).
+Synapse ensures that all personnel authorized to Process Customer Personal Data are bound by appropriate confidentiality obligations (**LGPD arts. 46–47** — security and confidentiality duty of all treatment agents — and **GDPR art. 28(3)(b)**). The personnel-security controls (MFA, hardware-key second factors, background checks, annual training, onboarding/offboarding checklists) are documented in [Tenant Isolation §7](/trust/tenant-isolation#7-personnel-security).
 
 ### 3.3 Security
 
@@ -97,7 +97,7 @@ Synapse provides reasonable assistance to the Customer in complying with its obl
 
 ### 3.6 No use of Customer Personal Data for Synapse's purposes
 
-Synapse does not use Customer Personal Data for purposes other than providing the Service to the Customer. **Synapse does not use Customer Content (a subset of Customer Personal Data) to train AI models** — this commitment is documented in [Model Use and Training](/trust/model-use-and-training) and is binding on Synapse under this DPA. Operational telemetry that is incidentally collected to operate and improve the Service is subject to the Brazilian PII mask described in [Data Retention §4](/trust/data-retention#4-observability-traces) and is never used for AI-model training.
+Synapse does not use Customer Personal Data for purposes other than providing the Service to the Customer. **Synapse does not use Customer Content (a subset of Customer Personal Data) to train AI models — neither Synapse's own models nor any of its Subprocessors' models in the inference chain** — this commitment is documented in [Model Use and Training](/trust/model-use-and-training) and is binding on Synapse under this DPA, with pass-through commitments from each Subprocessor cited in [§4.4](#44-subprocessor-obligations-and-pass-through-clauses). Operational telemetry that is incidentally collected to operate and improve the Service is subject to the Brazilian PII mask described in [Data Retention §4](/trust/data-retention#4-observability-traces) and is never used for AI-model training.
 
 ## 4. Subprocessors
 
@@ -118,9 +118,10 @@ The Customer may object in writing within the 30-day window to a proposed Subpro
 Each Subprocessor is bound by data-protection obligations no less protective than those in this DPA, through Synapse's contractual relationship with the Subprocessor. Synapse incorporates by reference the following upstream commitments and is responsible to the Customer for the Subprocessor's performance under those commitments:
 
 - **AWS** — the [AWS Data Processing Addendum](https://aws.amazon.com/compliance/gdpr-center/) governs the AWS Bedrock processing; incorporating SCCs.
-- **OpenAI** — the OpenAI DPA governs embedding processing, **with Zero Data Retention enrolled** for the Synapse production org. Synapse commits to maintain ZDR enrollment for the duration of this DPA, and to notify the Customer within 10 business days if ZDR is disabled (by Synapse or by OpenAI policy change).
+- **OpenAI** — the OpenAI DPA governs embedding processing, **with Zero Data Retention enrolled** for the Synapse production org. Synapse commits to (i) audit ZDR enrollment status at least quarterly via the OpenAI dashboard or written confirmation from OpenAI, (ii) notify the Customer **at least 30 days before any planned ZDR disablement** by Synapse, and (iii) notify the Customer **within 24 hours of becoming aware of an unplanned OpenAI-side disablement** of ZDR for the Synapse production org. ZDR loss triggers the Customer's objection right under [§4.3](#43-customer-objection-to-a-subprocessor-change).
 - **Cerebras** — the [Cerebras Terms of Use](https://www.cerebras.ai/terms-of-service) and [Privacy Policy](https://www.cerebras.ai/privacy-policy), including the published no-training and zero-retention commitments.
-- **Google Cloud Platform** — the [Google Cloud DPA](https://cloud.google.com/terms/data-processing-addendum) for all GCP-hosted components.
+- **Google Cloud Platform** — the [Google Cloud DPA](https://cloud.google.com/terms/data-processing-addendum) for all Google-Cloud-hosted components.
+- **Google Analytics 4** (marketing site only, consent-gated) — the [Google Measurement Controller-Controller Data Protection Terms](https://business.safety.google/adscontrollerterms/), which govern Synapse and Google as **independent controllers** for the analytics relationship (distinct from the Google Cloud DPA above). Loaded only after the visitor grants analytics consent; not loaded on the legal routes.
 - **Neo4j AuraDB** — the [Neo4j DPA](https://neo4j.com/legal/data-protection-addendum/) for the managed graph store.
 - **Stripe** — the [Stripe DPA](https://stripe.com/legal/dpa) for payment processing.
 - **Firebase Authentication** — covered under the Google Cloud DPA above.
@@ -157,7 +158,7 @@ Synapse notifies the Customer of a confirmed Security Incident affecting Custome
 
 Synapse publishes a written post-mortem to the affected Customer within **14 days of internal confirmation**, per [Incident Response §6](/trust/incident-response#6-post-mortem).
 
-The 72-hour SLA aligns with LGPD art. 48 ("prazo razoável," interpreted by ANPD as 72 hours) and with GDPR art. 33 (controller-to-supervisory-authority window).
+The 72-hour SLA is a contractual commitment that meets or exceeds the regulatory floors: under **ANPD Resolução CD/ANPD nº 15/2024, art. 5**, the controller-to-ANPD notification must occur within **3 business days** of incident knowledge; under **GDPR art. 33(2)**, the processor must notify the controller "without undue delay" (no fixed window). The art. 33(1) 72-hour clock binds the controller, not the processor.
 
 ## 8. Audit
 
@@ -184,7 +185,13 @@ On reasonable request, Synapse provides the Customer with information and docume
 
 ## 11. Liability
 
-Each Party's liability under this DPA is subject to the limits set out in the Agreement. Where the Agreement contains a liability cap, that cap applies to this DPA. Where the Agreement is silent or where Applicable Data Protection Law requires a different allocation, liability follows the joint-and-several allocation in LGPD art. 42 / GDPR art. 82.
+Each Party's liability under this DPA is subject to the limits set out in the Agreement. Where the Agreement contains a liability cap, that cap applies to this DPA, **except** that the cap does **not** apply to:
+
+- Synapse's indemnification obligations for breach of the no-training commitment in [§3.6](#36-restrictions-on-synapse-use-of-customer-personal-data);
+- Synapse's liability to Data Subjects, or to the Customer in their capacity as joint-and-severally-liable controller, under **LGPD art. 42 / GDPR art. 82**, which under Applicable Data Protection Law and Brazilian doctrine and ANPD enforcement practice is treated as statutorily uncappable; or
+- Statutory damages, fines, or other liabilities that cannot be contractually limited under Applicable Data Protection Law.
+
+Where the Agreement is silent or where Applicable Data Protection Law requires a different allocation, liability follows the joint-and-several allocation in LGPD art. 42 / GDPR art. 82.
 
 ## 12. Conflict between this DPA and the Agreement
 
@@ -228,7 +235,7 @@ Synapse implements and maintains the technical and organizational measures liste
 
 | Control area | Measure | Documented at |
 |--------------|---------|---------------|
-| Encryption at rest | Cloud-provider-managed AES-256 by default; customer-managed encryption keys available on enterprise request | [Trust Center Overview §3](/trust/overview#3-encryption-posture) |
+| Encryption at rest | Cloud-provider-managed AES-256 by default; customer-managed encryption keys available on enterprise request (typical scoping engagement: 4–8 weeks; may carry an incremental fee) | [Trust Center Overview §3](/trust/overview#3-encryption-posture) |
 | Encryption in transit | TLS 1.2+ enforced on every public surface; managed certificates | [Architecture §5](/trust/architecture#5-public-network-surface) |
 | Logical tenant isolation | Single-tenant logical model with per-layer (API, database, graph store, storage, observability) project-scoped enforcement | [Tenant Isolation §1](/trust/tenant-isolation#1-isolation-by-layer) |
 | Identity and access management | Per-project API tokens with TTL + last-used auditing; tier-aware observability access; Project-scoped Synapse-personnel access | [Tenant Isolation §2](/trust/tenant-isolation#2-api-tokens), [Tenant Isolation §6](/trust/tenant-isolation#6-things-that-explicitly-do-happen-at-the-synapse-personnel-layer) |
@@ -236,9 +243,10 @@ Synapse implements and maintains the technical and organizational measures liste
 | Data retention and deletion | Infinite-until-DELETE posture; end-to-end delete cascade; customer-callable DSR API; bounded TTL on observability traces | [Data Retention](/trust/data-retention) |
 | Security Incident response | 72-hour notification SLA; 14-day post-mortem commitment | [Incident Response](/trust/incident-response) |
 | Subprocessor management | Versioned subprocessor list; 30-day prior-notice commitment | [Subprocessors](/trust/subprocessors) |
-| Vulnerability management | Dependency scanning in CI; security advisory monitoring; quarterly patch review | Available on request |
+| Vulnerability management | Dependency scanning in CI; security advisory monitoring; at least annual patch review. **No third-party penetration test has been performed yet** — compensating controls and roadmap in [Compliance §3](/trust/compliance#3-compensating-controls-inventory) and [Incident Response §9](/trust/incident-response#9-security-research-and-vulnerability-disclosure) | [Incident Response §9](/trust/incident-response#9-security-research-and-vulnerability-disclosure) |
 | Disaster recovery | Cloud-provider automated backups + point-in-time recovery (7-day window); restore procedure that preserves customer DSR actions | [Data Retention §5](/trust/data-retention#5-backups-and-disaster-recovery) |
-| Audit logging | Customer-visible activity log surface; export path | [Audit Logs](/trust/audit-logs) |
+| Audit logging | Today: API-token last-used metadata, payment-processor billing events, usage metering, DSR delete confirmations. Activity log API + UI + export are roadmap; ad-hoc queries via privacy@ within 10 business days | [Audit Logs](/trust/audit-logs) |
+| Personnel security | MFA-required identity provider for production access; hardware-key second factors for persistent privileges; least-privilege role assignment reviewed annually and on joiner/mover/leaver; documented onboarding and offboarding checklists; confidentiality undertaking on hire surviving termination; annual privacy and secure-coding training with attestation; background checks per jurisdiction | [Tenant Isolation §7](/trust/tenant-isolation#7-personnel-security) |
 
 ## Annex 3 — Subprocessors as of signature date
 
@@ -255,7 +263,11 @@ Current Subprocessor categories (the full per-provider detail is in the Subproce
 - **Observability** — Self-hosted Langfuse (tier-aware).
 - **Marketing-site analytics** — Google Analytics (consent-gated; marketing site only; not loaded on legal routes).
 
-## Annex 4 — Standard Contractual Clauses
+## Annex 4 — International transfer instruments
+
+Two transfer instruments are incorporated by reference, depending on the Customer's place of establishment. **Both Customers and Synapse should identify the applicable Customer establishment at signature and elect the corresponding instrument in the Customer signature block.**
+
+### Annex 4-A — EU / UK / Swiss Customers: EU Standard Contractual Clauses
 
 For transfers of Customer Personal Data subject to GDPR from the European Economic Area, Switzerland, or the United Kingdom to Synapse's Processing locations (the United States and any other non-adequacy jurisdiction), the Parties incorporate by reference the **Standard Contractual Clauses 2021/914**, as adopted by European Commission Implementing Decision (EU) 2021/914 of 4 June 2021, together with the following Module elections:
 
@@ -266,13 +278,28 @@ The SCCs apply with the following clarifications:
 
 - **Clause 7** (Docking Clause): not applicable.
 - **Clause 9** (Use of Sub-processors): Option 2 (General written authorization), with the 30-day notice window in [§4.2](#42-material-changes-to-the-subprocessor-list) above.
-- **Clause 11** (Redress): independent dispute resolution body to be the body in the Customer's place of habitual residence.
-- **Clause 17** (Governing Law): the law of the EU Member State in which the data exporter is established. Where this would result in less protection for the data subject, the law of the EU Member State in which the data subject has habitual residence applies.
-- **Clause 18** (Choice of Forum and Jurisdiction): the courts of the EU Member State in which the data exporter is established.
+- **Clause 11** (Redress): the optional independent-dispute-resolution-body paragraph is not adopted; Data Subjects may lodge complaints with the competent supervisory authority of their habitual residence per Clause 11(b).
+- **Clause 17** (Governing Law): the law of the EU Member State in which the data exporter is established; if that Member State's law does not permit third-party-beneficiary rights, the law of **Ireland** applies as the standard commercial fallback.
+- **Clause 18** (Choice of Forum and Jurisdiction): the courts of the EU Member State whose law governs under Clause 17.
 
-For the UK extension: the **International Data Transfer Addendum to the EU Commission Standard Contractual Clauses** (UK IDTA) is incorporated by reference and prevails in case of conflict with the SCCs for transfers covered by UK GDPR.
+For the UK extension: the **International Data Transfer Addendum to the EU Commission Standard Contractual Clauses** (UK IDTA, published by the UK ICO) is incorporated by reference and prevails in case of conflict with the SCCs for transfers covered by UK GDPR.
 
-A copy of the full SCC text and the UK IDTA can be obtained on request from [privacy@graphorlm.com](mailto:privacy@graphorlm.com).
+### Annex 4-B — Brazilian Customers: ANPD Cláusulas-Padrão Contratuais
+
+For transfers of Customer Personal Data subject to LGPD from a Customer established in the Federative Republic of Brazil to Synapse's Processing locations in the United States, the Parties incorporate by reference the **Cláusulas-Padrão Contratuais para Transferência Internacional de Dados Pessoais** approved by ANPD pursuant to **Resolução CD/ANPD nº 19/2024** (Annex). The transfer relies on the hypothesis in **LGPD art. 33, II, b** (standard contractual clauses approved by the national authority).
+
+The Cláusulas-Padrão Contratuais apply with the following Module elections (mirroring the structure of Resolução 19/2024 Annex):
+
+- **Module 2** (Controlador-a-Operador) applies between the Customer (as data exporter / controlador) and Synapse (as data importer / operador) for Customer Personal Data Processed under this DPA.
+- **Module 3** (Operador-a-Operador) applies between Synapse (as data exporter) and each Subprocessor (as data importer) for onward transfers of Customer Personal Data, through Synapse's contractual relationship with each Subprocessor.
+
+Governing law and forum for disputes arising under the Cláusulas-Padrão Contratuais follow [§15](#15-governing-law-and-jurisdiction) of this DPA (Brazilian law; arbitration in São Paulo). The Cláusulas-Padrão Contratuais do not derogate from the Data Subject's right to file complaints with ANPD or with the consumer-protection authorities of habitual residence.
+
+### Annex 4-C — Customers in jurisdictions other than EU / UK / CH / BR
+
+For Customers established in jurisdictions not addressed by Annex 4-A or Annex 4-B, the Parties will agree on the applicable international-transfer instrument at signature based on the relevant local data-protection law; absent local equivalent, the EU SCCs in Annex 4-A apply as a default safeguard with appropriate jurisdiction adaptations.
+
+A copy of the full SCC text, the UK IDTA, and the ANPD Cláusulas-Padrão Contratuais can be obtained on request from [privacy@graphorlm.com](mailto:privacy@graphorlm.com).
 
 ---
 
@@ -308,7 +335,7 @@ By signing below, the Parties agree to be bound by this DPA.
 
 | Version | Date | Change |
 |---------|------|--------|
-| 1.0 | 2026-06-21 | Initial publication of the DPA template, incorporating the Trust Center commitments, the no-training clause with pass-through references to upstream Subprocessor DPAs (per [Subprocessors §1](/trust/subprocessors)), Standard Contractual Clauses incorporated by reference, and the 72-hour Security Incident notification SLA. |
+| 1.0 | 2026-06-21 | Initial publication of the DPA template, incorporating the Trust Center commitments, the no-training clause with pass-through references to upstream Subprocessor DPAs (per [Subprocessors §2](/trust/subprocessors#2-cloud-infrastructure-production) and [§3](/trust/subprocessors#3-ai-model-providers)), Standard Contractual Clauses incorporated by reference, and the 72-hour Security Incident notification SLA. |
 
 ## Contact
 

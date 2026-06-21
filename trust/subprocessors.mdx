@@ -24,6 +24,19 @@ This page is the canonical, versioned record of every active subprocessor in the
 
 **Subscribe to changes.** Email [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) to be notified when this page changes. You will receive a single email per change with a summary and the link to the new revision. We commit to publishing material additions **at least 30 days before** they take effect in production, except when the addition is required to remediate an active security incident.
 
+## Subprocessor onboarding diligence
+
+Before a new subprocessor is added to the inventory below, Synapse performs documented diligence to demonstrate that the provider offers "sufficient guarantees" within the meaning of **LGPD art. 39 / GDPR art. 28(1)**. The diligence covers, at minimum:
+
+- **Certification review.** Current SOC 2 Type II, ISO/IEC 27001 (and, where relevant, 27017/27018/27701), PCI DSS, or FedRAMP authorization; provider's most recent audit report obtained where available.
+- **DPA review.** A Data Processing Addendum (or equivalent) is in place before any production traffic; the DPA must incorporate Standard Contractual Clauses (or ANPD-approved Cláusulas-Padrão Contratuais) for international transfer, and must commit the provider to not training models on Customer Content where the provider operates AI services.
+- **Region and residency.** The provider's region of processing must be compatible with Graphor's residency commitments in [Data Residency](/trust/data-residency); deviation requires a documented exception.
+- **Security posture review.** Encryption-at-rest and in-transit defaults, incident-response SLA, deletion mechanism, and data-segregation model are assessed against the controls inventoried in [Compliance §3](/trust/compliance#3-compensating-controls-inventory).
+- **Internal approval.** A new subprocessor is added only after the founder signs off; the decision (with rationale) is recorded in a Subprocessor Onboarding Register that is available to enterprise customers under NDA via [privacy@graphorlm.com](mailto:privacy@graphorlm.com).
+- **30-day prior notification to existing customers** (as committed above) before the new subprocessor takes production traffic, except for incident-remediation additions.
+
+Material changes to an existing subprocessor's posture (loss of certification, change of region, change of training/retention defaults) trigger the same disclosure and customer-objection path as a new addition — see [DPA §4.3](/legal/dpa-template#43-customer-objection-to-a-subprocessor-change).
+
 ---
 
 ## 1. How to read these tables
@@ -83,7 +96,7 @@ Graphor uses a single observability platform for application tracing. Whether yo
 |--------------|------|-------------------------|--------|-------------------|
 | **Langfuse GmbH** ([Langfuse](https://langfuse.com/)) — **self-hosted by Synapse** | Open-source LLM observability platform. Graphor runs Langfuse on Synapse-controlled infrastructure in the same production region (Langfuse the company does not receive customer data). | When tracing is enabled per project: user questions (capped at 4 000 characters), LLM input and output, model and routing metadata. **Tool-output content is summarized to metadata; long inputs are sent only as length + short preview.** **A global Brazilian PII mask** scrubs email, CPF, CNPJ, BR phone, and OAB patterns from any string before send. | `us-central1` (Iowa, USA) — same cloud project as the rest of the production environment. | Self-hosted on Synapse infrastructure under the [Google Cloud DPA](https://cloud.google.com/terms/data-processing-addendum). No third-party Langfuse cloud or Langfuse company personnel have access to customer traces. |
 
-**Trace retention**: 90 days for Free/Pro tiers, 30 days for any Enterprise-tier project that has explicitly opted in. Traces can also be deleted on demand via the customer-controlled DSR API. Full detail in [Data Retention](/trust/data-retention).
+**Trace retention**: Enterprise default OFF — no traces produced. If the project owner explicitly opts in, Enterprise traces have a 30-day TTL. Free/Pro default ON with a 90-day TTL. Traces can also be deleted on demand via the customer-controlled DSR API. Full detail in [Data Retention](/trust/data-retention).
 
 ---
 
@@ -136,7 +149,7 @@ Synapse does not yet hold its own SOC 2 Type II or ISO 27001 certifications (see
 
 | Subprocessor | Inherited certifications and audit reports |
 |--------------|--------------------------------------------|
-| Google Cloud (incl. Firebase Auth) | ISO/IEC 27001, 27017, 27018; SOC 1, SOC 2, SOC 3; PCI DSS Level 1; FedRAMP. |
+| Google Cloud (incl. Firebase Auth) | ISO/IEC 27001, 27017, 27018, 27701; SOC 1, SOC 2 Type 2, SOC 3; PCI DSS Level 1; FedRAMP High; HIPAA BAA available. |
 | Amazon Web Services (Bedrock) | ISO/IEC 27001, 27017, 27018, 27701; SOC 1, SOC 2, SOC 3; PCI DSS Level 1; FedRAMP. |
 | OpenAI | SOC 2 Type 2. |
 | Cerebras | SOC 2 Type 2. |

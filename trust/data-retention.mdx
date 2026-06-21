@@ -27,17 +27,17 @@ The rest of this page documents what gets retained, where, for how long, and how
 | **Derived Content** — partitions, retrievable units, embeddings, document and partition annotations | Graphor's managed graph store. | Tied to the parent Source (same retention semantics, same delete cascade). | Deleted as part of the Source cascade. |
 | **Structured extractions** (results from `/data-extraction`) | Graphor's primary relational database. | Tied to the parent Source. | Deleted as part of the Source cascade. |
 | **Conversation / `conversation_id`** — chat sessions, messages, summaries, observation records | Graphor's primary relational database (multiple associated tables). | Indefinite until explicit deletion. | `DELETE /api/v1/conversations/{conversation_id}` (or UI). Cascade covers all associated tables and, for any conversation that produced observability traces, the corresponding traces via the [DSR API](#3-the-dsr-api). |
-| **Account Information** — user profile, email, organization name, project membership | Graphor's primary relational database. | Until account deletion. | Account deletion request via [privacy@graphorlm.com](mailto:privacy@graphorlm.com) (an in-app self-service flow is on the roadmap). |
+| **Account Information** — user profile, email, organization name, project membership | Graphor's primary relational database. | Until account deletion. | Account deletion request via [privacy@graphorlm.com](mailto:privacy@graphorlm.com); Synapse processes account-level deletion within **15 calendar days** of request to satisfy LGPD art. 19. An in-app self-service flow is on the roadmap. |
 | **API tokens** — hashed token records, scope, expiry, last-used timestamp/IP | Graphor's primary relational database. | Indefinite until the token is revoked or (if `expires_at` is set) expires. | Revoke via UI; expired tokens are rejected at verification time and may be hard-deleted asynchronously. |
-| **Observability traces** — when tracing is enabled per project (see [§4](#4-observability-traces)) | Self-hosted observability store in the Graphor production region (`us-central1`). | **90 days** for Free/Pro-tier projects; **30 days** for Enterprise-tier projects that have explicitly enabled tracing (Enterprise default is OFF — no traces produced at all). | Automatic purge at TTL; customer can issue ad-hoc trace deletion via the [DSR API](#3-the-dsr-api) by `conversation_id` or `user_id`. |
+| **Observability traces** — when tracing is enabled per project (see [§4](#4-observability-traces)) | Self-hosted observability store in the Graphor production region (`us-central1`). | **Enterprise default OFF — no traces produced at all.** If the project owner explicitly opts in, Enterprise traces have a **30-day** TTL. Free/Pro tiers default ON with a **90-day** TTL. | Automatic purge at TTL; customer can issue ad-hoc trace deletion via the [DSR API](#3-the-dsr-api) by `conversation_id` or `user_id`. |
 | **Billing records** — payment-processor customer/subscription identifiers, invoice metadata, payment-attempt logs | Graphor's primary relational database + the payment processor. | Retained as long as legally required to comply with Brazilian tax and accounting obligations (typically 5 years from invoice issuance). | Customer Content is **never** stored alongside billing records; deletion of an account does not delete billing history because doing so would violate legal record-keeping obligations. |
-| **Operational telemetry** — request paths, response codes, latency histograms, error stack traces | Cloud-provider operational log store. | 30 days (provider default; identifiers in logs are scrubbed via the same Brazilian PII mask used on observability traces). | Telemetry that contains identifiers can be purged on DSR request via [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
+| **Operational telemetry** — request paths, response codes, latency histograms, error stack traces | Cloud-provider operational log store. Synapse-side application logs and error stack traces (which may incidentally include identifiers) inherit the same store. | 30 days for the live log store; identifiers in logs are scrubbed via the same Brazilian PII mask used on observability traces. Logs exported to long-term storage as **confirmed incident-investigation evidence** are retained until investigation close + 1 year, then deleted. | Telemetry that contains identifiers can be purged on DSR request via [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
 | **Database backups** | Managed by the cloud-provider's automated backup service. | Per the configured backup retention window (7 days of automated daily backups + point-in-time recovery within that window). Backups are encrypted with cloud-provider-managed keys and are not customer-readable. | Backups follow the configured retention window and roll off automatically; an explicit out-of-cycle delete of backup contents is not exposed because backups exist to support disaster recovery, not as a primary customer-data surface. |
 | **Object storage versions** | Project-scoped object storage. | Object versioning is **disabled** on the customer-content bucket — a delete is a hard delete with no recoverable noncurrent version. | n/a (no recoverable previous version exists for deleted source documents). |
 
 ## 2. The delete cascade
 
-When the customer (or the DSR API) issues a delete on a Source, an end-to-end cascade runs across every store that holds data derived from the Source. The delete is **not acknowledged** until every step completes successfully — partial failures roll back where possible and surface to the caller.
+When the customer (or the DSR API) issues a delete on a Source, an end-to-end cascade runs across every store that holds data derived from the Source. The DSR endpoint returns success after the cascade reaches all stores; if a backing store is temporarily unavailable the cascade retries with backoff, and a reconciliation job runs to drive the cascade to convergence. Any persistent failure surfaces in the next DSR query against the same resource.
 
 The cascade covers, at minimum:
 
@@ -63,7 +63,9 @@ The Data Subject Request endpoints satisfy LGPD art. 18 (eliminação) and GDPR 
 
 Each endpoint returns a JSON acknowledgement listing every store class that was acted upon. Acknowledgements are persisted for 90 days so the customer can verify the action after the fact.
 
-Account-level deletion (delete the user account and every project owned by it) is handled out-of-band via [privacy@graphorlm.com](mailto:privacy@graphorlm.com) until the in-app self-service flow ships.
+Account-level deletion (delete the user account and every project owned by it) is handled out-of-band via [privacy@graphorlm.com](mailto:privacy@graphorlm.com) until the in-app self-service flow ships. Synapse processes account-level deletion within **15 calendar days** of request to satisfy LGPD art. 19.
+
+**Deletes and in-flight inference.** If a customer issues a delete on a Source or conversation while a `sources.ask` or `/data-extraction` request is mid-flight against that content, the in-flight request is allowed to complete and its response is discarded; no further request after the delete-acknowledgement uses the deleted content. The zero-retention commitments at AWS Bedrock, OpenAI (ZDR), and Cerebras ensure no provider-side persistence of the in-flight payload.
 
 ## 4. Observability traces
 
@@ -96,11 +98,13 @@ Database backups exist solely to enable disaster recovery and are not a primary 
 | Backup engine | Cloud-provider automated backup service |
 | Backup retention | 7 days of daily backups, automatically rolled off |
 | Point-in-time recovery | Available within the 7-day backup window |
-| Encryption | Cloud-provider-managed keys; backups inherit the encryption posture of the primary instance |
+| Encryption | Cloud-provider-managed keys; backups inherit the encryption posture of the primary database |
 | Customer-readable | No |
 | Out-of-cycle deletion | Not exposed — backups are a disaster-recovery surface, not a retention surface |
 
-**A customer delete is not undone by a backup restore.** A restore from backup that pre-dates a customer delete would re-introduce the deleted data; in that scenario Synapse re-runs the original delete operation against the restored database before opening the restored instance to traffic, so the customer's deletion intent is preserved across recoveries. This is documented in the [Incident Response](/trust/incident-response) runbook.
+**A customer delete is not undone by a backup restore.** A restore from backup that pre-dates a customer delete would re-introduce the deleted data; in that scenario Synapse re-runs the original delete cascade across every restored store before opening the restored environment to traffic, so the customer's deletion intent is preserved across recoveries. This is documented in the [Incident Response](/trust/incident-response) runbook.
+
+**Restore-window tenant isolation.** During a restore, the restored instance is provisioned into an isolated network with **no public ingress**. Access during the restore window is limited to the on-call engineer; every action is audit-logged per the database audit-logging control in [Tenant Isolation §6](/trust/tenant-isolation#6-things-that-explicitly-do-happen-at-the-synapse-personnel-layer). The restored instance is **not opened to customer traffic until reconciliation (including any deletion replay) completes**, so per-tenant isolation is preserved end-to-end across the restore.
 
 ## 6. Billing data
 
@@ -109,6 +113,7 @@ Billing records (payment-processor customer and subscription identifiers, invoic
 - **Billing records do not contain Customer Content.** No document, no conversation, no prompt, no completion is stored alongside billing records.
 - **Deleting an account does not delete billing history**, because doing so would violate legal record-keeping obligations. Billing history is purged after the statutory retention window elapses.
 - **The payment processor is the controller-of-record for full payment-card data.** Graphor stores only payment metadata (last 4 digits, card brand, billing address). For the payment processor's own retention practices, see the corresponding entry in [Subprocessors §5](/trust/subprocessors#5-payment-and-billing).
+- **Payment-processor-side retention persists beyond Synapse-side deletion.** When a Synapse account is deleted, the payment-processor customer and subscription records remain in the payment processor's systems under that processor's own retention policy (a function of PCI DSS and the processor's tax-record obligations in its own jurisdictions). Synapse can request payment-processor-side erasure on the customer's behalf, but the payment processor controls the timeline and scope of that erasure as the controller-of-record for those records.
 
 ## 7. Customer responsibilities
 

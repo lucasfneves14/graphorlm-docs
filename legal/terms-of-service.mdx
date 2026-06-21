@@ -73,9 +73,9 @@ The Service allows you to submit, upload, store, ingest, or transmit content ("U
 
 Synapse does not claim ownership of your User Content. All User Content you submit through the Service remains yours.
 
-By providing User Content through the Service, you grant Synapse a worldwide, royalty-free, non-exclusive license, with the right to grant sublicenses to its subprocessors, to use, copy, store, modify, transmit, and process such User Content **strictly to the extent reasonably necessary to provide, maintain, and improve the Service for you**. This license terminates when you delete the User Content via the [DSR API](/trust/data-retention#3-the-dsr-api) or otherwise direct Synapse to delete it.
+By providing User Content through the Service, you grant Synapse a worldwide, royalty-free, non-exclusive license, with the right to grant sublicenses to its subprocessors, to use, copy, store, modify, transmit, and process such User Content **strictly to the extent reasonably necessary to provide, maintain, and improve the Service for you**. **For the avoidance of doubt, "improve the Service" does not include any use of User Content to train, fine-tune, evaluate, grade, or otherwise input to any machine-learning or AI model — see [Model Use and Training](/trust/model-use-and-training) and [DPA §3.6](/legal/dpa-template).** This license terminates when you delete the User Content via the [DSR API](/trust/data-retention#3-the-dsr-api) or otherwise direct Synapse to delete it.
 
-**Synapse does not use User Content to train AI models.** This is a contractual commitment described in [Model Use and Training](/trust/model-use-and-training) and incorporated into the [Data Processing Addendum](/legal/dpa-template). User Content is encrypted in transit and at rest per [Trust Center §3](/trust/overview#3-encryption-posture).
+**Synapse does not use User Content to train AI models — neither Synapse's own models nor any of its subprocessors' models in the inference chain.** This is a contractual commitment described in [Model Use and Training](/trust/model-use-and-training) and incorporated into the [Data Processing Addendum](/legal/dpa-template). User Content is encrypted in transit and at rest per [Trust Center §3](/trust/overview#3-encryption-posture).
 
 ### 3.3 Representations and warranties about User Content
 
@@ -187,7 +187,7 @@ By entering into these Terms, you and Synapse each waive the right to a trial by
 
 ## 13. General Provisions
 
-- **Entire agreement.** These Terms, together with the [Privacy Policy](/legal/privacy-policy) and, where applicable, the [Data Processing Addendum](/legal/dpa-template), constitute the entire agreement between you and Synapse regarding the Service and supersede any prior or contemporaneous understandings.
+- **Entire agreement.** These Terms, together with the [Privacy Policy](/legal/privacy-policy) and, where applicable, the [Data Processing Addendum](/legal/dpa-template), constitute the entire agreement between you and Synapse regarding the Service and supersede any prior or contemporaneous understandings. **In the event of conflict between these Terms and any Data Processing Addendum executed between Synapse and a Customer, the DPA prevails on data-protection matters per its own terms** (see [DPA §12](/legal/dpa-template#12-conflict-between-this-dpa-and-the-agreement)).
 - **Severability.** If any provision of these Terms is held unenforceable, it will be modified to the minimum extent necessary to make it enforceable; the remaining provisions remain in full force.
 - **Waiver.** No waiver of any provision is binding unless in writing and signed by the party making the waiver. Failure to enforce any provision is not a waiver of the right to enforce it later.
 - **Assignment.** You may not transfer or assign these Terms or any rights granted hereunder without Synapse's prior written consent. Synapse may assign these Terms in connection with a merger, acquisition, or sale of all or substantially all of its assets, on notice to you.

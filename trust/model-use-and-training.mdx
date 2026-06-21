@@ -23,7 +23,7 @@ Two distinct moments send Customer Content (or content derived from it) to an ex
 
 ### 1.1 Indexing time (once per build)
 
-When you ingest a new source (or rebuild an existing one), Graphor produces a knowledge representation for retrieval. This involves two AI providers:
+When you ingest a new source (or rebuild an existing one), Graphor produces an indexed retrieval representation. This involves two AI providers:
 
 | Step | Provider | What is sent | What comes back |
 |------|----------|--------------|-----------------|
@@ -99,7 +99,7 @@ Bedrock is the production lane for every Standard-tier and fast-tier-fallback in
 
 > "No, AWS and the third-party model providers will not use any inputs to or outputs from Amazon Bedrock to train Amazon Nova, Amazon Titan, or any third-party models."
 
-> "Users' inputs and model outputs are not shared with any model providers."
+> "No. Users' inputs and model outputs are not shared with any model providers."
 
 > "Any customer content processed by Amazon Bedrock is encrypted and stored at rest in the AWS Region where you are using Amazon Bedrock."
 
@@ -113,7 +113,7 @@ OpenAI provides the embedding model used during indexing and (when explicitly en
 
 Source: [OpenAI API — Your Data](https://developers.openai.com/api/docs/guides/your-data), Data controls section.
 
-Additionally, **Graphor is enrolled in OpenAI Zero Data Retention (ZDR)**, which eliminates the default 30-day abuse-monitoring log for API requests. ZDR is enrolled and maintained by Synapse; if ZDR is ever disabled (whether by Synapse choice or by OpenAI policy change), this page is updated and subscribers to [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) are notified.
+Additionally, **Graphor is enrolled in OpenAI Zero Data Retention (ZDR)**, which eliminates the default 30-day abuse-monitoring log for API requests. ZDR enrollment status is audited by Synapse at least quarterly. If ZDR is ever disabled (whether by Synapse choice or by OpenAI policy change), customers under a [Data Processing Addendum](/legal/dpa-template) are notified at least 30 days before any planned disablement, or within 24 hours of becoming aware of an unplanned OpenAI-side disablement, per [DPA §4.4](/legal/dpa-template#44-subprocessor-obligations-and-pass-through-clauses); this page is updated and subscribers to [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) are also notified.
 
 ### 4.4 Cerebras Systems, Inc. — chunk enrichment and fast tier
 

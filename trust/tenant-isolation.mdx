@@ -32,11 +32,11 @@ The same logical partition is enforced at every layer below the application. The
 | Layer | Isolation mechanism | Failure mode if violated |
 |-------|---------------------|---------------------------|
 | API surface | Every authenticated request resolves to a `(User, Organization, Project)` tuple in middleware before reaching any business handler. Endpoints that operate on per-project resources require a Project context derived from the API token or session. | Cross-tenant data exposure via API. Mitigated by integration tests and code-review gating that flags handlers without explicit Project scoping. |
-| Primary database | Every customer-owned table carries the Project identifier as a column. Every ORM query is parameterized by the Project context from the request. There is no service account with read access to multiple customers' rows that bypasses application-layer scoping. | Cross-tenant data exposure via SQL injection or a missing project-scope predicate. Mitigated by ORM parameterization, ORM-level constraints, and the parameterized-only query rule enforced by code review. |
+| Primary database | Every customer-owned table carries the Project identifier as a column. Every query is parameterized by the Project context from the request via the application's data-access layer. There is no service account with read access to multiple customers' rows that bypasses application-layer scoping. | Cross-tenant data exposure via SQL injection or a missing project-scope predicate. Mitigated by parameterized-query enforcement at the data-access layer, table-level constraints, and the parameterized-only query rule enforced by code review. |
 | Managed graph store | Source-level nodes carry the Project identifier. Per-Project labelling on retrievable units backs the per-Project indexes, so a retrieval query cannot accidentally surface units from another Project. | Cross-tenant retrieval. Mitigated by the per-Project index design — a missing Project filter does not silently fall through to a global index. |
 | Object storage | Every object key is prefixed with the Project identifier. Signed URLs issued to the customer carry a short expiration (15 minutes) and are scoped to a single object. The runtime service account has bucket-level access; per-customer scoping is enforced by the application before signing a URL. | Cross-tenant object access via a leaked signed URL. Mitigated by short URL TTLs and the application-side path-construction rule. |
 | Encryption | All data at rest is encrypted with cloud-provider-managed keys by default; enterprise customers may request customer-managed encryption keys on a per-Project basis. See [Trust Center Overview](/trust/overview). | A single bad key would not allow cross-tenant access at the application layer, but customer-managed keys would let an enterprise customer rotate or revoke their key independently. |
-| Observability traces | When tracing is enabled for a Project (see [§4](#4-observability-traces)), each trace carries the Project identifier as a tag. Synapse personnel access traces under the same Project-scoped filtering as the customer's own debugging UI. | Cross-tenant trace exposure during Synapse personnel debugging. Mitigated by Project-scoped role assignment on the observability store and by audit logging on the observability instance. |
+| Observability traces | When tracing is enabled for a Project (see [§4](#4-observability-traces)), each trace carries the Project identifier as a tag. Synapse personnel access traces under the same Project-scoped filtering as the customer's own debugging UI. | Cross-tenant trace exposure during Synapse personnel debugging. Mitigated by Project-scoped role assignment on the observability store and by code review of personnel queries during incident response. Per-personnel access-audit logging on the observability instance is on the roadmap. |
 | Billing | Payment-processor customer identifiers are stored on the Organization row, not on user or project rows. Billing data (payment-processor webhooks, invoice metadata) never reaches a per-Project surface. | Cross-tenant billing-data exposure. Mitigated by the deliberate separation of billing from product data — billing pages query Organization-scoped database tables that are distinct from the customer-content tables. |
 
 ## 2. API tokens
@@ -91,7 +91,7 @@ There are a few things the customer can do to harden their own use of Graphor be
 
 1. **One token per Project per integration.** Do not share a single token across multiple Projects or environments. A leaked token then compromises only the Project and integration it was created for.
 2. **Set `expires_at` on every new token.** A token that will never expire is a token that will eventually be in a stale backup, a forgotten config file, or a departed-employee's machine.
-3. **Review the token list quarterly.** Sort by `last_used_at` and revoke any token that has not been used in the last quarter unless you know why it must remain.
+3. **Review the token list at least annually** (quarterly is recommended for regulated workloads). Sort by `last_used_at` and revoke any token that has not been used in the review window unless you know why it must remain.
 4. **Promote Projects to an Organization early.** Personal-tier Projects (no `organization_id`) cannot apply Organization-level access controls. Once a Project moves to an Organization, member management, billing, and (eventually) Organization-level controls become available.
 5. **For Enterprise-tier projects, leave observability tracing off** unless you have a specific debugging engagement open. Re-enable it temporarily, then turn it off; the tracing toggle is reversible and does not lose product functionality.
 6. **For Enterprise-tier deployments, ask about customer-managed encryption keys and physical separation early.** Both are available but require lead time to provision.
@@ -106,14 +106,27 @@ For transparency, the access Synapse personnel have to customer-owned data:
 
 Synapse personnel do **not** routinely access customer Content. There is no "browse customer documents" UI, no scheduled report that aggregates customer data, and no analytics pipeline that ships content (as opposed to operational metadata) off the production environment. See [Model Use and Training §6](/trust/model-use-and-training#6-what-graphor-explicitly-does-not-do) for the explicit non-commitments around use of customer content.
 
-## 7. What Graphor explicitly does NOT offer today
+## 7. Personnel security
+
+Logical isolation is only as strong as the controls on the personnel who can bypass it. The controls below apply to every Synapse person with access to the production environment and satisfy LGPD arts. 46–47 (security and confidentiality duty of treatment agents) and GDPR art. 28(3)(b) (processor's obligation to ensure personnel commitment to confidentiality):
+
+- **Confidentiality on hire.** Every employee and contractor with production access signs a written confidentiality undertaking as a condition of engagement; the undertaking survives termination and explicitly covers Customer Content.
+- **Multi-factor authentication.** Production access requires MFA via the identity provider; hardware-key second factors are issued for personnel with persistent production privileges.
+- **Least-privilege role assignment.** Production roles follow least privilege; role grants are reviewed at least annually and on every personnel change (joiner / mover / leaver).
+- **Onboarding and offboarding.** Onboarding includes a documented checklist (account provisioning, MFA enrollment, role assignment, training attestation). Offboarding revokes credentials within one business day of departure; the founder maintains a documented backup-access procedure for continuity in the event of founder incapacitation.
+- **Security and privacy training.** All personnel complete a privacy and secure-coding training on hire and at least annually thereafter, with an attestation recorded. The training covers LGPD, Customer Content handling, the no-training commitment, and the incident-response runbook.
+- **Background checks.** Background checks are performed on personnel with persistent production access at the level customary for the jurisdiction of engagement, subject to applicable privacy law.
+
+The full Personnel Security policy (with audit-ready attestation records) is available to enterprise customers under NDA on request via [privacy@graphorlm.com](mailto:privacy@graphorlm.com).
+
+## 8. What Graphor explicitly does NOT offer today
 
 - **No physically separated infrastructure by default.** Per [§3](#3-explicit-non-decisions), available on request under an enterprise SOW.
 - **No row-level encryption with customer keys.** Customer keys protect a Project's data at the storage layer via customer-managed encryption keys on enterprise request, but individual rows are not encrypted with a per-record key.
 - **No customer-owned database.** The primary database is shared across customers; logical isolation is enforced at the application layer.
 - **No fine-grained scoped tokens today.** See [§2](#2-api-tokens) for the roadmap.
 
-## 8. Change history
+## 9. Change history
 
 | Version | Date | Change |
 |---------|------|--------|

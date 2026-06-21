@@ -13,7 +13,7 @@ A more **detailed Architecture Whitepaper**, with per-component implementation s
 
 ## 1. Conceptual overview
 
-The Graphor production environment is organized in five layers. Customer interactions are authenticated at the edge, authorized at the application layer, and scoped to a single Project before any customer-content store is touched.
+The Graphor production environment is organized into five conceptual subsystem groups (Client, Public edge, Graphor production, Data layer, External providers). Customer interactions are authenticated at the edge, authorized at the application layer, and scoped to a single Project before any customer-content store is touched. The per-component breakdown across these groups is in [§4](#4-per-layer-summary).
 
 ```mermaid
 flowchart TB
@@ -34,7 +34,8 @@ flowchart TB
 
     subgraph Data["Data layer"]
         STORE["Object storage<br/>(customer documents)"]
-        DB["Relational and graph stores<br/>(metadata · vectors · history)"]
+        DB["Primary relational database<br/>(accounts · conversations · tokens)"]
+        GRAPH["Managed graph store<br/>(retrievable units · vectors)"]
         CACHE["Ephemeral cache"]
     end
 
@@ -48,6 +49,7 @@ flowchart TB
     APP -->|HTTPS · API token or session| API
     API --> WORKERS
     API --> DB
+    API --> GRAPH
     API --> CACHE
     API --> STORE
     API --> AI
@@ -56,6 +58,7 @@ flowchart TB
     WORKERS --> AI
     WORKERS --> STORE
     WORKERS --> DB
+    WORKERS --> GRAPH
 ```
 
 The full per-component region inventory — including the region of every external dependency — is in [Data Residency §1](/trust/data-residency#1-per-component-residency). The complete subprocessor list is in [Subprocessors](/trust/subprocessors).
@@ -141,7 +144,7 @@ Stating these explicitly avoids confusion for security reviewers comparing Graph
 
 - **No customer-deployed agents.** Graphor does not require a customer-side daemon, gateway, or VPC peering. Integration is via the public surface listed above.
 - **No SSO into a customer-owned identity provider** today. Sign-in is via the managed identity provider in [§5](#5-public-network-surface). SAML or OIDC-to-customer-IdP is on the enterprise-tier roadmap.
-- **No customer-deployed cloud (BYOC).** See [Tenant Isolation §3](/trust/tenant-isolation#3-explicit-non-decisions) for the explicit non-decision.
+- **No Bring-Your-Own-Cloud (BYOC) deployment.** See [Tenant Isolation §3](/trust/tenant-isolation#3-explicit-non-decisions) for the explicit non-decision.
 - **No on-premise deployment.** Graphor is a cloud-only product. On-premise is not on the roadmap.
 
 ## 7. Architecture Whitepaper (NDA)

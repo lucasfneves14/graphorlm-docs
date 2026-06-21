@@ -9,11 +9,11 @@ last_updated: "2026-06-21"
 
 When Graphor confirms a security or privacy incident that affects customer data, the affected customer is notified within **72 hours of internal confirmation**.
 
-That window mirrors LGPD art. 48 ("prazo razoável," interpreted by ANPD as 72 hours) and aligns with GDPR art. 33. It is a contractual commitment incorporated into the [Data Processing Addendum](/legal/dpa-template) and is the same SLA whether the customer is on Free, Pro, or Enterprise tier.
+That window is a contractual commitment that meets or exceeds the regulatory floors: under **ANPD Resolução CD/ANPD nº 15/2024, art. 5**, the controller-to-ANPD notification must occur within **3 business days** of incident knowledge; under **GDPR art. 33(2)**, the processor must notify the controller "without undue delay" after becoming aware of a personal data breach (no fixed window). The 72-hour clock SLA is committed under the [Data Processing Addendum](/legal/dpa-template) and is the same SLA whether the customer is on Free, Pro, or Enterprise tier.
 
 The four moving parts:
 
-1. **Channel** — every notification (inbound from the customer or outbound from Synapse) flows through [privacy@graphorlm.com](mailto:privacy@graphorlm.com). The mailbox is monitored by the founder today and will route to a privacy distribution list as the team grows; the address itself does not change.
+1. **Channel** — every notification (inbound from the customer or outbound from Synapse) flows through [privacy@graphorlm.com](mailto:privacy@graphorlm.com). The mailbox auto-responds within minutes confirming receipt; inbound mail triggers an alert routed to the on-call engineer. As of the effective date in the front matter, the on-call function is staffed by the founder with an external incident-alerting service in place; Synapse is investing in 24/7 escalation as the team scales and discloses the current staffing model rather than overstating it. The address itself does not change as the team grows.
 2. **Trigger** — the 72-hour window starts when Synapse **internally confirms** that an incident affects customer data. Detection of an anomaly is not yet "confirmation"; the window starts when triage concludes that customer data is implicated.
 3. **Content** — every notification carries the same five elements (described in [§5](#5-what-the-notification-contains)) so the customer can act on it without a follow-up call.
 4. **Follow-through** — a post-mortem is published to the affected customer within **14 days of confirmation**, regardless of whether the incident has been fully remediated by then.
@@ -38,7 +38,7 @@ Incidents reach Synapse through one of three paths:
 
 | Path | Description |
 |------|-------------|
-| **Internal monitoring** | Cloud-provider operational log-based alerts on authentication anomalies, IAM policy changes, rate-limit spikes, error-rate elevations, and secret-store access events. The on-call engineer receives an alert and opens the triage runbook. |
+| **Internal monitoring** | Cloud-provider operational log-based alerts on IAM policy changes and service-account key creation are live today. Additional detections (authentication anomalies, rate-limit spikes, error-rate elevations, secret-store access events) are planned; the compensating control in the interim is daily review of operational logs by the on-call engineer. Alerts that fire route to the on-call engineer, who opens the triage runbook. |
 | **Subprocessor notification** | Inbound from a subprocessor's own incident-response program. The subprocessor's notification is logged in the [privacy@graphorlm.com](mailto:privacy@graphorlm.com) inbox and triggers the triage runbook regardless of the subprocessor's own severity rating. |
 | **Customer report** | Inbound to [privacy@graphorlm.com](mailto:privacy@graphorlm.com) (or, for non-security reports, [support@graphorlm.com](mailto:support@graphorlm.com)) from a customer who has spotted something they think is wrong. Customer reports are taken seriously by default; triage decides whether the report constitutes an incident. |
 
@@ -115,7 +115,21 @@ Customers who report a suspected incident in good faith are not subject to enfor
 - **Public product outages that do not implicate customer data.** Covered by the standard support channel and product status page, not by this SLA.
 - **Bug reports that do not constitute an incident.** Reach [support@graphorlm.com](mailto:support@graphorlm.com) instead.
 
-## 9. Change history
+## 9. Security research and vulnerability disclosure
+
+Synapse welcomes good-faith security research on the Graphor production surface. Researchers who follow the rules of engagement below are protected under a safe-harbor commitment and are not subject to enforcement under the Acceptable Use clauses of the [Terms of Service](/legal/terms-of-service).
+
+**Reporting channel.** [security@graphorlm.com](mailto:security@graphorlm.com) (also reachable via [privacy@graphorlm.com](mailto:privacy@graphorlm.com)). A `/.well-known/security.txt` file is published on the marketing site with the same channel and the current PGP key for encrypted reports.
+
+**In scope.** The customer-facing production surface listed in [Architecture §5](/trust/architecture#5-public-network-surface) — the marketing site, the documentation, the application UI, the REST and streaming API, and the per-Project MCP endpoints.
+
+**Out of scope.** Denial-of-service testing, social engineering of Synapse personnel or customers, physical security testing, automated scanners that produce a sustained traffic spike, and any access to data belonging to a tenant other than a Synapse-owned test account.
+
+**Rules of engagement.** Use only test accounts you own; do not access, modify, or download customer data; report promptly and confidentially; allow a reasonable disclosure window (typically 90 days) before public discussion.
+
+**Acknowledgement.** Synapse acknowledges receipt within one business day, provides a status update within ten business days, and credits the reporter publicly (with their permission) once the issue is remediated. Bounty payments are not committed today but may be offered at Synapse's discretion for high-impact reports.
+
+## 10. Change history
 
 | Version | Date | Change |
 |---------|------|--------|

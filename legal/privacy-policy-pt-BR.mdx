@@ -13,7 +13,7 @@ Esta Política de Privacidade também está publicada em [inglês](/legal/privac
 
 A Graphor é operada pela **SYNAPSE INOVAÇÃO E TECNOLOGIA LTDA.** ("Synapse," "Graphor," "nós"), sociedade constituída segundo as leis da República Federativa do Brasil, com sede no Brasil.
 
-Para comunicações relacionadas à privacidade, incluindo o exercício dos direitos do titular, entre em contato pelo endereço [privacy@graphorlm.com](mailto:privacy@graphorlm.com). A caixa postal de privacidade é monitorada pela Synapse e encaminhada ao time responsável em até um dia útil; respostas substantivas são fornecidas dentro dos prazos exigidos pela legislação aplicável (tipicamente 15 dias pela LGPD art. 19, um mês pelo GDPR art. 12).
+Para comunicações relacionadas à privacidade, incluindo o exercício dos direitos do titular, entre em contato pelo endereço [privacy@graphorlm.com](mailto:privacy@graphorlm.com). A caixa postal de privacidade é monitorada pela Synapse e encaminhada ao time responsável em até um dia útil; respostas substantivas são fornecidas dentro dos prazos exigidos pela legislação aplicável (15 dias pela LGPD art. 19, § 3º para confirmação e acesso — a expectativa regulatória geral de 15 dias para os demais direitos do art. 18 segue a Resolução CD/ANPD nº 18/2024; um mês pelo GDPR art. 12).
 
 ## 2. Escopo desta Política
 
@@ -53,7 +53,7 @@ Utilizamos cada categoria de dados pessoais somente para as finalidades listadas
 | Dados de Conta | Criar e administrar sua conta; autenticar você; comunicar-se com você sobre sua conta, segurança e operações do Serviço. |
 | Dados Profissionais | Personalizar a implantação e a comunicação; oferecer suporte; entender quem usa o Serviço para aprimorar o ajuste de produto. |
 | Dados de Contato | Entregar comunicações relativas ao Serviço; com seu consentimento, enviar newsletters e atualizações de produto. |
-| Conteúdo do Cliente | Prestar o Serviço contratado — particionar, dividir em trechos, indexar, recuperar, responder perguntas, extrair dados estruturados. **Não utilizamos Conteúdo do Cliente para treinar nenhum modelo de IA** (ver [§8](#8-uso-de-modelos-de-ia-e-treinamento) e [Model Use and Training](/trust/model-use-and-training)). |
+| Conteúdo do Cliente | Prestar o Serviço contratado — particionar, dividir em trechos, criar embeddings, indexar, recuperar, responder perguntas, extrair dados estruturados. **Não utilizamos Conteúdo do Cliente para treinar nenhum modelo de IA** (ver [§8](#8-uso-de-modelos-de-ia-e-treinamento) e [Model Use and Training](/trust/model-use-and-training)). |
 | Conteúdo Derivado | Viabilizar a recuperação e a inferência do Serviço; persistir seu histórico de conversações e extrações para acesso futuro; atender solicitações de eliminação. |
 | Dados de Pagamento | Processar pagamentos; emitir notas e recibos; cumprir obrigações tributárias e contábeis brasileiras de retenção de documentos. |
 | Dados de Eventos, Concursos e Pesquisas | Administrar o evento, concurso ou pesquisa; responder à sua submissão; comunicar-se com você. |
@@ -93,7 +93,7 @@ Não vendemos dados pessoais nem os compartilhamos para publicidade comportament
 
 ## 7. Retenção e eliminação
 
-Retemos dados pessoais somente pelo tempo necessário para cumprir as finalidades para as quais foram coletados, sujeito a períodos maiores quando exigido por lei (como retenção tributária e contábil brasileira para documentos fiscais, tipicamente cinco anos).
+Retemos dados pessoais somente pelo tempo necessário para cumprir as finalidades para as quais foram coletados, sujeito a períodos maiores quando exigido por lei — incluindo obrigações brasileiras de retenção fiscal de **5 anos sob o CTN art. 173** (decadência) e **CC art. 206, § 5º** (prescrição quinquenal para cobrança de créditos), além dos prazos específicos para NFS-e e ICMS sob a legislação tributária estadual e municipal aplicável.
 
 As regras específicas de retenção por categoria de dado — incluindo a postura **retenção indefinida até a DELEÇÃO explícita** para Conteúdo do Cliente e Conversações, e o TTL limitado para traces de observabilidade — estão documentadas em detalhe na página [Data Retention](/trust/data-retention).
 
@@ -124,22 +124,23 @@ Nos termos da LGPD art. 18 e do GDPR art. 15–22, você tem os seguintes direit
 | **Confirmação e acesso** (LGPD art. 18, I e II / GDPR art. 15) | Confirmar que processamos seus dados pessoais; acessar uma cópia desses dados. | E-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
 | **Correção** (LGPD art. 18, III / GDPR art. 16) | Corrigir dados incompletos, inexatos ou desatualizados. | Editar em sua conta ou enviar e-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
 | **Eliminação** (LGPD art. 18, VI / GDPR art. 17) | Eliminar dados pessoais que não precisamos mais, sujeito a obrigações legais de retenção. | Usar a [DSR API](/trust/data-retention#3-the-dsr-api) ou enviar e-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com) para eliminação de conta. |
-| **Portabilidade** (LGPD art. 18, V / GDPR art. 20) | Receber seus dados em formato estruturado, de uso comum e leitura por máquina. | E-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com) — uma API de exportação in-app está no roadmap; exportação manual provisória é fornecida sob demanda. |
-| **Limitação do tratamento** (LGPD art. 18, IV / GDPR art. 18) | Restringir o tratamento enquanto a precisão é verificada ou uma oposição é avaliada. | E-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
+| **Portabilidade** (LGPD art. 18, V / GDPR art. 20) | Receber seus dados em formato estruturado, de uso comum e leitura por máquina. O pacote de exportação inclui: Fontes originais conforme enviadas; unidades derivadas em JSON; transcrições de conversações em JSON; metadados da conta em JSON; entregue como bundle de URL assinada com manifest e checksum. | E-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com) — exportação manual é entregue em **15 dias corridos** da solicitação, satisfazendo o prazo da LGPD art. 19. Um endpoint self-service `POST /api/v1/dsr/export` está no roadmap. |
+| **Bloqueio / limitação** (LGPD art. 18, IV — componente "bloqueio" / GDPR art. 18) | Sob a LGPD art. 18, IV, o titular pode requerer bloqueio, anonimização ou eliminação de dados desnecessários, excessivos ou tratados em desconformidade (a LGPD não possui equivalente direto à "limitação do tratamento" do GDPR art. 18); sob o GDPR art. 18, restringir o tratamento enquanto a precisão é verificada ou uma oposição é avaliada. | E-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
 | **Oposição** (LGPD art. 18, § 2º / GDPR art. 21) | Opor-se ao tratamento baseado em legítimo interesse ou para marketing direto. | E-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
 | **Revogação do consentimento** (LGPD art. 8º, § 5º / GDPR art. 7(3)) | Revogar consentimento para tratamentos baseados em consentimento, sem afetar tratamentos lícitos anteriores. | Ajustar o banner de cookies ou suas preferências de comunicação; enviar e-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com) para outros tratamentos baseados em consentimento. |
-| **Informação sobre suboperadores** (LGPD art. 18, VII / GDPR art. 13) | Saber com quem compartilhamos seus dados. | Ver a página de [Suboperadores](/trust/subprocessors). |
+| **Informação sobre suboperadores** (LGPD art. 18, VII / GDPR art. 15(1)(c)) | Saber com quem compartilhamos seus dados — o direito de acesso inclui os destinatários ou categorias de destinatários a quem os dados pessoais foram ou serão divulgados. | Ver a página de [Suboperadores](/trust/subprocessors). |
 | **Reclamação perante a autoridade de controle** (LGPD art. 18, parágrafo único / GDPR art. 77) | Apresentar reclamação à autoridade de proteção de dados — ANPD no Brasil, a autoridade de controle competente na UE. | Entre em contato conosco primeiro pelo [privacy@graphorlm.com](mailto:privacy@graphorlm.com); auxiliaremos no que pudermos, mas você pode acessar a autoridade diretamente. |
 
-Respondemos às solicitações dos titulares dentro dos prazos exigidos pela legislação aplicável (15 dias pela LGPD art. 19, um mês pelo GDPR art. 12, com possível extensão para solicitações complexas). A primeira resposta inclui a informação solicitada ou, quando precisamos verificar sua identidade ou escopar melhor a solicitação, uma descrição do próximo passo.
+Respondemos às solicitações dos titulares dentro dos prazos exigidos pela legislação aplicável (15 dias pela LGPD art. 19, § 3º para confirmação e acesso — a expectativa regulatória geral de 15 dias para os demais direitos do art. 18 segue a Resolução CD/ANPD nº 18/2024; um mês pelo GDPR art. 12, com possível extensão para solicitações complexas). A primeira resposta inclui a informação solicitada ou, quando precisamos verificar sua identidade ou escopar melhor a solicitação, uma descrição do próximo passo.
 
 ## 10. Transferência internacional de dados pessoais
 
 Processamos dados pessoais nos Estados Unidos. A região de produção relevante (`us-central1`, Iowa, EUA) e as regiões dos provedores de IA estão documentadas na página [Data Residency](/trust/data-residency).
 
-Nos termos da LGPD art. 33 e do GDPR art. 44–49, as transferências internacionais são cobertas por:
+Nos termos da LGPD art. 33, II, b (cláusulas contratuais específicas ou cláusulas-padrão contratuais) e do GDPR art. 44–49, as transferências internacionais são cobertas por:
 
 - **Google Cloud Data Processing Addendum**, incorporando as Standard Contractual Clauses 2021/914 (cobre a infraestrutura em nuvem de produção, incluindo identidade).
+- **Google Measurement Controller-Controller Data Protection Terms** (aplicáveis apenas em visitas ao site institucional com consentimento, quando o Google Analytics 4 é carregado).
 - **AWS Data Processing Addendum**, incorporando as Standard Contractual Clauses (cobre AWS Bedrock).
 - **OpenAI Data Processing Addendum**, com inscrição no Zero Data Retention.
 - **Termos e Política de Privacidade da Cerebras**, com compromisso explícito de zero retenção.

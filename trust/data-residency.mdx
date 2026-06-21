@@ -19,11 +19,11 @@ The table below covers every layer of the Graphor production environment that to
 |-------|--------|-------|
 | Authenticated application backend (REST, streaming, MCP transports) | `us-central1` | Stateless. No customer data persisted on the backend instances. |
 | Asynchronous ingestion workers | `us-central1` | Long-running ingestion workflow — parsing, chunking, enrichment, embedding, indexing. |
-| Document parsing service (GPU-accelerated) | `us-central1` | Hosts the in-house parsing pipeline (OCR, partitioning, visual embedding). Runs in-house parsing models — no document content sent to an external parsing provider. |
-| Primary relational database | `us-central1` | Stores Account Information, Conversations, dataset metadata, API tokens, and billing-record identifiers. **Automated backups + point-in-time recovery enabled** ([Data Retention §5](/trust/data-retention#5-backups-and-disaster-recovery)). |
-| Managed graph store | North American region under the managed graph provider's footprint | Holds source nodes, document partitions, retrievable units (with embedding vectors), and per-dataset indexes. See [Subprocessors §2](/trust/subprocessors#2-cloud-infrastructure-production). |
+| Document parsing service | `us-central1` | Hosts the in-house parsing pipeline (OCR, partitioning, visual embedding). Runs in-house parsing models — no document content sent to an external parsing provider. |
+| Primary relational database | `us-central1` | Stores Account Information, Conversations, Project metadata, API tokens, and billing-record identifiers. **Automated backups + point-in-time recovery enabled** ([Data Retention §5](/trust/data-retention#5-backups-and-disaster-recovery)). |
+| Managed graph store | North American region under the managed graph provider's footprint | Holds source nodes, document partitions, retrievable units (with embedding vectors), and per-Project indexes. See [Subprocessors §2](/trust/subprocessors#2-cloud-infrastructure-production). |
 | In-memory cache + streaming fan-out | `us-central1` | Ephemeral cache, streaming notifications, idempotency keys. No Customer Content persisted. |
-| Internal message bus + analytics warehouse | `us-central1` | Carries operational events and aggregates them into an analytics warehouse (counters and metadata only — no Customer Content). |
+| Internal event bus + analytics aggregation | `us-central1` | Carries operational events and aggregates them into an internal analytics store (counters and metadata only — no Customer Content). |
 | Object storage — Customer documents | **`us-central1`** (single-region; migrated from US multi-region) | Raw uploaded sources (PDFs, DOCX, audio, video, etc.). |
 | Object storage — internal artifacts (model weights, public marketing assets, TLS certificate artifacts) | `us-central1` (single-region) | No Customer Content. |
 | Self-hosted observability store | `us-central1` | Tier-aware (Enterprise default OFF, Free/Pro default ON with PII mask). See [Data Retention §4](/trust/data-retention#4-observability-traces). |
@@ -48,16 +48,62 @@ Synapse is incorporated in Brazil and the catalyzing pilot customers are subject
 | Transfer leg | Legal basis | Source of contract |
 |--------------|-------------|---------------------|
 | Customer → Synapse | Direct controller-to-processor relationship under the Graphor [Data Processing Addendum](/legal/dpa-template). | Synapse–Customer DPA. |
-| Synapse → cloud infrastructure provider (`us-central1`) | LGPD art. 33 + 35 (international transfer to a country with adequate protection or under contractual safeguards). Inherited via the cloud-provider DPA, which incorporates Standard Contractual Clauses 2021/914. | Cloud-provider Data Processing Addendum (linked from [Subprocessors §2](/trust/subprocessors#2-cloud-infrastructure-production)). |
-| Synapse → AWS Bedrock (US regions) | LGPD art. 33 + 35; AWS DPA incorporates Standard Contractual Clauses. | AWS Data Processing Addendum (linked from [Subprocessors §3](/trust/subprocessors#3-ai-model-providers)). |
-| Synapse → OpenAI | LGPD art. 33 + 35; OpenAI DPA incorporates Standard Contractual Clauses; ZDR addendum signed. | OpenAI DPA + ZDR addendum (linked from [Subprocessors §3](/trust/subprocessors#3-ai-model-providers)). |
-| Synapse → Cerebras | LGPD art. 33 + 35; subject to Cerebras Terms of Use and Privacy Policy commitments cited in [Model Use and Training §4.4](/trust/model-use-and-training#44-cerebras-systems-inc--chunk-enrichment-and-fast-tier). | Cerebras Terms of Use + Privacy Policy (linked from [Subprocessors §3](/trust/subprocessors#3-ai-model-providers)). |
-| Synapse → managed graph store provider | LGPD art. 33 + 35; provider DPA incorporates Standard Contractual Clauses. | Provider DPA (linked from [Subprocessors §2](/trust/subprocessors#2-cloud-infrastructure-production)). |
-| Synapse → payment processor | LGPD art. 33 + 35; payment-processor DPA incorporates Standard Contractual Clauses. Payment processor handles only billing identifiers, not Customer Content. | Payment-processor DPA (linked from [Subprocessors §5](/trust/subprocessors#5-payment-and-billing)). |
+| Synapse → cloud infrastructure provider (`us-central1`) | LGPD art. 33, II, b (specific or standard contractual clauses for international transfer); art. 35 governs ANPD's role in defining the model clauses. Inherited via the cloud-provider DPA, which incorporates Standard Contractual Clauses 2021/914 for EU customers and the ANPD-approved Cláusulas-Padrão Contratuais (Resolução CD/ANPD nº 19/2024) for Brazilian customers per [DPA Annex 4](/legal/dpa-template#annex-4--international-transfer-instruments). | Cloud-provider Data Processing Addendum (linked from [Subprocessors §2](/trust/subprocessors#2-cloud-infrastructure-production)). |
+| Synapse → AWS Bedrock (US regions) | LGPD art. 33, II, b; AWS DPA incorporates Standard Contractual Clauses. | AWS Data Processing Addendum (linked from [Subprocessors §3](/trust/subprocessors#3-ai-model-providers)). |
+| Synapse → OpenAI | LGPD art. 33, II, b; OpenAI DPA incorporates Standard Contractual Clauses; ZDR addendum signed. | OpenAI DPA + ZDR addendum (linked from [Subprocessors §3](/trust/subprocessors#3-ai-model-providers)). |
+| Synapse → Cerebras | LGPD art. 33, II, b; subject to Cerebras Terms of Use and Privacy Policy commitments cited in [Model Use and Training §4.4](/trust/model-use-and-training#44-cerebras-systems-inc--chunk-enrichment-and-fast-tier). | Cerebras Terms of Use + Privacy Policy (linked from [Subprocessors §3](/trust/subprocessors#3-ai-model-providers)). |
+| Synapse → managed graph store provider | LGPD art. 33, II, b; provider DPA incorporates Standard Contractual Clauses. | Provider DPA (linked from [Subprocessors §2](/trust/subprocessors#2-cloud-infrastructure-production)). |
+| Synapse → payment processor | LGPD art. 33, II, b; payment-processor DPA incorporates Standard Contractual Clauses. Payment processor handles only billing identifiers, not Customer Content. | Payment-processor DPA (linked from [Subprocessors §5](/trust/subprocessors#5-payment-and-billing)). |
 
 Every transfer is governed by a contract that incorporates Standard Contractual Clauses or an equivalent. The complete set of clauses is referenced and made available to enterprise customers under NDA via [privacy@graphorlm.com](mailto:privacy@graphorlm.com).
 
-## 4. Why us-central1
+## 4. Transfer Impact Assessment — US compelled-disclosure regime
+
+Customers subject to LGPD or GDPR conducting a transfer-impact assessment ("TIA") for the Brazil → US (and EU → US) leg should be aware of the following. This section satisfies the **ANPD transfer-impact-assessment expectation under Resolução CD/ANPD nº 19/2024** and the **Schrems II–style impact-assessment expectation under GDPR art. 46(2)(c)**.
+
+### 4.1 US compelled-disclosure vectors
+
+Customer Personal Data Processed in `us-central1` and in AWS Bedrock US regions is in principle reachable by the following US legal mechanisms:
+
+- **US CLOUD Act (Clarifying Lawful Overseas Use of Data Act, 18 U.S.C. § 2713)** — extends Stored Communications Act process to data held by US-based providers irrespective of storage location.
+- **FISA Section 702 / Executive Order 12333** — authorities relevant to non-US persons; primary Schrems II concern.
+- **Federal subpoenas, search warrants, and National Security Letters** under standard US federal criminal procedure.
+
+### 4.2 Technical and operational safeguards that constrain reachable scope
+
+- **Encryption at rest** on every backing store; cloud-provider-managed keys today, customer-managed encryption keys available on enterprise request (see [Tenant Isolation §1](/trust/tenant-isolation#1-isolation-by-layer) and [§7](/trust/tenant-isolation#7-personnel-security)). A request that compels the cloud provider rather than Synapse cannot decrypt customer data without the application-layer access path; customer-managed keys further reduce reachability.
+- **Encryption in transit** TLS 1.2+ on every public surface ([Architecture §5](/trust/architecture#5-public-network-surface)).
+- **Logical tenant isolation** enforced at the application layer ([Tenant Isolation §1](/trust/tenant-isolation#1-isolation-by-layer)); compelled disclosure of "all data" at the infrastructure level still requires Synapse-side application access to reconstruct a Customer-scoped view.
+- **Zero-retention or no-training commitments at AI providers** ([Model Use and Training §4](/trust/model-use-and-training#4-per-provider-evidence-verbatim)): AWS Bedrock does not retain or share inputs with model providers; OpenAI ZDR eliminates the default 30-day abuse-monitoring log; Cerebras commits to zero retention. A US request against any of these providers reaches a smaller residual surface than a request against a provider with default retention.
+
+### 4.3 Synapse's commitments under compelled disclosure
+
+Per [DPA §9](/legal/dpa-template#9-cooperation-with-authorities), if Synapse receives a binding legal request from a competent authority for disclosure of Customer Personal Data:
+
+- Synapse notifies the Customer of the request to the extent legally permitted, allowing the Customer to seek a protective order or other remedy;
+- Where notification is prohibited, Synapse takes reasonable steps to inform the Customer of the request once the prohibition expires;
+- Synapse discloses only the minimum data required to comply with the request.
+
+Synapse will challenge overbroad or facially unlawful requests using available legal procedure (motion to quash, narrowing negotiations).
+
+### 4.4 Brazilian Marco Civil interplay
+
+For Customer Personal Data of Brazilian data subjects, **Lei nº 12.965/2014 (Marco Civil da Internet) art. 11** establishes that the Brazilian legal framework applies to data-collection, storage, and processing operations where at least one of the parties is in Brazil — applicable to Synapse (incorporated in Brazil) as the controller in the controller-to-processor chain. This means:
+
+- Brazilian data subjects retain full LGPD enforcement rights against Synapse irrespective of the US processing location;
+- ANPD has jurisdiction over Synapse's processing of Brazilian personal data, including the international-transfer leg;
+- The Cláusulas-Padrão Contratuais incorporated in [DPA Annex 4-B](/legal/dpa-template#annex-4--international-transfer-instruments) bind Synapse contractually to LGPD-equivalent protections at the US processing destination.
+
+### 4.5 Customer options for compounded risk reduction
+
+Customers with elevated transfer-impact concerns may:
+
+- Request **customer-managed encryption keys** (see [Tenant Isolation §1](/trust/tenant-isolation#1-isolation-by-layer)) so that even infrastructure-level compelled disclosure does not yield decryptable data without Synapse-side application access — typical scoping engagement: 4–8 weeks.
+- Request the **São Paulo region option** on the [Data Residency roadmap §5](#5-roadmap), which removes the US processing leg for the relational, object, and (where supported) graph stores.
+- Disable observability tracing entirely (the Enterprise default) and rely on the DSR API for any post-hoc audit need.
+- Restrict ingestion of special-category personal data (LGPD art. 11) to non-Graphor channels until the alternative-region engagement is in place.
+
+## 5. Why us-central1
 
 A single cloud region was chosen rather than a multi-region storage deployment or a cross-region active-active design for three reasons:
 
@@ -67,7 +113,7 @@ A single cloud region was chosen rather than a multi-region storage deployment o
 
 The migration of the customer-content storage from US multi-region to `us-central1` single-region was completed as part of this trust-documentation initiative. Stg is intentionally not migrated — it does not host real customer data.
 
-## 5. Roadmap
+## 6. Roadmap
 
 Two alternative regions are on the roadmap. Neither has a committed delivery date — both unlock on customer request for the enterprise tier, subject to a cost/timeline review per customer.
 
@@ -81,22 +127,22 @@ Two alternative regions are on the roadmap. Neither has a committed delivery dat
 **Brazil region (São Paulo)** — for LGPD-bound customers that prefer Brazilian residency, or for customers in regulated sectors where Brazilian residency is explicitly required (some federal-government workloads, certain Bacen guidelines). Tradeoffs:
 
 - The cloud infrastructure provider supports the full Graphor stack in the São Paulo region.
-- AWS Bedrock is **already available in `sa-east-1`** (São Paulo) — Anthropic Claude on Bedrock is GA in this region as of 2025. The Standard tier could be served entirely from Brazilian regions if the customer requires it; this is the lightest-lift alternative residency option.
+- AWS Bedrock is **already available in `sa-east-1`** (São Paulo) — Anthropic Claude on Bedrock is GA in this region. The Standard tier could be served entirely from Brazilian regions if the customer requires it; this is the lightest-lift alternative residency option.
 - The managed graph store does not currently offer a São Paulo region; the Brazil deployment would either accept a North-American managed instance (with the contractual residency commitment from the provider) or migrate to a self-hosted graph store on the São Paulo footprint.
 - OpenAI embeddings remain non-region-pinned; same compensating control as the EU case.
 
 Customers interested in either region should email [privacy@graphorlm.com](mailto:privacy@graphorlm.com) with a brief description of the residency requirement (regulatory citation, contractual obligation, internal policy). A scoping conversation establishes feasibility, timeline, and any incremental cost surcharge for the alternative region's infrastructure.
 
-## 6. Things that explicitly do NOT happen
+## 7. Things that explicitly do NOT happen
 
 Stating these explicitly removes ambiguity for security and privacy reviewers:
 
 - **No cross-region replication of Customer Content.** The customer-content storage is single-region; the primary relational database has no cross-region replica; backups stay within the cloud-provider region's redundancy posture.
 - **No CDN caching of authenticated responses.** Authenticated application responses are not cached in any edge location. Public marketing assets may be edge-cached but contain no Customer Content.
 - **No content sent to a multi-region or global resource by default.** The legacy multi-region customer-content store has been migrated; no production component routes customer data through a multi-region resource.
-- **No silent regional failover.** AWS Bedrock has configured failover regions (US-only) that activate on quota or availability events; the failover regions are all US. The configured São Paulo failover slot is currently disabled — a future activation will be published on the [Subprocessors](/trust/subprocessors) page before it takes effect.
+- **No silent regional failover.** AWS Bedrock has configured failover regions (US-only) that activate on quota or availability events; the failover regions are all US. The São Paulo (`sa-east-1`) slot is **configured but inactive** in standard routing — a future activation will be published on the [Subprocessors](/trust/subprocessors) page before it takes effect.
 
-## 7. Change history
+## 8. Change history
 
 | Version | Date | Change |
 |---------|------|--------|
