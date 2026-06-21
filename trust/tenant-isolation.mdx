@@ -1,0 +1,128 @@
+---
+title: Tenant Isolation
+description: "How Graphor isolates one customer's data from another's at the application, database, storage, and API-token layers, plus the controls a customer can apply to harden their own use."
+effective_from: "2026-06-21"
+last_updated: "2026-06-21"
+---
+
+## The model
+
+Graphor's tenancy model is **single-tenant logical isolation on shared infrastructure**. Every customer's data lives in the same Google Cloud project, the same Cloud SQL instance, the same Neo4j knowledge graph, the same GCS bucket — but is partitioned at the application layer by an `organization_id` foreign key that propagates through every customer-owned record.
+
+This is the same model that most modern multi-tenant SaaS products use, including the providers Graphor itself depends on (Stripe, Firebase, Langfuse). It is well understood by SI evaluators, and it scales to high tenant counts without the operational complexity of one project / one cluster / one bucket per customer. The model is **not** suitable for customers that contractually require physically separated infrastructure; for those cases see [§7](#7-what-graphor-explicitly-does-not-offer-today).
+
+The tenancy hierarchy is:
+
+```
+User              (one human identity, can belong to many Organizations)
+  ↓
+Organization       (a billing entity; the unit of access control and member management)
+  ↓
+Project            (== "Dataset" in the data model; the unit of API-token scope, source storage, and conversation history)
+  ↓
+Source / Conversation / ApiToken / etc.   (per-project records)
+```
+
+Every record below the Project layer carries the Project's identifier; every Project carries an `organization_id` (nullable for personal-tier projects that have not been promoted to an Organization). Every authenticated database query, every GCS object key, every Neo4j Cypher query is scoped by these identifiers — there is no application path that retrieves data without scoping by the calling user's accessible Project set.
+
+## 1. Isolation by layer
+
+The same logical partition is enforced at every layer below the application. The table records how the partition shows up at each layer and what the failure mode would be if the partition were violated.
+
+| Layer | Isolation mechanism | Failure mode if violated |
+|-------|---------------------|---------------------------|
+| API surface | Every authenticated request resolves to a `(User, Organization, Project)` tuple in middleware before reaching any business handler. Endpoints that operate on per-project resources require a Project context derived from the API token or session. | Cross-tenant data exposure via API. Mitigated by integration tests and code-review gating that flags handlers without explicit Project scoping. |
+| Postgres | Every customer-owned table carries the Project identifier as a column. Every ORM query is parameterized by the Project context from the request. There is no service account with read access to multiple customers' rows that bypasses application-layer scoping. | Cross-tenant data exposure via SQL injection or a missing `WHERE project_id = ?`. Mitigated by SQLAlchemy parameterization, ORM-level constraints, and the parameterized-only query rule enforced by code review. |
+| Neo4j knowledge graph | Source nodes carry the Project identifier. Chunks additionally carry a per-dataset label (the second label introduced in the F10 phase of the native-RAG migration), which is the target of the per-dataset vector and full-text indexes. Retrieval queries always run against the dataset-scoped label, so a query cannot accidentally surface chunks from another dataset. | Cross-tenant retrieval. Mitigated by the dataset-scoped index design — a missing dataset filter does not silently fall through to a global index. |
+| Object storage (Cloud Storage `graphorlm-prd-datasets-uc1`) | Every object key is prefixed with the Project identifier. Signed URLs issued to the customer carry a short expiration (15 minutes) and are scoped to a single object. The runtime service account has bucket-level access; per-customer scoping is enforced by the application before signing a URL. | Cross-tenant object access via a leaked signed URL. Mitigated by short URL TTLs and the application-side path-construction rule. |
+| Encryption | All data at rest is encrypted with Google-managed encryption keys by default; enterprise customers may request CMEK (customer-managed encryption keys via Cloud KMS) on a per-Project basis. See [Trust Center Overview](/trust/overview). | A single bad key would not allow cross-tenant access at the application layer, but CMEK would let an enterprise customer rotate or revoke their key independently. |
+| Observability traces | When tracing is enabled for a Project (see [§4](#4-observability-traces)), each trace carries the Project identifier as a Langfuse tag. Synapse personnel access traces under the same Project-scoped filtering as the customer's own debugging UI. | Cross-tenant trace exposure during Synapse personnel debugging. Mitigated by Project-scoped Langfuse role assignment for Synapse personnel and by audit logging on the Langfuse instance. |
+| Billing | Stripe customer identifiers are stored on the Organization row, not on user or project rows. Billing data (Stripe webhooks, invoice metadata) never reaches a per-Project surface. | Cross-tenant billing-data exposure. Mitigated by the deliberate separation of billing from product data — billing pages query Organization-scoped Postgres tables that are distinct from the customer-content tables. |
+
+## 2. API tokens
+
+The API token model is the primary mechanism through which the customer authenticates programmatic access to Graphor.
+
+**Tokens are per-project today.** Every API token created in the Graphor UI is bound at creation time to exactly one Project (one `Dataset` row in the data model). A token created in Project A cannot read, write, or otherwise act on Project B; the verification middleware rejects the request before it reaches any handler.
+
+This per-project model is the customer's first-line isolation control. The customer-side best practice is to **provision one token per Project per integration** — do not share a single master token across multiple projects or environments, and do not reuse a development token in production. Each token can be revoked independently, has its own audit trail, and limits the blast radius of a leak.
+
+**Token format.** Every token is structured as `<prefix>_<identifier:12chars>_<secret:32chars>`. The identifier is indexed for O(1) lookup; the secret is stored only as a hash. The full token is shown to the customer exactly once at creation — Graphor cannot recover a lost token, only revoke and re-issue.
+
+**Token controls available today.**
+
+| Control | Where | Default | Purpose |
+|---------|-------|---------|---------|
+| `expires_at` (TTL) | Project settings → API Tokens | Nullable (non-expiring) for backward compatibility; recommended to set on every new token | A token with an expiration cannot be replayed after the expiry, even if leaked. |
+| `last_used_at` + `last_used_ip` | Token list in Project settings | Auto-populated | The customer can detect tokens that are no longer in use (candidate for revocation) or that have been used from unexpected IP addresses. |
+| Revoke | Token list in Project settings | n/a | A revoked token is rejected at verification time and may be hard-deleted asynchronously. |
+
+**Token controls on the enterprise-tier roadmap.**
+
+| Control | Status | Description |
+|---------|--------|-------------|
+| Scopes (`sources:read`, `sources:write`, `chat:execute`, `extract:execute`, `dsr:execute`) | Roadmap, no committed date | Per-token permission granularity. Today every token has the equivalent of `["*"]` (full access to its bound Project). The roadmap path adds a `scopes` column on the token and route-level enforcement so customers can issue read-only or extract-only tokens. |
+| Per-organization tokens | **Not planned today** — see [§3](#3-explicit-non-decisions) | A token that grants access to every Project in an Organization with a single credential would simplify integration for customers with many projects, at the cost of a larger blast radius if leaked. Graphor has chosen isolation over convenience for now. |
+| IP allowlist per token | **Not planned today** — see [§3](#3-explicit-non-decisions) | Restricting a token to a fixed set of source IPs is available on request for enterprise customers via a manual configuration; there is no UI for it today. |
+
+## 3. Explicit non-decisions
+
+The following controls are sometimes asked about in SI questionnaires. Graphor has deliberately **not** built them; this section records that decision so SI reviewers know it is a conscious choice rather than an oversight.
+
+| Control | Why not built | Available on request? |
+|---------|---------------|------------------------|
+| Per-organization API tokens | Aggregating access across all Projects in an Organization into a single credential increases the blast radius of a leak. The per-Project model is the safer default and is sufficient for the vast majority of integrations. If a customer needs a single credential to talk to many Projects, the recommended pattern is to orchestrate per-Project tokens server-side under a customer-controlled secret store. | Considered case-by-case for enterprise contracts. |
+| IP allowlist per token | Customer integration topology (serverless functions, dynamic CI/CD egress IPs, mobile clients) makes a static IP allowlist operationally fragile for most customers. The per-token TTL + audit-trail model in [§2](#2-api-tokens) captures most of the same risk reduction without the operational fragility. | Available on request for enterprise customers via manual configuration. |
+| Physically separated infrastructure (one GCP project per customer) | Graphor's logical-isolation model is the industry default and is auditable. A physical-separation deployment is a significant operational and cost commitment that few customers ultimately need. | Available on request for enterprise customers under a custom deployment SOW. |
+| Bring-Your-Own-Cloud / dedicated tenancy | Same reasoning as physical separation. | Available on request for enterprise customers under a custom deployment SOW. |
+
+## 4. Observability traces
+
+Observability is tier-aware. The full retention rules and DSR endpoints are in [Data Retention §4](/trust/data-retention#4-observability-traces); this section focuses on the **isolation** dimension.
+
+- **Enterprise tier** — tracing is **off by default**. No traces are produced for Enterprise-tier projects unless the project owner explicitly enables tracing. The most conservative isolation posture: there is no trace surface to isolate from.
+- **Free and Pro tiers** — tracing is **on by default**. Each trace is tagged with the Project identifier; Synapse personnel access traces under the same Project-scoped filtering as the customer's own debugging UI. A Brazilian-PII regex mask is applied to every string field before send.
+
+Synapse personnel do not have unrestricted "all-projects view" on the observability store — Langfuse role assignment scopes individual engineer access to projects under active support or incident response.
+
+## 5. Customer best practices
+
+There are a few things the customer can do to harden their own use of Graphor beyond the platform defaults:
+
+1. **One token per Project per integration.** Do not share a single token across multiple Projects or environments. A leaked token then compromises only the Project and integration it was created for.
+2. **Set `expires_at` on every new token.** A token that will never expire is a token that will eventually be in a stale backup, a forgotten config file, or a departed-employee's machine.
+3. **Review the token list quarterly.** Sort by `last_used_at` and revoke any token that has not been used in the last quarter unless you know why it must remain.
+4. **Promote Projects to an Organization early.** Personal-tier Projects (no `organization_id`) cannot apply Organization-level access controls. Once a Project moves to an Organization, member management, billing, and (eventually) Organization-level controls become available.
+5. **For Enterprise-tier projects, leave observability tracing off** unless you have a specific debugging engagement open. Re-enable it temporarily, then turn it off; the tracing toggle is reversible and does not lose product functionality.
+6. **For Enterprise-tier deployments, ask about CMEK and physical separation early.** Both are available but require lead time to provision.
+
+## 6. Things that explicitly do happen at the Synapse-personnel layer
+
+For transparency, the access Synapse personnel have to customer-owned data:
+
+- **Project-scoped Langfuse access** for engineers actively supporting a customer or investigating an incident. Scoped — not blanket — and audited.
+- **Read access to the production Postgres replica** for the on-call engineer during incident response. All such access is logged via Cloud SQL audit logging.
+- **Read access to the production GCS datasets bucket** for the on-call engineer during incident response. All such access is logged via Cloud Storage audit logging.
+
+Synapse personnel do **not** routinely access customer Content. There is no "browse customer documents" UI, no scheduled report that aggregates customer data, and no analytics pipeline that ships content (as opposed to operational metadata) off the production environment. See [Model Use and Training §6](/trust/model-use-and-training#6-what-graphor-explicitly-does-not-do) for the explicit non-commitments around use of customer content.
+
+## 7. What Graphor explicitly does NOT offer today
+
+- **No physically separated infrastructure by default.** Per [§3](#3-explicit-non-decisions), available on request under an enterprise SOW.
+- **No row-level encryption with customer keys.** Customer keys protect a Project's data at the storage layer via CMEK on enterprise request, but individual rows are not encrypted with a per-record key.
+- **No customer-owned database.** The production Cloud SQL instance is shared across customers; logical isolation is enforced at the application layer.
+- **No fine-grained scoped tokens today.** See [§2](#2-api-tokens) for the roadmap.
+
+## 8. Change history
+
+| Version | Date | Change |
+|---------|------|--------|
+| 1.0 | 2026-06-21 | Initial publication. Documents per-Project token model, tier-aware observability, the C16 token TTL + audit changes, and the explicit non-decisions on per-org tokens and IP allowlist. |
+
+When the tenancy model, the token controls, the observability tier defaults, or the explicit non-decisions change, this table is updated and subscribers to [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) receive an email.
+
+## Contact
+
+- General privacy and isolation inquiries: [privacy@graphorlm.com](mailto:privacy@graphorlm.com)
+- Enterprise deployment options (CMEK, physical separation, BYOC): [privacy@graphorlm.com](mailto:privacy@graphorlm.com)
+- Customer support: [support@graphorlm.com](mailto:support@graphorlm.com)

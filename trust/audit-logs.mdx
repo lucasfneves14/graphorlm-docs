@@ -1,0 +1,80 @@
+---
+title: Audit Logs
+description: "What customer-visible activity logs are available today, what is on the roadmap, and how to request a specific audit query in the interim."
+effective_from: "2026-06-21"
+last_updated: "2026-06-21"
+---
+
+## The current surface (honest)
+
+Customer-visible audit logging on the Graphor product surface today is **limited and we are honest about it**. The functionality below is what exists; everything else is on the roadmap in [§3](#3-on-the-roadmap) or explicitly out of scope in [§4](#4-what-is-not-planned).
+
+This page is the canonical record so SI reviewers do not have to infer what is and is not available.
+
+## 1. What is available today
+
+| Surface | Where it lives | What you can see | How to access |
+|---------|---------------|------------------|----------------|
+| **API token last-used metadata** (per [Tenant Isolation §2](/trust/tenant-isolation#2-api-tokens)) | Project settings → API Tokens | The `last_used_at` timestamp and `last_used_ip` for each token. Indicates which tokens are active and from which source IP they were last used. Helpful for detecting stale tokens (revoke them) and tokens used from unexpected IPs (investigate). | Project owner / project admin UI; tokens are scoped to a single Project. |
+| **Stripe billing events** | Stripe customer portal | Every billing event Stripe issues for the customer's subscription — invoice generation, payment attempt, refund, subscription change. | Customer accesses their Stripe portal directly via the link in their Graphor account; events on the Stripe side are owned by Stripe. |
+| **Usage metering** (token in / token out, dataset-scoped) | Graphor billing surface | Aggregate usage per project per billing period, for the purpose of plan-limit visibility. Not a per-request audit log; it is an aggregation. | Project owner / billing admin UI. |
+| **Source and conversation deletion confirmations** | DSR API response payload + audit follow-up email | When a customer issues a `DELETE /api/v1/sources/{file_id}`, `DELETE /api/v1/conversations/{conversation_id}`, or `DELETE /api/v1/dsr/traces`, the response payload lists every backing store that was acted upon. A confirmation is also persisted for 90 days so the customer can verify the action after the fact. | Returned in the API response; persisted server-side per [Data Retention §3](/trust/data-retention#3-the-dsr-api). |
+
+The above is the **full inventory** of customer-visible activity surfaces as of the effective date in the front matter. Internal Cloud Logging captures detailed operational logs (every request, every error, every authentication event), but these are Synapse-internal and not customer-exposed. Synapse personnel access them under the Project-scoped access controls described in [Tenant Isolation §6](/trust/tenant-isolation#6-things-that-explicitly-do-happen-at-the-synapse-personnel-layer).
+
+## 2. How to request a specific audit query in the interim
+
+Until the customer-visible activity log API in [§3](#3-on-the-roadmap) ships, customers who need an answer to a specific audit question (for an internal audit, a regulator request, an incident investigation, an end-user DSR pass-through) can email [privacy@graphorlm.com](mailto:privacy@graphorlm.com) with the question. Typical queries Synapse can answer from internal logs include:
+
+- "Did API token `<identifier>` access source `<file_id>` on date `<date>`?"
+- "Who deleted source `<file_id>`, when, and from what IP?"
+- "List all `sources.ask` requests in project `<project_id>` between dates `<start>` and `<end>`."
+- "Confirm whether observability tracing was enabled for project `<project_id>` on date `<date>`."
+
+Synapse responds within **5 business days** with the answer (or with an explanation if the query cannot be answered from available logs — for example, if it predates the Cloud Logging retention window for the relevant log source). For incident-related audit queries, the standard 72-hour SLA in [Incident Response](/trust/incident-response) applies instead.
+
+## 3. On the roadmap
+
+The following audit log capabilities are committed to the roadmap. None has a fixed delivery date today; enterprise contracts that require a specific capability can accelerate it.
+
+| Capability | Description | Status |
+|------------|-------------|--------|
+| **Customer-visible activity log API** | A `GET /api/v1/audit-log` endpoint exposing project-scoped events (ingestion, query, deletion, token use, configuration change) with filtering by date range, event type, and actor. | Roadmap |
+| **Customer-visible activity feed UI** | A "Activity" tab in the Project settings showing the same events as the API, with a search and filter UI. | Roadmap |
+| **Audit log export** | Bulk export of project-scoped audit events as CSV. | Roadmap |
+| **Webhook delivery for selected events** | Optional customer-configurable webhooks for high-signal events (token created/revoked, source deleted, conversation deleted, tier change). | Roadmap |
+| **BigQuery share for enterprise tier** | Optional read-only BigQuery share of the customer's project events for customers that maintain their own data warehouse. | Roadmap, enterprise-tier |
+| **Login history visible to the user** | A view of the user's own Google sign-in history (timestamp, IP, user agent). | Roadmap |
+| **Audit log retention guarantee** | A published retention window for the customer-visible audit log (current internal Cloud Logging window is 30 days; the customer-visible log will have its own retention SLA when shipped). | Roadmap, ties to the activity log API |
+
+Customer-relevant roadmap items are coordinated with the [Compliance](/trust/compliance) roadmap — a SOC 2 Type II audit, when committed, will accelerate the activity-log surfaces above because the auditor will need them.
+
+## 4. What is not planned
+
+For transparency:
+
+- **Database-level audit logging exposed to the customer** (Cloud SQL audit logs, Postgres `pgaudit`-style row-level access logs). The Cloud SQL audit logs exist on the Synapse side for incident investigation; exposing them per-customer would conflict with the logical-isolation model on shared infrastructure. Not on the roadmap.
+- **Cloud Logging direct access for the customer.** The Synapse-internal Cloud Logging stream contains operational data from every customer interspersed; per-customer slicing is not exposed and is not on the roadmap. Customer queries are served via [§2](#2-how-to-request-a-specific-audit-query-in-the-interim).
+- **Full request/response capture of every API call.** Capturing every prompt and completion long-term would conflict with the [Data Retention](/trust/data-retention) posture (zero-retention on AI providers via OpenAI ZDR + Cerebras commitments; tier-aware observability) and would create a privacy and storage liability without a customer-side benefit that the [DSR API](/trust/data-retention#3-the-dsr-api) and the planned activity log do not already provide.
+
+## 5. Customer-side compensating practices
+
+Customers that need richer audit logging today than the surface in [§1](#1-what-is-available-today) provides can compensate on their side:
+
+- **Log Graphor API calls at the customer's egress point.** Any HTTP proxy (the customer's API gateway, a service mesh, an SDK middleware) can log the request method, URL, headers, and a response summary. Combined with the customer's own observability stack, this produces a customer-side audit trail of every interaction with Graphor.
+- **Issue narrow-scope API tokens per integration and per environment.** The `last_used_at` on each token then becomes a per-integration audit signal — see [Tenant Isolation §5](/trust/tenant-isolation#5-customer-best-practices).
+- **Subscribe to Subprocessor and Trust Center changes.** [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) provides a separate audit trail of changes to the platform that affect the customer's risk posture.
+
+## 6. Change history
+
+| Version | Date | Change |
+|---------|------|--------|
+| 1.0 | 2026-06-21 | Initial publication. Documents the limited customer-visible audit surface today, the interim manual query path, the roadmap, and the explicit non-decisions. |
+
+When the audit surface materially changes (new endpoint, new export format, new retention guarantee), this table is updated and subscribers to [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) receive an email.
+
+## Contact
+
+- Audit-log questions and ad-hoc audit queries: [privacy@graphorlm.com](mailto:privacy@graphorlm.com)
+- Subscription to audit-policy change notifications: [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com)
+- Customer support: [support@graphorlm.com](mailto:support@graphorlm.com)

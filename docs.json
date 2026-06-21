@@ -97,6 +97,40 @@
         ]
       },
       {
+        "tab": "Trust Center",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "trust/overview",
+              "trust/architecture",
+              "trust/subprocessors",
+              "trust/model-use-and-training",
+              "trust/data-retention",
+              "trust/tenant-isolation",
+              "trust/data-residency",
+              "trust/incident-response",
+              "trust/compliance",
+              "trust/audit-logs"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Legal",
+        "groups": [
+          {
+            "group": "Policies",
+            "pages": [
+              "legal/privacy-policy",
+              "legal/privacy-policy-pt-BR",
+              "legal/terms-of-service",
+              "legal/dpa-template"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "API Reference",
         "groups": [
           {

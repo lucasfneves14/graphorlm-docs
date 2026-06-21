@@ -1,0 +1,122 @@
+---
+title: Compliance
+description: "Graphor's honest certification status, the inherited certifications from subprocessors that cover the upstream chain, and the inventory of compensating controls in place where a formal certification does not yet exist."
+effective_from: "2026-06-21"
+last_updated: "2026-06-21"
+---
+
+## The stance
+
+This page is intentionally honest about what is and is not certified. Graphor is operated by Synapse Inovação e Tecnologia LTDA., a company at an early-stage. It does not yet hold its own SOC 2 Type II or ISO 27001 certification. Stating that openly is the first compensating control.
+
+What this page commits to:
+
+- **No aspirational certification dates.** Where a certification is under evaluation, the page says so without binding to a delivery date. When a date is committed, this page is updated and the change history at the bottom records it.
+- **Every control claim in the rest of the Trust Center is verifiable.** Each row in the [compensating-controls inventory](#3-compensating-controls-inventory) below links to the Trust Center page that documents the control in implementation detail.
+- **Inherited certifications are listed verbatim with links.** Where Graphor relies on a subprocessor's certified posture, the certification is named with its issuing standard and the customer can read the same report under NDA.
+
+For enterprise customers that contractually require Graphor itself to hold a specific certification, see [§5](#5-how-to-request-audit-reports-and-discuss-certification-needs) at the bottom of this page for the path forward.
+
+## 1. Synapse's own certification status
+
+| Certification | Current status | Committed timeline | Compensating controls (see [§3](#3-compensating-controls-inventory)) |
+|---------------|----------------|---------------------|-----------------------------------------------------------------------|
+| **SOC 2 Type II** | Evaluating; no committed date | None today | Full set in [§3](#3-compensating-controls-inventory) |
+| **ISO/IEC 27001** | Evaluating; no committed date | None today | Full set in [§3](#3-compensating-controls-inventory) |
+| **ISO/IEC 27017** (cloud services security) | Evaluating; no committed date | None today | Inherited from Google Cloud (Cloud Run, Cloud SQL, GKE, GCS) — see [§2](#2-inherited-certifications) |
+| **ISO/IEC 27018** (PII in public cloud) | Evaluating; no committed date | None today | Inherited from Google Cloud — see [§2](#2-inherited-certifications) |
+| **ISO/IEC 27701** (privacy information management) | Not evaluated | None today | Compensated by LGPD / GDPR alignment per [§4](#4-regime-based-posture) |
+| **PCI DSS** | Not applicable to Synapse directly | n/a | Payment-card data is processed by Stripe — see [Subprocessors §5](/trust/subprocessors#5-payment-and-billing); Graphor stores only payment metadata |
+| **HIPAA** | Not in scope today | n/a | Graphor is not currently positioned as a HIPAA-Business-Associate; healthcare customers should discuss the gap before contract |
+| **FedRAMP** | Not in scope today | n/a | Out of scope — Graphor is not positioned for US-federal-government workloads |
+
+The "evaluating" status on SOC 2 Type II and ISO 27001 reflects an active assessment of when it makes sense to enter the audit cycle. Enterprise contracts that require either certification can accelerate the timeline — see [§5](#5-how-to-request-audit-reports-and-discuss-certification-needs).
+
+## 2. Inherited certifications
+
+Graphor's operational stack runs on subprocessors that carry the certifications listed below. Inheritance is not a substitute for Graphor holding its own certification, but it is the standard way that a SOC 2-pending company demonstrates that the upstream chain meets enterprise security expectations.
+
+| Subprocessor | Certifications and audit reports |
+|--------------|----------------------------------|
+| **Google Cloud Platform** (Cloud Run, Cloud SQL, GKE, GCS, KMS, Pub/Sub, BigQuery, Memorystore, Artifact Registry, Cloud Functions, Firebase Auth) | ISO/IEC 27001, 27017, 27018, 27701; SOC 1, SOC 2, SOC 3; PCI DSS Level 1; FedRAMP High; HIPAA BAA available. Reports: [Google Cloud compliance offerings](https://cloud.google.com/security/compliance/offerings). |
+| **Amazon Web Services** (Bedrock) | ISO/IEC 27001, 27017, 27018, 27701; SOC 1, SOC 2, SOC 3; PCI DSS Level 1; FedRAMP. Reports: [AWS compliance programs](https://aws.amazon.com/compliance/programs/). |
+| **OpenAI** (embeddings) | SOC 2 Type 2. Reports: [OpenAI Trust Portal](https://trust.openai.com/). |
+| **Cerebras** (chunk enrichment + fast tier) | SOC 2 Type 2. Reports: available on request from Cerebras under NDA. |
+| **Stripe** (payment processing) | PCI DSS Level 1; SOC 1, SOC 2 Type 2; ISO/IEC 27001. Reports: [Stripe Privacy and Compliance](https://stripe.com/privacy). |
+| **Neo4j AuraDB** (managed knowledge graph) | SOC 2 Type 2; ISO/IEC 27001. Reports: [Neo4j Trust Center](https://neo4j.com/trust-center/). |
+
+Each subprocessor's audit reports can be requested through Synapse via [privacy@graphorlm.com](mailto:privacy@graphorlm.com); the report itself is delivered by the subprocessor under their own NDA terms.
+
+## 3. Compensating controls inventory
+
+In the absence of Synapse's own SOC 2 or ISO 27001 certification, the following operational controls — already in place and documented elsewhere on the Trust Center — cover the gap that the certification would otherwise demonstrate.
+
+| Control area (SOC 2 / ISO 27001 mapping) | What Graphor does | Where it is documented |
+|-------------------------------------------|--------------------|------------------------|
+| Asset inventory and architecture | Public, sanitized architecture published; every component and data flow documented; production region pinned and verifiable per component. | [Architecture](/trust/architecture), [Data Residency](/trust/data-residency) |
+| Vendor and subprocessor management | Versioned subprocessor list; 30-day prior-notice commitment for material additions; inherited-certification inventory; related-party disclosure for Synapse Consultoria. | [Subprocessors](/trust/subprocessors) |
+| Encryption at rest and in transit | Google-managed AES-256 default; CMEK available on enterprise request; TLS 1.2+ enforced on every public surface. | [Trust Center Overview §3](/trust/overview#3-encryption-posture) |
+| Identity and access management | Per-project API tokens with TTL + last-used auditing; tier-aware observability access; Project-scoped Synapse-personnel access via Langfuse role assignment. | [Tenant Isolation](/trust/tenant-isolation) |
+| Logical tenant isolation | Single-tenant logical model with application-layer scoping at API, Postgres, Neo4j, Storage, and observability layers; per-layer failure-mode analysis published. | [Tenant Isolation §1](/trust/tenant-isolation#1-isolation-by-layer) |
+| Data retention and disposal | Infinite-until-DELETE posture; end-to-end delete cascade; customer-callable DSR API; bounded TTL on observability traces; 7-day Postgres backup + PITR window. | [Data Retention](/trust/data-retention) |
+| AI / model governance | Contractual no-training commitment from every active provider, with verbatim citations; tier-based provider declaration; explicit non-commitments around training-program opt-in, fine-tuning, and human review of customer content. | [Model Use and Training](/trust/model-use-and-training) |
+| Incident response and breach notification | 72-hour customer notification SLA after internal confirmation; 14-day post-mortem commitment; customer-side reporting path with safe-harbor. | [Incident Response](/trust/incident-response) |
+| Privacy program and DSR | Privacy policy published in English and Portuguese; DSR API satisfies LGPD art. 18 and GDPR art. 17; privacy contact channel monitored. | [Privacy Policy](/legal/privacy-policy), [Data Retention §3](/trust/data-retention#3-the-dsr-api) |
+| Contractual instruments | DPA template available for customer counter-signature; SCC-equivalent international transfer clauses; pass-through clauses referencing upstream DPAs. | [DPA Template](/legal/dpa-template) |
+| Audit logging | Customer-visible activity log surface (ingestion events, query events, API token use, deletes), with export path. | [Audit Logs](/trust/audit-logs) |
+| Vulnerability management | Container images built on official base images; dependency scanning in CI; security advisories monitored for every active subprocessor; quarterly review of patch posture. | Not yet published as a standalone Trust Center page — request via [privacy@graphorlm.com](mailto:privacy@graphorlm.com) |
+| Disaster recovery | Cloud SQL automated backups + PITR window; documented restore procedure that preserves customer DSR actions across recoveries. | [Data Retention §5](/trust/data-retention#5-backups-and-disaster-recovery), [Incident Response](/trust/incident-response) |
+| Business continuity | Single-region deployment is intentional; failure-mode planning documented; provider redundancy for AI inference (Cerebras + Bedrock both available). | [Data Residency §4](/trust/data-residency#4-why-us-central1), [Model Use and Training](/trust/model-use-and-training) |
+
+Enterprise customers performing a Graphor-specific security questionnaire can use this table as a cross-reference: for each line item on the questionnaire, identify the relevant control area and follow the link to the implementation detail.
+
+## 4. Regime-based posture (LGPD, GDPR)
+
+LGPD and GDPR are regulatory regimes, not certification schemes — there is no formal "LGPD-certified" stamp. Graphor's posture against each is documented as compliance by design, with the relevant articles cited next to the control that satisfies them:
+
+| Regime | Article / topic | Where Graphor's posture is documented |
+|--------|------------------|---------------------------------------|
+| LGPD art. 7º (legal bases) | Contractual necessity, consent, legal obligation, legitimate interests | [Privacy Policy](/legal/privacy-policy) |
+| LGPD art. 9º (transparency) | Privacy Policy, Trust Center, ToS | This site |
+| LGPD art. 18 (data-subject rights) | DSR API + privacy contact | [Data Retention §3](/trust/data-retention#3-the-dsr-api) |
+| LGPD art. 33 (international transfer) | SCC-equivalent clauses in every subprocessor DPA; single-region production; ZDR on OpenAI | [Data Residency §3](/trust/data-residency#3-international-transfer-regime) |
+| LGPD art. 38 (DPIA) | DPIA template for high-risk processing on request | Available on request via [privacy@graphorlm.com](mailto:privacy@graphorlm.com) |
+| LGPD art. 39 (subprocessor declaration) | Versioned subprocessor list with notification subscription | [Subprocessors](/trust/subprocessors) |
+| LGPD art. 48 (incident notification) | 72-hour SLA matches the ANPD-interpreted "prazo razoável" | [Incident Response](/trust/incident-response) |
+| GDPR art. 5 (data protection principles) | Mirrored by the same controls that satisfy LGPD art. 7º and 9º | This site |
+| GDPR art. 6 / 9 (lawful basis / special categories) | Same legal-basis statement as LGPD art. 7º; no processing of special-category data on a Graphor-product basis (customer may upload it as part of Customer Content under their own legal basis) | [Privacy Policy](/legal/privacy-policy) |
+| GDPR art. 15–22 (data-subject rights) | Same DSR API as LGPD art. 18 | [Data Retention §3](/trust/data-retention#3-the-dsr-api) |
+| GDPR art. 28 (processor obligations) | Codified in the DPA template | [DPA Template](/legal/dpa-template) |
+| GDPR art. 32 (security of processing) | Inherited from Google ISO 27001/27017/27018 + AWS Bedrock equivalents + the compensating controls in [§3](#3-compensating-controls-inventory) | This page |
+| GDPR art. 33 (breach notification) | Same 72-hour SLA as LGPD art. 48 | [Incident Response](/trust/incident-response) |
+| GDPR art. 44–49 (international transfer) | Same SCC-equivalent posture as LGPD art. 33 | [Data Residency §3](/trust/data-residency#3-international-transfer-regime) |
+| EOAB art. 7 (advocacy confidentiality, Brazil) | Reinforced by the no-training commitment, tier-aware observability default-off for enterprise (default for legal customers), and the DSR API that satisfies the sigilo profissional surface | [Model Use and Training](/trust/model-use-and-training), [Tenant Isolation §4](/trust/tenant-isolation#4-observability-traces) |
+
+## 5. How to request audit reports and discuss certification needs
+
+For enterprise customers:
+
+- **Subprocessor audit reports** (Google SOC 2, AWS SOC 2, OpenAI SOC 2 Type 2, etc.): request via [privacy@graphorlm.com](mailto:privacy@graphorlm.com). Reports are delivered by the subprocessor under their own NDA terms.
+- **A formal Synapse certification commitment** (specific SOC 2 timeline, ISO 27001 scope agreement, HIPAA BAA): request via [privacy@graphorlm.com](mailto:privacy@graphorlm.com). An enterprise contract with a binding certification clause is the path to bringing a specific audit cycle forward.
+- **A DPIA / Legitimate Interest Assessment** specific to your processing activity: Synapse can provide a Graphor-side template that you complete with your processing details, on request via [privacy@graphorlm.com](mailto:privacy@graphorlm.com).
+- **A custom security questionnaire**: Synapse will complete reasonable enterprise security questionnaires within 10 business days of receipt, citing the Trust Center pages above for the answers wherever they apply.
+
+## Executive intent statement
+
+> Synapse Inovação e Tecnologia LTDA. — the operator of Graphor — is committed to building the controls, the operational discipline, and the audit posture that regulated enterprise customers require. We are honest about what is certified today and what is not. We do not publish aspirational dates that we may miss. We do publish, in detail, the controls that are in place in lieu of those certifications, and we welcome customer audits of those controls under reasonable scoping.
+>
+> — Lucas Neves, Founder & CEO, Synapse Inovação e Tecnologia LTDA.
+
+## 6. Change history
+
+| Version | Date | Change |
+|---------|------|--------|
+| 1.0 | 2026-06-21 | Initial publication. |
+
+When a certification status changes (audit started, audit completed, scope expanded), this table is updated and subscribers to [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) receive an email.
+
+## Contact
+
+- Compliance, audit, and certification inquiries: [privacy@graphorlm.com](mailto:privacy@graphorlm.com)
+- Subscription to compliance-status change notifications: [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com)
+- Customer support: [support@graphorlm.com](mailto:support@graphorlm.com)

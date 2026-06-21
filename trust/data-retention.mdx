@@ -1,0 +1,133 @@
+---
+title: Data Retention and Deletion
+description: "How long Graphor retains each category of customer data, where it lives, how it is deleted, and the customer-controlled DSR mechanisms that satisfy LGPD art. 18 and GDPR art. 15–22."
+effective_from: "2026-06-21"
+last_updated: "2026-06-21"
+---
+
+## The posture
+
+Graphor retains primary customer data **indefinitely until the customer explicitly deletes it**. No automatic time-based pruning runs on sources, conversations, or extractions. The customer is the source of truth on retention; Graphor provides the API and UI to act on it.
+
+This posture is intentional. Regulated customers (legal, financial, healthcare) typically need to control retention themselves — for example, to align with a case-file matter-management retention schedule, with an audit obligation under CVM or Bacen rules, or with a patient-record retention requirement under CFM resolutions. A platform that prunes on a fixed schedule does not fit those constraints.
+
+Three commitments balance this posture against the right to deletion:
+
+1. **Every delete propagates end-to-end.** When the customer issues a delete, every backing store that holds the data — Postgres, Neo4j, Google Cloud Storage, the observability store — drops it.
+2. **A customer-callable DSR API satisfies LGPD art. 18 / GDPR art. 17.** The customer (or their data subjects, when the customer routes the request) can issue a verifiable deletion request through the API; the response confirms each store that was acted upon.
+3. **Observability traces have bounded server-side retention** (and a tier-aware default-off for enterprise) so that any incidental customer content that survives the masking floor does not accumulate indefinitely.
+
+The rest of this page documents what gets retained, where, for how long, and how to act on it.
+
+## 1. Retention by data category
+
+| Category | Where it lives | Default retention | Deletion mechanism |
+|----------|---------------|-------------------|--------------------|
+| **Source / `file_id`** — raw uploaded documents (PDF, DOCX, HTML, audio, video, etc.) | Google Cloud Storage bucket `graphorlm-prd-datasets-uc1` (`us-central1`) | Indefinite until explicit deletion. | `DELETE /api/v1/sources/{file_id}` or UI delete. Triggers the cascade in [§2](#2-the-delete-cascade) — including removal of the original document bytes from GCS. |
+| **Derived Content** — partitions, source chunks, embeddings, document/partition annotations | Managed Neo4j knowledge graph | Tied to the parent Source (same retention semantics, same delete cascade). | Deleted as part of the Source cascade. |
+| **Structured extractions** (results from `/data-extraction`) | Postgres | Tied to the parent Source. | Deleted as part of the Source cascade. |
+| **Conversation / `conversation_id`** — chat sessions, messages, summaries, observation records | Postgres (four cascading tables) | Indefinite until explicit deletion. | `DELETE /api/v1/conversations/{conversation_id}` (or UI). Cascade covers all four Postgres tables and, for any conversation that produced observability traces, the corresponding Langfuse traces via the [DSR API](#3-the-dsr-api). |
+| **Account Information** — user profile, email, organization name, project membership | Postgres | Until account deletion. | Account deletion request via [privacy@graphorlm.com](mailto:privacy@graphorlm.com) (an in-app self-service flow is on the roadmap). |
+| **API tokens** — hashed token records, scope, expiry, last-used timestamp/IP | Postgres | Indefinite until the token is revoked or (if `expires_at` is set) expires. | Revoke via UI; expired tokens are rejected at verification time and may be hard-deleted asynchronously. |
+| **Observability traces** — when tracing is enabled per project (see [§4](#4-observability-traces)) | Self-hosted Langfuse ClickHouse on Synapse's GKE cluster (`us-central1`) | **90 days** for Free/Pro-tier projects; **30 days** for Enterprise-tier projects that have explicitly enabled tracing (Enterprise default is OFF — no traces produced at all). | TTL on the trace tables purges automatically; customer can issue ad-hoc trace deletion via [DSR API](#3-the-dsr-api) by `conversation_id` or `user_id`. |
+| **Billing records** — Stripe customer/subscription identifiers, invoice metadata, payment-attempt logs | Postgres + Stripe | Retained as long as legally required to comply with Brazilian tax and accounting obligations (typically 5 years from invoice issuance). | Customer Content is **never** stored alongside billing records; deletion of an account does not delete billing history because doing so would violate legal record-keeping obligations. |
+| **Operational telemetry** — request paths, response codes, latency histograms, error stack traces | Google Cloud Logging | 30 days (Cloud Logging default; identifiers in logs are scrubbed via the same Brazilian PII mask used on observability traces). | Telemetry that contains identifiers can be purged on DSR request via [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
+| **Postgres backups** | Google Cloud SQL managed backups | Per Cloud SQL backup retention (7 days of automated daily backups + point-in-time recovery window). Backups are encrypted with Google-managed keys and are not customer-readable. | Backups follow the configured retention window and roll off automatically; an explicit out-of-cycle delete of backup contents is not exposed because backups exist to support disaster recovery, not as a primary customer-data surface. |
+| **GCS object versions** | Google Cloud Storage on `graphorlm-prd-datasets-uc1` | Object versioning **disabled** on the datasets bucket — a delete is a hard delete with no recoverable noncurrent version. | n/a (no recoverable previous version exists for deleted source documents). |
+
+## 2. The delete cascade
+
+When the customer (or the DSR API) issues a delete on a Source, the following cascade runs end-to-end. The delete is **not acknowledged** until every step completes successfully — partial failures roll back where possible and surface to the caller.
+
+1. **Flow references** — any flow that references the Source in its configuration has the reference removed and its downstream nodes marked as out-of-date.
+2. **Neo4j partition nodes** — every `__DocumentPartition__` derived from the Source is deleted.
+3. **Neo4j source node** — the `Document` node representing the Source is deleted.
+4. **File search store** — for builds that use Graphor's native RAG engine, the chunk vectors and full-text entries are removed from the per-dataset indexes.
+5. **Object storage** — the original document bytes are removed from the GCS datasets bucket via `storage_manager.delete()`. After this step there is no recoverable copy.
+6. **Cache invalidation** — any in-memory or Redis caches keyed on the `file_id` are invalidated.
+
+Conversation deletes follow the analogous four-step cascade across the Postgres tables (`SourcesConversationMessage`, `SourcesConversationSummary`, `SourcesObservationRecord`, `SourcesConversation`) plus a call to the [Trace DSR API](#3-the-dsr-api) for the corresponding Langfuse traces.
+
+**Defense in depth — GCS lifecycle backstop.** The GCS datasets bucket carries a lifecycle rule that acts as a backstop if the application-layer cascade ever fails to remove a stale object. The lifecycle rule is scoped to non-customer-data paths only (staging uploads, expired signed-URL artifacts); customer-content paths are not auto-deleted by lifecycle because doing so would contradict the infinite-until-DELETE posture in [§Posture](#the-posture). The lifecycle rule exists to clean up orphaned partials, not to enforce retention on Customer Content.
+
+## 3. The DSR API
+
+The Data Subject Request endpoints satisfy LGPD art. 18 (eliminação) and GDPR art. 17 (right to erasure). They are authenticated with a project-admin API token (see [Tenant Isolation](/trust/tenant-isolation) for the token model).
+
+| Endpoint | Purpose | Coverage |
+|----------|---------|----------|
+| `DELETE /api/v1/sources/{file_id}` | Delete a single Source and everything derived from it. | Triggers the full cascade in [§2](#2-the-delete-cascade). |
+| `DELETE /api/v1/conversations/{conversation_id}` | Delete a single conversation. | Cascades through Postgres conversation tables and the corresponding observability traces (via the trace DSR call). |
+| `DELETE /api/v1/dsr/traces` (body: `{ conversation_id }` or `{ user_id }`) | Bulk-delete observability traces by conversation or by user, without deleting the underlying conversation row. | Useful for trace-only deletion in projects where the customer wants to keep the conversation history but purge the trace surface. |
+| `POST /api/v1/dsr/export` (roadmap) | Bundle the user's data into an export package (LGPD art. 18 portabilidade). | Roadmap — not yet exposed. Customer can request manual export via [privacy@graphorlm.com](mailto:privacy@graphorlm.com) in the interim. |
+
+Each endpoint returns a JSON acknowledgement listing every backing store that was acted upon. Acknowledgements are persisted for 90 days so the customer can verify the action after the fact.
+
+Account-level deletion (delete the user account and every project owned by it) is handled out-of-band via [privacy@graphorlm.com](mailto:privacy@graphorlm.com) until the in-app self-service flow ships.
+
+## 4. Observability traces
+
+Graphor uses a self-hosted Langfuse instance on its own GKE cluster (`us-central1`) for application tracing. The full subprocessor characterization is in [Subprocessors](/trust/subprocessors); the model-use rules are in [Model Use and Training](/trust/model-use-and-training). This section covers the **retention and deletion** posture only.
+
+**Tier-aware default.** Whether your project's traces reach the observability store depends on the tier:
+
+- **Enterprise tier** — tracing is **off by default**. No traces are produced for Enterprise-tier projects unless the project owner explicitly enables tracing in project settings.
+- **Free and Pro tiers** — tracing is **on by default** with the Brazilian PII mask applied before send.
+
+**The mask.** When tracing is enabled (Enterprise opt-in or Free/Pro default), every string sent to the observability store passes through a regex-based mask that scrubs email addresses, CPF, CNPJ, BR phone numbers, and OAB registration patterns. The mask is a floor, not a substitute for the tier-aware default: customers with stricter PII concerns should keep tracing off rather than rely on the mask alone.
+
+**Server-side retention TTL.**
+
+- Free/Pro-tier traces: **90 days** then automatic purge from ClickHouse via TTL.
+- Enterprise-tier traces (when tracing has been opted in): **30 days** then automatic purge.
+
+**Customer-controlled deletion.** Independent of TTL, the customer can issue ad-hoc trace deletion at any time via the [`DELETE /api/v1/dsr/traces`](#3-the-dsr-api) endpoint. The endpoint covers traces by `conversation_id` (single conversation) or `user_id` (all conversations associated with a user).
+
+**Cascade integration.** Deleting a conversation via `DELETE /api/v1/conversations/{conversation_id}` automatically issues the trace deletion for that conversation — the customer does not need to call the trace endpoint separately for the conversation case.
+
+**Operational improvement use.** Synapse personnel access the observability store for incident debugging only. Customer Content is never extracted from the store for product improvement, model evaluation, or any other secondary purpose. See [Model Use and Training §6](/trust/model-use-and-training#6-what-graphor-explicitly-does-not-do) for the explicit non-commitments.
+
+## 5. Backups and disaster recovery
+
+Postgres backups exist solely to enable disaster recovery and are not a primary customer-data surface. The customer cannot read individual backup contents; the backup window exists so that a catastrophic database failure can be recovered without data loss.
+
+| Property | Value |
+|----------|-------|
+| Backup engine | Google Cloud SQL automated backups |
+| Backup retention | 7 days of daily backups, automatically rolled off |
+| Point-in-time recovery (PITR) | Available within the 7-day backup window |
+| Encryption | Google-managed keys; backups inherit the encryption posture of the primary instance |
+| Customer-readable | No |
+| Out-of-cycle deletion | Not exposed — backups are a disaster-recovery surface, not a retention surface |
+
+**A customer delete is not undone by a backup restore.** A restore from backup that pre-dates a customer delete would re-introduce the deleted data; in that scenario Synapse re-runs the original delete operation against the restored database before opening the restored instance to traffic, so the customer's deletion intent is preserved across recoveries. This is documented in the [Incident Response](/trust/incident-response) runbook.
+
+## 6. Billing data
+
+Billing records (Stripe customer and subscription identifiers, invoice metadata, payment-attempt timing) are retained separately from Customer Content and are subject to Brazilian tax and accounting record-keeping obligations (commonly 5 years from invoice issuance).
+
+- **Billing records do not contain Customer Content.** No PDF, no conversation, no prompt, no completion is stored alongside billing records.
+- **Deleting an account does not delete billing history**, because doing so would violate legal record-keeping obligations. Billing history is purged after the statutory retention window elapses.
+- **Stripe is the controller-of-record for full payment-card data.** Graphor stores only payment metadata (last 4 digits, card brand, billing address). For Stripe's own retention practices, see the [Stripe Privacy Policy](https://stripe.com/privacy).
+
+## 7. Customer responsibilities
+
+A few responsibilities sit on the customer side. These are listed here so that nothing surprises an auditor reviewing the end-to-end retention story:
+
+- **Export before delete.** Once a Source or conversation is deleted, the deletion is final (no GCS versioning on the datasets bucket). If you need a portable copy of your data for audit or migration, export it before issuing the delete.
+- **Token hygiene.** Customer-issued API tokens that are leaked, lost, or simply unused are not auto-revoked. Set `expires_at` on tokens that should not live forever, and revoke unused tokens promptly.
+- **DSR cascading from your own data subjects.** When a data subject of your customer (e.g., a person mentioned in a document you ingested) requests deletion from you under LGPD art. 18, you remain the controller. Graphor provides the DSR API in [§3](#3-the-dsr-api) so you can act on that request inside your project; the actual evaluation of whether the request applies is yours to make.
+
+## 8. Change history
+
+| Version | Date | Change |
+|---------|------|--------|
+| 1.0 | 2026-06-21 | Initial publication. |
+
+When the retention posture, the TTL, the DSR endpoint inventory, or the backup configuration changes, this table is updated and subscribers to [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) receive an email.
+
+## Contact
+
+- General privacy and DSR inquiries: [privacy@graphorlm.com](mailto:privacy@graphorlm.com)
+- Subprocessor and retention-policy notifications: [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com)
+- Customer support: [support@graphorlm.com](mailto:support@graphorlm.com)

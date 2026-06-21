@@ -1,0 +1,164 @@
+---
+title: Subprocessors
+description: "Complete list of third parties that may process customer data through Graphor, with role, data categories, region, and legal basis. Updated whenever a subprocessor is added, removed, or substantively changes posture."
+effective_from: "2026-06-21"
+last_updated: "2026-06-21"
+---
+
+## About this page
+
+Graphor is operated by **SYNAPSE INOVAÇÃO E TECNOLOGIA LTDA.**, a company organized under the laws of the Federative Republic of Brazil ("Synapse" or "we"). When you use the Graphor Service, Synapse acts as a data processor on your behalf. To deliver the Service, Synapse engages a limited set of third-party providers ("subprocessors") that may process customer data.
+
+This page is the canonical, versioned record of every active subprocessor in the Graphor production environment. It is intended for procurement, security, privacy, and compliance teams evaluating Graphor for use under LGPD, GDPR, and equivalent regimes.
+
+**What this page is**
+
+- A complete inventory of subprocessors that process Customer Content or Account Information in the Graphor production environment.
+- Updated whenever a subprocessor is added, removed, or changes the categories of data it processes, the region in which it processes, or its retention posture.
+- The reference cited by the [Graphor Data Processing Addendum](/legal/dpa-template), the [Privacy Policy](/legal/privacy-policy), and every other Trust Center page.
+
+**What this page is not**
+
+- A list of every software dependency or open-source library Graphor uses. Only third parties that **receive customer data** are listed.
+- A list of historical or deprecated subprocessors. Retired providers are removed from the table once their last data is purged; the [change history](#change-history) at the bottom records when they were removed.
+
+**Subscribe to changes.** Email [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) to be notified when this page changes. You will receive a single email per change with a summary and the link to the new revision. We commit to publishing material additions **at least 30 days before** they take effect in production, except when the addition is required to remediate an active security incident.
+
+---
+
+## 1. How to read these tables
+
+Each subprocessor is listed with the following attributes:
+
+| Column | Meaning |
+|--------|---------|
+| **Subprocessor** | Legal entity name and a link to the provider's main page. |
+| **Role** | A one-sentence description of what this provider does for Graphor. |
+| **Customer data processed** | The categories of customer data that may transit or be stored on this provider's infrastructure. |
+| **Region** | The geographic region(s) where processing takes place. |
+| **Legal basis / DPA** | The contractual instrument under which Synapse engages this subprocessor (typically a Data Processing Addendum incorporating Standard Contractual Clauses for international transfers). |
+
+Customer data categories used throughout the tables:
+
+- **Customer Content** — documents, web URLs, code repositories, audio, video, transcripts, and other materials you upload, ingest, or transmit to the Service.
+- **Derived Content** — chunks, embeddings, structured extractions, and conversation messages produced by the Service from Customer Content.
+- **Account Information** — name, email, organization name, account credentials, and account-level metadata.
+- **Billing Information** — billing address, partial payment data (last 4 digits of card, card brand), and Stripe customer / subscription identifiers. Graphor does not store full payment-card data.
+- **Operational Telemetry** — request paths, response codes, latencies, error stacks, and similar diagnostic data that may incidentally include identifiers but is not the primary purpose of the processing.
+
+---
+
+## 2. Cloud infrastructure (production)
+
+The Graphor production environment runs on Google Cloud Platform in a single GCP project, with one external regional dependency (AWS Bedrock for LLM serving). All production resources are pinned to `us-central1` (Iowa, USA) on GCP.
+
+| Subprocessor | Role | Customer data processed | Region | Legal basis / DPA |
+|--------------|------|-------------------------|--------|-------------------|
+| **Google LLC** ([Google Cloud](https://cloud.google.com/)) | Hosts the Graphor backend (Cloud Run), background workers (GKE), database (Cloud SQL Postgres), object storage (Cloud Storage), in-memory cache (Memorystore Redis), message queue (Pub/Sub), analytics warehouse (BigQuery), serverless functions (Cloud Functions), container registry (Artifact Registry), and encryption keys (Cloud KMS). | Customer Content (object storage), Derived Content (Postgres + Neo4j-managed-elsewhere), Account Information, Operational Telemetry. | All production GCP resources in `us-central1` (Iowa, USA). | [Google Cloud Data Processing Addendum](https://cloud.google.com/terms/data-processing-addendum) (incorporating Standard Contractual Clauses 2021/914). |
+| **Neo4j, Inc.** ([AuraDB](https://neo4j.com/cloud/aura/)) | Managed Neo4j knowledge graph hosting (source nodes, document partitions, source chunks, build/version metadata, per-dataset vector and fulltext indexes). | Customer Content (graph representation of partitioned source documents), Derived Content (chunks, embeddings, document/partition metadata). | Managed AuraDB instance in a North American region. | [Neo4j AuraDB Data Processing Addendum](https://neo4j.com/legal/data-protection-addendum/) (incorporating Standard Contractual Clauses). |
+| **Amazon Web Services, Inc.** ([AWS Bedrock](https://aws.amazon.com/bedrock/)) | Hosts the Anthropic Claude family of large language models on AWS managed infrastructure. Graphor calls Bedrock for all standard-tier `sources.ask` and `/data-extraction` requests, and for the fast-tier fallback path. | Customer Content + Derived Content sent as part of a prompt (typically retrieved chunks plus the user's question); model completions returned from Bedrock to Graphor. | AWS US regions only in production (`us-east-1`, `us-east-2`, `us-west-1`, `us-west-2`). The São Paulo region (`sa-east-1`) is configured as an optional failover but is not active in standard routing. | [AWS Data Processing Addendum](https://aws.amazon.com/compliance/gdpr-center/) + [AWS Bedrock data-protection commitments](https://aws.amazon.com/bedrock/faqs/) (no training on customer inputs/outputs; not shared with model providers). |
+
+---
+
+## 3. AI model providers
+
+Graphor uses multiple AI providers, segmented by role. None of the providers below uses customer content to train models. Verbatim citations are reproduced in the [Model Use and Training](/trust/model-use-and-training) page.
+
+| Subprocessor | Role | Customer data processed | Region | Legal basis / DPA |
+|--------------|------|-------------------------|--------|-------------------|
+| **Anthropic, PBC** ([Claude](https://www.anthropic.com/)) | Owns the Claude family of large language models. **Customer data never reaches Anthropic directly** — all Claude inference is served via AWS Bedrock (see [§2](#2-cloud-infrastructure-production)). This row records Anthropic's own model-owner commitments. | None (data does not transit Anthropic's own infrastructure). | n/a (served by AWS Bedrock). | [Anthropic Commercial Terms of Service](https://www.anthropic.com/legal/commercial-terms) — Section B: "Anthropic may not train models on Customer Content from Services." |
+| **OpenAI, L.L.C.** ([OpenAI API](https://platform.openai.com/)) | Provides the `text-embedding-3-small` embedding model used during native RAG indexing (chunks → vectors) and, when explicitly enabled by a customer, for optional reranking. | Derived Content (chunked text from Customer Content, sent for embedding). | OpenAI does not pin regional residency in basic documentation. Graphor is enrolled in **OpenAI Zero Data Retention (ZDR)**, which eliminates the default 30-day abuse-monitoring log for embedding requests. | [OpenAI API data usage policies](https://developers.openai.com/api/docs/guides/your-data) — default no-training since 2023-03-01; ZDR enrollment eliminates retention. |
+| **Cerebras Systems, Inc.** ([Cerebras Inference](https://www.cerebras.ai/)) | Serves the `gpt-oss-120b` model used for (a) chunk enrichment during native RAG indexing (per-page and per-document annotations appended to chunk text before embedding) and (b) the fast tier of `sources.ask` and `/data-extraction` (`thinking_level=fast`). | Customer Content + Derived Content (chunk text for enrichment; user question + retrieved chunks for fast-tier inference). | US-based infrastructure; processing may occur in any Cerebras data center. | [Cerebras Terms of Use](https://www.cerebras.ai/terms-of-service) — "the foregoing does not grant Cerebras the right to use Service Content for the purpose of training or fine-tuning models"; [Cerebras Privacy Policy](https://www.cerebras.ai/privacy-policy) — "We do not retain inputs and outputs associated with our training, inference and chatbot Services." |
+
+---
+
+## 4. Observability (tier-dependent)
+
+Graphor uses a single observability platform for application tracing. Whether your project's traces reach it is **tier-dependent**:
+
+- **Enterprise tier** — observability tracing is **off by default**. Customer prompts, completions, and chunk content are not sent to the observability store unless the project owner explicitly enables tracing.
+- **Free and Pro tiers** — observability tracing is **on by default** with the Brazilian PII mask described below. The project owner can disable tracing at any time from the project settings.
+
+| Subprocessor | Role | Customer data processed | Region | Legal basis / DPA |
+|--------------|------|-------------------------|--------|-------------------|
+| **Langfuse GmbH** ([Langfuse](https://langfuse.com/)) — **self-hosted by Synapse** | Open-source LLM observability platform. Graphor runs Langfuse on its own Google Kubernetes Engine cluster (Langfuse the company does not receive customer data). | When tracing is enabled per project: user questions (capped at 4 000 characters), LLM input/output for generation spans, tool call metadata, model and routing metadata. **Tool-output chunk content is summarized to file metadata only**; memory/compactor inputs are sent only as length + 200-character previews. **A global Brazilian PII mask** scrubs email, CPF, CNPJ, BR phone, and OAB patterns from any string before send. | `us-central1` (Iowa, USA) — same GCP project as the rest of the production environment. | Self-hosted on Synapse infrastructure under the [Google Cloud DPA](https://cloud.google.com/terms/data-processing-addendum). No third-party Langfuse cloud or Langfuse company personnel have access to customer traces. |
+
+**Trace retention**: 90 days for Free/Pro tiers, 30 days for any Enterprise-tier project that has explicitly opted in. Traces can also be deleted on demand via the customer-controlled DSR API. Full detail in [Data Retention](/trust/data-retention).
+
+---
+
+## 5. Payment and billing
+
+Stripe processes payments for Graphor subscriptions. Customer Content does not transit Stripe.
+
+| Subprocessor | Role | Customer data processed | Region | Legal basis / DPA |
+|--------------|------|-------------------------|--------|-------------------|
+| **Stripe, Inc.** ([Stripe](https://stripe.com/)) | Payment processor for Graphor subscriptions. Synapse does not store full credit-card data — payment-method details are submitted directly by the customer to Stripe and only payment metadata (Stripe customer/subscription identifier, last 4 digits, card brand, billing address) is returned to Graphor. | Billing Information only. **No Customer Content, Derived Content, or product usage data is shared with Stripe.** | Global (Stripe's standard distributed processing). | [Stripe Data Processing Addendum](https://stripe.com/legal/dpa) (incorporating Standard Contractual Clauses). |
+
+---
+
+## 6. Authentication
+
+Firebase Authentication is used for Graphor account sign-in (Google OAuth). Synapse does not directly handle Google account credentials — Firebase Auth issues an ID token after the user completes Google's sign-in flow.
+
+| Subprocessor | Role | Customer data processed | Region | Legal basis / DPA |
+|--------------|------|-------------------------|--------|-------------------|
+| **Google LLC** ([Firebase Authentication](https://firebase.google.com/products/auth)) | Sign-in and identity provider for Graphor user accounts (Google OAuth). Issues identity tokens validated by the Graphor backend; does not directly access Graphor application data. | Account Information (email, display name, Google account identifier). **No Customer Content or Derived Content reaches Firebase Auth.** | Multi-region Google infrastructure. | [Google Cloud Data Processing Addendum](https://cloud.google.com/terms/data-processing-addendum) (Firebase services are included). |
+
+---
+
+## 7. Marketing site only
+
+The following subprocessors are loaded **only on the public marketing surfaces** (`graphorlm.com` and the Graphor documentation site). They do not have access to Customer Content, Derived Content, or Account Information.
+
+| Subprocessor | Role | Data processed | Region | Legal basis / DPA |
+|--------------|------|----------------|--------|-------------------|
+| **Google LLC** ([Google Analytics 4](https://analytics.google.com/)) | Anonymous and identifier-linked visit analytics for the public marketing site. **Loaded only after the visitor grants analytics consent** via the cookie consent banner. **Removed from the legal routes** (`/privacy-policy`, `/terms-of-service`) by design — no analytics fire on legal pages regardless of consent. | Visitor IP address, browser type/version, operating system, pages visited, click events. | Multi-region Google infrastructure. | [Google Cloud Data Processing Addendum](https://cloud.google.com/terms/data-processing-addendum). |
+
+---
+
+## 8. Related-party disclosure
+
+SYNAPSE INOVAÇÃO E TECNOLOGIA LTDA. operates two distinct lines of business under the same legal entity:
+
+1. **Graphor** — the self-service Software-as-a-Service product documented on this site.
+2. **Synapse Consultoria** — a consultancy practice that builds custom software systems for end clients.
+
+Synapse Consultoria projects may, like any other Graphor customer, consume the Graphor product via its public REST API. When they do, they sign the standard [Graphor Data Processing Addendum](/legal/dpa-template) on the same terms as any unrelated third-party customer; the same per-project API token model, retention defaults, model-use commitments, and incident-response SLA apply. There is no privileged data path, no shared credential, and no preferential subprocessor treatment between Synapse Consultoria and Graphor: the contractual relationship is operationally arm's length and is disclosed here so that customers, auditors, and regulators can evaluate it.
+
+If you have questions about a specific Synapse Consultoria project that consumes Graphor, contact us at [privacy@graphorlm.com](mailto:privacy@graphorlm.com).
+
+---
+
+## 9. Inherited certifications
+
+Synapse does not yet hold its own SOC 2 Type II or ISO 27001 certifications (see [Compliance](/trust/compliance) for current status and roadmap). The subprocessors listed above carry certifications that Synapse inherits as part of the contractual relationship:
+
+| Subprocessor | Inherited certifications and audit reports |
+|--------------|--------------------------------------------|
+| Google Cloud (incl. Firebase Auth) | ISO/IEC 27001, 27017, 27018; SOC 1, SOC 2, SOC 3; PCI DSS Level 1; FedRAMP. |
+| Amazon Web Services (Bedrock) | ISO/IEC 27001, 27017, 27018, 27701; SOC 1, SOC 2, SOC 3; PCI DSS Level 1; FedRAMP. |
+| OpenAI | SOC 2 Type 2. |
+| Cerebras | SOC 2 Type 2. |
+| Stripe | PCI DSS Level 1; SOC 1, SOC 2 Type 2; ISO/IEC 27001. |
+| Neo4j AuraDB | SOC 2 Type 2; ISO/IEC 27001. |
+
+These reports are made available to Graphor enterprise customers under NDA on request to [privacy@graphorlm.com](mailto:privacy@graphorlm.com).
+
+---
+
+## 10. Change history
+
+| Version | Date | Change |
+|---------|------|--------|
+| 1.0 | 2026-06-21 | Initial publication of the Trust Center subprocessor list. |
+
+When this page changes materially, this table is updated and subscribers to [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) receive an email.
+
+---
+
+## Contact
+
+- General privacy and DPA inquiries: [privacy@graphorlm.com](mailto:privacy@graphorlm.com)
+- Subprocessor change notifications: [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com)
+- Customer support: [support@graphorlm.com](mailto:support@graphorlm.com)

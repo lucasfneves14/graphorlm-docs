@@ -1,0 +1,185 @@
+---
+title: Privacy Policy
+description: "How Graphor (operated by SYNAPSE INOVAÇÃO E TECNOLOGIA LTDA.) collects, uses, retains, and shares personal data — and how data subjects exercise their rights under LGPD, GDPR, and equivalent regimes."
+effective_from: "2026-06-21"
+last_updated: "2026-06-21"
+---
+
+<Note>
+This Privacy Policy is also published in [Portuguese](/legal/privacy-policy-pt-BR). Both versions are authoritative; in case of conflict between the two, the Portuguese version prevails for Brazilian data subjects and the English version for all others.
+</Note>
+
+## 1. Who we are
+
+Graphor is operated by **SYNAPSE INOVAÇÃO E TECNOLOGIA LTDA.** ("Synapse," "Graphor," "we," "us," "our"), a company organized under the laws of the Federative Republic of Brazil, with principal place of business in Brazil.
+
+For privacy-related communications, including the exercise of data-subject rights, contact us at [privacy@graphorlm.com](mailto:privacy@graphorlm.com). The privacy mailbox is monitored by Synapse and routed to the responsible team within one business day; substantive responses are provided within the timelines required by applicable law (typically 15 days under LGPD art. 19, one month under GDPR art. 12).
+
+## 2. Scope of this Policy
+
+This Policy applies to:
+
+- The Graphor application (`https://app.graphorlm.com`)
+- The Graphor documentation site (`https://docs.graphorlm.com`)
+- The Graphor marketing site (`https://graphorlm.com`)
+- The Graphor REST API, SDKs, and MCP transports
+- Customer-facing communications from Synapse (email, support tickets, in-app notifications)
+
+This Policy does **not** apply to third-party services that integrate with Graphor on your behalf (your CI/CD pipeline, your downstream applications). Those services are governed by their own privacy notices.
+
+## 3. Personal data we collect
+
+We collect personal data in the following categories. The legal basis for each is in [§5](#5-legal-bases-for-processing); the retention period in [§7](#7-retention-and-deletion).
+
+| Category | Examples | When we collect it |
+|----------|----------|---------------------|
+| **Account Information** | Full name, email address, password hash, organization name, Google account identifier (when you sign in with Google). | When you create an account or sign in. |
+| **Professional Information** | Job title, company name, professional background, relationship to Synapse. | When you provide it during signup, onboarding, or sales interactions. |
+| **Contact Information** | Email address, mailing address, phone number, communication preferences. | When you provide it via forms, signups, or sales interactions. |
+| **Customer Content** | Any documents, web URLs, code repositories, audio, video, transcripts, conversations, and other materials you upload, ingest, or transmit to the Service. | When you use the Service to ingest, query, or extract data. |
+| **Derived Content** | Chunks, embeddings, structured extractions, and conversation messages produced by the Service from Customer Content. | When the Service processes your Customer Content. |
+| **Payment Information** | Billing address, partial payment data (last 4 digits of card, card brand), Stripe customer / subscription identifiers. | When you subscribe to a paid plan. **Synapse does not store full credit-card data** — payment-card information is submitted directly by you to Stripe; see [§6](#6-sharing-of-personal-data-subprocessors). |
+| **Event, Contest and Survey Information** | Information you provide when signing up for an event, entering a contest, completing a survey, or submitting a testimonial. | When you opt in to one of these activities. |
+| **Feedback and Support Information** | Contents of support tickets, custom messages, recordings of calls (where permitted and disclosed). | When you contact us for support or feedback. |
+| **Operational Telemetry** | Request paths, response codes, latencies, error stack traces, IP address, browser type, operating system. May incidentally include identifiers but is not the primary purpose of the processing. | Automatically, when you use the Service. |
+| **Marketing-site analytics** | Anonymized visit telemetry (IP address, browser/OS, pages visited, click events) — loaded only after you grant analytics consent via the cookie banner. **Not loaded on the legal routes** (`/privacy-policy`, `/terms-of-service`). | When you visit the marketing site and grant analytics consent. |
+
+## 4. How we use personal data
+
+We use each category of personal data only for the purposes listed below. We do not sell personal data, and we do not use it for purposes beyond what is described here without your explicit consent.
+
+| Category | Purposes |
+|----------|----------|
+| Account Information | Create and administer your account; authenticate you; communicate with you about your account, security, and service operations. |
+| Professional Information | Tailor onboarding and communication; provide customer support; understand who is using the Service to improve product fit. |
+| Contact Information | Deliver service-related communications; with your consent, send newsletters and product updates. |
+| Customer Content | Provide the Service you requested — partition, chunk, embed, index, retrieve, answer questions, extract structured data. **We do not use Customer Content to train any AI model** (see [§8](#8-ai-model-use-and-training) and [Model Use and Training](/trust/model-use-and-training)). |
+| Derived Content | Power retrieval and inference for the Service; persist your conversation history and extractions for your future access; satisfy your data-subject deletion requests. |
+| Payment Information | Process your payment; issue invoices and receipts; comply with Brazilian tax and accounting record-keeping obligations. |
+| Event, Contest and Survey Information | Administer the event / contest / survey; respond to your submission; communicate with you. |
+| Feedback and Support Information | Investigate and respond to your inquiries; improve the Service. |
+| Operational Telemetry | Operate and monitor the Service; detect and prevent abuse; troubleshoot incidents; improve performance and reliability. Identifiers in telemetry are masked using the Brazilian PII regex described in [Data Retention §4](/trust/data-retention#4-observability-traces). |
+| Marketing-site analytics | Understand site traffic and content effectiveness — only with consent and only on non-legal routes. |
+
+## 5. Legal bases for processing
+
+Under LGPD art. 7º and GDPR art. 6, we process personal data on one or more of the following bases:
+
+| Legal basis | Where it applies |
+|-------------|------------------|
+| **Contractual necessity** (LGPD art. 7º, V / GDPR art. 6(1)(b)) | Provision of the Service per the Terms of Service and any Data Processing Addendum: account creation, processing Customer Content, supporting your use of the Service. |
+| **Consent** (LGPD art. 7º, I / GDPR art. 6(1)(a)) | Marketing communications; non-essential cookies (marketing-site analytics); optional features that require additional data collection. |
+| **Legal obligation** (LGPD art. 7º, II / GDPR art. 6(1)(c)) | Compliance with Brazilian tax law (retention of invoice and payment records), accounting law, and lawful requests from authorities. |
+| **Legitimate interests** (LGPD art. 7º, IX / GDPR art. 6(1)(f)) | Security monitoring, fraud prevention, service improvement based on operational telemetry, recovery of overdue payments. Where we rely on legitimate interests, we balance them against your rights and freedoms; you can object via [§9](#9-your-rights-and-how-to-exercise-them). |
+
+We do not rely on the "vital interests" or "public task" bases for any processing activity.
+
+## 6. Sharing of personal data (subprocessors)
+
+We share personal data with the third-party subprocessors listed on our [Subprocessors page](/trust/subprocessors). The list is versioned, includes the role each subprocessor plays, the categories of data we share with them, the region in which they process data, and the contractual instrument under which we engage them.
+
+In summary, subprocessors fall into the following groups:
+
+- **Cloud infrastructure** — Google Cloud Platform (production hosting), Amazon Web Services (AI model serving via Bedrock), Neo4j AuraDB (managed knowledge graph).
+- **AI model providers** — Anthropic (via AWS Bedrock), OpenAI (embeddings), Cerebras (chunk enrichment and fast tier).
+- **Payment** — Stripe (subscriptions and invoicing).
+- **Authentication** — Firebase Authentication (Google sign-in).
+- **Observability** — Self-hosted Langfuse (operational tracing).
+- **Marketing-site analytics** — Google Analytics (consent-gated, marketing site only).
+
+Subscribe to [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) to be notified at least 30 days before any material subprocessor change takes effect, except where an immediate change is required to remediate a security incident.
+
+We do not sell personal data and do not share it for behavioral advertising.
+
+## 7. Retention and deletion
+
+We retain personal data only for as long as necessary to fulfil the purposes for which it was collected, subject to longer retention where required by law (such as Brazilian tax and accounting record-keeping for invoices and payment records, commonly five years).
+
+The specific retention rules per data category — including the **infinite-until-explicit-DELETE** posture for Customer Content and Conversations and the bounded TTL for observability traces — are documented in detail on the [Data Retention](/trust/data-retention) page.
+
+You can issue a deletion request at any time:
+
+- **Sources and conversations** via the [DSR API](/trust/data-retention#3-the-dsr-api) (`DELETE /api/v1/sources/{file_id}` and `DELETE /api/v1/conversations/{conversation_id}`).
+- **Observability traces** via the same DSR API (`DELETE /api/v1/dsr/traces`).
+- **Account deletion** by emailing [privacy@graphorlm.com](mailto:privacy@graphorlm.com).
+
+Billing records are retained for as long as required by Brazilian tax and accounting law, even after account deletion.
+
+## 8. AI model use and training
+
+**We do not use Customer Content to train any AI model — neither Synapse's own models nor any subprocessor's models.** This is a contractual commitment that rests on three layers:
+
+1. Synapse's Terms of Service: "Synapse does not train AI models using User Content."
+2. Each AI subprocessor's contractual no-training clause, with verbatim citations published on the [Model Use and Training](/trust/model-use-and-training#4-per-provider-evidence-verbatim) page.
+3. Operational controls: Synapse does not opt in to any provider's training programs, does not maintain a fine-tuning pipeline on customer corpora, and does not provide a flag through the API that would cause Customer Content to be used for training.
+
+The [Model Use and Training](/trust/model-use-and-training) page describes the full picture: which providers serve which inference tier, what data reaches each provider, and what each provider commits to do with that data.
+
+## 9. Your rights and how to exercise them
+
+Under LGPD art. 18 and GDPR art. 15–22, you have the following rights with respect to personal data we hold about you:
+
+| Right | What it means | How to exercise |
+|-------|---------------|------------------|
+| **Confirmation and access** (LGPD art. 18, I and II / GDPR art. 15) | Confirm that we process your personal data; access a copy of that data. | Email [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
+| **Correction** (LGPD art. 18, III / GDPR art. 16) | Correct incomplete, inaccurate, or out-of-date data. | Edit in your account settings, or email [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
+| **Deletion** (LGPD art. 18, VI / GDPR art. 17) | Delete personal data we no longer need, subject to legal retention obligations. | Use the [DSR API](/trust/data-retention#3-the-dsr-api), or email [privacy@graphorlm.com](mailto:privacy@graphorlm.com) for account-level deletion. |
+| **Portability** (LGPD art. 18, V / GDPR art. 20) | Receive your data in a structured, commonly used, machine-readable format. | Email [privacy@graphorlm.com](mailto:privacy@graphorlm.com) — an in-app export API is on the roadmap; interim manual export is provided on request. |
+| **Restriction of processing** (LGPD art. 18, IV / GDPR art. 18) | Restrict processing pending verification of accuracy or while an objection is evaluated. | Email [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
+| **Objection** (LGPD art. 18, § 2º / GDPR art. 21) | Object to processing based on legitimate interests or for direct marketing. | Email [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
+| **Withdrawal of consent** (LGPD art. 8º, § 5º / GDPR art. 7(3)) | Withdraw consent for processing based on consent, without affecting prior lawful processing. | Adjust the cookie banner or your communication preferences; email [privacy@graphorlm.com](mailto:privacy@graphorlm.com) for other consent-based processing. |
+| **Information about subprocessors** (LGPD art. 18, VII / GDPR art. 13) | Know with whom we share your data. | See the [Subprocessors page](/trust/subprocessors). |
+| **Complaint to a supervisory authority** (LGPD art. 18, parágrafo único / GDPR art. 77) | File a complaint with the data protection authority — ANPD in Brazil, the relevant supervisory authority in the EU. | Contact us first via [privacy@graphorlm.com](mailto:privacy@graphorlm.com); we will assist where we can, but you may always reach the authority directly. |
+
+We respond to data-subject requests within the timelines required by applicable law (15 days under LGPD art. 19, one month under GDPR art. 12, with possible extension for complex requests). The first response includes either the requested information or, where we need to verify your identity or scope the request further, a description of the next step.
+
+## 10. International transfer of personal data
+
+We process personal data in the United States. The relevant production region (`us-central1`, Iowa, USA) and AI-provider regions are documented on the [Data Residency](/trust/data-residency) page.
+
+Under LGPD art. 33 and GDPR art. 44–49, international transfers are covered by:
+
+- **Google Cloud Data Processing Addendum**, incorporating Standard Contractual Clauses 2021/914 (covers Cloud Run, Cloud SQL, GKE, GCS, Memorystore, Pub/Sub, BigQuery, Cloud Functions, Artifact Registry, Cloud KMS, and Firebase Authentication).
+- **AWS Data Processing Addendum**, incorporating Standard Contractual Clauses (covers AWS Bedrock).
+- **OpenAI Data Processing Addendum**, with Zero Data Retention enrollment.
+- **Cerebras Terms of Use and Privacy Policy**, with explicit zero-retention commitment.
+- **Stripe Data Processing Addendum**, incorporating Standard Contractual Clauses.
+- **Neo4j AuraDB Data Processing Addendum**, incorporating Standard Contractual Clauses.
+
+Customers in the European Economic Area, Switzerland, or the United Kingdom: the Standard Contractual Clauses referenced above include the modules required for processor-to-processor and controller-to-processor transfers under GDPR art. 46(2)(c). Copies are available under NDA via [privacy@graphorlm.com](mailto:privacy@graphorlm.com).
+
+## 11. Security
+
+We protect personal data using industry-standard controls — including encryption at rest (Google-managed AES-256 by default; CMEK on enterprise request), encryption in transit (TLS 1.2+), logical tenant isolation, per-project API tokens with TTL and audit, and a 72-hour breach-notification SLA. The full inventory is on the [Trust Center](/trust/overview).
+
+No system is completely secure. Where we suffer a confirmed security incident that affects your personal data, we notify you within 72 hours of internal confirmation per our [Incident Response](/trust/incident-response) commitment.
+
+## 12. Cookies and similar technologies
+
+The Graphor sites use cookies in two categories:
+
+- **Strictly necessary cookies** — required to operate the Service (session cookies, authentication tokens, CSRF protection). These are not subject to consent because they are necessary to provide the Service you requested.
+- **Analytics cookies** — Google Analytics, loaded **only after you grant analytics consent** via the cookie banner on the marketing site. Analytics cookies are **not** loaded on the legal routes (`/privacy-policy`, `/terms-of-service`) regardless of consent. You can withdraw your consent at any time via the cookie preferences link in the site footer.
+
+We do not use marketing or advertising cookies, and we do not participate in cross-site behavioral advertising networks.
+
+## 13. Children's privacy
+
+The Service is not directed to children under the age of majority (typically 18) in their jurisdiction. We do not knowingly collect personal data from such children. If you believe a child has provided personal data to us, please contact [privacy@graphorlm.com](mailto:privacy@graphorlm.com) and we will delete the data.
+
+## 14. Changes to this Policy
+
+We may update this Policy from time to time. When we do, the "Last updated" date in the front matter changes, and the change history below records the change. For material changes, we notify users by email and post a prominent notice on the Service for at least 30 days before the change takes effect.
+
+## 15. Change history
+
+| Version | Date | Change |
+|---------|------|--------|
+| 2.0 | 2026-06-21 | Comprehensive rewrite. Aligned with LGPD art. 18 and GDPR art. 15–22 rights. Documents the no-training commitment, tier-aware observability, DSR API, international-transfer regime, and cookie-consent posture. Removes references to subprocessors no longer in the production stack. |
+| 1.0 | 2025-10-07 | Prior version (legacy). |
+
+## Contact
+
+- Privacy, data-subject requests, and DPA inquiries: [privacy@graphorlm.com](mailto:privacy@graphorlm.com)
+- Subscription to privacy-policy and subprocessor change notifications: [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com)
+- Customer support: [support@graphorlm.com](mailto:support@graphorlm.com)

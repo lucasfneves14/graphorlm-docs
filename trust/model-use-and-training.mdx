@@ -1,0 +1,168 @@
+---
+title: Model Use and Training
+description: "How Graphor uses AI models, what customer data reaches which provider, and the contractual commitments that prevent customer content from being used to train any model."
+effective_from: "2026-06-21"
+last_updated: "2026-06-21"
+---
+
+## The commitment
+
+**Customer Content sent to Graphor is never used to train any AI model — neither Graphor's own models nor the models of any subprocessor in the inference chain.**
+
+This is a contractual commitment, not just a best-effort promise. It rests on three layers:
+
+1. **Synapse Terms of Service** — "Synapse does not train AI models using User Content."
+2. **Per-provider contractual no-training clauses** — every AI subprocessor in the Graphor production chain (AWS Bedrock, OpenAI, Cerebras) has a published no-training policy that Graphor relies on by contract. Verbatim citations are in [§4 below](#4-per-provider-evidence-verbatim).
+3. **Operational controls** — Graphor does not opt in to any provider's training programs, does not maintain a fine-tuning pipeline on customer corpora, and routes traffic only through provider tiers with the no-training default.
+
+This page is the canonical reference for that commitment. The [Subprocessors](/trust/subprocessors) page lists who sees customer data; this page documents what they are allowed to do with it.
+
+## 1. What gets to an AI provider
+
+Two distinct moments send Customer Content (or content derived from it) to an external AI provider. Both are governed by the no-training commitment above.
+
+### 1.1 Indexing time (once per build)
+
+When you ingest a new source (or rebuild an existing one), Graphor produces a knowledge representation for retrieval. This involves two AI providers:
+
+| Step | Provider | What is sent | What comes back |
+|------|----------|--------------|-----------------|
+| Chunk enrichment | **Cerebras** (`gpt-oss-120b`) | Chunked text from your source + per-page and per-document metadata annotations to be appended to the chunk. | Enriched chunk text for embedding. |
+| Embedding | **OpenAI** (`text-embedding-3-small`) | The enriched chunk text. | A 1 536-dimensional vector. |
+
+The vectors are stored in Graphor's own Neo4j knowledge graph. After embedding, **no further indexing-time traffic to either provider occurs for that build**.
+
+### 1.2 Query time (per `sources.ask` or `/data-extraction` request)
+
+When a user asks a question or runs a structured extraction, Graphor routes the request to one of two **tiers** based on the `thinking_level` parameter the caller provides.
+
+| `thinking_level` | Tier | Provider chain | Latency profile |
+|-----------------|------|----------------|-----------------|
+| `fast` | **Fast tier** | **Cerebras** (`gpt-oss-120b`) inference. If the Cerebras path is unavailable, the request falls back to the Standard tier provider. | Sub-second answers for short queries. |
+| `balanced`, `accurate` (default), `max` | **Standard tier** | **Anthropic Claude** family, hosted on **AWS Bedrock**. The `thinking_level` controls the reasoning effort applied to the same model, from medium effort up to maximum extended thinking. | Several seconds for `balanced`; tens of seconds for `accurate` and `max` on long-context reasoning. |
+
+What is sent on each request:
+
+- The user's question text
+- A bounded set of chunks retrieved from your knowledge graph (relevant snippets, with provenance metadata)
+- The system prompt and conversation history for that session
+- For `/data-extraction` requests: the JSON Schema describing the expected output shape
+
+What comes back: the model's textual answer (or structured extraction matching the schema), plus token usage metadata for billing and observability.
+
+**Customer Content does not leave the Graphor production environment** except as required to fulfill one of these two flows. There is no batch upload to provider training endpoints, no nightly export, and no cross-customer aggregation.
+
+## 2. Customer-controllable knobs
+
+The following parameters and project-level settings give the customer direct control over what touches an AI provider and how:
+
+| Knob | Where | Default | What it controls |
+|------|-------|---------|------------------|
+| `thinking_level` | Per request on `sources.ask` and `/data-extraction` | `accurate` (Standard tier) | Routes the request to the Fast or Standard tier as described in [§1.2](#12-query-time-per-sourcesask-or-data-extraction-request). Set `fast` for low-latency answers, `max` for long-context reasoning. |
+| Reranker | Project setting | **Off** | When enabled, applies an OpenAI reranking pass to retrieved chunks before final answer composition. Off by default — when off, OpenAI is not invoked at query time. |
+| Hybrid search | Project setting | **Off** | When enabled, combines vector and full-text search (Postgres FTS, no LLM). No additional AI subprocessor involvement. |
+| Observability tracing | Project setting (tier-aware default) | **Off for Enterprise tier projects; On for Free/Pro tier projects** with the Brazilian PII mask applied before send | When enabled, prompts and completions are sent to Graphor's self-hosted observability store (Langfuse on GKE). See [Tenant Isolation](/trust/tenant-isolation) and [Data Retention](/trust/data-retention). |
+
+The customer cannot opt **in** to any model-training program through Graphor's API — there is no flag, parameter, or setting that would cause Customer Content to be used for training.
+
+## 3. What Graphor uses Customer Content for
+
+For transparency, here is the complete enumeration of how Customer Content is used inside the Graphor production environment:
+
+1. **Storage** — the raw source you upload is stored in Graphor's object storage (Google Cloud Storage, `us-central1`) for as long as the source exists in your project. Deleted on customer DSR action per [Data Retention](/trust/data-retention).
+2. **Partitioning** — the source is parsed into structured elements (pages, sections, tables, images) by Graphor's data-processing service, running on Graphor's own infrastructure.
+3. **Chunking** — partitioned text is split into retrieval-sized chunks by Graphor's own code.
+4. **Enrichment** — chunks are annotated with per-page and per-document context using the Cerebras-hosted enrichment model. The enriched text is what gets embedded.
+5. **Embedding** — chunks are sent to OpenAI for embedding under the OpenAI Zero Data Retention agreement (no logging, no training).
+6. **Indexing** — vectors and metadata are written to Graphor's own Neo4j knowledge graph.
+7. **Retrieval** — at query time, Graphor's own code searches the index and selects relevant chunks.
+8. **Inference** — selected chunks plus the user's question are sent to either the Fast or Standard tier provider for an answer.
+9. **Operational improvement** — anonymized, mask-applied operational telemetry (latencies, error rates, retrieval quality signals) may be used by Synapse to improve the Graphor product. **This explicitly excludes the content of customer questions and answers.**
+
+Items 4, 5, and 8 are the only steps in which an external AI provider receives Customer Content. All three providers are governed by the no-training commitments cited verbatim below.
+
+## 4. Per-provider evidence (verbatim)
+
+Each provider's public position on training and retention is reproduced here exactly as published. Sources are linked so any reader can verify.
+
+### 4.1 Anthropic, PBC — model owner of Claude
+
+Anthropic models reach the Graphor pipeline through AWS Bedrock; **no Customer Content transits Anthropic's own infrastructure**. The model-owner commitment from Anthropic's own commercial terms reinforces the AWS-side commitment in [§4.2](#42-amazon-web-services-aws-bedrock):
+
+> "Anthropic may not train models on Customer Content from Services."
+
+Source: [Anthropic Commercial Terms of Service](https://www.anthropic.com/legal/commercial-terms), Section B (Customer Content).
+
+### 4.2 Amazon Web Services — AWS Bedrock
+
+Bedrock is the production lane for every Standard-tier and fast-tier-fallback inference call:
+
+> "No, AWS and the third-party model providers will not use any inputs to or outputs from Amazon Bedrock to train Amazon Nova, Amazon Titan, or any third-party models."
+
+> "Users' inputs and model outputs are not shared with any model providers."
+
+> "Any customer content processed by Amazon Bedrock is encrypted and stored at rest in the AWS Region where you are using Amazon Bedrock."
+
+Source: [AWS Bedrock FAQs](https://aws.amazon.com/bedrock/faqs/), Security section.
+
+### 4.3 OpenAI, L.L.C. — embeddings and optional reranker
+
+OpenAI provides the embedding model used during indexing and (when explicitly enabled) the reranker:
+
+> "As of March 1, 2023, data sent to the OpenAI API is not used to train or improve OpenAI models (unless you explicitly opt in to share data with us)."
+
+Source: [OpenAI API — Your Data](https://developers.openai.com/api/docs/guides/your-data), Data controls section.
+
+Additionally, **Graphor is enrolled in OpenAI Zero Data Retention (ZDR)**, which eliminates the default 30-day abuse-monitoring log for API requests. ZDR is enrolled and maintained by Synapse; if ZDR is ever disabled (whether by Synapse choice or by OpenAI policy change), this page is updated and subscribers to [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) are notified.
+
+### 4.4 Cerebras Systems, Inc. — chunk enrichment and fast tier
+
+Cerebras serves the open-source `gpt-oss-120b` model used for chunk enrichment and the fast tier:
+
+> "the foregoing does not grant Cerebras the right to use Service Content for the purpose of training or fine-tuning models."
+
+Source: [Cerebras Terms of Use](https://www.cerebras.ai/terms-of-service).
+
+Cerebras additionally commits to zero retention of inference data:
+
+> "We do not retain inputs and outputs associated with our training, inference and chatbot Services."
+
+Source: [Cerebras Privacy Policy](https://www.cerebras.ai/privacy-policy).
+
+## 5. Currently running
+
+The tier-based declaration in [§1.2](#12-query-time-per-sourcesask-or-data-extraction-request) is the stable contract — provider and tier do not change without a published update to this page. The exact model SKUs that serve each tier do change as providers release new versions; the table below records the models in production as of the **Last updated** date in the front matter.
+
+| Step | Currently running | Effective from |
+|------|-------------------|----------------|
+| Chunk enrichment | `gpt-oss-120b` on Cerebras | 2026-06-21 |
+| Embedding | `text-embedding-3-small` on OpenAI | 2026-06-21 |
+| Fast tier inference | `gpt-oss-120b` on Cerebras (fallback: Claude Haiku on AWS Bedrock if Cerebras is unavailable) | 2026-06-21 |
+| Standard tier inference (`balanced`, `accurate`, `max`) | Anthropic Claude Opus on AWS Bedrock | 2026-06-21 |
+| Reranker (when enabled by the customer) | OpenAI reranking model | 2026-06-21 |
+
+Model upgrades within the same tier (for example, a future Claude Opus version) are deployed as part of normal release management; the table above is revised on each upgrade and the [change history](#7-change-history) records the date.
+
+## 6. What Graphor explicitly does NOT do
+
+Stating these explicitly removes ambiguity for security and privacy reviewers:
+
+- **No fine-tuning on customer corpora.** Graphor does not maintain a pipeline that fine-tunes any model on customer-derived datasets.
+- **No opt-in to provider training programs.** Synapse does not opt in to any provider's training programs (for example, OpenAI's training opt-in) for the production Graphor org.
+- **No cross-customer data aggregation for model improvement.** Operational telemetry used to improve the Graphor product is aggregated and mask-applied; the content of customer questions and answers is not part of it.
+- **No human review of customer prompts for quality grading.** Synapse personnel do not review customer Content for quality grading, dataset curation, or evaluation purposes.
+- **No silent provider substitution.** Provider and tier changes are published in advance via the [Subprocessors](/trust/subprocessors) page and the `subprocessors@graphorlm.com` notification list.
+
+## 7. Change history
+
+| Version | Date | Change |
+|---------|------|--------|
+| 1.0 | 2026-06-21 | Initial publication. |
+
+When the tier-to-provider mapping, the per-provider citation, or the currently-running model annex changes, this table is updated and subscribers to [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) receive an email.
+
+## Contact
+
+- General privacy and DPA inquiries: [privacy@graphorlm.com](mailto:privacy@graphorlm.com)
+- Subprocessor and model-change notifications: [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com)
+- Customer support: [support@graphorlm.com](mailto:support@graphorlm.com)

@@ -1,0 +1,130 @@
+---
+title: Incident Response
+description: "How Graphor detects, contains, and notifies on security and privacy incidents — including the 72-hour breach-notification SLA, the escalation matrix, and the post-mortem commitment."
+effective_from: "2026-06-21"
+last_updated: "2026-06-21"
+---
+
+## The commitment
+
+When Graphor confirms a security or privacy incident that affects customer data, the affected customer is notified within **72 hours of internal confirmation**.
+
+That window mirrors LGPD art. 48 ("prazo razoável," interpreted by ANPD as 72 hours) and aligns with GDPR art. 33. It is a contractual commitment incorporated into the [Data Processing Addendum](/legal/dpa-template) and is the same SLA whether the customer is on Free, Pro, or Enterprise tier.
+
+The four moving parts:
+
+1. **Channel** — every notification (inbound from the customer or outbound from Synapse) flows through [privacy@graphorlm.com](mailto:privacy@graphorlm.com). The mailbox is monitored by the founder today and will route to a privacy distribution list as the team grows; the address itself does not change.
+2. **Trigger** — the 72-hour window starts when Synapse **internally confirms** that an incident affects customer data. Detection of an anomaly is not yet "confirmation"; the window starts when triage concludes that customer data is implicated.
+3. **Content** — every notification carries the same five elements (described in [§5](#5-what-the-notification-contains)) so the customer can act on it without a follow-up call.
+4. **Follow-through** — a post-mortem is published to the affected customer within **14 days of confirmation**, regardless of whether the incident has been fully remediated by then.
+
+## 1. What counts as an incident
+
+For the purposes of this page, "incident" means any event that does or may compromise the confidentiality, integrity, or availability of customer data on the Graphor platform.
+
+| Category | Examples | Notification SLA |
+|----------|----------|------------------|
+| **Confidentiality breach** | Unauthorized access to Customer Content, Derived Content, Account Information, or observability traces. Cross-tenant data exposure. Leaked API token actively exploited by a third party. Inadvertent disclosure to a non-authorized party. | 72 hours from internal confirmation. |
+| **Integrity breach** | Unauthorized modification or destruction of customer data. Cascade of a delete operation to the wrong project. Data corruption that cannot be restored from backup within the recovery objective. | 72 hours from internal confirmation. |
+| **Availability incident affecting customer data** | Total or partial loss of access to customer data for the customer (not a Graphor product outage that resolves without data loss). Backup restore that loses recently written data. | 72 hours from internal confirmation. |
+| **Subprocessor incident affecting customer data** | A confirmed breach reported by AWS, Google Cloud, OpenAI, Cerebras, Stripe, Firebase Auth, Neo4j AuraDB, or any other [subprocessor](/trust/subprocessors) that materially affects customer data on Graphor. | 72 hours from Graphor's receipt of the subprocessor's confirmed notification, plus any time required to identify which customers are affected on Graphor's side. |
+| Product outage that does NOT affect customer data | Cloud Run unavailability, ingestion queue backlog, model-provider throttling, certificate renewal issues. | Not subject to the 72-hour SLA — communicated through the standard support channel and the Graphor status surface. |
+
+Severity is determined during triage. Severity 1 (Critical) and Severity 2 (High) incidents always trigger this page's notification path; Severity 3 (Medium) and Severity 4 (Low) follow the standard support channel unless triage escalates them.
+
+## 2. Detection
+
+Incidents reach Synapse through one of three paths:
+
+| Path | Description |
+|------|-------------|
+| **Internal monitoring** | Cloud Logging-based alerts on authentication anomalies, IAM policy changes, rate-limit spikes, error-rate elevations, and Secret Manager access events. The on-call engineer receives an alert and opens the triage runbook. |
+| **Subprocessor notification** | Inbound from a subprocessor's own incident-response program. The subprocessor's notification is logged in the [privacy@graphorlm.com](mailto:privacy@graphorlm.com) inbox and triggers the triage runbook regardless of the subprocessor's own severity rating. |
+| **Customer report** | Inbound to [privacy@graphorlm.com](mailto:privacy@graphorlm.com) (or, for non-security reports, [support@graphorlm.com](mailto:support@graphorlm.com)) from a customer who has spotted something they think is wrong. Customer reports are taken seriously by default; triage decides whether the report constitutes an incident. |
+
+The auto-responder on the privacy mailbox confirms receipt of every inbound notification within minutes, regardless of whether it ultimately escalates to an incident.
+
+## 3. Triage and confirmation
+
+Triage takes the alert, the subprocessor notification, or the customer report and answers four questions:
+
+1. **Is customer data implicated?** If no — the event is logged but does not trigger the notification SLA.
+2. **Which customers are implicated?** If the answer is "all customers in a given tier" or "all customers", a broader notification path is engaged.
+3. **What is the scope of data implicated?** Categories per [Data Retention §1](/trust/data-retention#1-retention-by-data-category).
+4. **What is the severity?** Severity 1 (Critical) starts the notification clock immediately; Severity 2 (High) starts it as soon as the implicated-customer list is known; Severity 3 and 4 are tracked but do not trigger this SLA.
+
+"Internal confirmation" — the moment that starts the 72-hour clock — is the moment when triage answers Yes to question 1 with sufficient evidence to be acted upon, and at minimum a partial answer to question 2. Confirmation does not require the full incident to be understood, only that customer data is implicated.
+
+## 4. Containment and remediation
+
+Containment runs in parallel with notification preparation; the 72-hour clock does not pause for containment.
+
+Typical containment actions:
+
+- Revoke compromised credentials (API tokens, service account keys, Stripe webhooks, OAuth tokens).
+- Rotate affected encryption keys via Cloud KMS.
+- Disable user accounts that are the source of unauthorized access.
+- Restrict network access via VPC firewall rules and Cloud Run ingress controls.
+- Hold a database restore until containment is verified, to avoid re-introducing compromised data.
+
+Remediation actions and timelines are documented in the post-mortem ([§6](#6-post-mortem)).
+
+## 5. What the notification contains
+
+Every customer notification carries these five elements at minimum:
+
+1. **What happened** — a description of the incident in plain language: the category, the affected data scope, the affected timeframe.
+2. **Why it happened** — root cause as best understood at the time of notification. If root cause is still under investigation, the notification states that explicitly and commits to a follow-up.
+3. **What data is affected for you specifically** — a per-customer scope statement, not a generic statement. If the answer is "we do not yet have a complete list", the notification states that and commits to a follow-up.
+4. **What we have done and are doing** — containment actions completed, remediation in progress, monitoring in place to detect recurrence.
+5. **What you should do** — specific customer-side actions (e.g., rotate exposed API tokens, review recent activity in your project, expect a follow-up by date X).
+
+Notifications are sent to the privacy contact on file for the customer's Organization, with a copy to the project admin(s) of any affected project. If the customer has designated a separate security contact, that contact is added.
+
+## 6. Post-mortem
+
+Within **14 days of internal confirmation**, Synapse publishes a written post-mortem to the affected customer. The post-mortem covers:
+
+- **Timeline** — minute-level reconstruction of detection, triage, confirmation, containment, customer notification, and remediation milestones.
+- **Root cause** — the technical and process factors that allowed the incident to occur.
+- **Contributing factors** — anything that amplified the incident or delayed detection or response.
+- **Remediation** — actions taken to remediate the incident, and actions planned to prevent recurrence (with target dates).
+- **Customer impact** — confirmed scope of customer-data implication, including any customers that were initially included in notification but turned out not to be affected after deeper investigation.
+
+The post-mortem is private to the affected customer (it may contain implementation detail that should not be public); the customer is free to share it with their own regulators, auditors, or counsel under the standard confidentiality terms of their contract.
+
+For systemic findings that affect multiple customers or change the published trust posture, a sanitized summary may be added to the [change history](#9-change-history) at the bottom of this page.
+
+## 7. How customers report a suspected incident
+
+Email [privacy@graphorlm.com](mailto:privacy@graphorlm.com) with as much detail as is comfortable to share. The mailbox auto-responds within minutes confirming receipt; a triage engineer responds within one business day.
+
+Useful elements to include in a report (none is required):
+
+- A description of what you observed and when.
+- The affected Organization, Project, or `file_id` / `conversation_id` if you can identify them.
+- Any logs, screenshots, or request IDs (`X-Request-Id` header on Graphor API responses) that may help triage.
+- Your contact preference for follow-up (the same email address, a different one, a phone number).
+
+Customers who report a suspected incident in good faith are not subject to enforcement under the Acceptable Use clauses of the [Terms of Service](/legal/terms-of-service) for the act of reporting, even if the report turns out not to be an incident.
+
+## 8. Things explicitly NOT covered by the 72-hour SLA
+
+- **Vendor-side incidents that do not affect Graphor customer data.** A subprocessor breach that is contained to data Graphor does not send to that subprocessor is logged and tracked, but does not start the 72-hour clock for Graphor customers.
+- **Customer-side incidents on the customer's own infrastructure.** If a customer's own employee leaks an API token from a laptop that Graphor never had access to, the customer's own incident-response program owns the response. Graphor will assist (revoke the token, audit token usage) but is not the controller of the customer's-side breach.
+- **Public product outages that do not implicate customer data.** Covered by the standard support channel and product status page, not by this SLA.
+- **Bug reports that do not constitute an incident.** Reach [support@graphorlm.com](mailto:support@graphorlm.com) instead.
+
+## 9. Change history
+
+| Version | Date | Change |
+|---------|------|--------|
+| 1.0 | 2026-06-21 | Initial publication. Documents the 72-hour breach-notification SLA, the [privacy@graphorlm.com](mailto:privacy@graphorlm.com) channel, the triage and containment process, and the 14-day post-mortem commitment. |
+
+When the SLA, the escalation matrix, the contact channel, or the incident categories change, this table is updated and subscribers to [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) receive an email.
+
+## Contact
+
+- Security and privacy incidents: [privacy@graphorlm.com](mailto:privacy@graphorlm.com)
+- Non-security product issues: [support@graphorlm.com](mailto:support@graphorlm.com)
+- Subscription to incident-policy change notifications: [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com)

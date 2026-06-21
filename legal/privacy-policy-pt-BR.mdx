@@ -1,0 +1,185 @@
+---
+title: Política de Privacidade
+description: "Como a Graphor (operada pela SYNAPSE INOVAÇÃO E TECNOLOGIA LTDA.) coleta, utiliza, retém e compartilha dados pessoais — e como os titulares de dados exercem seus direitos nos termos da LGPD, do GDPR e regimes equivalentes."
+effective_from: "2026-06-21"
+last_updated: "2026-06-21"
+---
+
+<Note>
+Esta Política de Privacidade também está publicada em [inglês](/legal/privacy-policy). Ambas as versões são autoritativas; em caso de conflito entre as duas, a versão em português prevalece para titulares de dados brasileiros e a versão em inglês prevalece para os demais.
+</Note>
+
+## 1. Quem somos
+
+A Graphor é operada pela **SYNAPSE INOVAÇÃO E TECNOLOGIA LTDA.** ("Synapse," "Graphor," "nós"), sociedade constituída segundo as leis da República Federativa do Brasil, com sede no Brasil.
+
+Para comunicações relacionadas à privacidade, incluindo o exercício dos direitos do titular, entre em contato pelo endereço [privacy@graphorlm.com](mailto:privacy@graphorlm.com). A caixa postal de privacidade é monitorada pela Synapse e encaminhada ao time responsável em até um dia útil; respostas substantivas são fornecidas dentro dos prazos exigidos pela legislação aplicável (tipicamente 15 dias pela LGPD art. 19, um mês pelo GDPR art. 12).
+
+## 2. Escopo desta Política
+
+Esta Política aplica-se a:
+
+- A aplicação Graphor (`https://app.graphorlm.com`)
+- O site de documentação da Graphor (`https://docs.graphorlm.com`)
+- O site institucional da Graphor (`https://graphorlm.com`)
+- A API REST, os SDKs e os transportes MCP da Graphor
+- Comunicações da Synapse direcionadas a clientes (e-mail, tickets de suporte, notificações in-app)
+
+Esta Política **não** se aplica a serviços de terceiros que se integram à Graphor em seu nome (sua esteira de CI/CD, suas aplicações downstream). Esses serviços são regidos pelas respectivas notas de privacidade.
+
+## 3. Dados pessoais que coletamos
+
+Coletamos dados pessoais nas categorias abaixo. A base legal de cada categoria está em [§5](#5-bases-legais-para-o-tratamento); o prazo de retenção em [§7](#7-reten%C3%A7%C3%A3o-e-elimina%C3%A7%C3%A3o).
+
+| Categoria | Exemplos | Quando coletamos |
+|-----------|----------|-------------------|
+| **Dados de Conta** | Nome completo, e-mail, hash de senha, nome da organização, identificador da conta Google (quando você usa login Google). | Ao criar uma conta ou fazer login. |
+| **Dados Profissionais** | Cargo, nome da empresa, formação profissional, natureza do seu relacionamento com a Synapse. | Quando você os fornece no cadastro, na implantação ou em interações comerciais. |
+| **Dados de Contato** | E-mail, endereço postal, telefone, preferências de comunicação. | Quando você os fornece em formulários, cadastros ou interações comerciais. |
+| **Conteúdo do Cliente** | Documentos, URLs, repositórios de código, áudios, vídeos, transcrições, conversas e demais materiais que você faz upload, ingere ou transmite ao Serviço. | Quando você usa o Serviço para ingerir, consultar ou extrair dados. |
+| **Conteúdo Derivado** | Trechos (chunks), embeddings, extrações estruturadas e mensagens de conversação produzidas pelo Serviço a partir do Conteúdo do Cliente. | Quando o Serviço processa seu Conteúdo do Cliente. |
+| **Dados de Pagamento** | Endereço de cobrança, dados parciais do meio de pagamento (últimos 4 dígitos do cartão, bandeira), identificadores de cliente / assinatura da Stripe. | Ao contratar um plano pago. **A Synapse não armazena dados completos de cartão de crédito** — as informações de cartão são submetidas diretamente por você à Stripe; ver [§6](#6-compartilhamento-de-dados-pessoais-suboperadores). |
+| **Dados de Eventos, Concursos e Pesquisas** | Informações fornecidas ao se inscrever em evento, participar de concurso, responder pesquisa ou enviar depoimento. | Quando você opta por participar dessas atividades. |
+| **Dados de Feedback e Suporte** | Conteúdo de tickets de suporte, mensagens enviadas, gravações de chamadas (quando permitido e informado). | Quando você nos contata para suporte ou feedback. |
+| **Telemetria Operacional** | Caminhos de requisições, códigos de resposta, latências, traces de erro, endereço IP, tipo de navegador, sistema operacional. Pode incluir identificadores incidentalmente, mas esse não é o propósito primário do tratamento. | Automaticamente, quando você usa o Serviço. |
+| **Analytics do site institucional** | Telemetria anônima de visitas (IP, navegador/SO, páginas visitadas, eventos de clique) — carregada **somente após você conceder consentimento** via o banner de cookies. **Não é carregada nas rotas legais** (`/privacy-policy`, `/terms-of-service`). | Quando você visita o site institucional e concede consentimento para analytics. |
+
+## 4. Como utilizamos os dados pessoais
+
+Utilizamos cada categoria de dados pessoais somente para as finalidades listadas abaixo. Não vendemos dados pessoais e não os utilizamos para finalidades além das aqui descritas sem o seu consentimento explícito.
+
+| Categoria | Finalidades |
+|-----------|-------------|
+| Dados de Conta | Criar e administrar sua conta; autenticar você; comunicar-se com você sobre sua conta, segurança e operações do Serviço. |
+| Dados Profissionais | Personalizar a implantação e a comunicação; oferecer suporte; entender quem usa o Serviço para aprimorar o ajuste de produto. |
+| Dados de Contato | Entregar comunicações relativas ao Serviço; com seu consentimento, enviar newsletters e atualizações de produto. |
+| Conteúdo do Cliente | Prestar o Serviço contratado — particionar, dividir em trechos, indexar, recuperar, responder perguntas, extrair dados estruturados. **Não utilizamos Conteúdo do Cliente para treinar nenhum modelo de IA** (ver [§8](#8-uso-de-modelos-de-ia-e-treinamento) e [Model Use and Training](/trust/model-use-and-training)). |
+| Conteúdo Derivado | Viabilizar a recuperação e a inferência do Serviço; persistir seu histórico de conversações e extrações para acesso futuro; atender solicitações de eliminação. |
+| Dados de Pagamento | Processar pagamentos; emitir notas e recibos; cumprir obrigações tributárias e contábeis brasileiras de retenção de documentos. |
+| Dados de Eventos, Concursos e Pesquisas | Administrar o evento, concurso ou pesquisa; responder à sua submissão; comunicar-se com você. |
+| Dados de Feedback e Suporte | Investigar e responder às suas dúvidas; aprimorar o Serviço. |
+| Telemetria Operacional | Operar e monitorar o Serviço; detectar e prevenir abusos; investigar incidentes; melhorar performance e confiabilidade. Identificadores presentes na telemetria são mascarados pelo regex de PII brasileiro descrito em [Data Retention §4](/trust/data-retention#4-observability-traces). |
+| Analytics do site institucional | Compreender o tráfego do site e a efetividade do conteúdo — somente com consentimento e somente nas rotas não-legais. |
+
+## 5. Bases legais para o tratamento
+
+Nos termos da LGPD art. 7º e do GDPR art. 6, tratamos dados pessoais com uma ou mais das seguintes bases legais:
+
+| Base legal | Onde se aplica |
+|-------------|----------------|
+| **Execução contratual** (LGPD art. 7º, V / GDPR art. 6(1)(b)) | Prestação do Serviço conforme os Termos de Uso e qualquer DPA: criação de conta, processamento do Conteúdo do Cliente, suporte ao seu uso do Serviço. |
+| **Consentimento** (LGPD art. 7º, I / GDPR art. 6(1)(a)) | Comunicações de marketing; cookies não essenciais (analytics do site institucional); recursos opcionais que demandem coleta adicional. |
+| **Cumprimento de obrigação legal ou regulatória** (LGPD art. 7º, II / GDPR art. 6(1)(c)) | Cumprimento da legislação tributária e contábil brasileira (retenção de documentos fiscais e comprovantes de pagamento) e atendimento a requisições legítimas de autoridades. |
+| **Legítimo interesse** (LGPD art. 7º, IX / GDPR art. 6(1)(f)) | Monitoramento de segurança, prevenção de fraude, aprimoramento do Serviço com base em telemetria operacional, cobrança de pagamentos em atraso. Quando recorremos ao legítimo interesse, sopesamos esse interesse em relação aos seus direitos e liberdades; você pode se opor conforme [§9](#9-seus-direitos-e-como-exerc%C3%AA-los). |
+
+Não recorremos às bases "proteção da vida" ou "execução de políticas públicas" para nenhuma atividade de tratamento.
+
+## 6. Compartilhamento de dados pessoais (suboperadores)
+
+Compartilhamos dados pessoais com os suboperadores listados na nossa página de [Suboperadores](/trust/subprocessors). A lista é versionada e inclui o papel de cada suboperador, as categorias de dados que com ele compartilhamos, a região onde processa os dados e o instrumento contratual sob o qual o engajamos.
+
+Em resumo, os suboperadores estão organizados nos seguintes grupos:
+
+- **Infraestrutura em nuvem** — Google Cloud Platform (hospedagem em produção), Amazon Web Services (servir modelos de IA via Bedrock), Neo4j AuraDB (grafo de conhecimento gerenciado).
+- **Provedores de modelos de IA** — Anthropic (via AWS Bedrock), OpenAI (embeddings), Cerebras (enriquecimento de trechos e tier rápido).
+- **Pagamento** — Stripe (assinaturas e faturamento).
+- **Autenticação** — Firebase Authentication (login Google).
+- **Observabilidade** — Langfuse self-hosted (rastreamento operacional).
+- **Analytics do site institucional** — Google Analytics (gated por consentimento, somente no site institucional).
+
+Inscreva-se em [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) para ser notificado com pelo menos 30 dias de antecedência sobre alterações materiais na lista de suboperadores, exceto quando uma alteração imediata for necessária para remediar um incidente de segurança.
+
+Não vendemos dados pessoais nem os compartilhamos para publicidade comportamental.
+
+## 7. Retenção e eliminação
+
+Retemos dados pessoais somente pelo tempo necessário para cumprir as finalidades para as quais foram coletados, sujeito a períodos maiores quando exigido por lei (como retenção tributária e contábil brasileira para documentos fiscais, tipicamente cinco anos).
+
+As regras específicas de retenção por categoria de dado — incluindo a postura **retenção indefinida até a DELEÇÃO explícita** para Conteúdo do Cliente e Conversações, e o TTL limitado para traces de observabilidade — estão documentadas em detalhe na página [Data Retention](/trust/data-retention).
+
+Você pode solicitar a eliminação a qualquer momento:
+
+- **Fontes e conversações** via [DSR API](/trust/data-retention#3-the-dsr-api) (`DELETE /api/v1/sources/{file_id}` e `DELETE /api/v1/conversations/{conversation_id}`).
+- **Traces de observabilidade** via a mesma DSR API (`DELETE /api/v1/dsr/traces`).
+- **Eliminação de conta** enviando e-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com).
+
+Documentos fiscais são retidos pelo prazo exigido pela legislação tributária e contábil brasileira, mesmo após a eliminação da conta.
+
+## 8. Uso de modelos de IA e treinamento
+
+**Não utilizamos o Conteúdo do Cliente para treinar nenhum modelo de IA — nem os modelos próprios da Synapse nem os de qualquer suboperador.** Este é um compromisso contratual apoiado em três camadas:
+
+1. Os Termos de Uso da Synapse: "Synapse does not train AI models using User Content."
+2. A cláusula contratual de não-treinamento de cada suboperador de IA, com citações verbatim publicadas na página [Model Use and Training §4](/trust/model-use-and-training#4-per-provider-evidence-verbatim).
+3. Controles operacionais: a Synapse não opta por participar de programas de treinamento dos provedores, não mantém pipeline de fine-tuning sobre corpora de cliente e não disponibiliza flag de API que faria com que Conteúdo do Cliente fosse utilizado para treinamento.
+
+A página [Model Use and Training](/trust/model-use-and-training) descreve o quadro completo: quais provedores servem cada tier de inferência, quais dados chegam a cada provedor e os compromissos contratuais de cada um.
+
+## 9. Seus direitos e como exercê-los
+
+Nos termos da LGPD art. 18 e do GDPR art. 15–22, você tem os seguintes direitos quanto aos dados pessoais que mantemos sobre você:
+
+| Direito | O que significa | Como exercer |
+|---------|------------------|---------------|
+| **Confirmação e acesso** (LGPD art. 18, I e II / GDPR art. 15) | Confirmar que processamos seus dados pessoais; acessar uma cópia desses dados. | E-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
+| **Correção** (LGPD art. 18, III / GDPR art. 16) | Corrigir dados incompletos, inexatos ou desatualizados. | Editar em sua conta ou enviar e-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
+| **Eliminação** (LGPD art. 18, VI / GDPR art. 17) | Eliminar dados pessoais que não precisamos mais, sujeito a obrigações legais de retenção. | Usar a [DSR API](/trust/data-retention#3-the-dsr-api) ou enviar e-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com) para eliminação de conta. |
+| **Portabilidade** (LGPD art. 18, V / GDPR art. 20) | Receber seus dados em formato estruturado, de uso comum e leitura por máquina. | E-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com) — uma API de exportação in-app está no roadmap; exportação manual provisória é fornecida sob demanda. |
+| **Limitação do tratamento** (LGPD art. 18, IV / GDPR art. 18) | Restringir o tratamento enquanto a precisão é verificada ou uma oposição é avaliada. | E-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
+| **Oposição** (LGPD art. 18, § 2º / GDPR art. 21) | Opor-se ao tratamento baseado em legítimo interesse ou para marketing direto. | E-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
+| **Revogação do consentimento** (LGPD art. 8º, § 5º / GDPR art. 7(3)) | Revogar consentimento para tratamentos baseados em consentimento, sem afetar tratamentos lícitos anteriores. | Ajustar o banner de cookies ou suas preferências de comunicação; enviar e-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com) para outros tratamentos baseados em consentimento. |
+| **Informação sobre suboperadores** (LGPD art. 18, VII / GDPR art. 13) | Saber com quem compartilhamos seus dados. | Ver a página de [Suboperadores](/trust/subprocessors). |
+| **Reclamação perante a autoridade de controle** (LGPD art. 18, parágrafo único / GDPR art. 77) | Apresentar reclamação à autoridade de proteção de dados — ANPD no Brasil, a autoridade de controle competente na UE. | Entre em contato conosco primeiro pelo [privacy@graphorlm.com](mailto:privacy@graphorlm.com); auxiliaremos no que pudermos, mas você pode acessar a autoridade diretamente. |
+
+Respondemos às solicitações dos titulares dentro dos prazos exigidos pela legislação aplicável (15 dias pela LGPD art. 19, um mês pelo GDPR art. 12, com possível extensão para solicitações complexas). A primeira resposta inclui a informação solicitada ou, quando precisamos verificar sua identidade ou escopar melhor a solicitação, uma descrição do próximo passo.
+
+## 10. Transferência internacional de dados pessoais
+
+Processamos dados pessoais nos Estados Unidos. A região de produção relevante (`us-central1`, Iowa, EUA) e as regiões dos provedores de IA estão documentadas na página [Data Residency](/trust/data-residency).
+
+Nos termos da LGPD art. 33 e do GDPR art. 44–49, as transferências internacionais são cobertas por:
+
+- **Google Cloud Data Processing Addendum**, incorporando as Standard Contractual Clauses 2021/914 (cobre Cloud Run, Cloud SQL, GKE, GCS, Memorystore, Pub/Sub, BigQuery, Cloud Functions, Artifact Registry, Cloud KMS e Firebase Authentication).
+- **AWS Data Processing Addendum**, incorporando as Standard Contractual Clauses (cobre AWS Bedrock).
+- **OpenAI Data Processing Addendum**, com inscrição no Zero Data Retention.
+- **Termos e Política de Privacidade da Cerebras**, com compromisso explícito de zero retenção.
+- **Stripe Data Processing Addendum**, incorporando as Standard Contractual Clauses.
+- **Neo4j AuraDB Data Processing Addendum**, incorporando as Standard Contractual Clauses.
+
+Clientes no Espaço Econômico Europeu, Suíça ou Reino Unido: as Standard Contractual Clauses acima incluem os módulos exigidos para transferências processador-a-processador e controlador-a-processador nos termos do GDPR art. 46(2)(c). Cópias estão disponíveis mediante NDA pelo [privacy@graphorlm.com](mailto:privacy@graphorlm.com).
+
+## 11. Segurança
+
+Protegemos os dados pessoais com controles padrão de indústria — incluindo criptografia em repouso (AES-256 com chaves gerenciadas pelo Google por padrão; CMEK mediante solicitação na tier enterprise), criptografia em trânsito (TLS 1.2+), isolamento lógico de tenants, tokens de API por projeto com TTL e auditoria, e SLA de notificação de incidentes de 72 horas. O inventário completo está no [Trust Center](/trust/overview).
+
+Nenhum sistema é completamente seguro. Quando sofremos um incidente de segurança confirmado que afete seus dados pessoais, notificamos você em até 72 horas após a confirmação interna, conforme nosso compromisso em [Incident Response](/trust/incident-response).
+
+## 12. Cookies e tecnologias similares
+
+Os sites da Graphor utilizam cookies em duas categorias:
+
+- **Cookies estritamente necessários** — exigidos para operar o Serviço (cookies de sessão, tokens de autenticação, proteção CSRF). Não estão sujeitos a consentimento por serem necessários à prestação do Serviço solicitado.
+- **Cookies de analytics** — Google Analytics, carregado **somente após você conceder consentimento** via o banner de cookies no site institucional. Cookies de analytics **não** são carregados nas rotas legais (`/privacy-policy`, `/terms-of-service`) independentemente do consentimento. Você pode revogar o consentimento a qualquer momento pelo link de preferências de cookies no rodapé.
+
+Não utilizamos cookies de marketing ou publicidade e não participamos de redes de publicidade comportamental cross-site.
+
+## 13. Privacidade de crianças
+
+O Serviço não é direcionado a crianças menores da idade da maioridade civil (tipicamente 18 anos) em sua jurisdição. Não coletamos conscientemente dados pessoais dessas crianças. Se você acredita que uma criança forneceu dados pessoais a nós, entre em contato pelo [privacy@graphorlm.com](mailto:privacy@graphorlm.com) e eliminaremos os dados.
+
+## 14. Alterações nesta Política
+
+Podemos atualizar esta Política periodicamente. Quando o fizermos, a data de "Última atualização" no cabeçalho será modificada e o histórico de mudanças abaixo registrará a alteração. Para mudanças materiais, notificamos os usuários por e-mail e publicamos aviso destacado no Serviço por pelo menos 30 dias antes de a mudança entrar em vigor.
+
+## 15. Histórico de mudanças
+
+| Versão | Data | Alteração |
+|--------|------|-----------|
+| 2.0 | 2026-06-21 | Reescrita abrangente. Alinhada com os direitos da LGPD art. 18 e do GDPR art. 15–22. Documenta o compromisso de não-treinamento, a postura tier-aware de observabilidade, a DSR API, o regime de transferência internacional e a postura de consentimento para cookies. Remove referências a suboperadores que não fazem mais parte da stack de produção. |
+| 1.0 | 2025-10-07 | Versão anterior (legada). |
+
+## Contato
+
+- Privacidade, solicitações de titular e questões de DPA: [privacy@graphorlm.com](mailto:privacy@graphorlm.com)
+- Inscrição em notificações de alterações da política de privacidade e suboperadores: [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com)
+- Suporte ao cliente: [support@graphorlm.com](mailto:support@graphorlm.com)
