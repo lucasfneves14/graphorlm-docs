@@ -71,35 +71,48 @@ Customer Personal Data Processed in `us-central1` and in AWS Bedrock US regions 
 
 ### 4.2 Technical and operational safeguards that constrain reachable scope
 
-- **Encryption at rest** on every backing store; cloud-provider-managed keys today, customer-managed encryption keys available on enterprise request (see [Tenant Isolation §1](/trust/tenant-isolation#1-isolation-by-layer) and [§7](/trust/tenant-isolation#7-personnel-security)). A request that compels the cloud provider rather than Synapse cannot decrypt customer data without the application-layer access path; customer-managed keys further reduce reachability.
+- **Encryption at rest** on every backing store; cloud-provider-managed keys today, customer-managed encryption keys available on enterprise request (see [Tenant Isolation §1](/trust/tenant-isolation#1-isolation-by-layer)). A request that compels the cloud provider rather than Synapse cannot decrypt customer data without the application-layer access path; customer-managed keys further reduce reachability. Personnel-side safeguards on the application access path are documented in [Tenant Isolation §7](/trust/tenant-isolation#7-personnel-security).
 - **Encryption in transit** TLS 1.2+ on every public surface ([Architecture §5](/trust/architecture#5-public-network-surface)).
 - **Logical tenant isolation** enforced at the application layer ([Tenant Isolation §1](/trust/tenant-isolation#1-isolation-by-layer)); compelled disclosure of "all data" at the infrastructure level still requires Synapse-side application access to reconstruct a Customer-scoped view.
 - **Zero-retention or no-training commitments at AI providers** ([Model Use and Training §4](/trust/model-use-and-training#4-per-provider-evidence-verbatim)): AWS Bedrock does not retain or share inputs with model providers; OpenAI ZDR eliminates the default 30-day abuse-monitoring log; Cerebras commits to zero retention. A US request against any of these providers reaches a smaller residual surface than a request against a provider with default retention.
 
-### 4.3 Synapse's commitments under compelled disclosure
+### 4.3 EU–US Data Privacy Framework (DPF) — additional safeguard for EU customers
 
-Per [DPA §9](/legal/dpa-template#9-cooperation-with-authorities), if Synapse receives a binding legal request from a competent authority for disclosure of Customer Personal Data:
+For EU/EEA/Swiss customers, the **EU–US Data Privacy Framework adequacy decision** (Commission Implementing Decision (EU) 2023/1795 of 10 July 2023) provides an additional adequacy basis where the US importer is DPF-certified. Synapse confirms DPF certification status of each US subprocessor at least annually via the [DPF participant list](https://www.dataprivacyframework.gov/list):
+
+- **Google Cloud Platform** (incl. Firebase Auth) — DPF-certified (verify on the DPF list at engagement).
+- **AWS** (incl. Bedrock) — DPF-certified (verify at engagement).
+- **OpenAI** — DPF certification status varies; the OpenAI ZDR enrollment is the primary safeguard for OpenAI transfers.
+- **Cerebras** — DPF certification status to be confirmed at engagement.
+- **Stripe** — DPF-certified (verify at engagement).
+
+The DPF does not displace the SCC-based safeguards in [§3](#3-international-transfer-regime) or the technical and organizational measures in [§4.2](#42-technical-and-operational-safeguards-that-constrain-reachable-scope); it complements them as an additional adequacy anchor for EU customer transfers. If a Synapse subprocessor loses DPF certification, the SCC-based safeguards remain in force and customers are notified per the subprocessor-change procedure in [Subprocessors](/trust/subprocessors).
+
+### 4.4 Synapse's commitments under compelled disclosure
+
+Per [DPA §9](/legal/dpa-template#9-cooperation-with-authorities), if Synapse **receives a binding legal request directly** from a competent authority for disclosure of Customer Personal Data:
 
 - Synapse notifies the Customer of the request to the extent legally permitted, allowing the Customer to seek a protective order or other remedy;
 - Where notification is prohibited, Synapse takes reasonable steps to inform the Customer of the request once the prohibition expires;
-- Synapse discloses only the minimum data required to comply with the request.
+- Synapse discloses only the minimum data required to comply with the request;
+- Synapse challenges overbroad or facially unlawful requests using available legal procedure, engaging Brazilian counsel for requests received in Brazil and instructing US counsel-on-retainer for any request properly served on Synapse in the US.
 
-Synapse will challenge overbroad or facially unlawful requests using available legal procedure (motion to quash, narrowing negotiations).
+For requests served on a **US-based subprocessor** (e.g., a CLOUD Act subpoena to Google or AWS for data Synapse stores on their infrastructure), Synapse has no direct standing to challenge in US courts. Synapse relies on (i) each subprocessor's own published transparency-report commitment to challenge overbroad requests (e.g., [Google's Government Requests for User Information policy](https://policies.google.com/terms/information-requests), [AWS's law-enforcement information-requests page](https://aws.amazon.com/compliance/law-enforcement-information-requests/)) and (ii) the SCC clauses obligating the subprocessor to notify the data importer (Synapse) and to challenge unlawful access. Synapse will, in turn, notify the Customer per the bullet list above to the extent legally permitted.
 
-### 4.4 Brazilian Marco Civil interplay
+### 4.5 Brazilian Marco Civil interplay
 
 For Customer Personal Data of Brazilian data subjects, **Lei nº 12.965/2014 (Marco Civil da Internet) art. 11** establishes that the Brazilian legal framework applies to data-collection, storage, and processing operations where at least one of the parties is in Brazil — applicable to Synapse (incorporated in Brazil) as the controller in the controller-to-processor chain. This means:
 
 - Brazilian data subjects retain full LGPD enforcement rights against Synapse irrespective of the US processing location;
 - ANPD has jurisdiction over Synapse's processing of Brazilian personal data, including the international-transfer leg;
-- The Cláusulas-Padrão Contratuais incorporated in [DPA Annex 4-B](/legal/dpa-template#annex-4--international-transfer-instruments) bind Synapse contractually to LGPD-equivalent protections at the US processing destination.
+- The Cláusulas-Padrão Contratuais incorporated in [DPA Annex 4-B](/legal/dpa-template#annex-4-b--brazilian-customers-anpd-standard-contractual-clauses) bind Synapse contractually to LGPD-equivalent protections at the US processing destination.
 
-### 4.5 Customer options for compounded risk reduction
+### 4.6 Customer options for compounded risk reduction
 
 Customers with elevated transfer-impact concerns may:
 
 - Request **customer-managed encryption keys** (see [Tenant Isolation §1](/trust/tenant-isolation#1-isolation-by-layer)) so that even infrastructure-level compelled disclosure does not yield decryptable data without Synapse-side application access — typical scoping engagement: 4–8 weeks.
-- Request the **São Paulo region option** on the [Data Residency roadmap §5](#5-roadmap), which removes the US processing leg for the relational, object, and (where supported) graph stores.
+- Request the **São Paulo region option** on the [Data Residency roadmap §6](#6-roadmap), which removes the US processing leg for the relational, object, and (where supported) graph stores.
 - Disable observability tracing entirely (the Enterprise default) and rely on the DSR API for any post-hoc audit need.
 - Restrict ingestion of special-category personal data (LGPD art. 11) to non-Graphor channels until the alternative-region engagement is in place.
 
@@ -108,7 +121,7 @@ Customers with elevated transfer-impact concerns may:
 A single cloud region was chosen rather than a multi-region storage deployment or a cross-region active-active design for three reasons:
 
 1. **Auditability.** A regulated customer can verify the residency claim by running a single command per layer against the cloud-provider CLI and confirming the region. A multi-region claim demands provider-level trust that data does not move between sub-regions.
-2. **Predictable latency for the Brazilian user base.** `us-central1` (Iowa) is one of the lower-latency US regions for traffic originating in Brazil over public-internet routes. The latency tradeoff vs a São Paulo region is acceptable for current traffic patterns; see [§5](#5-roadmap) for the Brazil-region roadmap.
+2. **Predictable latency for the Brazilian user base.** `us-central1` (Iowa) is one of the lower-latency US regions for traffic originating in Brazil over public-internet routes. The latency tradeoff vs a São Paulo region is acceptable for current traffic patterns; see [§6](#6-roadmap) for the Brazil-region roadmap.
 3. **Subprocessor co-location with AWS US regions.** Bedrock-hosted inference returns to Graphor over public network paths; co-locating the Graphor backend with the Bedrock regions reduces round-trip variance.
 
 The migration of the customer-content storage from US multi-region to `us-central1` single-region was completed as part of this trust-documentation initiative. Stg is intentionally not migrated — it does not host real customer data.

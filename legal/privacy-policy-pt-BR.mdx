@@ -13,7 +13,7 @@ Esta Política de Privacidade também está publicada em [inglês](/legal/privac
 
 A Graphor é operada pela **SYNAPSE INOVAÇÃO E TECNOLOGIA LTDA.** ("Synapse," "Graphor," "nós"), sociedade constituída segundo as leis da República Federativa do Brasil, com sede no Brasil.
 
-Para comunicações relacionadas à privacidade, incluindo o exercício dos direitos do titular, entre em contato pelo endereço [privacy@graphorlm.com](mailto:privacy@graphorlm.com). A caixa postal de privacidade é monitorada pela Synapse e encaminhada ao time responsável em até um dia útil; respostas substantivas são fornecidas dentro dos prazos exigidos pela legislação aplicável (15 dias pela LGPD art. 19, § 3º para confirmação e acesso — a expectativa regulatória geral de 15 dias para os demais direitos do art. 18 segue a Resolução CD/ANPD nº 18/2024; um mês pelo GDPR art. 12).
+Para comunicações relacionadas à privacidade, incluindo o exercício dos direitos do titular, entre em contato pelo endereço [privacy@graphorlm.com](mailto:privacy@graphorlm.com). A caixa postal de privacidade é monitorada pela Synapse e encaminhada ao time responsável em até um dia útil; respostas substantivas são fornecidas dentro dos prazos exigidos pela legislação aplicável (15 dias pela LGPD art. 19, II para confirmação e acesso — a Synapse aplica o mesmo prazo de 15 dias por analogia aos demais direitos do art. 18 como melhor prática; um mês pelo GDPR art. 12).
 
 ## 2. Escopo desta Política
 
@@ -85,7 +85,7 @@ Em resumo, os suboperadores estão organizados nos seguintes grupos:
 - **Pagamento** — Stripe (assinaturas e faturamento).
 - **Autenticação** — Firebase Authentication (login Google).
 - **Observabilidade** — Langfuse self-hosted (rastreamento operacional).
-- **Analytics do site institucional** — Google Analytics (gated por consentimento, somente no site institucional).
+- **Analytics do site institucional** — Google Analytics 4 (gated por consentimento, somente no site institucional; regido pelo Google Measurement Controller-Controller Data Protection Terms — ver [§10](#10-transferência-internacional-de-dados-pessoais)).
 
 Inscreva-se em [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) para ser notificado com pelo menos 30 dias de antecedência sobre alterações materiais na lista de suboperadores, exceto quando uma alteração imediata for necessária para remediar um incidente de segurança.
 
@@ -101,7 +101,7 @@ Você pode solicitar a eliminação a qualquer momento:
 
 - **Fontes e conversações** via [DSR API](/trust/data-retention#3-the-dsr-api) (`DELETE /api/v1/sources/{file_id}` e `DELETE /api/v1/conversations/{conversation_id}`).
 - **Traces de observabilidade** via a mesma DSR API (`DELETE /api/v1/dsr/traces`).
-- **Eliminação de conta** enviando e-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com).
+- **Eliminação de conta** enviando e-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com) — a Synapse processa a eliminação em até **15 dias corridos** da solicitação, aplicando o prazo da LGPD art. 19, II (confirmação/acesso) por analogia como melhor prática. Ver [Data Retention §1](/trust/data-retention#1-retention-by-data-category).
 
 Documentos fiscais são retidos pelo prazo exigido pela legislação tributária e contábil brasileira, mesmo após a eliminação da conta.
 
@@ -124,14 +124,14 @@ Nos termos da LGPD art. 18 e do GDPR art. 15–22, você tem os seguintes direit
 | **Confirmação e acesso** (LGPD art. 18, I e II / GDPR art. 15) | Confirmar que processamos seus dados pessoais; acessar uma cópia desses dados. | E-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
 | **Correção** (LGPD art. 18, III / GDPR art. 16) | Corrigir dados incompletos, inexatos ou desatualizados. | Editar em sua conta ou enviar e-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
 | **Eliminação** (LGPD art. 18, VI / GDPR art. 17) | Eliminar dados pessoais que não precisamos mais, sujeito a obrigações legais de retenção. | Usar a [DSR API](/trust/data-retention#3-the-dsr-api) ou enviar e-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com) para eliminação de conta. |
-| **Portabilidade** (LGPD art. 18, V / GDPR art. 20) | Receber seus dados em formato estruturado, de uso comum e leitura por máquina. O pacote de exportação inclui: Fontes originais conforme enviadas; unidades derivadas em JSON; transcrições de conversações em JSON; metadados da conta em JSON; entregue como bundle de URL assinada com manifest e checksum. | E-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com) — exportação manual é entregue em **15 dias corridos** da solicitação, satisfazendo o prazo da LGPD art. 19. Um endpoint self-service `POST /api/v1/dsr/export` está no roadmap. |
+| **Portabilidade** (LGPD art. 18, V / GDPR art. 20) | Receber seus dados em formato estruturado, de uso comum e leitura por máquina. O pacote de exportação inclui: Fontes originais conforme enviadas; unidades derivadas em JSON; transcrições de conversações em JSON; metadados da conta em JSON; entregue como bundle de URL assinada com manifest e checksum. | E-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com) — exportação manual é entregue em **15 dias corridos** da solicitação, aplicando o prazo da LGPD art. 19, II (confirmação/acesso) por analogia à portabilidade do art. 18, V como melhor prática. Um endpoint self-service `POST /api/v1/dsr/export` está no roadmap. |
 | **Bloqueio / limitação** (LGPD art. 18, IV — componente "bloqueio" / GDPR art. 18) | Sob a LGPD art. 18, IV, o titular pode requerer bloqueio, anonimização ou eliminação de dados desnecessários, excessivos ou tratados em desconformidade (a LGPD não possui equivalente direto à "limitação do tratamento" do GDPR art. 18); sob o GDPR art. 18, restringir o tratamento enquanto a precisão é verificada ou uma oposição é avaliada. | E-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
-| **Oposição** (LGPD art. 18, § 2º / GDPR art. 21) | Opor-se ao tratamento baseado em legítimo interesse ou para marketing direto. | E-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
+| **Oposição** (LGPD art. 18, § 2º / GDPR art. 21) | Sob a LGPD art. 18, § 2º, opor-se a tratamento realizado com fundamento em uma das hipóteses de dispensa de consentimento em caso de descumprimento da LGPD; sob o GDPR art. 21, opor-se a tratamento baseado em legítimo interesse ou para marketing direto (sem equivalente direto na LGPD). | E-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
 | **Revogação do consentimento** (LGPD art. 8º, § 5º / GDPR art. 7(3)) | Revogar consentimento para tratamentos baseados em consentimento, sem afetar tratamentos lícitos anteriores. | Ajustar o banner de cookies ou suas preferências de comunicação; enviar e-mail para [privacy@graphorlm.com](mailto:privacy@graphorlm.com) para outros tratamentos baseados em consentimento. |
 | **Informação sobre suboperadores** (LGPD art. 18, VII / GDPR art. 15(1)(c)) | Saber com quem compartilhamos seus dados — o direito de acesso inclui os destinatários ou categorias de destinatários a quem os dados pessoais foram ou serão divulgados. | Ver a página de [Suboperadores](/trust/subprocessors). |
 | **Reclamação perante a autoridade de controle** (LGPD art. 18, parágrafo único / GDPR art. 77) | Apresentar reclamação à autoridade de proteção de dados — ANPD no Brasil, a autoridade de controle competente na UE. | Entre em contato conosco primeiro pelo [privacy@graphorlm.com](mailto:privacy@graphorlm.com); auxiliaremos no que pudermos, mas você pode acessar a autoridade diretamente. |
 
-Respondemos às solicitações dos titulares dentro dos prazos exigidos pela legislação aplicável (15 dias pela LGPD art. 19, § 3º para confirmação e acesso — a expectativa regulatória geral de 15 dias para os demais direitos do art. 18 segue a Resolução CD/ANPD nº 18/2024; um mês pelo GDPR art. 12, com possível extensão para solicitações complexas). A primeira resposta inclui a informação solicitada ou, quando precisamos verificar sua identidade ou escopar melhor a solicitação, uma descrição do próximo passo.
+Respondemos às solicitações dos titulares dentro dos prazos exigidos pela legislação aplicável (15 dias pela LGPD art. 19, II para confirmação e acesso — a Synapse aplica o mesmo prazo de 15 dias por analogia aos demais direitos do art. 18 como melhor prática; um mês pelo GDPR art. 12, com possível extensão para solicitações complexas). A primeira resposta inclui a informação solicitada ou, quando precisamos verificar sua identidade ou escopar melhor a solicitação, uma descrição do próximo passo.
 
 ## 10. Transferência internacional de dados pessoais
 

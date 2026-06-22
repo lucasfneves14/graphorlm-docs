@@ -118,7 +118,7 @@ The Customer may object in writing within the 30-day window to a proposed Subpro
 Each Subprocessor is bound by data-protection obligations no less protective than those in this DPA, through Synapse's contractual relationship with the Subprocessor. Synapse incorporates by reference the following upstream commitments and is responsible to the Customer for the Subprocessor's performance under those commitments:
 
 - **AWS** — the [AWS Data Processing Addendum](https://aws.amazon.com/compliance/gdpr-center/) governs the AWS Bedrock processing; incorporating SCCs.
-- **OpenAI** — the OpenAI DPA governs embedding processing, **with Zero Data Retention enrolled** for the Synapse production org. Synapse commits to (i) audit ZDR enrollment status at least quarterly via the OpenAI dashboard or written confirmation from OpenAI, (ii) notify the Customer **at least 30 days before any planned ZDR disablement** by Synapse, and (iii) notify the Customer **within 24 hours of becoming aware of an unplanned OpenAI-side disablement** of ZDR for the Synapse production org. ZDR loss triggers the Customer's objection right under [§4.3](#43-customer-objection-to-a-subprocessor-change).
+- **OpenAI** — the OpenAI DPA governs embedding processing, **with Zero Data Retention enrolled** for the Synapse production org. Synapse commits to (i) audit ZDR enrollment status at least quarterly via the OpenAI dashboard or written confirmation from OpenAI, (ii) notify the Customer **at least 30 days before any planned ZDR disablement** by Synapse, and (iii) notify the Customer **within 24 hours of becoming aware of an unplanned OpenAI-side disablement** of ZDR for the Synapse production org. ZDR loss triggers the Customer's objection right under [§4.3](#43-customer-objection).
 - **Cerebras** — the [Cerebras Terms of Use](https://www.cerebras.ai/terms-of-service) and [Privacy Policy](https://www.cerebras.ai/privacy-policy), including the published no-training and zero-retention commitments.
 - **Google Cloud Platform** — the [Google Cloud DPA](https://cloud.google.com/terms/data-processing-addendum) for all Google-Cloud-hosted components.
 - **Google Analytics 4** (marketing site only, consent-gated) — the [Google Measurement Controller-Controller Data Protection Terms](https://business.safety.google/adscontrollerterms/), which govern Synapse and Google as **independent controllers** for the analytics relationship (distinct from the Google Cloud DPA above). Loaded only after the visitor grants analytics consent; not loaded on the legal routes.
@@ -138,7 +138,7 @@ Synapse operates two distinct business lines under the same legal entity (the Gr
 
 The Customer authorizes Synapse to transfer Customer Personal Data to the regions described in [Data Residency](/trust/data-residency). For Customer Personal Data subject to LGPD or GDPR, the transfer is conducted under one or more of the safeguards in LGPD art. 33 / GDPR art. 44–49:
 
-- The **Standard Contractual Clauses 2021/914** referenced in [Annex 4](#annex-4--standard-contractual-clauses) and incorporated by reference, including the modules required for the relevant transfer scenario (Module 2 for controller-to-processor; Module 3 for processor-to-processor onward transfers to Subprocessors).
+- The **Standard Contractual Clauses 2021/914** referenced in [Annex 4](#annex-4--international-transfer-instruments) and incorporated by reference, including the modules required for the relevant transfer scenario (Module 2 for controller-to-processor; Module 3 for processor-to-processor onward transfers to Subprocessors).
 - The data protection commitments of each upstream Subprocessor (per [§4.4](#44-subprocessor-obligations-and-pass-through-clauses)).
 - The technical and organizational measures in [Annex 2](#annex-2--technical-and-organizational-measures).
 
@@ -158,7 +158,7 @@ Synapse notifies the Customer of a confirmed Security Incident affecting Custome
 
 Synapse publishes a written post-mortem to the affected Customer within **14 days of internal confirmation**, per [Incident Response §6](/trust/incident-response#6-post-mortem).
 
-The 72-hour SLA is a contractual commitment that meets or exceeds the regulatory floors: under **ANPD Resolução CD/ANPD nº 15/2024, art. 5**, the controller-to-ANPD notification must occur within **3 business days** of incident knowledge; under **GDPR art. 33(2)**, the processor must notify the controller "without undue delay" (no fixed window). The art. 33(1) 72-hour clock binds the controller, not the processor.
+The 72-hour SLA is a contractual commitment that meets or exceeds the regulatory floors: under **ANPD Resolução CD/ANPD nº 15/2024, art. 6**, the controller-to-ANPD notification must occur within **3 business days** of incident knowledge; under **GDPR art. 33(2)**, the processor must notify the controller "without undue delay" (no fixed window). The art. 33(1) 72-hour clock binds the controller, not the processor.
 
 ## 8. Audit
 
@@ -187,15 +187,15 @@ On reasonable request, Synapse provides the Customer with information and docume
 
 Each Party's liability under this DPA is subject to the limits set out in the Agreement. Where the Agreement contains a liability cap, that cap applies to this DPA, **except** that the cap does **not** apply to:
 
-- Synapse's indemnification obligations for breach of the no-training commitment in [§3.6](#36-restrictions-on-synapse-use-of-customer-personal-data);
-- Synapse's liability to Data Subjects, or to the Customer in their capacity as joint-and-severally-liable controller, under **LGPD art. 42 / GDPR art. 82**, which under Applicable Data Protection Law and Brazilian doctrine and ANPD enforcement practice is treated as statutorily uncappable; or
-- Statutory damages, fines, or other liabilities that cannot be contractually limited under Applicable Data Protection Law.
+- Synapse's indemnification obligations for breach of the no-training commitment in [§3.6](#36-no-use-of-customer-personal-data-for-synapses-purposes);
+- Synapse's indemnification of the Customer for the Customer's joint-and-several exposure to Data Subjects under **LGPD art. 42 / GDPR art. 82**, to the extent that exposure cannot be contractually limited under Applicable Data Protection Law as a matter of public policy; or
+- Statutory damages, regulatory fines, or other liabilities that cannot be contractually limited under Applicable Data Protection Law.
 
-Where the Agreement is silent or where Applicable Data Protection Law requires a different allocation, liability follows the joint-and-several allocation in LGPD art. 42 / GDPR art. 82.
+Data Subjects' statutory rights of action against Synapse and the Customer are governed by LGPD art. 42 (with the conditional solidariedade in § 1º, incisos I and II) and GDPR art. 82 directly, not by this DPA; this section addresses only the allocation of liability between the Parties.
 
 ## 12. Conflict between this DPA and the Agreement
 
-If there is a conflict between this DPA and the Agreement on data-protection matters, this DPA prevails. If there is a conflict between this DPA and any other data-processing instrument signed between the Parties after the effective date of this DPA, the later-signed instrument prevails.
+If there is a conflict between this DPA and the Agreement on data-protection matters, this DPA prevails. A later-signed data-processing instrument between the Parties prevails over this DPA **only if it expressly references this DPA, identifies the specific provisions it amends, and meets or exceeds the protections herein**.
 
 ## 13. Return and deletion on termination
 
@@ -278,20 +278,26 @@ The SCCs apply with the following clarifications:
 
 - **Clause 7** (Docking Clause): not applicable.
 - **Clause 9** (Use of Sub-processors): Option 2 (General written authorization), with the 30-day notice window in [§4.2](#42-material-changes-to-the-subprocessor-list) above.
-- **Clause 11** (Redress): the optional independent-dispute-resolution-body paragraph is not adopted; Data Subjects may lodge complaints with the competent supervisory authority of their habitual residence per Clause 11(b).
+- **Clause 11** (Redress): the optional first sentence (independent-dispute-resolution-body) is not adopted; redress proceeds under the remaining paragraphs of Clause 11, including the Data Subject's right to lodge complaints with the competent supervisory authority of habitual residence.
 - **Clause 17** (Governing Law): the law of the EU Member State in which the data exporter is established; if that Member State's law does not permit third-party-beneficiary rights, the law of **Ireland** applies as the standard commercial fallback.
 - **Clause 18** (Choice of Forum and Jurisdiction): the courts of the EU Member State whose law governs under Clause 17.
 
 For the UK extension: the **International Data Transfer Addendum to the EU Commission Standard Contractual Clauses** (UK IDTA, published by the UK ICO) is incorporated by reference and prevails in case of conflict with the SCCs for transfers covered by UK GDPR.
 
-### Annex 4-B — Brazilian Customers: ANPD Cláusulas-Padrão Contratuais
+**Scope of the Clause 17 / 18 election.** The Clause 17 governing-law election and Clause 18 choice-of-forum election in Annex 4-A govern disputes arising under the SCCs themselves only. Disputes arising under the body of this DPA (separately from the SCCs) are governed by [§15](#15-governing-law-and-jurisdiction) (Brazilian law; arbitration in São Paulo, Portuguese).
 
-For transfers of Customer Personal Data subject to LGPD from a Customer established in the Federative Republic of Brazil to Synapse's Processing locations in the United States, the Parties incorporate by reference the **Cláusulas-Padrão Contratuais para Transferência Internacional de Dados Pessoais** approved by ANPD pursuant to **Resolução CD/ANPD nº 19/2024** (Annex). The transfer relies on the hypothesis in **LGPD art. 33, II, b** (standard contractual clauses approved by the national authority).
+### Annex 4-B — Brazilian Customers (ANPD Standard Contractual Clauses)
 
-The Cláusulas-Padrão Contratuais apply with the following Module elections (mirroring the structure of Resolução 19/2024 Annex):
+For transfers of Customer Personal Data subject to LGPD from a Customer established in the Federative Republic of Brazil to Synapse's Processing locations in the United States, the Parties incorporate by reference the **Cláusulas-Padrão Contratuais para Transferência Internacional de Dados Pessoais** approved by ANPD pursuant to **Resolução CD/ANPD nº 19/2024** (Anexo II). The transfer relies on the hypothesis in **LGPD art. 33, II, b** (standard contractual clauses approved by the national authority).
 
-- **Module 2** (Controlador-a-Operador) applies between the Customer (as data exporter / controlador) and Synapse (as data importer / operador) for Customer Personal Data Processed under this DPA.
-- **Module 3** (Operador-a-Operador) applies between Synapse (as data exporter) and each Subprocessor (as data importer) for onward transfers of Customer Personal Data, through Synapse's contractual relationship with each Subprocessor.
+The Cláusulas-Padrão Contratuais are organized in **Seções I–IV** (Seção I — Informações Gerais; Seção II — Cláusulas Mandatórias; Seção III — Medidas de Segurança; Seção IV — Cláusulas Adicionais e Anexos). The role-allocation election in **Cláusula 4 (Responsabilidades das Partes)** is as follows for this engagement:
+
+- **Opção A** (when at least one party acts as Controlador) applies between the Customer (as Controlador / data exporter) and Synapse (as Operador / data importer) for Customer Personal Data Processed under this DPA — covering the same relationship pattern that the EU SCCs assign to Module 2.
+- **Opção B** (Operador-a-Operador) applies between Synapse (as Operador / data exporter) and each Subprocessor (as Operador / data importer) for onward transfers of Customer Personal Data — covering the same relationship pattern that the EU SCCs assign to Module 3.
+
+Seção I (Informações Gerais) identifies Synapse Inovação e Tecnologia LTDA. as the data importer, the Customer (named in the signature block) as the data exporter, the Processing region as `us-central1` (Iowa, USA), and the Subprocessors enumerated in [Annex 3](#annex-3--subprocessors-as-of-signature-date).
+
+Seção III (Medidas de Segurança) cross-references the technical and organizational measures in [Annex 2](#annex-2--technical-and-organizational-measures) of this DPA.
 
 Governing law and forum for disputes arising under the Cláusulas-Padrão Contratuais follow [§15](#15-governing-law-and-jurisdiction) of this DPA (Brazilian law; arbitration in São Paulo). The Cláusulas-Padrão Contratuais do not derogate from the Data Subject's right to file complaints with ANPD or with the consumer-protection authorities of habitual residence.
 
@@ -328,6 +334,8 @@ By signing below, the Parties agree to be bound by this DPA.
 | Title | [CAMPO — Signatory title] |
 | Signature | [CAMPO] |
 | Date | [CAMPO] |
+| Customer place of establishment | [CAMPO — country / state] |
+| **International transfer instrument elected** (per [Annex 4](#annex-4--international-transfer-instruments)) | ☐ Annex 4-A (EU / UK / Swiss customer — EU SCCs 2021/914) ☐ Annex 4-B (Brazilian customer — ANPD Cláusulas-Padrão Contratuais Res. 19/2024) ☐ Annex 4-C (Other jurisdiction — to be scoped) |
 
 ---
 

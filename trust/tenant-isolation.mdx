@@ -9,7 +9,7 @@ last_updated: "2026-06-21"
 
 Graphor's tenancy model is **single-tenant logical isolation on shared infrastructure**. Every customer's data lives in the same cloud project, the same primary database, the same managed graph store, the same object storage — but is partitioned at the application layer by an `organization_id` foreign key that propagates through every customer-owned record.
 
-This is the same model that most modern multi-tenant SaaS products use, including the upstream providers that Graphor itself depends on. It is well understood by SI evaluators, and it scales to high tenant counts without the operational complexity of one project / one cluster / one bucket per customer. The model is **not** suitable for customers that contractually require physically separated infrastructure; for those cases see [§7](#7-what-graphor-explicitly-does-not-offer-today).
+This is the same model that most modern multi-tenant SaaS products use, including the upstream providers that Graphor itself depends on. It is well understood by SI evaluators, and it scales to high tenant counts without the operational complexity of one project / one cluster / one bucket per customer. The model is **not** suitable for customers that contractually require physically separated infrastructure; for those cases see [§8](#8-what-graphor-explicitly-does-not-offer-today).
 
 The tenancy hierarchy is:
 
@@ -110,14 +110,16 @@ Synapse personnel do **not** routinely access customer Content. There is no "bro
 
 Logical isolation is only as strong as the controls on the personnel who can bypass it. The controls below apply to every Synapse person with access to the production environment and satisfy LGPD arts. 46–47 (security and confidentiality duty of treatment agents) and GDPR art. 28(3)(b) (processor's obligation to ensure personnel commitment to confidentiality):
 
-- **Confidentiality on hire.** Every employee and contractor with production access signs a written confidentiality undertaking as a condition of engagement; the undertaking survives termination and explicitly covers Customer Content.
-- **Multi-factor authentication.** Production access requires MFA via the identity provider; hardware-key second factors are issued for personnel with persistent production privileges.
-- **Least-privilege role assignment.** Production roles follow least privilege; role grants are reviewed at least annually and on every personnel change (joiner / mover / leaver).
-- **Onboarding and offboarding.** Onboarding includes a documented checklist (account provisioning, MFA enrollment, role assignment, training attestation). Offboarding revokes credentials within one business day of departure; the founder maintains a documented backup-access procedure for continuity in the event of founder incapacitation.
-- **Security and privacy training.** All personnel complete a privacy and secure-coding training on hire and at least annually thereafter, with an attestation recorded. The training covers LGPD, Customer Content handling, the no-training commitment, and the incident-response runbook.
-- **Background checks.** Background checks are performed on personnel with persistent production access at the level customary for the jurisdiction of engagement, subject to applicable privacy law.
+**Today's posture (founder-led).** As of the effective date in the front matter, the only person with persistent production access is the founder, who signed a written confidentiality undertaking on incorporation and who complies with the controls below. As the team grows, every additional person with production access will be required to comply before access is granted.
 
-The full Personnel Security policy (with audit-ready attestation records) is available to enterprise customers under NDA on request via [privacy@graphorlm.com](mailto:privacy@graphorlm.com).
+- **Confidentiality on hire.** Every employee and contractor with production access signs a written confidentiality undertaking as a condition of engagement; the undertaking survives termination and explicitly covers Customer Content.
+- **Multi-factor authentication.** Production access requires MFA via the identity provider; hardware-key second factors are required for any persistent-privilege production role.
+- **Least-privilege role assignment.** Production roles follow least privilege; role grants are reviewed at least annually and on every personnel change (joiner / mover / leaver).
+- **Onboarding and offboarding.** Onboarding follows a documented checklist (account provisioning, MFA enrollment, role assignment, training attestation). Offboarding revokes credentials within one business day of departure; the founder maintains a documented backup-access procedure for continuity in the event of founder incapacitation (full description in [Compliance §5.1](/trust/compliance#51-what-is-in-place)).
+- **Security and privacy training.** All personnel complete a privacy and secure-coding training on hire and at least annually thereafter, with an attestation recorded. The training covers LGPD, Customer Content handling, the no-training commitment, and the incident-response runbook.
+- **Background checks (forward-looking).** Synapse commits that any future personnel with persistent production access will undergo background checks at the level customary for the jurisdiction of engagement before access is granted, subject to applicable privacy law. The founder's background is disclosed under NDA on enterprise request.
+
+The current Personnel Security policy and the attestation register (growing as the team scales) are available to enterprise customers under NDA on request via [privacy@graphorlm.com](mailto:privacy@graphorlm.com).
 
 ## 8. What Graphor explicitly does NOT offer today
 

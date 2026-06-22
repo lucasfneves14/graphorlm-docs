@@ -9,7 +9,7 @@ last_updated: "2026-06-21"
 
 When Graphor confirms a security or privacy incident that affects customer data, the affected customer is notified within **72 hours of internal confirmation**.
 
-That window is a contractual commitment that meets or exceeds the regulatory floors: under **ANPD Resolução CD/ANPD nº 15/2024, art. 5**, the controller-to-ANPD notification must occur within **3 business days** of incident knowledge; under **GDPR art. 33(2)**, the processor must notify the controller "without undue delay" after becoming aware of a personal data breach (no fixed window). The 72-hour clock SLA is committed under the [Data Processing Addendum](/legal/dpa-template) and is the same SLA whether the customer is on Free, Pro, or Enterprise tier.
+That window is a contractual commitment that meets or exceeds the regulatory floors: under **ANPD Resolução CD/ANPD nº 15/2024, art. 6**, the controller-to-ANPD notification must occur within **3 business days** of incident knowledge; under **GDPR art. 33(2)**, the processor must notify the controller "without undue delay" after becoming aware of a personal data breach (no fixed window). The 72-hour clock SLA is committed under the [Data Processing Addendum](/legal/dpa-template) and is the same SLA whether the customer is on Free, Pro, or Enterprise tier.
 
 The four moving parts:
 
@@ -93,7 +93,7 @@ Within **14 days of internal confirmation**, Synapse publishes a written post-mo
 
 The post-mortem is private to the affected customer (it may contain implementation detail that should not be public); the customer is free to share it with their own regulators, auditors, or counsel under the standard confidentiality terms of their contract.
 
-For systemic findings that affect multiple customers or change the published trust posture, a sanitized summary may be added to the [change history](#9-change-history) at the bottom of this page.
+For systemic findings that affect multiple customers or change the published trust posture, a sanitized summary may be added to the [change history](#10-change-history) at the bottom of this page.
 
 ## 7. How customers report a suspected incident
 
@@ -119,7 +119,7 @@ Customers who report a suspected incident in good faith are not subject to enfor
 
 Synapse welcomes good-faith security research on the Graphor production surface. Researchers who follow the rules of engagement below are protected under a safe-harbor commitment and are not subject to enforcement under the Acceptable Use clauses of the [Terms of Service](/legal/terms-of-service).
 
-**Reporting channel.** [security@graphorlm.com](mailto:security@graphorlm.com) (also reachable via [privacy@graphorlm.com](mailto:privacy@graphorlm.com)). A `/.well-known/security.txt` file is published on the marketing site with the same channel and the current PGP key for encrypted reports.
+**Reporting channel.** [security@graphorlm.com](mailto:security@graphorlm.com) (also reachable via [privacy@graphorlm.com](mailto:privacy@graphorlm.com)). A `/.well-known/security.txt` file and a PGP key for encrypted reports are being published as part of this VDP rollout; the email channel is live today.
 
 **In scope.** The customer-facing production surface listed in [Architecture §5](/trust/architecture#5-public-network-surface) — the marketing site, the documentation, the application UI, the REST and streaming API, and the per-Project MCP endpoints.
 
@@ -127,7 +127,7 @@ Synapse welcomes good-faith security research on the Graphor production surface.
 
 **Rules of engagement.** Use only test accounts you own; do not access, modify, or download customer data; report promptly and confidentially; allow a reasonable disclosure window (typically 90 days) before public discussion.
 
-**Acknowledgement.** Synapse acknowledges receipt within one business day, provides a status update within ten business days, and credits the reporter publicly (with their permission) once the issue is remediated. Bounty payments are not committed today but may be offered at Synapse's discretion for high-impact reports.
+**Acknowledgement.** Inbound mail receives an automated acknowledgement within minutes; a human triage response is provided within **three business days** (note: this SLA is staffed by the founder today and is informed by the current scale documented in [Compliance §5](/trust/compliance#5-business-continuity-and-key-person-risk)). Synapse credits the reporter publicly (with their permission) once the issue is remediated. **No bounty program is operated today**; Synapse may offer discretionary recognition for high-impact reports (typically public acknowledgement and a Hall of Fame mention).
 
 ## 10. Change history
 

@@ -13,7 +13,7 @@ This Privacy Policy is also published in [Portuguese](/legal/privacy-policy-pt-B
 
 Graphor is operated by **SYNAPSE INOVAÇÃO E TECNOLOGIA LTDA.** ("Synapse," "Graphor," "we," "us," "our"), a company organized under the laws of the Federative Republic of Brazil, with principal place of business in Brazil.
 
-For privacy-related communications, including the exercise of data-subject rights, contact us at [privacy@graphorlm.com](mailto:privacy@graphorlm.com). The privacy mailbox is monitored by Synapse and routed to the responsible team within one business day; substantive responses are provided within the timelines required by applicable law (15 days under LGPD art. 19, § 3º for confirmation and access — the general 15-day expectation for other LGPD art. 18 rights follows ANPD's regulatory practice under Resolução CD/ANPD nº 18/2024; one month under GDPR art. 12).
+For privacy-related communications, including the exercise of data-subject rights, contact us at [privacy@graphorlm.com](mailto:privacy@graphorlm.com). The privacy mailbox is monitored by Synapse and routed to the responsible team within one business day; substantive responses are provided within the timelines required by applicable law (15 days under LGPD art. 19, II for confirmation and access — Synapse applies the same 15-day window by analogy to the other LGPD art. 18 rights as best practice; one month under GDPR art. 12).
 
 ## 2. Scope of this Policy
 
@@ -85,7 +85,7 @@ In summary, subprocessors fall into the following groups:
 - **Payment** — Stripe (subscriptions and invoicing).
 - **Authentication** — Firebase Authentication (Google sign-in).
 - **Observability** — Self-hosted Langfuse (operational tracing).
-- **Marketing-site analytics** — Google Analytics (consent-gated, marketing site only).
+- **Marketing-site analytics** — Google Analytics 4 (consent-gated, marketing site only; governed by the Google Measurement Controller-Controller Data Protection Terms — see [§10](#10-international-transfer-of-personal-data)).
 
 Subscribe to [subprocessors@graphorlm.com](mailto:subprocessors@graphorlm.com) to be notified at least 30 days before any material subprocessor change takes effect, except where an immediate change is required to remediate a security incident.
 
@@ -101,7 +101,7 @@ You can issue a deletion request at any time:
 
 - **Sources and conversations** via the [DSR API](/trust/data-retention#3-the-dsr-api) (`DELETE /api/v1/sources/{file_id}` and `DELETE /api/v1/conversations/{conversation_id}`).
 - **Observability traces** via the same DSR API (`DELETE /api/v1/dsr/traces`).
-- **Account deletion** by emailing [privacy@graphorlm.com](mailto:privacy@graphorlm.com).
+- **Account deletion** by emailing [privacy@graphorlm.com](mailto:privacy@graphorlm.com) — Synapse processes account-level deletion within **15 calendar days** of request, applying the LGPD art. 19, II confirmation/access timeline by analogy as best practice. See [Data Retention §1](/trust/data-retention#1-retention-by-data-category).
 
 Billing records are retained for as long as required by Brazilian tax and accounting law, even after account deletion.
 
@@ -124,14 +124,14 @@ Under LGPD art. 18 and GDPR art. 15–22, you have the following rights with res
 | **Confirmation and access** (LGPD art. 18, I and II / GDPR art. 15) | Confirm that we process your personal data; access a copy of that data. | Email [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
 | **Correction** (LGPD art. 18, III / GDPR art. 16) | Correct incomplete, inaccurate, or out-of-date data. | Edit in your account settings, or email [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
 | **Deletion** (LGPD art. 18, VI / GDPR art. 17) | Delete personal data we no longer need, subject to legal retention obligations. | Use the [DSR API](/trust/data-retention#3-the-dsr-api), or email [privacy@graphorlm.com](mailto:privacy@graphorlm.com) for account-level deletion. |
-| **Portability** (LGPD art. 18, V / GDPR art. 20) | Receive your data in a structured, commonly used, machine-readable format. The export package includes: original Sources as uploaded; derived units as JSON; conversation transcripts as JSON; account metadata as JSON; delivered as a signed-URL bundle with a manifest and checksum. | Email [privacy@graphorlm.com](mailto:privacy@graphorlm.com) — manual export is delivered within **15 calendar days** of request, satisfying the LGPD art. 19 timeline. A self-service `POST /api/v1/dsr/export` endpoint is on the roadmap. |
+| **Portability** (LGPD art. 18, V / GDPR art. 20) | Receive your data in a structured, commonly used, machine-readable format. The export package includes: original Sources as uploaded; derived units as JSON; conversation transcripts as JSON; account metadata as JSON; delivered as a signed-URL bundle with a manifest and checksum. | Email [privacy@graphorlm.com](mailto:privacy@graphorlm.com) — manual export is delivered within **15 calendar days** of request, applying the LGPD art. 19, II confirmation/access timeline by analogy to portability under art. 18, V as best practice. A self-service `POST /api/v1/dsr/export` endpoint is on the roadmap. |
 | **Blocking / restriction** (LGPD art. 18, IV — "bloqueio" component / GDPR art. 18) | Under LGPD art. 18, IV the data subject may request blocking, anonymization, or elimination of unnecessary, excessive, or non-compliant data (LGPD has no direct equivalent to GDPR art. 18 "restriction of processing"); under GDPR art. 18, restrict processing pending verification of accuracy or while an objection is evaluated. | Email [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
-| **Objection** (LGPD art. 18, § 2º / GDPR art. 21) | Object to processing based on legitimate interests or for direct marketing. | Email [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
+| **Objection** (LGPD art. 18, § 2º / GDPR art. 21) | Under LGPD art. 18, § 2º, object to processing carried out under a consent-dispensation legal basis where there has been non-compliance with the LGPD; under GDPR art. 21, object to processing based on legitimate interests or for direct marketing (no LGPD direct equivalent). | Email [privacy@graphorlm.com](mailto:privacy@graphorlm.com). |
 | **Withdrawal of consent** (LGPD art. 8º, § 5º / GDPR art. 7(3)) | Withdraw consent for processing based on consent, without affecting prior lawful processing. | Adjust the cookie banner or your communication preferences; email [privacy@graphorlm.com](mailto:privacy@graphorlm.com) for other consent-based processing. |
 | **Information about subprocessors** (LGPD art. 18, VII / GDPR art. 15(1)(c)) | Know with whom we share your data — the right of access includes the recipients or categories of recipient to whom personal data have been or will be disclosed. | See the [Subprocessors page](/trust/subprocessors). |
 | **Complaint to a supervisory authority** (LGPD art. 18, parágrafo único / GDPR art. 77) | File a complaint with the data protection authority — ANPD in Brazil, the relevant supervisory authority in the EU. | Contact us first via [privacy@graphorlm.com](mailto:privacy@graphorlm.com); we will assist where we can, but you may always reach the authority directly. |
 
-We respond to data-subject requests within the timelines required by applicable law (15 days under LGPD art. 19, § 3º for confirmation and access — the general 15-day expectation for other LGPD art. 18 rights follows ANPD's regulatory practice under Resolução CD/ANPD nº 18/2024; one month under GDPR art. 12, with possible extension for complex requests). The first response includes either the requested information or, where we need to verify your identity or scope the request further, a description of the next step.
+We respond to data-subject requests within the timelines required by applicable law (15 days under LGPD art. 19, II for confirmation and access — Synapse applies the same 15-day window by analogy to the other LGPD art. 18 rights as best practice; one month under GDPR art. 12, with possible extension for complex requests). The first response includes either the requested information or, where we need to verify your identity or scope the request further, a description of the next step.
 
 ## 10. International transfer of personal data
 
