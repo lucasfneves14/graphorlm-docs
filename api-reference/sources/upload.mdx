@@ -53,6 +53,44 @@ All endpoints on this page require authentication using an API token. Include yo
   The **Get build status** endpoint can also return paginated **parsed elements** (chunks) for a completed build when you do not set `suppress_elements=true`.
 </Note>
 
+## Enrichment and indexing options
+
+Every ingest endpoint on this page — and [Reprocess](/api-reference/sources/process) — accepts two optional fields that control how much post-parse processing runs. On [Ingest file](#ingest-file) they are sent as `multipart/form-data` form fields; on the JSON endpoints ([Ingest URL](#ingest-url), [Ingest GitHub](#ingest-github), [Ingest YouTube](#ingest-youtube)) they are JSON body fields.
+
+| Field | Type | Description | Required |
+|-------|------|-------------|----------|
+| `enrichment` | string | LLM annotation level: `full` (default) or `none`. With `none`, the LLM page/section/document annotation step is skipped, making parsing significantly faster and cheaper; elements carry no LLM `page_annotation`. Structural metadata (page and section numbering) is still present, but retrieval and agent answers may have weaker context. | No |
+| `indexing` | string | Index level: `full` (default) or `none`. With `none`, chunking, embedding, and indexing are skipped: the source is parsed but **not searchable** — ask, extraction, and prebuilt RAG retrieval return nothing for it. Reading elements, page screenshots, and element listings still work. | No |
+
+Omitting either field is equivalent to `full`. Sending an explicit invalid value returns **400** listing the valid values.
+
+| `enrichment` | `indexing` | Result |
+|--------------|------------|--------|
+| `full` | `full` | Default — best retrieval quality |
+| `none` | `full` | Fast parse, still searchable |
+| `full` | `none` | Annotated export without search (rare) |
+| `none` | `none` | Fastest parse — parse results only |
+
+To make an unindexed source searchable later without re-parsing, index its build with [Index build](/api-reference/sources/index-build) (**POST** `https://sources.graphorlm.com/index`).
+
+### Deployment support
+
+`indexing: 'none'` requires the deployment to support it. Check the available options with **GET** `https://sources.graphorlm.com/config`:
+
+```json
+{
+  "retry_enabled": true,
+  "enrichment_options": ["full", "none"],
+  "indexing_options": ["full", "none"]
+}
+```
+
+When `indexing_options` is `["full"]`, sending `indexing: 'none'` returns **400**.
+
+<Note>
+  When every source in a prebuilt RAG retrieve scope is unindexed, the empty response includes an explanatory `message` field.
+</Note>
+
 ## Get build status
 
 Use this endpoint to poll the result of an async ingestion (or re-process). The **build_id** is returned by:
@@ -102,6 +140,9 @@ When the build has been persisted (history exists), the response includes status
   "file_name": "report.pdf",
   "error": null,
   "method": "balanced",
+  "enrichment": "full",
+  "indexing": "full",
+  "searchable": true,
   "total_partitions": 42,
   "total_pages": 10,
   "created_at": "2025-03-07T12:00:00Z",
@@ -154,6 +195,9 @@ When the build is still in progress (running):
 | `file_name` | string \| null | Display name of the source; present when persisted |
 | `error` | string \| null | Error message from the pipeline when the build failed |
 | `method` | string \| null | Strategy used (e.g. `auto`, `fast`, `balanced`, `accurate`, `agentic`) |
+| `enrichment` | string | Enrichment level used for the build: `full` or `none` (see [Enrichment and indexing options](#enrichment-and-indexing-options)) |
+| `indexing` | string | Indexing level used for the build: `full` or `none` (see [Enrichment and indexing options](#enrichment-and-indexing-options)) |
+| `searchable` | boolean | `true` only when the build completed, was indexed, and is still the source's active build; `false` for unindexed, failed, in-progress, or superseded builds |
 | `total_partitions` | integer \| null | Number of partitions; present when history exists |
 | `total_pages` | integer \| null | Total pages in the source; present when history exists |
 | `created_at` | string \| null | ISO8601 timestamp when the build was created |
@@ -245,6 +289,8 @@ Upload a local file and schedule ingestion in the background. The API validates 
 |-------|------|-------------|----------|
 | `file` | File | The document file to upload | Yes |
 | `method` | string | Processing method: `auto`, `fast`, `balanced`, `accurate`, or `agentic` (see [Partition methods](#partition-methods)) | No |
+| `enrichment` | string | Annotation level: `full` (default) or `none` (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
+| `indexing` | string | Index level: `full` (default) or `none`. With `none`, the source is parsed but not searchable (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
 
 ### Partition methods
 
@@ -365,11 +411,21 @@ curl -X POST https://sources.graphorlm.com/ingest-file \
   -F "method=balanced"
 ```
 
+#### cURL with enrichment and indexing options
+
+```bash
+curl -X POST https://sources.graphorlm.com/ingest-file \
+  -H "Authorization: Bearer grlm_your_api_token_here" \
+  -F "file=@document.pdf" \
+  -F "enrichment=none" \
+  -F "indexing=none"
+```
+
 ### Error responses
 
 | Status Code | Description |
 |-------------|-------------|
-| `400` | Unsupported file type or missing file name |
+| `400` | Unsupported file type, missing file name, or invalid `enrichment`/`indexing` value (the response lists the valid values) |
 | `411` | Missing Content-Length header |
 | `413` | File exceeds 100 MB limit |
 | `500` | Internal server error |
@@ -421,6 +477,8 @@ Ingest a web page (or multiple pages via crawling) as a source. The job runs in 
 | `url` | string | The web page URL to ingest | Yes |
 | `crawlUrls` | boolean | When `true`, follow and ingest links found on the page (ignored when URL resolves to a file) | No (default: `false`) |
 | `method` | string | One of: `auto`, `fast`, `balanced`, `accurate`, `agentic`. `auto` is PDF-only and only effective when the URL resolves to a PDF; non-PDF URLs fall back to `fast`. | No |
+| `enrichment` | string | Annotation level: `full` (default) or `none` (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
+| `indexing` | string | Index level: `full` (default) or `none`. With `none`, the source is parsed but not searchable (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
 
 ### Success response (200 OK)
 
@@ -484,7 +542,7 @@ curl -X POST https://sources.graphorlm.com/ingest-url \
 
 | Status Code | Description |
 |-------------|-------------|
-| `400` | Unsupported file type detected from a file URL |
+| `400` | Unsupported file type detected from a file URL, or invalid `enrichment`/`indexing` value (the response lists the valid values) |
 | `500` | Internal server error during URL processing |
 
 <Note>
@@ -522,6 +580,8 @@ Ingest a public GitHub repository as a source. Processing runs in the background
 | Field | Type | Description | Required |
 |-------|------|-------------|----------|
 | `url` | string | GitHub repository URL (e.g. `https://github.com/owner/repo`) | Yes |
+| `enrichment` | string | Annotation level: `full` (default) or `none` (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
+| `indexing` | string | Index level: `full` (default) or `none`. With `none`, the source is parsed but not searchable (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
 
 ### Success response (200 OK)
 
@@ -581,6 +641,7 @@ curl -X POST https://sources.graphorlm.com/ingest-github \
 
 | Status Code | Description |
 |-------------|-------------|
+| `400` | Invalid `enrichment` or `indexing` value (the response lists the valid values) |
 | `500` | Internal server error during GitHub processing |
 
 <Note>
@@ -618,6 +679,8 @@ Ingest a public YouTube video (transcript/captions) as a source. Processing runs
 | Field | Type | Description | Required |
 |-------|------|-------------|----------|
 | `url` | string | YouTube video URL (e.g. `https://www.youtube.com/watch?v=...`) | Yes |
+| `enrichment` | string | Annotation level: `full` (default) or `none` (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
+| `indexing` | string | Index level: `full` (default) or `none`. With `none`, the source is parsed but not searchable (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
 
 ### Success response (200 OK)
 
@@ -677,6 +740,7 @@ curl -X POST https://sources.graphorlm.com/ingest-youtube \
 
 | Status Code | Description |
 |-------------|-------------|
+| `400` | Invalid `enrichment` or `indexing` value (the response lists the valid values) |
 | `500` | Internal server error during YouTube processing |
 
 <Note>
@@ -701,6 +765,9 @@ After ingestion completes (build status `Completed`):
 <CardGroup cols={2}>
   <Card title="Parse source" icon="gears" href="/api-reference/sources/process">
     Re-process a source with a different partition method (async; returns a new build_id)
+  </Card>
+  <Card title="Index build" icon="magnifying-glass" href="/api-reference/sources/index-build">
+    Index a build ingested with `indexing: 'none'` to make it searchable — without re-parsing
   </Card>
   <Card title="List sources" icon="list" href="/api-reference/sources/list">
     List all sources in your project

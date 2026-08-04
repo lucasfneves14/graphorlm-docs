@@ -244,6 +244,47 @@ Version management features:
 
 The active version (marked with a green "active" badge) is the one used for Document Chat and Data Extraction.
 
+## Ingestion Options: Enrichment and Indexing
+
+Beyond the parsing method, Graphor lets you control two additional processing steps: **LLM enrichment** and **search indexing**. Both options appear under **Advanced options** in the dashboard when uploading or reprocessing a source, and as the `enrichment` and `indexing` fields on the REST API. Each accepts two values: `full` (the default) or `none`.
+
+```json
+{ "enrichment": "full", "indexing": "full" }
+```
+
+### LLM Enrichment
+
+Enrichment annotates pages, sections, and the document as a whole with an LLM, improving retrieval quality downstream.
+
+- **`full` (default)** — Pages, sections, and the document are annotated for better retrieval quality
+- **`none`** — Parsing is significantly faster and cheaper. The parsed structure (pages, sections, elements) is unaffected, but retrieval and agent answers lose the annotation context
+
+### Search Indexing
+
+Indexing chunks, embeds, and indexes the source so it can be searched.
+
+- **`full` (default)** — The source is chunked, embedded, and indexed for search
+- **`none`** — The source is parsed but **not searchable**: ask, extract, and retrieval return nothing for it. Viewing the parsed elements still works
+
+Sources and versions processed without indexing display a **Not searchable** badge in the dashboard. If you later decide you want an unindexed build to be searchable, the **Versions** panel offers **Index this version**, which indexes the existing build without re-parsing. The same operation is available via the REST API with **POST** `https://sources.graphorlm.com/index` — see the [Index a build](/api-reference/sources/index-build) reference.
+
+### Combining the Options
+
+| | Indexing: `full` | Indexing: `none` |
+|---|---|---|
+| **Enrichment: `full`** | Default — annotated and searchable | Annotated but unsearchable (rare) |
+| **Enrichment: `none`** | Fast parse, still searchable | Fastest — parse-only |
+
+### When to Use These Options
+
+- **Parse-only pipelines** — Export parsed elements or build your own downstream index; skip enrichment and indexing entirely
+- **Cost-sensitive bulk ingestion** — Turn off enrichment (and optionally indexing) to reduce processing cost at scale
+- **Quick previews** — Get a fast parse to inspect a document before committing to full processing
+
+<Warning>
+Reprocessing an already-indexed source with indexing set to `none` drops its current chunks. The source will no longer be searchable until you index it again.
+</Warning>
+
 ## Content Classification
 
 Graphor can automatically classify document sections to improve retrieval relevance:

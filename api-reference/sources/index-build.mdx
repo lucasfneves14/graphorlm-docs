@@ -1,0 +1,225 @@
+---
+title: 'Index Build'
+description: 'Index an existing build from its already-parsed content via the Graphor REST API'
+---
+
+The **Index build** endpoint chunks, embeds, and indexes an existing build from its already-parsed content — without re-parsing the document. It is the way out of `indexing: 'none'`: after ingesting or re-processing a source with [`indexing: 'none'`](/api-reference/sources/upload#enrichment-and-indexing-options), call this endpoint to make the source searchable.
+
+## Endpoint overview
+
+<CardGroup cols={2}>
+  <Card title="HTTP Method" icon="arrow-up">
+    **POST**
+  </Card>
+  <Card title="Endpoint URL" icon="link">
+    **https://sources.graphorlm.com/index**
+  </Card>
+</CardGroup>
+
+## Authentication
+
+This endpoint requires authentication using an API token. Include your API token as a Bearer token in the `Authorization` header.
+
+<Note>
+  Learn how to create and manage API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## Request format
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Authorization` | `Bearer YOUR_API_TOKEN` | Yes |
+| `Content-Type` | `application/json` | Yes |
+
+### Request body
+
+Send a JSON body with the following fields:
+
+| Field | Type | Description | Required |
+|-------|------|-------------|----------|
+| `file_id` | string | Unique identifier of the source whose build should be indexed | Yes |
+| `build_id` | string | Build to index. When omitted, the file's **active build** is used. Indexing a non-active build makes it the active build. | No |
+
+## Behavior
+
+- Chunks, embeds, and indexes the build's persisted partitions — the document is **not** re-parsed.
+- Makes the build the source's active build.
+- Sets the build's indexing level to `full`.
+- Afterwards, ask, extraction, and prebuilt RAG retrieval see the source, and [Get build status](/api-reference/sources/upload#get-build-status) reports `searchable: true`.
+
+<Note>
+  The request is **synchronous** — the response arrives when indexing has finished. For large documents the connection is kept alive with whitespace heartbeats that JSON parsers ignore, so no client changes are needed.
+</Note>
+
+## Request example
+
+```json
+{
+  "file_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+}
+```
+
+With a specific build:
+
+```json
+{
+  "file_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "build_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+
+## Response format
+
+### Success response (200 OK)
+
+```json
+{
+  "file_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "build_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "chunks_indexed": 42,
+  "indexing": "full",
+  "success": true
+}
+```
+
+### Response fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `file_id` | string | The source file ID |
+| `build_id` | string | The build that was indexed (now the source's active build) |
+| `chunks_indexed` | integer | Number of chunks created and indexed |
+| `indexing` | string | The build's indexing level after the operation: `full` |
+| `success` | boolean | Whether indexing completed successfully |
+
+## Code examples
+
+#### JavaScript/Node.js
+
+```javascript
+const indexBuild = async (apiToken, fileId, buildId = undefined) => {
+  const body = buildId ? { file_id: fileId, build_id: buildId } : { file_id: fileId };
+
+  const response = await fetch("https://sources.graphorlm.com/index", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Index build failed: ${response.status}`);
+  }
+
+  return await response.json();
+};
+
+// Usage: index the source's active build
+const result = await indexBuild(
+  "grlm_your_api_token_here",
+  "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+);
+console.log("Chunks indexed:", result.chunks_indexed);
+```
+
+#### Python
+
+```python
+import requests
+
+def index_build(api_token, file_id, build_id=None):
+    url = "https://sources.graphorlm.com/index"
+    headers = {
+        "Authorization": f"Bearer {api_token}",
+        "Content-Type": "application/json",
+    }
+    payload = {"file_id": file_id}
+    if build_id:
+        payload["build_id"] = build_id
+    response = requests.post(url, headers=headers, json=payload, timeout=600)
+    response.raise_for_status()
+    return response.json()
+
+# Usage: index the source's active build
+result = index_build("grlm_your_api_token_here", "f47ac10b-58cc-4372-a567-0e02b2c3d479")
+print("Chunks indexed:", result["chunks_indexed"])
+```
+
+#### cURL
+
+```bash
+curl -X POST https://sources.graphorlm.com/index \
+  -H "Authorization: Bearer grlm_your_api_token_here" \
+  -H "Content-Type: application/json" \
+  -d '{"file_id":"f47ac10b-58cc-4372-a567-0e02b2c3d479"}'
+```
+
+## Error responses
+
+### Common error codes
+
+| Status code | Description |
+|-------------|-------------|
+| `400` | Indexing is unavailable on the deployment, the build is not in a settled status, the build has no partitions, or the build is already indexed — the response `detail` says which |
+| `404` | Unknown `file_id` or `build_id` |
+
+### Error response format
+
+```json
+{
+  "detail": "Human-readable description of the problem"
+}
+```
+
+### Error examples
+
+<AccordionGroup>
+  <Accordion icon="gears" title="Indexing unavailable (400)">
+    **Cause**: The deployment does not support indexing through this endpoint.  
+    **Solution**: Check **GET** `https://sources.graphorlm.com/config` — see [Deployment support](/api-reference/sources/upload#deployment-support).
+  </Accordion>
+  <Accordion icon="hourglass-half" title="Build not settled (400)">
+    **Cause**: The build is still pending or processing.  
+    **Solution**: Poll [Get build status](/api-reference/sources/upload#get-build-status) until the build reaches a settled status, then retry.
+  </Accordion>
+  <Accordion icon="file-dashed-line" title="Build has no partitions (400)">
+    **Cause**: The build produced no parsed content to index.  
+    **Solution**: Re-process the source (see [Reprocess](/api-reference/sources/process)) and check the build's `error` field.
+  </Accordion>
+  <Accordion icon="circle-check" title="Build already indexed (400)">
+    **Cause**: The build is already indexed; there is nothing to do.  
+    **Solution**: None needed — the source is already searchable. The response `detail` says so.
+  </Accordion>
+  <Accordion icon="file-xmark" title="File or build not found (404)">
+    **Cause**: The given `file_id` (or `build_id`) does not exist in your project.  
+    **Solution**: Verify the IDs (e.g. from [List sources](/api-reference/sources/list) or a previous [build status](/api-reference/sources/upload#get-build-status) response).
+  </Accordion>
+</AccordionGroup>
+
+## Best practices
+
+- **Ingest with `indexing: 'none'` first**: Use this endpoint as the second step of a two-phase flow — parse fast without indexing, review the parse results, then index only the sources you keep.
+- **Allow generous timeouts**: Indexing is synchronous; large documents take longer. The heartbeats keep the connection alive, but set a generous client timeout anyway.
+- **Verify with build status**: After a successful call, [Get build status](/api-reference/sources/upload#get-build-status) reports `searchable: true` for the build.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Get build status" icon="circle-info" href="/api-reference/sources/upload#get-build-status">
+    Confirm the build is now active and `searchable: true`
+  </Card>
+  <Card title="Ingest sources" icon="arrow-up-from-bracket" href="/api-reference/sources/upload">
+    Upload files, URLs, GitHub repos, or YouTube videos — with enrichment and indexing options
+  </Card>
+  <Card title="Reprocess source" icon="gears" href="/api-reference/sources/process">
+    Re-run the ingestion pipeline with a different partition method
+  </Card>
+  <Card title="List sources" icon="list" href="/api-reference/sources/list">
+    View all sources and their status in your project
+  </Card>
+</CardGroup>

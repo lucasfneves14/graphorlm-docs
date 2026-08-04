@@ -47,6 +47,12 @@ Send a JSON body with the following fields:
 |-------|------|-------------|----------|
 | `file_id` | string | Unique identifier of the source to re-process | Yes |
 | `method` | string | Partitioning strategy. One of: `auto`, `fast`, `balanced`, `accurate`, `agentic`. Default: `fast` | No |
+| `enrichment` | string | Annotation level: `full` (default) or `none` (see [Enrichment and indexing options](/api-reference/sources/upload#enrichment-and-indexing-options)) | No |
+| `indexing` | string | Index level: `full` (default) or `none`. With `none`, the source is parsed but not searchable (see [Enrichment and indexing options](/api-reference/sources/upload#enrichment-and-indexing-options)) | No |
+
+<Warning>
+  Re-processing with `indexing: 'none'` drops the source's current chunks — the source stops being searchable until you re-process it with indexing enabled or index the build via **POST** `https://sources.graphorlm.com/index` (see [Index build](/api-reference/sources/index-build)).
+</Warning>
 
 ### Partition method values (v2)
 

@@ -31,6 +31,8 @@ The **`reprocess`** method (same name as the API endpoint) re-runs the ingestion
     client.sources.reprocess(
         file_id: str,                           # Required
         method: str | None = None,             # Optional: auto, fast, balanced, accurate, agentic
+        enrichment: str | None = None,         # Optional: full (default), none
+        indexing: str | None = None,           # Optional: full (default), none
         timeout: float | None = None
     ) -> SourceReprocessResponse
     ```
@@ -41,6 +43,8 @@ The **`reprocess`** method (same name as the API endpoint) re-runs the ingestion
     await client.sources.reprocess({
       file_id: string,                                   // Required
       method?: 'auto' | 'fast' | 'balanced' | 'accurate' | 'agentic',
+      enrichment?: 'full' | 'none',
+      indexing?: 'full' | 'none',
     }): Promise<SourceReprocessResponse>
     ```
     Returns **`SourceReprocessResponse`** with `.build_id`.
@@ -55,6 +59,8 @@ The **`reprocess`** method (same name as the API endpoint) re-runs the ingestion
     |-----------|------|-------------|----------|
     | `file_id` | `str` | Unique identifier of the source to re-process | Yes |
     | `method` | `str \| None` | One of: `auto`, `fast`, `balanced`, `accurate`, `agentic`. Default: `fast` | No |
+    | `enrichment` | `str \| None` | `'full'` (default) or `'none'` (see [Ingestion options](#ingestion-options) below) | No |
+    | `indexing` | `str \| None` | `'full'` (default) or `'none'` (see [Ingestion options](#ingestion-options) below) | No |
     | `timeout` | `float` | Request timeout in seconds | No |
   </Tab>
   <Tab title="TypeScript">
@@ -62,6 +68,8 @@ The **`reprocess`** method (same name as the API endpoint) re-runs the ingestion
     |-----------|------|-------------|----------|
     | `file_id` | `string` | Unique identifier of the source to re-process | Yes |
     | `method` | `string` | One of: `auto`, `fast`, `balanced`, `accurate`, `agentic` | No |
+    | `enrichment` | `string` | `'full'` (default) or `'none'` (see [Ingestion options](#ingestion-options) below) | No |
+    | `indexing` | `string` | `'full'` (default) or `'none'` (see [Ingestion options](#ingestion-options) below) | No |
   </Tab>
 </Tabs>
 
@@ -84,6 +92,25 @@ The **`reprocess`** method (same name as the API endpoint) re-runs the ingestion
 | **Balanced** | Medium | Very good | Very good | Complex layouts, mixed content | Yes |
 | **Accurate** | Medium | Excellent | Excellent | Premium accuracy needed | Yes |
 | **Agentic** | Medium | Excellent | Excellent | Complex layouts, multi-page tables, diagrams | Yes |
+
+### Ingestion options
+
+The optional `enrichment` and `indexing` parameters control which stages of the pipeline run after parsing. Both accept `'full'` (default) or `'none'`.
+
+| Parameter | Values | Default | Description |
+|-----------|--------|---------|-------------|
+| `enrichment` | `'full'`, `'none'` | `'full'` | `'none'` skips LLM page, section, and document annotation. Parsing is faster and cheaper, but elements carry no LLM page annotations and retrieval/agent context is weaker. |
+| `indexing` | `'full'`, `'none'` | `'full'` | `'none'` skips chunking, embedding, and indexing. The source is parsed but **not searchable**: ask, extract, and retrieve return nothing for it. Element reads still work. |
+
+<Warning>
+  Reprocessing with `indexing: 'none'` drops the source's current chunks. The source stops being searchable until you reprocess it with indexing enabled or index it via the [Index build endpoint](/api-reference/sources/index-build).
+</Warning>
+
+`indexing: 'none'` requires deployment support: the GET sources config endpoint exposes `indexing_options`, and sending `'none'` on a deployment that does not support it returns a 400 error. The [Index build endpoint](/api-reference/sources/index-build) indexes a parse-only source later without re-parsing it.
+
+<Note>
+  `enrichment` and `indexing` are available on the REST API today and land in the next SDK release. If your installed SDK version does not accept them yet, pass them through the SDK's raw request options (`extra_body` in Python, request `body` in TypeScript).
+</Note>
 
 ### Return value
 
@@ -187,6 +214,38 @@ The method returns a **`build_id`** (string). Use it with [Get build status](/sd
 <Warning>
   Reprocessing runs in the background and can take several minutes. Use [Get build status](/sdk/sources/upload#get-build-status) to poll until completion.
 </Warning>
+
+### With ingestion options
+
+Re-parse a source without LLM enrichment or indexing (see [Ingestion options](#ingestion-options)).
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    response = client.sources.reprocess(
+        file_id=file_id,
+        method="balanced",
+        enrichment="none",
+        indexing="none"
+    )
+    build_id = response.build_id
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    const { build_id: buildId } = await client.sources.reprocess({
+      file_id: fileId,
+      method: 'balanced',
+      enrichment: 'none',
+      indexing: 'none',
+    });
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  These named parameters ship in the next SDK release; on current SDK versions, send them via the raw request options as described in [Ingestion options](#ingestion-options).
+</Note>
 
 ### Error handling
 
@@ -296,7 +355,7 @@ Reprocess multiple sources by `file_id`; each call returns a `build_id`. Poll [G
 
 | Error Type | Status Code | Description |
 |------------|-------------|-------------|
-| `BadRequestError` | 400 | Invalid request format or partition method |
+| `BadRequestError` | 400 | Invalid request format or partition method, or `indexing: 'none'` on a deployment without indexing support |
 | `AuthenticationError` | 401 | Invalid or missing API key |
 | `PermissionDeniedError` | 403 | Access denied to the specified project |
 | `NotFoundError` | 404 | Source not found for the given file_id |
