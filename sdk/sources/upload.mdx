@@ -205,9 +205,6 @@ The response also reports how the build was processed:
 - **`indexing`** — The indexing option the build ran with: `'full'` or `'none'` (see [Ingestion options](#ingestion-options)).
 - **`searchable`** — Boolean. `true` only when the build completed, its chunks are indexed, and it is still the active build for the source. When `false`, ask, extract, and retrieve return nothing for this source.
 
-<Note>
-  The `enrichment`, `indexing`, and `searchable` fields are available on the REST API today and land in the next SDK release. Until then, read them from the raw JSON response if your installed SDK version does not expose them as typed fields.
-</Note>
 
 ### Poll until complete
 
@@ -335,9 +332,6 @@ The optional `enrichment` and `indexing` parameters control which stages of the 
 
 To make a parse-only source searchable later without re-parsing it, use the [Index build endpoint](/api-reference/sources/index-build).
 
-<Note>
-  `enrichment` and `indexing` are available on the REST API today and land in the next SDK release. If your installed SDK version does not accept them yet, pass them through the SDK's raw request options (`extra_body` in Python, request `body` in TypeScript).
-</Note>
 
 ### File requirements
 
@@ -471,9 +465,6 @@ Skip LLM enrichment and indexing for a fast, parse-only ingestion (see [Ingestio
   </Tab>
 </Tabs>
 
-<Note>
-  These named parameters ship in the next SDK release; on current SDK versions, send them via the raw request options as described in [Ingestion options](#ingestion-options).
-</Note>
 
 #### Ingest from bytes / buffer
 
@@ -646,9 +637,6 @@ Ingest a web page by URL (async). Returns a **build_id**; use [Get build status]
   </Tab>
 </Tabs>
 
-<Note>
-  `enrichment` and `indexing` are available on the REST API today and land in the next SDK release (see [Ingestion options](#ingestion-options)).
-</Note>
 
 ### URL Requirements
 

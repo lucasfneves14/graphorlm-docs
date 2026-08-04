@@ -108,9 +108,6 @@ The optional `enrichment` and `indexing` parameters control which stages of the 
 
 `indexing: 'none'` requires deployment support: the GET sources config endpoint exposes `indexing_options`, and sending `'none'` on a deployment that does not support it returns a 400 error. The [Index build endpoint](/api-reference/sources/index-build) indexes a parse-only source later without re-parsing it.
 
-<Note>
-  `enrichment` and `indexing` are available on the REST API today and land in the next SDK release. If your installed SDK version does not accept them yet, pass them through the SDK's raw request options (`extra_body` in Python, request `body` in TypeScript).
-</Note>
 
 ### Return value
 
@@ -243,9 +240,6 @@ Re-parse a source without LLM enrichment or indexing (see [Ingestion options](#i
   </Tab>
 </Tabs>
 
-<Note>
-  These named parameters ship in the next SDK release; on current SDK versions, send them via the raw request options as described in [Ingestion options](#ingestion-options).
-</Note>
 
 ### Error handling
 
