@@ -340,7 +340,7 @@ To make a parse-only source searchable later without re-parsing it, use the [Ind
     **Documents**: PDF, DOC, DOCX, ODT, TXT, TEXT, MD, HTML, HTM · **Presentations**: PPT, PPTX · **Spreadsheets**: CSV, TSV, XLS, XLSX · **Images**: PNG, JPG, JPEG, TIFF, BMP, HEIC · **Audio**: MP3, WAV, M4A, OGG, FLAC · **Video**: MP4, MOV, AVI, MKV, WEBM
   </Accordion>
   <Accordion icon="weight-scale" title="File size limits">
-    **Maximum file size**: 100 MB per file. The request must include a Content-Length so the server can enforce the limit.
+    **Maximum file size**: 200 MB per file (Python `graphor` 0.27.0+, TypeScript `graphor` 0.24.0+). Older versions: about 32 MB.
   </Accordion>
 </AccordionGroup>
 
@@ -541,7 +541,7 @@ Skip LLM enrichment and indexing for a fast, parse-only ingestion (see [Ingestio
 
 ### Error handling
 
-Ingest methods throw on invalid file type, missing Content-Length, size over 100 MB, or server errors. Use [Get build status](#get-build-status) to detect processing failures (e.g. `status.error`).
+Ingest methods throw on invalid file type, a file too large, or server errors. Use [Get build status](#get-build-status) to detect processing failures (e.g. `status.error`).
 
 <Tabs>
   <Tab title="Python">
