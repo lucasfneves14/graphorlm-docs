@@ -445,9 +445,9 @@ Example error body:
 
 For files above the single-request limit, up to 200 MB. The SDKs (Python `graphor` 0.27.0+, TypeScript `graphor` 0.24.0+) do this in `ingest_file` / `ingestFile`.
 
-1. `POST /sources/upload-sessions` with `file_name` and `file_size` (and optional `method`, `enrichment`, `indexing`). Returns `upload_id`, `build_id`, `upload_url` and `chunk_size`.
-2. `PUT` the bytes to `upload_url` in chunks of `chunk_size`, with `Content-Range: bytes <first>-<last>/<total>`. Do not send your API key to this URL.
-3. `POST /sources/upload-sessions/complete` with `upload_id` (and optional `md5`, base64). Returns `build_id`, as [Ingest file](#ingest-file) does. Safe to retry.
+1. **POST** `https://sources.graphorlm.com/upload-sessions` with `file_name` and `file_size` (and optional `method`, `enrichment`, `indexing`). Returns `upload_id`, `build_id`, `upload_url` and `chunk_size`.
+2. `PUT` the bytes to `upload_url` in chunks of `chunk_size`, with `Content-Range: bytes <first>-<last>/<total>`. A `308` means continue from the byte after its `Range` header (`bytes=0-N`), or from 0 if it has none; `200` or `201` means done. After a failed `PUT`, an empty `PUT` with `Content-Range: bytes */<total>` returns the stored range. Do not send your API key to this URL.
+3. **POST** `https://sources.graphorlm.com/upload-sessions/complete` with `upload_id` (and optional `md5`: the base64 of the file's 16-byte MD5 digest). Returns `build_id`, as [Ingest file](#ingest-file) does. Safe to retry. A long complete can answer `200` with an error body instead (`detail`, `status_code`, `retryable`), so check for `build_id`.
 
 If sessions are not available, create answers `501`: send the file to [Ingest file](#ingest-file) instead.
 
