@@ -245,7 +245,7 @@ Once installed, your agent has access to **12 tools** covering the full Graphor 
 
 | Tool | Required params | Optional params | Returns |
 |------|----------------|-----------------|---------|
-| `ingest_file` | `file_path` **or** (`file_content` + `file_name`) | `method` | `build_id` |
+| `ingest_file` | `file_path` **or** (`file_content` + `file_name`) | `method` | `build_id` (files up to 200 MB by `file_path`) |
 | `ingest_url` | `url` | `crawlUrls`, `method` | `build_id` |
 | `ingest_github` | `url` | — | `build_id` |
 | `ingest_youtube` | `url` | — | `build_id` |
