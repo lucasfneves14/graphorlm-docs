@@ -342,6 +342,9 @@ To make a parse-only source searchable later without re-parsing it, use the [Ind
   <Accordion icon="weight-scale" title="File size limits">
     **Maximum file size**: 200 MB per file (Python `graphor` 0.27.0+, TypeScript `graphor` 0.24.0+). Older versions: about 32 MB.
   </Accordion>
+  <Accordion icon="file-signature" title="File name">
+    If the project already has a source with that name, the file is stored as `name (1).ext` (the lowest free number) and the existing source is not changed. The stored name is the `file_name` in the build status.
+  </Accordion>
 </AccordionGroup>
 
 ### Code examples

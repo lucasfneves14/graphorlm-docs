@@ -325,6 +325,7 @@ When provided, `partition_method` controls how the document is parsed. If omitte
   </Accordion>
   <Accordion icon="file-signature" title="File name requirements">
     The file must have a valid filename with extension; the extension determines allowed processing.
+    If the project already has a source with that name, the file is stored as `name (1).ext` (the lowest free number) and the existing source is not changed. The stored name is the `file_name` in the build status.
   </Accordion>
 </AccordionGroup>
 
