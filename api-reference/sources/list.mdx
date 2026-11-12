@@ -3,7 +3,9 @@ title: 'List Sources'
 description: 'List all sources in your project via the Graphor REST API'
 ---
 
-The **List sources** endpoint returns every source in the project's knowledge graph for the authenticated project. Each item includes file metadata (ID, name, size, type, origin), current processing status, and a human-readable message. You can optionally filter by `file_id`.
+import FoldersSdkVersions from '/snippets/folders-sdk-versions.mdx';
+
+The **List sources** endpoint returns every source in the project's knowledge graph for the authenticated project. Each item includes file metadata (ID, name, size, type, origin), its [folder](/api-reference/sources/folders), current processing status, and a human-readable message. You can optionally filter by `file_id` and by folder.
 
 ## Endpoint overview
 
@@ -36,9 +38,28 @@ This endpoint requires authentication using an API token. Include your API token
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `file_ids` | list of strings | No | If provided, only sources whose `file_id` is in this list are returned. Repeat the parameter for multiple IDs (e.g. `?file_ids=id1&file_ids=id2`). |
+| `file_ids` | list of strings | No | If provided, only sources whose `file_id` is in this list are returned. Repeat the parameter (`?file_ids=id1&file_ids=id2`) or join the IDs with commas (`?file_ids=id1,id2`); both forms are accepted. An empty value is the same as omitting it. |
+| `folder` | string | No | Only the sources in this folder and, with `recursive=true`, in the folders below it. An empty value or `/` lists only the top level. See [Filter by folder](#filter-by-folder). |
+| `recursive` | boolean | No | Default `true`. With `folder`, whether the folders below it are included. Without `folder`, `false` lists only the top level. |
 
-When `file_ids` is omitted, the response includes all sources in the project.
+When no parameter is given, the response includes all sources in the project. The filters combine: `file_ids` with `folder` returns the listed sources that are in the folder.
+
+### Filter by folder
+
+| Request | Returns |
+|---------|---------|
+| no `folder` | every source (`recursive=false`: only the top level) |
+| `?folder=Contracts` | the sources in `Contracts` and in every folder below it |
+| `?folder=Contracts&recursive=false` | only the sources directly in `Contracts` |
+| `?folder=` or `?folder=/` | only the sources at the top level, whatever `recursive` says |
+
+`folder` is a single value: a comma is part of a folder's name (`?folder=Smith,%20Jones` is the folder `Smith, Jones`). Encode the path in the URL as usual (`Contracts%2F2026` or `Contracts/2026`). Matching is exact: `Contracts` does not match `Contracts2`. An invalid path answers `422` (see [Folder paths](/api-reference/sources/folders#folder-paths)).
+
+<Note>
+  A response to a request with `folder` or `recursive` comes from an API that applied the filter only when every source in it carries `folder`. A source without `folder` means the filter was not applied: do not act on the list (for example by deleting what it returned). The SDKs check this for you.
+</Note>
+
+<FoldersSdkVersions />
 
 ## Response format
 
@@ -58,7 +79,8 @@ The endpoint returns a JSON array of source objects. Each object includes file m
     "file_source": "local file",
     "project_id": "550e8400-e29b-41d4-a716-446655440000",
     "project_name": "My Project",
-    "method": "fast"
+    "method": "fast",
+    "folder": ""
   },
   {
     "status": "Completed",
@@ -70,7 +92,8 @@ The endpoint returns a JSON array of source objects. Each object includes file m
     "file_source": "local file",
     "project_id": "550e8400-e29b-41d4-a716-446655440000",
     "project_name": "My Project",
-    "method": "balanced"
+    "method": "balanced",
+    "folder": "Contracts/2026"
   },
   {
     "status": "Processing",
@@ -82,7 +105,8 @@ The endpoint returns a JSON array of source objects. Each object includes file m
     "file_source": "url",
     "project_id": "550e8400-e29b-41d4-a716-446655440000",
     "project_name": "My Project",
-    "method": "accurate"
+    "method": "accurate",
+    "folder": "Research"
   }
 ]
 ```
@@ -101,6 +125,7 @@ The endpoint returns a JSON array of source objects. Each object includes file m
 | `project_id` | string | UUID of the project |
 | `project_name` | string | Name of the project |
 | `method` | string \| null | Partitioning strategy used: `auto`, `fast`, `balanced`, `accurate`, or `agentic` (when available) |
+| `folder` | string | The folder the source is in, as a `/`-separated path; `""` is the top level. Always present. |
 
 ### Status values
 
@@ -196,6 +221,44 @@ curl -X GET "https://sources.graphorlm.com?file_ids=file_abc123&file_ids=file_de
   -H "Authorization: Bearer grlm_your_api_token_here"
 ```
 
+```bash
+# Everything in Contracts and below
+curl -G https://sources.graphorlm.com \
+  --data-urlencode "folder=Contracts" \
+  -H "Authorization: Bearer grlm_your_api_token_here"
+
+# Only the sources directly in Contracts/2026
+curl -G https://sources.graphorlm.com \
+  --data-urlencode "folder=Contracts/2026" \
+  --data-urlencode "recursive=false" \
+  -H "Authorization: Bearer grlm_your_api_token_here"
+
+# Only the sources at the top level
+curl -G https://sources.graphorlm.com \
+  --data-urlencode "folder=/" \
+  -H "Authorization: Bearer grlm_your_api_token_here"
+```
+
+```python
+import requests
+
+def list_folder(api_token, folder, recursive=True):
+    response = requests.get(
+        "https://sources.graphorlm.com",
+        headers={"Authorization": f"Bearer {api_token}"},
+        params={"folder": folder, "recursive": str(recursive).lower()},
+        timeout=30,
+    )
+    response.raise_for_status()
+    sources = response.json()
+    if any("folder" not in s for s in sources):
+        raise RuntimeError("The API did not apply the folder filter")
+    return sources
+
+for source in list_folder("grlm_your_api_token_here", "Contracts"):
+    print(f"{source['folder']}/{source['file_name']}")
+```
+
 ## Error responses
 
 ### Common error codes
@@ -204,6 +267,7 @@ curl -X GET "https://sources.graphorlm.com?file_ids=file_abc123&file_ids=file_de
 |-------------|-------------|
 | `401` | Invalid or missing API token |
 | `403` | Access denied to the project |
+| `422` | Invalid `folder` (`code: "request.invalid"`, `detail` starting with `Invalid folder:`) |
 | `500` | Unexpected internal error while retrieving sources |
 
 ### Error response format
@@ -510,6 +574,9 @@ After listing your sources:
   </Card>
   <Card title="Delete source" icon="trash" href="/api-reference/sources/delete">
     Remove a source from your project
+  </Card>
+  <Card title="Folders" icon="folder-tree" href="/api-reference/sources/folders">
+    List, create, rename and delete folders; move sources
   </Card>
   <Card title="Get build status" icon="circle-info" href="/api-reference/sources/upload#get-build-status">
     Poll status and optional elements for an async ingestion or reprocess

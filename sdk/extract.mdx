@@ -3,6 +3,8 @@ title: 'Data Extraction'
 description: 'Extract structured data from documents using JSON Schema with the Graphor SDK'
 ---
 
+import FoldersSdkVersions from '/snippets/folders-sdk-versions.mdx';
+
 The `extract` method allows you to extract structured information from your documents using standard JSON Schema and natural language instructions. This is ideal for document processing pipelines that need to convert unstructured documents into structured data.
 
 ## Method Overview
@@ -37,6 +39,7 @@ The `extract` method allows you to extract structured information from your docu
     client.sources.extract(
         file_ids: list[str] | None = None,        # Preferred
         file_names: list[str] | None = None,      # Deprecated
+        folders: list[str] | None = None,         # Extract from these folders
         output_schema: dict[str, object],         # Required
         user_instruction: str,                    # Required
         thinking_level: str | None = None,
@@ -51,6 +54,7 @@ The `extract` method allows you to extract structured information from your docu
       user_instruction: string,                                    // Required
       file_ids?: string[] | null,                                  // Preferred
       file_names?: string[] | null,                                // Deprecated
+      folders?: string[] | null,                                   // Extract from these folders
       thinking_level?: 'fast' | 'balanced' | 'accurate' | null,
     }): Promise<SourceExtractResponse>
     ```
@@ -58,7 +62,7 @@ The `extract` method allows you to extract structured information from your docu
 </Tabs>
 
 <Note>
-At least one of `file_ids` or `file_names` must be provided. `file_ids` is preferred.
+At least one of `file_ids`, `file_names` or `folders` must be provided and non-empty. `file_ids` is preferred over `file_names`.
 </Note>
 
 ## Parameters
@@ -69,6 +73,7 @@ At least one of `file_ids` or `file_names` must be provided. `file_ids` is prefe
     |-----------|------|-------------|----------|
     | `file_ids` | `list[str]` | List of file IDs to extract data from (preferred) | No* |
     | `file_names` | `list[str]` | List of file names to extract data from (deprecated, use `file_ids`) | No* |
+    | `folders` | `list[str]` | Extract from every source at or below each [folder](/sdk/sources/folders), together with `file_ids`. See [Scope by folder](#scope-by-folder). | No* |
     | `output_schema` | `dict[str, object]` | JSON Schema defining the structure of the extracted data | Yes |
     | `user_instruction` | `str` | Natural language instructions to guide the extraction | Yes |
     | `thinking_level` | `str` | Controls model and thinking configuration: `"fast"`, `"balanced"`, `"accurate"` (default) | No |
@@ -79,6 +84,7 @@ At least one of `file_ids` or `file_names` must be provided. `file_ids` is prefe
     |-----------|------|-------------|----------|
     | `file_ids` | `string[] \| null` | List of file IDs to extract data from (preferred) | No* |
     | `file_names` | `string[] \| null` | List of file names to extract data from (deprecated, use `file_ids`) | No* |
+    | `folders` | `string[] \| null` | Extract from every source at or below each [folder](/sdk/sources/folders), together with `file_ids`. See [Scope by folder](#scope-by-folder). | No* |
     | `output_schema` | `Record<string, unknown>` | JSON Schema defining the structure of the extracted data | Yes |
     | `user_instruction` | `string` | Natural language instructions to guide the extraction | Yes |
     | `thinking_level` | `'fast' \| 'balanced' \| 'accurate' \| null` | Controls model and thinking configuration (default: `"accurate"`) | No |
@@ -86,7 +92,7 @@ At least one of `file_ids` or `file_names` must be provided. `file_ids` is prefe
 </Tabs>
 
 <Note>
-*At least one of `file_ids` or `file_names` must be provided. `file_ids` is preferred.
+*At least one of `file_ids`, `file_names` or `folders` must be provided and non-empty. `file_ids` is preferred over `file_names`.
 </Note>
 
 ### Thinking Level
@@ -131,6 +137,7 @@ The method returns a `SourceExtractResponse` object with the following propertie
 | `file_names` | `list[str]` | List of file names used for extraction |
 | `structured_output` | `dict \| None` | Extracted data matching your schema |
 | `raw_json` | `str \| None` | Raw JSON text produced by the model before validation/correction |
+| `folders` | `list[str] \| None` | The folders the scope was resolved from; `None` when the call named no folder |
 
 ## Code Examples
 
@@ -284,6 +291,80 @@ The method returns a `SourceExtractResponse` object with the following propertie
     ```
   </Tab>
 </Tabs>
+
+### Scope by folder
+
+Pass `folders` to extract from everything in one or more [folders](/sdk/sources/folders); `folders` alone is enough:
+
+<FoldersSdkVersions />
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+
+    client = Graphor()
+
+    result = client.sources.extract(
+        folders=["Invoices/2026"],
+        user_instruction="List every invoice number and its total amount.",
+        output_schema={
+            "type": "object",
+            "properties": {
+                "invoices": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "invoice_number": {"type": "string"},
+                            "total_amount": {"type": "number"},
+                        },
+                    },
+                }
+            },
+        },
+    )
+    print(result.structured_output)
+    print("Scoped to:", result.folders)
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    const result = await client.sources.extract({
+      folders: ['Invoices/2026'],
+      user_instruction: 'List every invoice number and its total amount.',
+      output_schema: {
+        type: 'object',
+        properties: {
+          invoices: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                invoice_number: { type: 'string' },
+                total_amount: { type: 'number' },
+              },
+            },
+          },
+        },
+      },
+    });
+    console.log(result.structured_output);
+    console.log('Scoped to:', result.folders);
+    ```
+  </Tab>
+</Tabs>
+
+- Each folder covers **every source at or below it**, read when the request arrives; it combines with `file_ids` (the union of both).
+- **An empty list is no folder scope**: `folders=[]` behaves as if it were omitted, so `file_ids` or `file_names` must then be given. If you build the list in code, check for an empty list yourself.
+- A folder that holds no source refuses the whole call: `BadRequestError` with code `chat.folder_scope_empty`.
+- The top level (`""`, `"/"`) is not a folder, and `folders` cannot be combined with `file_names`: both raise `UnprocessableEntityError` (`request.invalid`). At most 1,000 entries.
+- The response carries `folders`, the folders the scope was resolved from. If the API did not apply the scope, the SDK raises `FolderScopeNotAppliedError` instead of returning the result (see [Folders](/sdk/sources/folders#when-the-api-does-not-apply-a-folder)).
+- `file_ids` in the response keeps echoing the `file_ids` you passed; sources found through `folders` are not added to it.
 
 ### Using Thinking Level
 
@@ -1792,14 +1873,18 @@ Use the `raw_json` field to debug extraction issues:
 
 | Error Type | Status Code | Description |
 |------------|-------------|-------------|
-| `BadRequestError` | 400 | Invalid parameters or malformed schema |
+| `BadRequestError` | 400 | Invalid parameters or malformed schema; `chat.folder_scope_empty` when a folder in `folders` holds no source |
 | `AuthenticationError` | 401 | Invalid or missing API key |
 | `PermissionDeniedError` | 403 | Access denied to the specified project |
 | `NotFoundError` | 404 | File not found or no parsing history |
+| `UnprocessableEntityError` | 422 | `request.invalid`: no scope given, an invalid folder, the top level as a folder, or `folders` with `file_names` |
 | `RateLimitError` | 429 | Too many requests, please retry after waiting |
-| `InternalServerError` | ≥500 | Server-side processing error |
+| `InternalServerError` | ≥500 | Server-side processing error (`503 service.unavailable`: the folder scope could not be read; retry) |
 | `APIConnectionError` | N/A | Network connectivity issues |
 | `APITimeoutError` | N/A | Request timed out |
+| `FolderScopeNotAppliedError` | N/A | `folders` was passed and the API did not apply the scope; the result is withheld |
+
+When a call with `folders` fails after the API started streaming its result, the SDK raises the error for the status the API reports (for example `InternalServerError`), with the body's `retry_after` as the error's `Retry-After` header, not `FolderScopeNotAppliedError`. A `folders` value that is not a list (Python: list or tuple) or an array (TypeScript), such as a single string, raises a plain `GraphorError` before any request.
 
 ## Troubleshooting
 

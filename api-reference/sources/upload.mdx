@@ -3,6 +3,8 @@ title: 'Ingest Sources'
 description: 'Upload sources (files, web pages, GitHub, YouTube) to your project via the Graphor REST API'
 ---
 
+import FoldersSdkVersions from '/snippets/folders-sdk-versions.mdx';
+
 This page documents Graphor's **source ingestion** endpoints. All ingestion is **asynchronous**: you send a request, receive a **build ID** immediately, and then poll the **build status** endpoint until processing completes. Use these endpoints to add content to your project — whether that content is a **local file**, a **public web page URL**, a **public GitHub repository**, or a **public YouTube video**.
 
 ## Endpoints
@@ -90,6 +92,42 @@ When `indexing_options` is `["full"]`, sending `indexing: 'none'` returns **400*
 <Note>
   When every source in a prebuilt RAG retrieve scope is unindexed, the empty response includes an explanatory `message` field.
 </Note>
+
+## Folders
+
+Every ingest endpoint on this page takes an optional `folder`: the [folder](/api-reference/sources/folders) to store the new source in, as a `/`-separated path such as `Contracts/2026`. On [Ingest file](#ingest-file) it is a form field; on [upload sessions](#upload-sessions) and the JSON endpoints it is a JSON field. A folder that does not exist is created; you do not need to create it first.
+
+| `folder` | Ingest file, upload sessions | Ingest URL, GitHub, YouTube |
+|----------|------------------------------|-----------------------------|
+| omitted or `null` | the top level | a new source goes to the top level; a source that replaces one of the same name keeps that source's folder |
+| `""` or `"/"` | the top level | the top level, also when it replaces a source |
+| a path | that folder | that folder |
+
+- **File names stay unique per project, whatever the folder.** A file uploaded into `Contracts/2026` with the same name as a source elsewhere is stored as `name (1).ext`.
+- **An invalid path** is refused before anything is stored: `400 request.invalid` on Ingest file and upload sessions, `422 request.invalid` on the JSON endpoints (see [Folder paths](/api-reference/sources/folders#folder-paths)).
+- **`503 service.unavailable`** means the target folder could not be recorded and nothing was started; retrying is safe.
+- **An upload session's folder is fixed when the session is created** and echoed in its response. If the folder is renamed or deleted before `complete`, the source is still stored at the path named at creation (which is created again if needed); [move it](/api-reference/sources/folders#move-sources) afterwards if you need to.
+- [Reprocess](/api-reference/sources/process) keeps a source's folder; use [Move sources](/api-reference/sources/folders#move-sources) to change it.
+
+### Confirm where uploads landed
+
+The build status does not report the folder. To check where sources landed, list the folder: **GET** `https://sources.graphorlm.com?folder=Contracts/2026` (every source in the response carries `folder`), or list the new sources by id with `?file_ids=id1,id2`. An API without folder support ignores `folder` on ingest and stores the source at the top level, so check before relying on the folder.
+
+```bash
+curl -X POST https://sources.graphorlm.com/ingest-file \
+  -H "Authorization: Bearer grlm_your_api_token_here" \
+  -F "file=@contract.pdf" \
+  -F "folder=Contracts/2026"
+```
+
+```bash
+curl -X POST https://sources.graphorlm.com/ingest-url \
+  -H "Authorization: Bearer grlm_your_api_token_here" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com/terms", "folder": "Policies"}'
+```
+
+<FoldersSdkVersions />
 
 ## Get build status
 
@@ -291,6 +329,7 @@ Upload a local file and schedule ingestion in the background. The API validates 
 | `method` | string | Processing method: `auto`, `fast`, `balanced`, `accurate`, or `agentic` (see [Partition methods](#partition-methods)) | No |
 | `enrichment` | string | Annotation level: `full` (default) or `none` (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
 | `indexing` | string | Index level: `full` (default) or `none`. With `none`, the source is parsed but not searchable (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
+| `folder` | string | The folder to store the source in; empty, `/` or omitted is the top level (see [Folders](#folders)) | No |
 
 ### Partition methods
 
@@ -426,10 +465,11 @@ curl -X POST https://sources.graphorlm.com/ingest-file \
 
 | Status Code | Description |
 |-------------|-------------|
-| `400` | Unsupported file type, missing file name, or invalid `enrichment`/`indexing` value (the response lists the valid values) |
+| `400` | Unsupported file type, missing file name, invalid `enrichment`/`indexing` value (the response lists the valid values), or an invalid `folder` (`code: "request.invalid"`) |
 | `411` | Missing Content-Length header |
 | `413` | File too large for a single request: use the SDKs or [upload sessions](#upload-sessions) |
 | `500` | Internal server error |
+| `503` | `service.unavailable`: the target folder could not be recorded and nothing started; retry |
 
 Example error body:
 
@@ -446,7 +486,7 @@ Example error body:
 
 For files above the single-request limit, up to 200 MB. The SDKs (Python `graphor` 0.27.0+, TypeScript `graphor` 0.24.0+) do this in `ingest_file` / `ingestFile`.
 
-1. **POST** `https://sources.graphorlm.com/upload-sessions` with `file_name` and `file_size` (and optional `method`, `enrichment`, `indexing`). Returns `upload_id`, `build_id`, `upload_url` and `chunk_size`.
+1. **POST** `https://sources.graphorlm.com/upload-sessions` with `file_name` and `file_size` (and optional `method`, `enrichment`, `indexing`, `folder`). Returns `upload_id`, `build_id`, `upload_url`, `chunk_size` and `folder`, the folder the source will be stored in (normalized; `""` is the top level). The folder is fixed here (see [Folders](#folders)); an invalid one answers `400 request.invalid`. If you sent `folder` and the response has no `folder`, the API does not support folders: do not upload the file.
 2. `PUT` the bytes to `upload_url` in chunks of `chunk_size`, with `Content-Range: bytes <first>-<last>/<total>`. A `308` means continue from the byte after its `Range` header (`bytes=0-N`), or from 0 if it has none; `200` or `201` means done. After a failed `PUT`, an empty `PUT` with `Content-Range: bytes */<total>` returns the stored range. Do not send your API key to this URL.
 3. **POST** `https://sources.graphorlm.com/upload-sessions/complete` with `upload_id` (and optional `md5`: the base64 of the file's 16-byte MD5 digest). Returns `build_id`, as [Ingest file](#ingest-file) does. Safe to retry. A long complete can answer `200` with an error body instead (`detail`, `status_code`, `retryable`), so check for `build_id`.
 
@@ -485,6 +525,7 @@ Ingest a web page (or multiple pages via crawling) as a source. The job runs in 
 | `method` | string | One of: `auto`, `fast`, `balanced`, `accurate`, `agentic`. `auto` is PDF-only and only effective when the URL resolves to a PDF; non-PDF URLs fall back to `fast`. | No |
 | `enrichment` | string | Annotation level: `full` (default) or `none` (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
 | `indexing` | string | Index level: `full` (default) or `none`. With `none`, the source is parsed but not searchable (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
+| `folder` | string \| null | The folder to store the source in; `""` or `"/"` is the top level. When omitted, a new source goes to the top level and a source that replaces one of the same name keeps that source's folder (see [Folders](#folders)) | No |
 
 ### Success response (200 OK)
 
@@ -549,7 +590,9 @@ curl -X POST https://sources.graphorlm.com/ingest-url \
 | Status Code | Description |
 |-------------|-------------|
 | `400` | Unsupported file type detected from a file URL, or invalid `enrichment`/`indexing` value (the response lists the valid values) |
+| `422` | Invalid `folder` (`code: "request.invalid"`) |
 | `500` | Internal server error during URL processing |
+| `503` | `service.unavailable`: the target folder could not be recorded and nothing started; retry |
 
 <Note>
   To ingest local files (PDF, DOCX, etc.), use [Ingest file](#ingest-file).
@@ -588,6 +631,7 @@ Ingest a public GitHub repository as a source. Processing runs in the background
 | `url` | string | GitHub repository URL (e.g. `https://github.com/owner/repo`) | Yes |
 | `enrichment` | string | Annotation level: `full` (default) or `none` (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
 | `indexing` | string | Index level: `full` (default) or `none`. With `none`, the source is parsed but not searchable (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
+| `folder` | string \| null | The folder to store the source in; `""` or `"/"` is the top level. When omitted, a new source goes to the top level and a source that replaces one of the same name keeps that source's folder (see [Folders](#folders)) | No |
 
 ### Success response (200 OK)
 
@@ -648,7 +692,9 @@ curl -X POST https://sources.graphorlm.com/ingest-github \
 | Status Code | Description |
 |-------------|-------------|
 | `400` | Invalid `enrichment` or `indexing` value (the response lists the valid values) |
+| `422` | Invalid `folder` (`code: "request.invalid"`) |
 | `500` | Internal server error during GitHub processing |
+| `503` | `service.unavailable`: the target folder could not be recorded and nothing started; retry |
 
 <Note>
   Only **public** repositories are supported.
@@ -687,6 +733,7 @@ Ingest a public YouTube video (transcript/captions) as a source. Processing runs
 | `url` | string | YouTube video URL (e.g. `https://www.youtube.com/watch?v=...`) | Yes |
 | `enrichment` | string | Annotation level: `full` (default) or `none` (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
 | `indexing` | string | Index level: `full` (default) or `none`. With `none`, the source is parsed but not searchable (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
+| `folder` | string \| null | The folder to store the source in; `""` or `"/"` is the top level. When omitted, a new source goes to the top level and a source that replaces one of the same name keeps that source's folder (see [Folders](#folders)) | No |
 
 ### Success response (200 OK)
 
@@ -747,7 +794,9 @@ curl -X POST https://sources.graphorlm.com/ingest-youtube \
 | Status Code | Description |
 |-------------|-------------|
 | `400` | Invalid `enrichment` or `indexing` value (the response lists the valid values) |
+| `422` | Invalid `folder` (`code: "request.invalid"`) |
 | `500` | Internal server error during YouTube processing |
+| `503` | `service.unavailable`: the target folder could not be recorded and nothing started; retry |
 
 <Note>
   The video must be **public**; transcripts/captions are downloaded and processed in the background.
@@ -777,6 +826,9 @@ After ingestion completes (build status `Completed`):
   </Card>
   <Card title="List sources" icon="list" href="/api-reference/sources/list">
     List all sources in your project
+  </Card>
+  <Card title="Folders" icon="folder-tree" href="/api-reference/sources/folders">
+    Organize sources in folders and move them
   </Card>
   <Card title="Get elements" icon="file-dashed-line" href="/api-reference/sources/list-elements">
     Retrieve parsed elements (chunks) for a source

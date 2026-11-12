@@ -115,6 +115,13 @@ The Sources methods cover the full ingestion lifecycle:
   >
     Permanently remove sources from your project
   </Card>
+  <Card
+    title="Folders"
+    icon="folder-tree"
+    href="/sdk/sources/folders"
+  >
+    Organize sources in folders and move them
+  </Card>
 </CardGroup>
 
 ## Document Chat
@@ -274,28 +281,32 @@ export GRAPHOR_API_KEY="grlm_your_api_key_here"
   <Tab title="Python">
     | Method | Description |
     |--------|-------------|
-    | [`client.sources.ingest_file()`](/sdk/sources/upload#upload-a-file) | Ingest a local file (returns `build_id`) |
-    | [`client.sources.ingest_url()`](/sdk/sources/upload#upload-from-url) | Ingest from a web URL |
-    | [`client.sources.ingest_github()`](/sdk/sources/upload#upload-from-github) | Ingest from GitHub |
-    | [`client.sources.ingest_youtube()`](/sdk/sources/upload#upload-from-youtube) | Ingest from YouTube |
+    | [`client.sources.ingest_file()`](/sdk/sources/upload#ingest-file) | Ingest a local file (returns `build_id`) |
+    | [`client.sources.ingest_url()`](/sdk/sources/upload#ingest-url) | Ingest from a web URL |
+    | [`client.sources.ingest_github()`](/sdk/sources/upload#ingest-github) | Ingest from GitHub |
+    | [`client.sources.ingest_youtube()`](/sdk/sources/upload#ingest-youtube) | Ingest from YouTube |
     | [`client.sources.get_build_status()`](/sdk/sources/upload#get-build-status) | Poll build status; returns `file_id` when ready |
     | [`client.sources.reprocess()`](/sdk/sources/process) | Reprocess a source by `file_id` (returns `build_id`) |
     | [`client.sources.list()`](/sdk/sources/list) | List all sources (optional `file_ids` filter) |
     | [`client.sources.get_elements()`](/sdk/sources/list-elements) | Get parsed elements by `file_id` |
     | [`client.sources.delete()`](/sdk/sources/delete) | Delete a source by `file_id` |
+    | [`client.sources.list_folders()`, `create_folder()`, `rename_folder()`, `remove_folder()`, `delete_folder()`](/sdk/sources/folders) | Manage folders |
+    | [`client.sources.move()`](/sdk/sources/folders#move-sources) | Move sources to a folder |
   </Tab>
   <Tab title="TypeScript">
     | Method | Description |
     |--------|-------------|
-    | [`client.sources.ingestFile()`](/sdk/sources/upload#upload-a-file) | Ingest a local file (returns `build_id`) |
-    | [`client.sources.ingestUrl()`](/sdk/sources/upload#upload-from-url) | Ingest from a web URL |
-    | [`client.sources.ingestGitHub()`](/sdk/sources/upload#upload-from-github) | Ingest from GitHub |
-    | [`client.sources.ingestYoutube()`](/sdk/sources/upload#upload-from-youtube) | Ingest from YouTube |
+    | [`client.sources.ingestFile()`](/sdk/sources/upload#ingest-file) | Ingest a local file (returns `build_id`) |
+    | [`client.sources.ingestURL()`](/sdk/sources/upload#ingest-url) | Ingest from a web URL |
+    | [`client.sources.ingestGitHub()`](/sdk/sources/upload#ingest-github) | Ingest from GitHub |
+    | [`client.sources.ingestYoutube()`](/sdk/sources/upload#ingest-youtube) | Ingest from YouTube |
     | [`client.sources.getBuildStatus()`](/sdk/sources/upload#get-build-status) | Poll build status; returns `fileId` when ready |
     | [`client.sources.reprocess()`](/sdk/sources/process) | Reprocess a source by `fileId` (returns `build_id`) |
     | [`client.sources.list()`](/sdk/sources/list) | List all sources (optional `fileIds` filter) |
     | [`client.sources.getElements()`](/sdk/sources/list-elements) | Get parsed elements by `fileId` |
     | [`client.sources.delete()`](/sdk/sources/delete) | Delete a source by `fileId` |
+    | [`client.sources.listFolders()`, `createFolder()`, `renameFolder()`, `removeFolder()`, `deleteFolder()`](/sdk/sources/folders) | Manage folders |
+    | [`client.sources.move()`](/sdk/sources/folders#move-sources) | Move sources to a folder |
   </Tab>
 </Tabs>
 
@@ -692,8 +703,8 @@ Here's the full "happy path": **ingest → get_build_status (poll) → list → 
         return this.client.sources.getBuildStatus(buildId);
       }
 
-      async ingestUrl(url: string, crawl = false) {
-        return this.client.sources.ingestUrl({ url, crawlUrls: crawl });
+      async ingestURL(url: string, crawl = false) {
+        return this.client.sources.ingestURL({ url, crawlUrls: crawl });
       }
 
       async reprocess(fileId: string, method = 'balanced') {
@@ -1014,6 +1025,7 @@ The SDK provides typed exceptions for different error scenarios:
 | ≥500 | `InternalServerError` | Server-side error |
 | N/A | `APIConnectionError` | Network connectivity issues |
 | N/A | `APITimeoutError` | Request timed out |
+| N/A | `FolderScopeNotAppliedError` | A folder filter or scope was not applied by the API; the result is withheld (see [Folders](/sdk/sources/folders#when-the-api-does-not-apply-a-folder)) |
 
 ## Configuration
 

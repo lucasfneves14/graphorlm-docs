@@ -3,6 +3,8 @@ title: 'MCP Server'
 description: 'Connect AI agents and coding assistants to your Graphor documents using the Model Context Protocol'
 ---
 
+import FoldersSdkVersions from '/snippets/folders-sdk-versions.mdx';
+
 The **Graphor MCP Server** lets AI agents — such as Cursor, VS Code Copilot, Claude Code, and other MCP-compatible clients — interact with your Graphor project directly. Your agent can upload documents, ask questions, extract structured data, and perform semantic search, all without leaving your development environment.
 
 <CardGroup cols={2}>
@@ -18,13 +20,16 @@ The **Graphor MCP Server** lets AI agents — such as Cursor, VS Code Copilot, C
   <Card title="Semantic Search" icon="magnifying-glass">
     Retrieve relevant document chunks via semantic search
   </Card>
+  <Card title="Organize in Folders" icon="folder-tree">
+    List and create folders, move sources, and scope questions to folders
+  </Card>
 </CardGroup>
 
 ## How It Works
 
-The Graphor MCP Server exposes **12 individual tools**, one per SDK operation. Each tool maps directly to a Graphor API call and your agent calls them by name with typed parameters.
+The Graphor MCP Server exposes **individual tools**, one per SDK operation. Each tool maps directly to a Graphor API call and your agent calls them by name with typed parameters.
 
-The ingestion tools (`ingest_file`, `ingest_url`, `ingest_github`, `ingest_youtube`, and `reprocess`) are **asynchronous**: they return a `build_id` immediately, and you poll `get_build_status` until the job completes to obtain the `file_id`. All other operations (`ask`, `extract`, `retrieve_chunks`, `get_elements`, `delete_source`, `list_sources`) use `file_id` directly.
+The ingestion tools (`ingest_file`, `ingest_url`, `ingest_github`, `ingest_youtube`, and `reprocess`) are **asynchronous**: they return a `build_id` immediately, and you poll `get_build_status` until the job completes to obtain the `file_id`. All other operations (`ask`, `extract`, `retrieve_chunks`, `get_elements`, `delete_source`, `list_sources`, `move_sources`) use `file_id` directly.
 
 ## Installation
 
@@ -239,16 +244,16 @@ For clients that only support `stdio` transport, use [`mcp-remote`](https://www.
 
 ## Available Tools
 
-Once installed, your agent has access to **12 tools** covering the full Graphor API surface:
+Once installed, your agent has access to tools covering the Graphor API surface:
 
 ### Ingestion
 
 | Tool | Required params | Optional params | Returns |
 |------|----------------|-----------------|---------|
-| `ingest_file` | `file_path` **or** (`file_content` + `file_name`) | `method` | `build_id` (files up to 200 MB by `file_path`) |
-| `ingest_url` | `url` | `crawlUrls`, `method` | `build_id` |
-| `ingest_github` | `url` | — | `build_id` |
-| `ingest_youtube` | `url` | — | `build_id` |
+| `ingest_file` | `file_path` **or** (`file_content` + `file_name`) | `method`, `folder` | `build_id` (files up to 200 MB by `file_path`) |
+| `ingest_url` | `url` | `crawlUrls`, `method`, `folder` | `build_id` |
+| `ingest_github` | `url` | `folder` | `build_id` |
+| `ingest_youtube` | `url` | `folder` | `build_id` |
 | `get_build_status` | `build_id` | `suppress_elements`, `suppress_img_base64`, `page`, `page_size` | build status + `file_id` when complete. Status can be `Pending` (not started), `Processing`, `Completed`, or `Processing failed` |
 
 The `method` parameter controls the partitioning strategy: `auto`, `fast`, `balanced`, `accurate`, or `agentic`. Use `auto` for mixed PDFs (body + tables + scans in one document) — it routes each page to the cheapest parser that fits.
@@ -257,7 +262,7 @@ The `method` parameter controls the partitioning strategy: `auto`, `fast`, `bala
 
 | Tool | Required params | Optional params | Returns |
 |------|----------------|-----------------|---------|
-| `list_sources` | — | `file_ids` | list of sources with metadata |
+| `list_sources` | — | `file_ids`, `folder`, `recursive` | list of sources with metadata, each with its `folder` |
 | `reprocess` | `file_id` | `method` | `build_id` |
 | `get_elements` | `file_id` | `page`, `page_size`, `suppress_img_base64`, `type`, `page_numbers`, `elementsToRemove` | paginated elements |
 | `delete_source` | `file_id` | — | confirmation |
@@ -266,9 +271,30 @@ The `method` parameter controls the partitioning strategy: `auto`, `fast`, `bala
 
 | Tool | Required params | Optional params | Returns |
 |------|----------------|-----------------|---------|
-| `ask` | `question` | `file_ids`, `file_names`, `conversation_id`, `reset`, `output_schema`, `thinking_level` | answer + `conversation_id` |
-| `extract` | `user_instruction`, `output_schema` | `file_ids`, `file_names`, `thinking_level` | `structured_output` |
-| `retrieve_chunks` | `query` | `file_ids`, `file_names` | ranked text chunks |
+| `ask` | `question` | `file_ids`, `file_names`, `folders`, `conversation_id`, `reset`, `output_schema`, `thinking_level` | answer + `conversation_id` |
+| `extract` | `user_instruction`, `output_schema` | `file_ids`, `file_names`, `folders`, `thinking_level` | `structured_output` |
+| `retrieve_chunks` | `query` | `file_ids`, `file_names`, `folders` | ranked text chunks |
+
+### Folders
+
+| Tool | Required params | Optional params | Returns |
+|------|----------------|-----------------|---------|
+| `list_folders` | — | — | every folder of the project, sorted, and `truncated` |
+| `create_folder` | `folder` | — | the folder and whether it was `created` |
+| `move_sources` | `file_ids`, `folder` | — | the target folder, the number `moved` and the ids `not_found` |
+
+<FoldersSdkVersions />
+
+A folder is a `/`-separated path such as `Contracts/2026`; the top level of the project is `""`. Folders work in the tools as in the [API](/api-reference/sources/folders):
+
+- **`folder` on the ingest tools** stores the new source in that folder (created if needed); `""` or `"/"` is the top level. On `ingest_url`, `ingest_github` and `ingest_youtube`, leaving `folder` out keeps the folder of a source of the same name that the ingest replaces.
+- **`list_sources`** with a path lists that folder and everything below it; with `recursive: false`, only that folder. With `""` or `"/"` it lists only the sources at the top level.
+- **`folders` on `ask`, `extract` and `retrieve_chunks`** scopes the call to every source at or below each folder, together with `file_ids`. An empty `folders` list is no folder scope. A folder that holds no source refuses the call (`chat.folder_scope_empty`).
+- **`move_sources`** moves up to 1,000 sources; `folder: ""` moves them to the top level.
+- **File names stay unique per project**, whatever the folder.
+- Renaming, removing and deleting folders are not tools: use the [SDK](/sdk/sources/folders), the [API](/api-reference/sources/folders) or the Graphor dashboard.
+
+When `list_sources`, `ask`, `extract`, `retrieve_chunks`, `ingest_file` (for a large file) or a folder tool sends a folder parameter the API did not apply, the tool returns an error to the agent instead of an unscoped result. `ingest_url`, `ingest_github`, `ingest_youtube` and a small `ingest_file` are not checked: on an API without folder support the source lands at the top level, so confirm with `list_sources`.
 
 ## What Your Agent Can Do
 
@@ -319,6 +345,15 @@ With the MCP server, your agent can perform any operation available in the Graph
     - *"Get elements from pages 3 to 5 of file_abc123."*
   </Accordion>
 
+  <Accordion icon="folder-tree" title="Organize Sources in Folders">
+    Use `list_folders`, `create_folder` and `move_sources` to organize sources, `folder` on the ingest tools to store new sources in a folder, and `list_sources` with `folder` to see what a folder holds.
+
+    **Example agent prompts:**
+    - *"Ingest ~/Downloads/contract.pdf into the folder Contracts/2026."*
+    - *"Move every source whose name starts with 2025 into Archive/2025."*
+    - *"List what is in the Contracts folder, without its subfolders."*
+  </Accordion>
+
   <Accordion icon="comments" title="Chat with Documents">
     Use `ask` to pose natural-language questions about your sources. Maintain conversation memory by passing the `conversation_id` returned in each response. Scope to specific files using `file_ids`.
 
@@ -326,6 +361,7 @@ With the MCP server, your agent can perform any operation available in the Graph
     - *"Ask: what are the key findings in the ingested report?"*
     - *"Follow up: can you elaborate on the second finding?"*
     - *"Ask a question scoped to file_ids ['file_abc123', 'file_def456']."*
+    - *"Ask which contracts in the Contracts/2026 folder renew automatically."*
   </Accordion>
 
   <Accordion icon="table" title="Extract Structured Data">

@@ -3,6 +3,8 @@ title: 'Chat API'
 description: 'Ask questions about your documents using natural language'
 ---
 
+import FoldersSdkVersions from '/snippets/folders-sdk-versions.mdx';
+
 ## Overview
 
 The Document Chat API allows you to ask questions about your ingested documents and receive answers grounded in your content. The API supports conversational memory, enabling follow-up questions that maintain context.
@@ -39,6 +41,7 @@ Authorization: Bearer YOUR_API_TOKEN
 | `reset` | boolean | No | When `true`, starts a new conversation and ignores previous history. Default: `false` |
 | `file_ids` | string[] | No | Restrict search to specific documents by file ID (preferred) |
 | `file_names` | string[] | No | Restrict search to specific documents by file name (deprecated, use `file_ids`) |
+| `folders` | string[] | No | Restrict search to every source at or below each [folder](/api-reference/sources/folders), together with `file_ids`. An empty list is no folder scope. See [Scope by folder](#scope-by-folder). |
 | `output_schema` | object (JSON Schema) | No | Optional JSON Schema to request a structured output. When provided, the API returns validated structured data in `structured_output` and the raw JSON-text candidate in `raw_json`. |
 | `thinking_level` | string | No | Controls model and thinking configuration. Values: `"fast"`, `"balanced"`, `"accurate"` (default). See [Thinking Level](#thinking-level) for details. |
 | `include_citation_images` | boolean | No | When `true`, populates `image_base64` (base64-encoded PNG of the cited page) inside each entry of `citations`. Default: `false`. See [Citations](#citations) for guidance. |
@@ -111,6 +114,30 @@ curl -X POST "https://sources.graphorlm.com/ask-sources" \
     "file_names": ["invoice-2024.pdf", "invoice-2023.pdf"]
   }'
 ```
+
+### Scope by folder
+
+Pass `folders` to ask about everything in one or more [folders](/api-reference/sources/folders):
+
+```bash
+curl -X POST "https://sources.graphorlm.com/ask-sources" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Which contracts renew automatically?",
+    "folders": ["Contracts/2026"]
+  }'
+```
+
+- Each folder covers **every source at or below it**, in any processing status, read when the request arrives. `Contracts` covers `Contracts/2026` too.
+- `folders` combines with `file_ids`: the scope is the union of both.
+- **An empty list is no folder scope.** `"folders": []` behaves as if `folders` were omitted, so with no `file_ids` either the call runs on the whole project. If you build the list in code, check for an empty list before sending.
+- **A folder that holds no source refuses the whole request** with `400 chat.folder_scope_empty`, even when the other folders hold sources.
+- The top level (`""`, `"/"`) is not a folder: to cover the whole project, omit `folders`. A top-level entry, an invalid path, or `folders` together with `file_names` answers `422 request.invalid`. At most 1,000 entries.
+- The response echoes `folders`: the folders the scope was resolved from, normalized and de-duplicated (`null` when the request named none). A response to a request with a non-empty `folders` that has no `folders` was **not** scoped by folder: do not use it as if it were (see [Checking that a folder was applied](/api-reference/sources/folders#checking-that-a-folder-was-applied)). The API has already recorded that unscoped turn in the conversation, so repeat the question with `reset: true` or without `conversation_id`.
+- The scope applies to this call only. A follow-up in the same `conversation_id` states its own scope (send `folders` again to keep it).
+
+<FoldersSdkVersions />
 
 ### Example with Thinking Level
 
@@ -191,6 +218,7 @@ curl -X POST "https://sources.graphorlm.com/ask-sources" \
 | `structured_output` | any | Optional structured output validated against the requested `output_schema`. Present only when `output_schema` is provided. |
 | `raw_json` | string | Optional raw JSON-text produced by the model before validation/correction. Present only when `output_schema` is provided. |
 | `conversation_id` | string | Conversation identifier for follow-up questions |
+| `folders` | string[] \| null | The folders the scope was resolved from (normalized); `null` when the request named no folder. See [Scope by folder](#scope-by-folder). |
 | `citations` | object[] | Structured citations resolving each `[N]` marker in `answer`. See [Citations](#citations). May be `null`/empty when the agent did not ground its answer (e.g. small-talk follow-ups). |
 | `usage` | object | Token usage breakdown for the request |
 | `elapsed_s` | number | Wall-clock time in seconds |
@@ -272,11 +300,30 @@ A good rule of thumb: enable `include_citation_images=true` only when you contro
 
 | Status Code | Description |
 |-------------|-------------|
-| 400 | Bad Request - Invalid parameters |
+| 400 | Bad Request - Invalid parameters; `chat.folder_scope_empty` when a folder in `folders` holds no source |
 | 401 | Unauthorized - Invalid or missing API token |
 | 404 | Not Found - Specified file not found |
-| 422 | Unprocessable Entity - Invalid `output_schema` or structured output validation failed |
+| 422 | Unprocessable Entity - Invalid `output_schema` or structured output validation failed; `request.invalid` for an invalid folder, the top level as a folder, or `folders` together with `file_names` |
 | 500 | Internal Server Error |
+| 503 | `service.unavailable`: the folder scope could not be read; retry |
+
+### Failures after the response started
+
+A long answer streams whitespace first to keep the connection open. A failure after that point cannot change the HTTP status, so it arrives as a `200` response whose JSON body is an error instead of an answer:
+
+```json
+{
+  "detail": "Internal server error occurred while asking sources",
+  "code": "internal",
+  "reference": "ref_0a1b2c3d4e5f",
+  "status_code": 500,
+  "retryable": true,
+  "retry_after": null,
+  "busy": false
+}
+```
+
+Check for `status_code` before reading the result: when present, treat the body as an error with that status. `detail` can be a string or an object, and `code` depends on what failed, so key your handling on `status_code` and `retryable`: retry only when `retryable` is `true` (after `retry_after` seconds when set). `reference` is present when there is one to quote to support. The SDKs raise the matching error for you.
 
 ## Usage Examples
 
@@ -361,7 +408,7 @@ console.log(followUp.answer);
 
 1. **Use conversation memory** — Pass `conversation_id` for follow-up questions to maintain context
 2. **Be specific** — Clear, specific questions get better answers
-3. **Scope when needed** — Use `file_ids` to focus on specific documents
+3. **Scope when needed** — Use `file_ids` to focus on specific documents, or `folders` to cover everything in a folder
 4. **Use structured output when integrating** — Provide `output_schema` to get JSON you can reliably parse in code
 5. **Reset when changing topics** — Set `reset: true` when switching to unrelated questions
 6. **Lazy-load citation images** — Keep `include_citation_images=false` (the default) and fetch page screenshots on demand via [Get Page Screenshot](/api-reference/sources/page-screenshot). Inlining base64 only makes sense for low-citation, low-frequency requests — for typical chat UIs it bloats the payload by hundreds of KB per cited page.

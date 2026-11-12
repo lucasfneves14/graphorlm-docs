@@ -1,0 +1,618 @@
+---
+title: 'Folders'
+description: 'Organize sources in folders, move them, and manage folders via the Graphor REST API'
+---
+
+import FoldersSdkVersions from '/snippets/folders-sdk-versions.mdx';
+
+Folders organize the sources of a project. A folder is a `/`-separated path such as `Contracts/2026`; every source is either in one folder or at the **top level** of the project. The endpoints on this page list, create, rename, remove and delete folders, and move sources between them. Folders also appear on other endpoints:
+
+- [List sources](/api-reference/sources/list) returns each source's `folder` and can filter by folder.
+- [Ingest file, URL, GitHub and YouTube](/api-reference/sources/upload#folders) take an optional `folder` to store the new source in.
+- [Ask](/api-reference/chat-api#scope-by-folder), [Extract](/api-reference/extract-api#scope-by-folder) and [Retrieve](/api-reference/prebuilt-rag-api#scope-by-folder) take an optional `folders` list to scope the call to everything in those folders.
+
+<FoldersSdkVersions />
+
+## Endpoints
+
+<CardGroup cols={2}>
+  <Card title="List folders" icon="folder-tree" href="#list-folders">
+    **GET** `https://sources.graphorlm.com/folders`
+
+    Every folder of the project, sorted
+  </Card>
+  <Card title="Create a folder" icon="folder-plus" href="#create-a-folder">
+    **POST** `https://sources.graphorlm.com/create-folder`
+
+    A folder that stays listed while it is empty
+  </Card>
+  <Card title="Rename or move a folder" icon="pen" href="#rename-or-move-a-folder">
+    **POST** `https://sources.graphorlm.com/rename-folder`
+
+    Rename a folder, or move it under another folder
+  </Card>
+  <Card title="Remove a folder" icon="folder-minus" href="#remove-a-folder">
+    **POST** `https://sources.graphorlm.com/remove-folder`
+
+    Remove a folder and move its content into the folder above it
+  </Card>
+  <Card title="Delete an empty folder" icon="trash" href="#delete-an-empty-folder">
+    **POST** `https://sources.graphorlm.com/delete-folder`
+
+    Delete a folder that holds no source
+  </Card>
+  <Card title="Move sources" icon="arrow-right-arrow-left" href="#move-sources">
+    **POST** `https://sources.graphorlm.com/move-sources`
+
+    Move up to 1,000 sources to a folder or to the top level
+  </Card>
+</CardGroup>
+
+## Authentication
+
+All endpoints on this page require authentication using an API token. Include your API token as a Bearer token in the `Authorization` header. Every call acts on the project of the token.
+
+<Note>
+  Learn how to create and manage API tokens in the [API Tokens guide](/guides/api-tokens).
+</Note>
+
+## How folders work
+
+- **A folder exists** while it holds a source, while an upload into it is on its way, or after it was created with [Create a folder](#create-a-folder) (an empty folder stays listed until you delete it). Creating a folder also creates the folders above it.
+- **No folder has to exist first.** An upload, a link ingest or a [move](#move-sources) into a path that does not exist creates it.
+- **File names stay unique per project, whatever the folder.** A second `README.md` uploaded into another folder is stored as `README (1).md` (see [Ingest file](/api-reference/sources/upload#ingest-file)).
+- **Every response returns the normalized path.** Sending `" /Contracts/2026/ "` stores and returns `Contracts/2026`.
+- **Paths are compared exactly**: `Contracts` and `contracts` are two folders.
+- **Changes made through the API show in the Graphor dashboard**, and open dashboard tabs refresh.
+
+### Folder paths
+
+A folder path is a list of names separated by `/`. Before it is checked, spaces and slashes at both ends of the path are removed, and spaces at both ends of each name too: `" Contracts / 2026 "` is `Contracts/2026`. The path is then refused with `request.invalid` when:
+
+- it has more than **8** levels, or a name longer than **100** characters, or the whole path is longer than **512** bytes (UTF-8);
+- a name is empty (`Contracts//2026`), `.` or `..`;
+- it contains a backslash (`\`), a control or invisible formatting character (a tab, a newline, a zero-width character), or a line or paragraph separator.
+
+Other Unicode spaces, such as a no-break space, are kept as part of the name.
+
+A comma is an ordinary character: `Smith, Jones/2026` is one folder named `Smith, Jones` with a subfolder `2026`.
+
+### The top level
+
+The top level is the project itself, not a folder. A value made only of spaces (U+0020) and slashes (`""`, `"/"`, `" "`, `"//"`) means the top level everywhere. An omitted value, or `null`, means "not given". Other whitespace is not stripped: a tab is refused as an invalid character, and a no-break space is a folder name.
+
+| Where | Omitted or `null` | The top level (`""`, `"/"`) |
+|-------|-------------------|-----------------------------|
+| [Ingest file](/api-reference/sources/upload#ingest-file), [upload sessions](/api-reference/sources/upload#upload-sessions) | the top level | the top level |
+| [Ingest URL, GitHub, YouTube](/api-reference/sources/upload#folders) | a new source goes to the top level; a source that replaces one of the same name keeps that source's folder | the top level, also when it replaces a source |
+| [Move sources](#move-sources) | `request.invalid` (`folder` is required) | the top level |
+| [List sources](/api-reference/sources/list#filter-by-folder) `folder` | no folder filter | only the sources at the top level |
+| [Create](#create-a-folder), [rename](#rename-or-move-a-folder), [remove](#remove-a-folder), [delete](#delete-an-empty-folder) | `request.invalid` | `request.invalid` |
+| An entry of `folders` on ask, extract and retrieve | (no entry) | `request.invalid` |
+
+In responses, the top level is always the empty string `""`.
+
+---
+
+## List folders
+
+Returns every folder of the project: folders created empty, folders that hold sources and folders that uploads are on their way to, each with the folders above it, sorted.
+
+### Endpoint overview
+
+<CardGroup cols={2}>
+  <Card title="HTTP Method" icon="list">
+    **GET**
+  </Card>
+  <Card title="Endpoint URL" icon="link">
+    **https://sources.graphorlm.com/folders**
+  </Card>
+</CardGroup>
+
+### Success response (200 OK)
+
+```json
+{
+  "folders": [
+    { "folder": "Contracts" },
+    { "folder": "Contracts/2025" },
+    { "folder": "Contracts/2026" },
+    { "folder": "Reports" }
+  ],
+  "truncated": false
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `folders` | object[] | One object per folder, sorted by path. Each has `folder`, the folder's `/`-separated path. The top level is not listed. |
+| `truncated` | boolean | `true` when the project has more than 10,000 folders; the answer then lists the first 10,000 in sort order |
+
+### Code examples
+
+```bash
+curl https://sources.graphorlm.com/folders \
+  -H "Authorization: Bearer grlm_your_api_token_here"
+```
+
+```python
+import requests
+
+def list_folders(api_token):
+    response = requests.get(
+        "https://sources.graphorlm.com/folders",
+        headers={"Authorization": f"Bearer {api_token}"},
+        timeout=30,
+    )
+    response.raise_for_status()
+    return [item["folder"] for item in response.json()["folders"]]
+
+print(list_folders("grlm_your_api_token_here"))
+```
+
+```javascript
+const listFolders = async (apiToken) => {
+  const response = await fetch("https://sources.graphorlm.com/folders", {
+    headers: { Authorization: `Bearer ${apiToken}` },
+  });
+  if (!response.ok) throw new Error(`List folders failed: ${response.status}`);
+  const { folders } = await response.json();
+  return folders.map((f) => f.folder);
+};
+```
+
+### Errors
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `503` | `service.unavailable` | Temporarily unavailable; retry (safe) |
+
+---
+
+## Create a folder
+
+Creates a folder, and the folders above it, that stays listed while it is empty. **Safe to repeat**: `created` is `false` when the folder already existed.
+
+### Endpoint overview
+
+<CardGroup cols={2}>
+  <Card title="HTTP Method" icon="arrow-up">
+    **POST**
+  </Card>
+  <Card title="Endpoint URL" icon="link">
+    **https://sources.graphorlm.com/create-folder**
+  </Card>
+</CardGroup>
+
+### Request body (JSON)
+
+| Field | Type | Description | Required |
+|-------|------|-------------|----------|
+| `folder` | string | The folder's path, for example `Contracts/2026`. Not the top level. | Yes |
+
+### Success response (200 OK)
+
+```json
+{
+  "folder": "Contracts/2026",
+  "created": true
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `folder` | string | The folder's normalized path |
+| `created` | boolean | `false` when the folder already existed |
+
+### Code example
+
+```bash
+curl -X POST https://sources.graphorlm.com/create-folder \
+  -H "Authorization: Bearer grlm_your_api_token_here" \
+  -H "Content-Type: application/json" \
+  -d '{"folder": "Contracts/2026"}'
+```
+
+### Errors
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `422` | `request.invalid` | An invalid path, or the top level |
+| `409` | `folder.too_many` | The project has too many folders (see [Limits](#limits)) |
+| `503` | `service.unavailable` | Temporarily unavailable; retry (safe) |
+
+---
+
+## Rename or move a folder
+
+Renames a folder, or moves it under another folder, with everything in it: its sources and its subfolders. `Contracts/2026` renamed to `Archive/2026` moves the folder and its content under `Archive` (created if needed).
+
+<Warning>
+  **Not safe to repeat blindly.** After a `503`, a timeout or a lost response, the change may have been saved, and a repeated call would answer `404 folder.not_found`. [List the folders](#list-folders) before repeating. See [Repeating a call](#repeating-a-call).
+</Warning>
+
+### Endpoint overview
+
+<CardGroup cols={2}>
+  <Card title="HTTP Method" icon="arrow-up">
+    **POST**
+  </Card>
+  <Card title="Endpoint URL" icon="link">
+    **https://sources.graphorlm.com/rename-folder**
+  </Card>
+</CardGroup>
+
+### Request body (JSON)
+
+| Field | Type | Description | Required |
+|-------|------|-------------|----------|
+| `folder` | string | The folder to rename | Yes |
+| `new_folder` | string | Its new path; it may sit under another folder | Yes |
+| `merge` | boolean | When `new_folder` already exists, merge into it instead of answering `409 folder.exists`. Default: `false` | No |
+
+### Success response (200 OK)
+
+```json
+{
+  "folder": "Contracts/2026",
+  "new_folder": "Archive/2026",
+  "moved": 12
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `folder` | string | The folder's former path |
+| `new_folder` | string | Its new path |
+| `moved` | integer | Number of sources moved |
+
+### Code example
+
+```bash
+curl -X POST https://sources.graphorlm.com/rename-folder \
+  -H "Authorization: Bearer grlm_your_api_token_here" \
+  -H "Content-Type: application/json" \
+  -d '{"folder": "Contracts/2026", "new_folder": "Archive/2026"}'
+```
+
+### Errors
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `422` | `request.invalid` | An invalid path, or the top level |
+| `404` | `folder.not_found` | No such folder. After an earlier attempt, it may mean that attempt worked |
+| `400` | `folder.into_itself` | `new_folder` is inside `folder` |
+| `400` | `folder.path_too_long` | A path inside the folder would break the [path limits](#folder-paths) at the new place |
+| `409` | `folder.exists` | `new_folder` already exists; send `merge: true` to merge into it |
+| `503` | `service.unavailable` | Temporarily unavailable. The change may have been saved: list the folders before repeating |
+
+---
+
+## Remove a folder
+
+Removes a folder and moves its sources and subfolders into the folder above it (the top level for a top-level folder). Removing `Contracts/2026` moves its sources into `Contracts`. To delete a folder only when it is empty, use [Delete an empty folder](#delete-an-empty-folder).
+
+<Warning>
+  **Not safe to repeat blindly.** [List the folders](#list-folders) before repeating. See [Repeating a call](#repeating-a-call).
+</Warning>
+
+### Endpoint overview
+
+<CardGroup cols={2}>
+  <Card title="HTTP Method" icon="arrow-up">
+    **POST**
+  </Card>
+  <Card title="Endpoint URL" icon="link">
+    **https://sources.graphorlm.com/remove-folder**
+  </Card>
+</CardGroup>
+
+### Request body (JSON)
+
+| Field | Type | Description | Required |
+|-------|------|-------------|----------|
+| `folder` | string | The folder to remove | Yes |
+| `merge` | boolean | When a subfolder would land on a folder of the same name above it, merge them instead of answering `409 folder.exists`. Default: `false` | No |
+
+### Success response (200 OK)
+
+```json
+{
+  "folder": "Contracts/2026",
+  "parent": "Contracts",
+  "moved": 12
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `folder` | string | The removed folder's path |
+| `parent` | string | Where its content went; `""` is the top level |
+| `moved` | integer | Number of sources moved |
+
+### Code example
+
+```bash
+curl -X POST https://sources.graphorlm.com/remove-folder \
+  -H "Authorization: Bearer grlm_your_api_token_here" \
+  -H "Content-Type: application/json" \
+  -d '{"folder": "Contracts/2026"}'
+```
+
+### Errors
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `422` | `request.invalid` | An invalid path, or the top level |
+| `404` | `folder.not_found` | No such folder. After an earlier attempt, it may mean that attempt worked |
+| `409` | `folder.exists` | A subfolder would land on a folder of the same name; send `merge: true` |
+| `503` | `service.unavailable` | Temporarily unavailable. The change may have been saved: list the folders before repeating |
+
+---
+
+## Delete an empty folder
+
+Deletes a folder that holds no source, together with the empty folders below it. Move or delete its sources first ([Move sources](#move-sources), [Delete source](/api-reference/sources/delete)).
+
+<Warning>
+  **Not safe to repeat blindly.** [List the folders](#list-folders) before repeating. See [Repeating a call](#repeating-a-call).
+</Warning>
+
+### Endpoint overview
+
+<CardGroup cols={2}>
+  <Card title="HTTP Method" icon="arrow-up">
+    **POST**
+  </Card>
+  <Card title="Endpoint URL" icon="link">
+    **https://sources.graphorlm.com/delete-folder**
+  </Card>
+</CardGroup>
+
+### Request body (JSON)
+
+| Field | Type | Description | Required |
+|-------|------|-------------|----------|
+| `folder` | string | The folder to delete | Yes |
+
+### Success response (200 OK)
+
+```json
+{
+  "folder": "Contracts/2026",
+  "deleted": 3
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `folder` | string | The deleted folder's path |
+| `deleted` | integer | Folders removed: the folder and its empty subfolders |
+
+### Code example
+
+```bash
+curl -X POST https://sources.graphorlm.com/delete-folder \
+  -H "Authorization: Bearer grlm_your_api_token_here" \
+  -H "Content-Type: application/json" \
+  -d '{"folder": "Contracts/2026"}'
+```
+
+### Errors
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `422` | `request.invalid` | An invalid path, or the top level |
+| `404` | `folder.not_found` | No such folder. After an earlier attempt, it may mean that attempt worked |
+| `409` | `folder.not_empty` | The folder, or a folder below it, holds a source |
+| `409` | `folder.uploads_pending` | The folder holds no stored source yet, but uploads into it are on their way; try again once they are stored |
+| `503` | `service.unavailable` | Temporarily unavailable. The change may have been saved: list the folders before repeating |
+
+---
+
+## Move sources
+
+Moves up to 1,000 sources to a folder, or to the top level with `""` or `"/"`. A folder that does not exist is created. Ids that match no source of the project come back in `not_found`. **Safe to repeat.**
+
+### Endpoint overview
+
+<CardGroup cols={2}>
+  <Card title="HTTP Method" icon="arrow-up">
+    **POST**
+  </Card>
+  <Card title="Endpoint URL" icon="link">
+    **https://sources.graphorlm.com/move-sources**
+  </Card>
+</CardGroup>
+
+### Request body (JSON)
+
+| Field | Type | Description | Required |
+|-------|------|-------------|----------|
+| `file_ids` | string[] | The sources to move: 1 to 1,000 ids | Yes |
+| `folder` | string | The target folder; `""` or `"/"` is the top level | Yes |
+
+### Success response (200 OK)
+
+```json
+{
+  "folder": "Contracts/2026",
+  "moved": 2,
+  "not_found": ["file_ghi789"]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `folder` | string | The target folder, normalized; `""` is the top level |
+| `moved` | integer | Number of sources moved |
+| `not_found` | string[] | Ids that matched no source of the project (or a source being deleted) |
+
+### Code examples
+
+```bash
+curl -X POST https://sources.graphorlm.com/move-sources \
+  -H "Authorization: Bearer grlm_your_api_token_here" \
+  -H "Content-Type: application/json" \
+  -d '{"file_ids": ["file_abc123", "file_def456"], "folder": "Contracts/2026"}'
+```
+
+```bash
+# Back to the top level
+curl -X POST https://sources.graphorlm.com/move-sources \
+  -H "Authorization: Bearer grlm_your_api_token_here" \
+  -H "Content-Type: application/json" \
+  -d '{"file_ids": ["file_abc123"], "folder": ""}'
+```
+
+```python
+import requests
+
+def move_sources(api_token, file_ids, folder):
+    response = requests.post(
+        "https://sources.graphorlm.com/move-sources",
+        headers={"Authorization": f"Bearer {api_token}"},
+        json={"file_ids": file_ids, "folder": folder},
+        timeout=60,
+    )
+    response.raise_for_status()
+    return response.json()
+
+result = move_sources("grlm_your_api_token_here", ["file_abc123", "file_def456"], "Contracts/2026")
+print(f"Moved {result['moved']} into '{result['folder']}'; not found: {result['not_found']}")
+```
+
+```javascript
+const moveSources = async (apiToken, fileIds, folder) => {
+  const response = await fetch("https://sources.graphorlm.com/move-sources", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ file_ids: fileIds, folder }),
+  });
+  if (!response.ok) throw new Error(`Move failed: ${response.status}`);
+  return response.json();
+};
+```
+
+### Errors
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `422` | `request.invalid` | An invalid path, no ids, or more than 1,000 ids |
+| `409` | `folder.too_many` | The project has too many folders (see [Limits](#limits)) |
+| `503` | `service.unavailable` | Temporarily unavailable; retry (safe) |
+
+---
+
+## Error codes
+
+A refusal has a JSON body with a human-readable `detail` and a stable `code`. Use `code` in your program; the `detail` text can change.
+
+```json
+{
+  "detail": "A folder with this name already exists here. Merge them, or choose another name.",
+  "code": "folder.exists"
+}
+```
+
+A `5xx` answer may also carry a `reference` to quote to support. A JSON body that fails validation (a missing field, a wrong type, too many ids, an invalid folder path in a folder endpoint or a link ingest) answers `422` with `code: "request.invalid"` and a `detail` list describing each problem. A `folders` refusal on ask, extract or retrieve (an invalid or top-level entry, or `folders` with `file_names`) answers `422 request.invalid` with a string `detail`. An invalid `folder` on [List sources](/api-reference/sources/list#filter-by-folder) (`422`), [Ingest file](/api-reference/sources/upload#ingest-file) or an [upload session](/api-reference/sources/upload#upload-sessions) (`400`) has a `detail` that starts with `Invalid folder:`.
+
+| Code | Status | Meaning | What to do |
+|------|--------|---------|------------|
+| `request.invalid` | `422` (`400` on ingest file and upload sessions) | An invalid path, the top level where a folder is required, too many ids or folders | Fix the request |
+| `folder.not_found` | `404` | The folder does not exist | Check the path with [List folders](#list-folders); after a repeated call, the first one may have worked |
+| `folder.into_itself` | `400` | A rename into the folder's own subtree | Choose another target |
+| `folder.path_too_long` | `400` | A rename would make a path inside the folder too deep or too long | Choose a shorter name or another place |
+| `folder.exists` | `409` | The target folder already exists | Send `merge: true`, or choose another name |
+| `folder.not_empty` | `409` | Delete of a folder that holds a source | Move or delete its sources first |
+| `folder.uploads_pending` | `409` | Delete of a folder whose only content is uploads not stored yet | Try again once they are stored |
+| `folder.too_many` | `409` | The project has too many folders | Delete or remove folders first |
+| `chat.folder_scope_empty` | `400` | Ask, extract or retrieve scoped to a folder that holds no source | Remove that folder from `folders`, or ingest into it |
+| `service.unavailable` | `503` | The operation could not complete in time | Retry, or for rename, remove and delete read the folders first |
+
+### Retry headers
+
+- Every folder `409` carries `x-should-retry: false`: repeating the same request gives the same answer.
+- A `503` carries `Retry-After: 30`. On [List folders](#list-folders), [Create a folder](#create-a-folder) and [Move sources](#move-sources) it also carries `x-should-retry: true`; on rename, remove and delete it carries `x-should-retry: false`, because the change may have been saved.
+
+### Repeating a call
+
+| Endpoint | Safe to repeat |
+|----------|----------------|
+| List folders | Yes |
+| Create a folder | Yes (`created: false` the second time) |
+| Move sources | Yes |
+| Rename or move a folder | No |
+| Remove a folder | No |
+| Delete an empty folder | No |
+
+Rename, remove and delete can answer `503`, time out, or lose their response after the change was saved. Before repeating one of them, [list the folders](#list-folders) and check whether the change is already there. Only a `404` whose `code` is `folder.not_found` can mean that an earlier call worked. A `404` **without** a `code` (`{"detail": "Not Found"}`) means the API you are calling does not offer the folder endpoints.
+
+```python
+import requests
+
+API = "https://sources.graphorlm.com"
+HEADERS = {"Authorization": "Bearer grlm_your_api_token_here"}
+
+def rename_folder_once(folder, new_folder):
+    """Rename a folder; after a failure, check the folders before trying again."""
+    try:
+        r = requests.post(f"{API}/rename-folder", headers=HEADERS,
+                          json={"folder": folder, "new_folder": new_folder}, timeout=60)
+        if r.status_code != 503:
+            r.raise_for_status()
+            return r.json()
+    except (requests.Timeout, requests.ConnectionError):
+        pass  # the rename may or may not have been saved
+    listed = requests.get(f"{API}/folders", headers=HEADERS, timeout=30)
+    listed.raise_for_status()
+    paths = {f["folder"] for f in listed.json()["folders"]}
+    # The API returns normalized paths: compare with paths written the same way ("A/B", no outer spaces or slashes)
+    if new_folder.strip(" /") in paths and folder.strip(" /") not in paths:
+        return None  # the first call worked
+    raise RuntimeError("Rename not applied; repeat it later")
+```
+
+## Checking that a folder was applied
+
+The API echoes every folder filter and scope it applies, so a caller can tell that the folder was used:
+
+| Request | Echo |
+|---------|------|
+| [List sources](/api-reference/sources/list#filter-by-folder) with `folder` or `recursive` | every returned source carries `folder` |
+| [Ask](/api-reference/chat-api#scope-by-folder), [extract](/api-reference/extract-api#scope-by-folder), [retrieve](/api-reference/prebuilt-rag-api#scope-by-folder) with a non-empty `folders` | the response carries `folders`, the folders the scope was resolved from. After an ask without it, the unscoped turn is already recorded in the conversation: repeat the question with `reset: true` or without `conversation_id` |
+| [Create an upload session](/api-reference/sources/upload#upload-sessions) with `folder` | the response carries `folder`, the folder the source will be stored in |
+
+A response without its echo comes from an API that did not apply the folder (for example a deployment without folder support): do not act on it as if it were scoped. A long ask or extract can also fail after it started streaming; that failure arrives as a `200` body with `detail`, `code`, `status_code`, `retryable` and `retry_after` instead of an answer, so check for `status_code` before reading `folders`. The SDKs do these checks for you and raise `FolderScopeNotAppliedError` (see [SDK folders](/sdk/sources/folders#when-the-api-does-not-apply-a-folder)).
+
+## Limits
+
+| Limit | Value |
+|-------|-------|
+| Ids per [Move sources](#move-sources) call | 1,000 |
+| Entries in `folders` on ask, extract and retrieve | 1,000 |
+| Stored folders per project, checked by [Create a folder](#create-a-folder) and [Move sources](#move-sources) | 10,000 |
+| Folders returned by [List folders](#list-folders) | 10,000 (`truncated: true` beyond) |
+| Levels in a path / characters per name / bytes per path | 8 / 100 / 512 |
+
+Uploads into a new folder are never refused because of the folder count.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="SDK folders" icon="folder-tree" href="/sdk/sources/folders">
+    The same operations in the Python and TypeScript SDKs
+  </Card>
+  <Card title="List sources" icon="list" href="/api-reference/sources/list#filter-by-folder">
+    List the sources of a folder
+  </Card>
+  <Card title="Ingest sources" icon="arrow-up-from-bracket" href="/api-reference/sources/upload#folders">
+    Store new sources in a folder
+  </Card>
+  <Card title="Chat API" icon="comments" href="/api-reference/chat-api#scope-by-folder">
+    Ask questions about the sources of a folder
+  </Card>
+</CardGroup>

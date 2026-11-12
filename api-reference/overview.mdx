@@ -56,6 +56,13 @@ The Sources API covers the full ingestion lifecycle. **Ingestion is asynchronous
   >
     Permanently remove a source from your project
   </Card>
+  <Card
+    title="Folders"
+    icon="folder-tree"
+    href="/api-reference/sources/folders"
+  >
+    Organize sources in folders, move them, and scope questions to folders
+  </Card>
 </CardGroup>
 
 ## Document Chat (Chat API)
@@ -94,6 +101,7 @@ Extract specific structured data from your documents using schemas:
 - **List**: list all sources (optionally filter by `file_ids`) and monitor status
 - **Get elements**: retrieve parsed elements (chunks) for a source by `file_id` (GET with query params)
 - **Delete**: remove a source by `file_id` (required)
+- **Folders**: list, create, rename, remove and delete folders, and move sources between them
 
 ## Authentication
 
@@ -125,14 +133,17 @@ All endpoints use the base **https://sources.graphorlm.com**.
 - `POST /ingest-github` — Ingest a GitHub repo (async)
 - `POST /ingest-youtube` — Ingest a YouTube video (async)
 - `POST /reprocess` — Re-process an existing source (async)
-- `GET /` — List all sources (optional `?file_ids=...`)
+- `GET /` — List all sources (optional `?file_ids=...`, `?folder=...`, `?recursive=...`)
+- `GET /folders` — List folders
+- `POST /create-folder`, `POST /rename-folder`, `POST /remove-folder`, `POST /delete-folder` — Manage folders
+- `POST /move-sources` — Move sources to a folder
 - `GET /get-elements` — Get parsed elements of a source (`file_id` required)
 - `DELETE /delete` — Delete a source (JSON body: `file_id` required)
 
 ### Chat & Extraction
-- `POST /ask-sources` — Ask questions about documents (optional `file_ids` / `file_names`)
-- `POST /run-extraction` — Extract structured data (`file_ids`, `user_instruction`, `output_schema`)
-- `POST /prebuilt-rag` — Retrieve chunks (RAG) without generating an answer
+- `POST /ask-sources` — Ask questions about documents (optional `file_ids` / `file_names` / `folders`)
+- `POST /run-extraction` — Extract structured data (`file_ids`, `file_names` or `folders`; `user_instruction`; `output_schema`)
+- `POST /prebuilt-rag` — Retrieve chunks (RAG) without generating an answer (optional `file_ids` / `folders`)
 
 ## Response Formats
 

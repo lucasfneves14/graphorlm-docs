@@ -3,6 +3,8 @@ title: 'Extraction API'
 description: 'Extract structured data from documents using JSON Schema'
 ---
 
+import FoldersSdkVersions from '/snippets/folders-sdk-versions.mdx';
+
 ## Overview
 
 The Data Extraction API allows you to extract structured information from your documents using standard JSON Schema and natural language instructions. The extraction uses the active parsing version of the specified document.
@@ -36,12 +38,13 @@ Authorization: Bearer YOUR_API_TOKEN
 |-----------|------|----------|-------------|
 | `file_ids` | string[] | No* | List of file IDs to extract from (preferred) |
 | `file_names` | string[] | No* | List of file names to extract from (deprecated, use `file_ids`) |
+| `folders` | string[] | No* | Extract from every source at or below each [folder](/api-reference/sources/folders), together with `file_ids`. See [Scope by folder](#scope-by-folder). |
 | `user_instruction` | string | Yes | Natural language instructions to guide the extraction |
 | `output_schema` | object | Yes | JSON Schema defining the structure of the extracted data |
 | `thinking_level` | string | No | Controls model and thinking configuration. Values: `"fast"`, `"balanced"`, `"accurate"` (default). See [Thinking Level](#thinking-level) for details. |
 
 <Note>
-*At least one of `file_ids` or `file_names` must be provided. `file_ids` is preferred.
+*At least one of `file_ids`, `file_names` or `folders` must be provided and non-empty. `file_ids` is preferred over `file_names`.
 </Note>
 
 ### Output Schema
@@ -125,6 +128,45 @@ curl -X POST "https://sources.graphorlm.com/run-extraction" \
     }
   }'
 ```
+
+### Scope by folder
+
+Pass `folders` to extract from everything in one or more [folders](/api-reference/sources/folders); `folders` alone is enough:
+
+```bash
+curl -X POST "https://sources.graphorlm.com/run-extraction" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "folders": ["Invoices/2026"],
+    "user_instruction": "List every invoice number and its total amount.",
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "invoices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "invoice_number": { "type": "string" },
+              "total_amount": { "type": "number" }
+            }
+          }
+        }
+      }
+    }
+  }'
+```
+
+- Each folder covers **every source at or below it**, in any processing status, read when the request arrives. `Contracts` covers `Contracts/2026` too.
+- `folders` combines with `file_ids`: the scope is the union of both.
+- **An empty list is no folder scope.** `"folders": []` behaves as if `folders` were omitted, so `file_ids` or `file_names` must then be given. If you build the list in code, check for an empty list before sending.
+- **A folder that holds no source refuses the whole request** with `400 chat.folder_scope_empty`, even when the other folders hold sources.
+- The top level (`""`, `"/"`) is not a folder. A top-level entry, an invalid path, or `folders` together with `file_names` answers `422 request.invalid`. At most 1,000 entries.
+- The response echoes `folders`: the folders the scope was resolved from, normalized and de-duplicated (`null` when the request named none). A response to a request with a non-empty `folders` that has no `folders` was **not** scoped by folder: do not use it as if it were (see [Checking that a folder was applied](/api-reference/sources/folders#checking-that-a-folder-was-applied)).
+- `file_ids` in the response keeps echoing the request's `file_ids`; the sources found through `folders` are not added to it.
+
+<FoldersSdkVersions />
 
 ### Example Request with Thinking Level
 
@@ -215,6 +257,7 @@ curl -X POST "https://sources.graphorlm.com/run-extraction" \
 | `file_names` | array | List of file names used for extraction |
 | `structured_output` | object | Extracted data matching your schema |
 | `raw_json` | string | Raw JSON-text produced by the model before validation/correction |
+| `folders` | array \| null | The folders the scope was resolved from (normalized); `null` when the request named no folder. See [Scope by folder](#scope-by-folder). |
 
 ### Example Response
 
@@ -265,15 +308,38 @@ When using `object` and `array` types in your schema:
   },
   "raw_json": "{...}"
 }
+```
 
 ### Error Responses
 
 | Status Code | Description |
 |-------------|-------------|
-| 400 | Bad Request - Invalid parameters or schema |
+| 400 | Bad Request - Invalid parameters or schema; `chat.folder_scope_empty` when a folder in `folders` holds no source |
 | 401 | Unauthorized - Invalid or missing API token |
 | 404 | Not Found - File not found or no parsing history |
+| 422 | `request.invalid`: no scope given, an invalid folder, the top level as a folder, or `folders` together with `file_names` |
 | 500 | Internal Server Error |
+| 503 | `service.unavailable`: the folder scope could not be read; retry |
+
+### Failures after the response started
+
+A long extraction streams whitespace first to keep the connection open. A failure after that point cannot change the HTTP status, so it arrives as a `200` response whose JSON body is an error instead of the extraction result:
+
+```json
+{
+  "detail": "Internal server error occurred while running extraction",
+  "code": "internal",
+  "reference": "ref_0a1b2c3d4e5f",
+  "status_code": 500,
+  "retryable": true,
+  "retry_after": null,
+  "busy": false
+}
+```
+
+Check for `status_code` before reading the result: when present, treat the body as an error with that status. `detail` can be a string or an object, and `code` depends on what failed, so key your handling on `status_code` and `retryable`: retry only when `retryable` is `true` (after `retry_after` seconds when set). `reference` is present when there is one to quote to support. The SDKs raise the matching error for you.
+
+A structured output that still fails validation after correction is a non-retryable error with `code: "extraction.internal"` and an object `detail` (`{"message": "Structured output validation failed", "error": ...}`): a `422` answer, or, once the response has started, a `200` body with `status_code: 422` and `retryable: false`.
 
 ## Schema Examples
 
