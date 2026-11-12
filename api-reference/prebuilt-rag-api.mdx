@@ -3,6 +3,8 @@ title: 'Prebuilt RAG API'
 description: 'Retrieve relevant document chunks using semantic search'
 ---
 
+import FoldersSdkVersions from '/snippets/folders-sdk-versions.mdx';
+
 ## Overview
 
 The Prebuilt RAG API allows you to retrieve relevant document chunks from your ingested documents using semantic search. It returns the most relevant content for your query, making it ideal for building custom applications.
@@ -37,6 +39,7 @@ Authorization: Bearer YOUR_API_TOKEN
 | `query` | string | Yes | The search query to retrieve relevant chunks |
 | `file_ids` | string[] | No | Restrict retrieval to specific documents by file ID (preferred) |
 | `file_names` | string[] | No | Restrict retrieval to specific documents by file name (deprecated, use `file_ids`) |
+| `folders` | string[] | No | Restrict retrieval to every source at or below each [folder](/api-reference/sources/folders), together with `file_ids`. An empty list is no folder scope. See [Scope by folder](#scope-by-folder). |
 
 ### Example Request
 
@@ -73,6 +76,29 @@ curl -X POST "https://sources.graphorlm.com/prebuilt-rag" \
   }'
 ```
 
+### Scope by folder
+
+Pass `folders` to search everything in one or more [folders](/api-reference/sources/folders):
+
+```bash
+curl -X POST "https://sources.graphorlm.com/prebuilt-rag" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "What are the payment terms?",
+    "folders": ["Contracts/2026"]
+  }'
+```
+
+- Each folder covers **every source at or below it**, in any processing status, read when the request arrives. `Contracts` covers `Contracts/2026` too.
+- `folders` combines with `file_ids`: the scope is the union of both.
+- **An empty list is no folder scope.** `"folders": []` behaves as if `folders` were omitted, so with no `file_ids` either the call runs on the whole project. If you build the list in code, check for an empty list before sending.
+- **A folder that holds no source refuses the whole request** with `400 chat.folder_scope_empty`, even when the other folders hold sources.
+- The top level (`""`, `"/"`) is not a folder: to cover the whole project, omit `folders`. A top-level entry, an invalid path, or `folders` together with `file_names` answers `422 request.invalid`. At most 1,000 entries.
+- The response echoes `folders`: the folders the scope was resolved from, normalized and de-duplicated (`null` when the request named none). A response to a request with a non-empty `folders` that has no `folders` was **not** scoped by folder: do not use it as if it were (see [Checking that a folder was applied](/api-reference/sources/folders#checking-that-a-folder-was-applied)).
+
+<FoldersSdkVersions />
+
 ## Response
 
 ### Success Response (200 OK)
@@ -82,6 +108,7 @@ curl -X POST "https://sources.graphorlm.com/prebuilt-rag" \
 | `query` | string | The original search query |
 | `chunks` | array | List of retrieved document chunks |
 | `total` | integer | Total number of chunks retrieved |
+| `folders` | string[] \| null | The folders the scope was resolved from (normalized); `null` when the request named no folder. See [Scope by folder](#scope-by-folder). |
 
 ### Chunk Object
 
@@ -135,10 +162,12 @@ Each chunk in the `chunks` array contains:
 
 | Status Code | Description |
 |-------------|-------------|
-| 400 | Bad Request - Invalid parameters |
+| 400 | Bad Request - Invalid parameters; `chat.folder_scope_empty` when a folder in `folders` holds no source |
 | 401 | Unauthorized - Invalid or missing API token |
 | 404 | Not Found - Specified file not found |
+| 422 | `request.invalid`: an invalid folder, the top level as a folder, or `folders` together with `file_names` |
 | 500 | Internal Server Error |
+| 503 | `service.unavailable`: the folder scope could not be read; retry |
 
 ## Usage Examples
 
@@ -343,7 +372,7 @@ Create custom Q&A systems with full control over:
 ## Best Practices
 
 1. **Be specific in queries** — Clear, specific queries return more relevant chunks
-2. **Use file_ids for focused search** — Restrict to specific documents when you know the source
+2. **Use file_ids for focused search** — Restrict to specific documents when you know the source, or use `folders` to search everything in a folder
 3. **Check relevance scores** — Higher scores indicate better matches; consider filtering low-score chunks
 4. **Include source citations** — Use file_name and page_number to cite sources in your responses
 5. **Combine with LLM** — Use retrieved chunks as context for LLM-generated answers

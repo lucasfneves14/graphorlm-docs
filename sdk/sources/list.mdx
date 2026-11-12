@@ -3,7 +3,9 @@ title: 'List Sources'
 description: 'List all sources in your project using the Graphor SDK'
 ---
 
-The **`list`** method returns every source in the project. Each item includes file metadata (ID, name, size, type, origin), current processing status, and a human-readable message. You can optionally filter by `file_ids`.
+import FoldersSdkVersions from '/snippets/folders-sdk-versions.mdx';
+
+The **`list`** method returns every source in the project. Each item includes file metadata (ID, name, size, type, origin), its [folder](/sdk/sources/folders), current processing status, and a human-readable message. You can optionally filter by `file_ids` and by folder.
 
 ## Method overview
 
@@ -23,6 +25,8 @@ The **`list`** method returns every source in the project. Each item includes fi
     ```python
     client.sources.list(
         file_ids: list[str] | None = None,   # Optional: filter by these file IDs
+        folder: str = omit,                  # Optional: filter by folder ("" or "/" is the top level)
+        recursive: bool = omit,              # Optional: include subfolders (default True)
         timeout: float | None = None
     ) -> list[PublicSource]
     ```
@@ -30,7 +34,9 @@ The **`list`** method returns every source in the project. Each item includes fi
   <Tab title="TypeScript">
     ```typescript
     await client.sources.list({
-      fileIds?: string[] | null,   // Optional: filter by these file IDs
+      file_ids?: string[] | null,  // Optional: filter by these file IDs
+      folder?: string,             // Optional: filter by folder ('' or '/' is the top level)
+      recursive?: boolean,         // Optional: include subfolders (default true)
     }): Promise<PublicSource[]>
     ```
   </Tab>
@@ -43,18 +49,24 @@ The **`list`** method returns every source in the project. Each item includes fi
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
     | `file_ids` | `list[str] \| None` | If provided, only sources whose `file_id` is in this list are returned | No |
+    | `folder` | `str` | Only the sources in this folder and, with `recursive`, below it. `""` or `"/"` lists only the top level. See [Filter by folder](#filter-by-folder). | No |
+    | `recursive` | `bool` | Default `True`. With `folder`, whether the folders below it are included. Without `folder`, `False` lists only the top level. | No |
     | `timeout` | `float` | Request timeout in seconds | No |
   </Tab>
   <Tab title="TypeScript">
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
-    | `fileIds` | `string[] \| null` | If provided, only sources with these `file_id`s are returned | No |
+    | `file_ids` | `string[] \| null` | If provided, only sources with these `file_id`s are returned | No |
+    | `folder` | `string` | Only the sources in this folder and, with `recursive`, below it. `''` or `'/'` lists only the top level. See [Filter by folder](#filter-by-folder). | No |
+    | `recursive` | `boolean` | Default `true`. With `folder`, whether the folders below it are included. Without `folder`, `false` lists only the top level. | No |
   </Tab>
 </Tabs>
 
 <Note>
-  When `file_ids` is omitted, the method returns all sources in the project.
+  When no filter is given, the method returns all sources in the project. The filters combine: `file_ids` with `folder` returns the listed sources that are in the folder.
 </Note>
+
+<FoldersSdkVersions />
 
 ## Response
 
@@ -71,7 +83,8 @@ The method returns a list of source objects. Each has:
 | `file_source` | `str` | Origin: `local file`, `url`, `github`, or `youtube` |
 | `project_id` | `str` | UUID of the project |
 | `project_name` | `str` | Name of the project |
-| `partition_method` | `str \| null` | Partition method: `auto`, `fast`, `balanced`, `accurate`, or `agentic` (when available) |
+| `method` | `str \| null` | Partition method: `auto`, `fast`, `balanced`, `accurate`, or `agentic` (when available) |
+| `folder` | `str` | The folder the source is in, as a `/`-separated path; `""` is the top level |
 
 ### Status values
 
@@ -195,9 +208,57 @@ Backend returns status with capital letters. Typical values:
   <Tab title="TypeScript">
     ```typescript
     const client = new Graphor();
-    const fileIds = ['file_abc123', 'file_def456'];
-    const sources = await client.sources.list({ fileIds });
+    const sources = await client.sources.list({ file_ids: ['file_abc123', 'file_def456'] });
     console.log(`Found ${sources.length} sources`);
+    ```
+  </Tab>
+</Tabs>
+
+### Filter by folder
+
+| Call | Returns |
+|------|---------|
+| no `folder` | every source (`recursive=False`: only the top level) |
+| `folder="Contracts"` | the sources in `Contracts` and in every folder below it |
+| `folder="Contracts", recursive=False` | only the sources directly in `Contracts` |
+| `folder=""` or `folder="/"` | only the sources at the top level |
+
+Matching is exact (`Contracts` does not match `Contracts2`), and a comma is part of a folder's name. When you pass `folder` or `recursive`, the SDK checks that every returned source carries `folder` and raises `FolderScopeNotAppliedError` otherwise, so a list the API did not filter is never returned as if it were (see [Folders](/sdk/sources/folders#when-the-api-does-not-apply-a-folder)).
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+
+    client = Graphor()
+
+    # Everything in Contracts and below
+    for source in client.sources.list(folder="Contracts"):
+        print(f"{source.folder}/{source.file_name}")
+
+    # Only the sources directly in Contracts/2026
+    direct = client.sources.list(folder="Contracts/2026", recursive=False)
+
+    # Only the sources at the top level
+    top_level = client.sources.list(folder="")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Everything in Contracts and below
+    for (const source of await client.sources.list({ folder: 'Contracts' })) {
+      console.log(`${source.folder}/${source.file_name}`);
+    }
+
+    // Only the sources directly in Contracts/2026
+    const direct = await client.sources.list({ folder: 'Contracts/2026', recursive: false });
+
+    // Only the sources at the top level
+    const topLevel = await client.sources.list({ folder: '' });
     ```
   </Tab>
 </Tabs>
@@ -522,7 +583,7 @@ Monitor the processing status of your documents:
         if processing:
             print("\nCurrently Processing:")
             for source in processing:
-                print(f"  - {source.file_name} ({source.partition_method})")
+                print(f"  - {source.file_name} ({source.method})")
         
         # List failed files that need attention
         if failed:
@@ -568,7 +629,7 @@ Monitor the processing status of your documents:
       if (processing.length > 0) {
         console.log('\nCurrently Processing:');
         for (const source of processing) {
-          console.log(`  - ${source.file_name} (${source.partition_method})`);
+          console.log(`  - ${source.file_name} (${source.method})`);
         }
       }
 
@@ -1236,8 +1297,10 @@ Set up continuous monitoring of your sources:
 |------------|-------------|-------------|
 | `AuthenticationError` | 401 | Invalid or missing API key |
 | `PermissionDeniedError` | 403 | Access denied to the specified project |
+| `UnprocessableEntityError` | 422 | Invalid `folder` path (`code: "request.invalid"`) |
 | `RateLimitError` | 429 | Too many requests, please retry after waiting |
 | `InternalServerError` | ≥500 | Server-side error retrieving sources |
+| `FolderScopeNotAppliedError` | — | `folder` or `recursive` was passed and the API did not apply the filter |
 | `APIConnectionError` | N/A | Network connectivity issues |
 | `APITimeoutError` | N/A | Request timed out |
 
@@ -1380,5 +1443,8 @@ After listing your sources:
   </Card>
   <Card title="Delete source" icon="trash" href="/sdk/sources/delete">
     Remove a source by file_id
+  </Card>
+  <Card title="Folders" icon="folder-tree" href="/sdk/sources/folders">
+    List, create, rename and delete folders; move sources
   </Card>
 </CardGroup>

@@ -3,6 +3,8 @@ title: 'Prebuilt RAG'
 description: 'Retrieve relevant document chunks using semantic search with the Graphor SDK'
 ---
 
+import FoldersSdkVersions from '/snippets/folders-sdk-versions.mdx';
+
 The `retrieveChunks` / `retrieve_chunks` method allows you to retrieve relevant document chunks from your ingested documents using semantic search. It returns the most relevant content for your query, making it ideal for building custom applications with your preferred LLM.
 
 ## Method Overview
@@ -38,6 +40,7 @@ The `retrieveChunks` / `retrieve_chunks` method allows you to retrieve relevant 
         query: str,                              # Required
         file_ids: list[str] | None = None,       # Preferred
         file_names: list[str] | None = None,     # Deprecated
+        folders: list[str] | None = None,        # Scope to these folders
         timeout: float | None = None
     ) -> SourceRetrieveChunksResponse
     ```
@@ -48,6 +51,7 @@ The `retrieveChunks` / `retrieve_chunks` method allows you to retrieve relevant 
       query: string,                              // Required
       file_ids?: string[] | null,                 // Preferred
       file_names?: string[] | null,               // Deprecated
+      folders?: string[] | null,                  // Scope to these folders
     }): Promise<SourceRetrieveChunksResponse>
     ```
   </Tab>
@@ -62,6 +66,7 @@ The `retrieveChunks` / `retrieve_chunks` method allows you to retrieve relevant 
     | `query` | `str` | The search query to retrieve relevant chunks | Yes |
     | `file_ids` | `list[str] \| None` | Restrict retrieval to specific documents by file ID (preferred) | No |
     | `file_names` | `list[str] \| None` | Restrict retrieval to specific documents by file name (deprecated, use `file_ids`) | No |
+    | `folders` | `list[str] \| None` | Restrict retrieval to every source at or below each [folder](/sdk/sources/folders), together with `file_ids`. An empty list is no folder scope. See [Scope by folder](#scope-by-folder). | No |
     | `timeout` | `float` | Request timeout in seconds | No |
   </Tab>
   <Tab title="TypeScript">
@@ -70,6 +75,7 @@ The `retrieveChunks` / `retrieve_chunks` method allows you to retrieve relevant 
     | `query` | `string` | The search query to retrieve relevant chunks | Yes |
     | `file_ids` | `string[] \| null` | Restrict retrieval to specific documents by file ID (preferred) | No |
     | `file_names` | `string[] \| null` | Restrict retrieval to specific documents by file name (deprecated, use `file_ids`) | No |
+    | `folders` | `string[] \| null` | Restrict retrieval to every source at or below each [folder](/sdk/sources/folders), together with `file_ids`. An empty list is no folder scope. See [Scope by folder](#scope-by-folder). | No |
   </Tab>
 </Tabs>
 
@@ -82,6 +88,7 @@ The method returns a `SourceRetrieveChunksResponse` object with the following pr
 | `query` | `str` | The original search query |
 | `total` | `int` | Total number of chunks retrieved |
 | `chunks` | `list[Chunk] \| None` | List of retrieved document chunks |
+| `folders` | `list[str] \| None` | The folders the scope was resolved from; `None` when the call named no folder |
 
 ### Chunk Object
 
@@ -225,6 +232,50 @@ Each chunk in the `chunks` list contains:
     ```
   </Tab>
 </Tabs>
+
+### Scope by folder
+
+Pass `folders` to search everything in one or more [folders](/sdk/sources/folders):
+
+<FoldersSdkVersions />
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+
+    client = Graphor()
+
+    result = client.sources.retrieve_chunks(
+        query="What are the payment terms?",
+        folders=["Contracts/2026"],
+    )
+    for chunk in result.chunks or []:
+        print(chunk.file_name, chunk.page_number, chunk.score)
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    const result = await client.sources.retrieveChunks({
+      query: 'What are the payment terms?',
+      folders: ['Contracts/2026'],
+    });
+    for (const chunk of result.chunks ?? []) {
+      console.log(chunk.file_name, chunk.page_number, chunk.score);
+    }
+    ```
+  </Tab>
+</Tabs>
+
+- Each folder covers **every source at or below it**, read when the request arrives; it combines with `file_ids` (the union of both).
+- **An empty list is no folder scope**: `folders=[]` behaves as if it were omitted, so with no `file_ids` either the search covers the whole project. If you build the list in code, check for an empty list yourself.
+- A folder that holds no source refuses the whole call: `BadRequestError` with code `chat.folder_scope_empty`.
+- The top level (`""`, `"/"`) is not a folder, and `folders` cannot be combined with `file_names`: both raise `UnprocessableEntityError` (`request.invalid`). At most 1,000 entries.
+- The response carries `folders`, the folders the scope was resolved from. If the API did not apply the scope, the SDK raises `FolderScopeNotAppliedError` instead of returning the result (see [Folders](/sdk/sources/folders#when-the-api-does-not-apply-a-folder)).
 
 ### Async Retrieval
 
@@ -1409,14 +1460,18 @@ Create custom Q&A systems with full control over:
 
 | Error Type | Status Code | Description |
 |------------|-------------|-------------|
-| `BadRequestError` | 400 | Invalid parameters |
+| `BadRequestError` | 400 | Invalid parameters; `chat.folder_scope_empty` when a folder in `folders` holds no source |
 | `AuthenticationError` | 401 | Invalid or missing API key |
 | `PermissionDeniedError` | 403 | Access denied to the project |
 | `NotFoundError` | 404 | Specified file not found |
+| `UnprocessableEntityError` | 422 | `request.invalid`: an invalid folder, the top level as a folder, or `folders` with `file_names` |
 | `RateLimitError` | 429 | Too many requests, please retry after waiting |
-| `InternalServerError` | ≥500 | Server-side error |
+| `InternalServerError` | ≥500 | Server-side error (`503 service.unavailable`: the folder scope could not be read; retry) |
 | `APIConnectionError` | N/A | Network connectivity issues |
 | `APITimeoutError` | N/A | Request timed out |
+| `FolderScopeNotAppliedError` | N/A | `folders` was passed and the API did not apply the scope; the result is withheld |
+
+A `folders` value that is not a list (Python: list or tuple) or an array (TypeScript), such as a single string, raises a plain `GraphorError` before any request.
 
 ## Troubleshooting
 

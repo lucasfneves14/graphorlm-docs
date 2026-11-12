@@ -358,6 +358,18 @@ To delete multiple sources at once:
 
 **Note**: Deleting sources permanently removes the document and its derived data (parsed elements, embeddings, and metadata).
 
+## Organizing Sources in Folders
+
+Folders group the sources of a project, for example by client, year or document type. A folder is a `/`-separated path such as `Contracts/2026`; a source is either in one folder or at the top level of the project.
+
+- **Store sources in a folder as you ingest them**: every ingest (file, URL, GitHub, YouTube) takes an optional folder, and a folder that does not exist is created.
+- **Move sources** between folders at any time; moving does not reprocess them.
+- **Rename or move a folder** with everything in it, **remove** a folder (its content moves to the folder above), or **delete** an empty one.
+- **Ask, extract and retrieve within folders**: scope a question or an extraction to everything in one or more folders instead of listing file IDs.
+- **Names stay unique per project**, whatever the folder: a file with the same name as an existing source is stored as `name (1).ext`.
+
+Folders made in the dashboard and through the API are the same folders. To work with them in code, see [Folders in the API reference](/api-reference/sources/folders) and [Folders in the SDK](/sdk/sources/folders).
+
 ## Programmatic Integration
 
 All data ingestion operations can be automated using Graphor's REST API. The project context is already included in your API token.
@@ -404,6 +416,15 @@ curl -X POST "https://sources.graphorlm.com/process" \
 ```bash
 curl -X GET "https://sources.graphorlm.com" \
   -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+### Move Sources to a Folder
+
+```bash
+curl -X POST "https://sources.graphorlm.com/move-sources" \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"file_ids": ["file_abc123"], "folder": "Contracts/2026"}'
 ```
 
 ### Delete a Source

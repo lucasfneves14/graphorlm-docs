@@ -3,6 +3,8 @@ title: 'Ingest Sources'
 description: 'Ingest sources (files, URLs, GitHub, YouTube) and poll build status using the Graphor SDK'
 ---
 
+import FoldersSdkVersions from '/snippets/folders-sdk-versions.mdx';
+
 This page documents how to **ingest** content into your Graphor project using the SDK. Ingestion is **asynchronous**: each method returns a **build_id** immediately; you then use **get build status** to poll until processing completes and get the **file_id** for use in other API calls.
 
 Supported sources: **local file**, **web page URL**, **GitHub repository**, and **YouTube video**.
@@ -261,6 +263,7 @@ Upload a local file and schedule ingestion in the background. Returns a **build_
         method: str | None = None,                   # Optional: fast, balanced, accurate, agentic
         enrichment: str | None = None,               # Optional: full (default), none
         indexing: str | None = None,                 # Optional: full (default), none
+        folder: str = omit,                          # Optional: folder to store the source in
         timeout: float | None = None
     ) -> SourceIngestFileResponse
     ```
@@ -273,6 +276,7 @@ Upload a local file and schedule ingestion in the background. Returns a **build_
       method?: 'fast' | 'balanced' | 'accurate' | 'agentic' | null,
       enrichment?: 'full' | 'none',
       indexing?: 'full' | 'none',
+      folder?: string,                                     // Optional: folder to store the source in
     }): Promise<SourceIngestFileResponse>
     ```
     Returns **`SourceIngestFileResponse`** with `.build_id`.
@@ -289,6 +293,7 @@ Upload a local file and schedule ingestion in the background. Returns a **build_
     | `method` | `str \| None` | One of: `auto`, `fast`, `balanced`, `accurate`, `agentic` (see [Partition methods](#partition-methods) below) | No |
     | `enrichment` | `str \| None` | `'full'` (default) or `'none'` (see [Ingestion options](#ingestion-options) below) | No |
     | `indexing` | `str \| None` | `'full'` (default) or `'none'` (see [Ingestion options](#ingestion-options) below) | No |
+    | `folder` | `str` | The folder to store the source in; `""`, `"/"` or omitted is the top level (see [Folders](#folders)) | No |
     | `timeout` | `float` | Request timeout in seconds (default: 60) | No |
   </Tab>
   <Tab title="TypeScript">
@@ -298,6 +303,7 @@ Upload a local file and schedule ingestion in the background. Returns a **build_
     | `method` | `string \| null` | One of: `auto`, `fast`, `balanced`, `accurate`, `agentic` (see [Partition methods](#partition-methods) below) | No |
     | `enrichment` | `string` | `'full'` (default) or `'none'` (see [Ingestion options](#ingestion-options) below) | No |
     | `indexing` | `string` | `'full'` (default) or `'none'` (see [Ingestion options](#ingestion-options) below) | No |
+    | `folder` | `string` | The folder to store the source in; `''`, `'/'` or omitted is the top level (see [Folders](#folders)) | No |
   </Tab>
 </Tabs>
 
@@ -597,6 +603,7 @@ Ingest a web page by URL (async). Returns a **build_id**; use [Get build status]
         method: str | None = None,                   # Optional: fast, balanced, accurate, agentic
         enrichment: str | None = None,               # Optional: full (default), none
         indexing: str | None = None,                 # Optional: full (default), none
+        folder: str | None = None,                   # Optional: folder to store the source in
         timeout: float | None = None
     ) -> SourceIngestURLResponse
     ```
@@ -610,6 +617,7 @@ Ingest a web page by URL (async). Returns a **build_id**; use [Get build status]
       method?: 'fast' | 'balanced' | 'accurate' | 'agentic' | null,
       enrichment?: 'full' | 'none',
       indexing?: 'full' | 'none',
+      folder?: string | null,                              // Optional: folder to store the source in
     }): Promise<SourceIngestURLResponse>
     ```
     Returns **`SourceIngestURLResponse`** with `.build_id`.
@@ -627,6 +635,7 @@ Ingest a web page by URL (async). Returns a **build_id**; use [Get build status]
     | `method` | `str \| None` | One of: `auto`, `fast`, `balanced`, `accurate`, `agentic`. `auto` is PDF-only and only effective when the URL resolves to a PDF. | No |
     | `enrichment` | `str \| None` | `'full'` (default) or `'none'` (see [Ingestion options](#ingestion-options)) | No |
     | `indexing` | `str \| None` | `'full'` (default) or `'none'` (see [Ingestion options](#ingestion-options)) | No |
+    | `folder` | `str \| None` | The folder to store the source in; `""` or `"/"` is the top level. When omitted, a new source goes to the top level and a source that replaces one of the same name keeps its folder (see [Folders](#folders)) | No |
     | `timeout` | `float` | Request timeout in seconds | No |
   </Tab>
   <Tab title="TypeScript">
@@ -637,6 +646,7 @@ Ingest a web page by URL (async). Returns a **build_id**; use [Get build status]
     | `method` | `string \| null` | One of: `auto`, `fast`, `balanced`, `accurate`, `agentic`. `auto` is PDF-only and only effective when the URL resolves to a PDF. | No |
     | `enrichment` | `string` | `'full'` (default) or `'none'` (see [Ingestion options](#ingestion-options)) | No |
     | `indexing` | `string` | `'full'` (default) or `'none'` (see [Ingestion options](#ingestion-options)) | No |
+    | `folder` | `string \| null` | The folder to store the source in; `''` or `'/'` is the top level. When omitted, a new source goes to the top level and a source that replaces one of the same name keeps its folder (see [Folders](#folders)) | No |
   </Tab>
 </Tabs>
 
@@ -710,6 +720,7 @@ Ingest a public GitHub repository (async). Returns a **build_id**; use [Get buil
     ```python
     client.sources.ingest_github(
         url: str,              # Required
+        folder: str | None = None,  # Optional: folder to store the source in
         timeout: float | None = None
     ) -> str
     ```
@@ -719,6 +730,7 @@ Ingest a public GitHub repository (async). Returns a **build_id**; use [Get buil
     ```typescript
     await client.sources.ingestGitHub({
       url: string,              // Required
+      folder?: string | null,   // Optional: folder to store the source in
     }): Promise<string>
     ```
     Returns **build_id** (string).
@@ -732,12 +744,14 @@ Ingest a public GitHub repository (async). Returns a **build_id**; use [Get buil
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
     | `url` | `str` | GitHub repo URL (e.g. `https://github.com/org/repo`) | Yes |
+    | `folder` | `str \| None` | The folder to store the source in; `""` or `"/"` is the top level (see [Folders](#folders)) | No |
     | `timeout` | `float` | Request timeout in seconds | No |
   </Tab>
   <Tab title="TypeScript">
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
     | `url` | `string` | GitHub repo URL (e.g. `https://github.com/org/repo`) | Yes |
+    | `folder` | `string \| null` | The folder to store the source in; `''` or `'/'` is the top level (see [Folders](#folders)) | No |
   </Tab>
 </Tabs>
 
@@ -790,6 +804,7 @@ Ingest a public YouTube video (async). Returns a **build_id**; use [Get build st
     ```python
     client.sources.ingest_youtube(
         url: str,              # Required
+        folder: str | None = None,  # Optional: folder to store the source in
         timeout: float | None = None
     ) -> str
     ```
@@ -799,6 +814,7 @@ Ingest a public YouTube video (async). Returns a **build_id**; use [Get build st
     ```typescript
     await client.sources.ingestYoutube({
       url: string,              // Required
+      folder?: string | null,   // Optional: folder to store the source in
     }): Promise<string>
     ```
     Returns **build_id** (string).
@@ -812,12 +828,14 @@ Ingest a public YouTube video (async). Returns a **build_id**; use [Get build st
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
     | `url` | `str` | YouTube video URL (e.g. `https://www.youtube.com/watch?v=...`) | Yes |
+    | `folder` | `str \| None` | The folder to store the source in; `""` or `"/"` is the top level (see [Folders](#folders)) | No |
     | `timeout` | `float` | Request timeout in seconds | No |
   </Tab>
   <Tab title="TypeScript">
     | Parameter | Type | Description | Required |
     |-----------|------|-------------|----------|
     | `url` | `string` | YouTube video URL (e.g. `https://www.youtube.com/watch?v=...`) | Yes |
+    | `folder` | `string \| null` | The folder to store the source in; `''` or `'/'` is the top level (see [Folders](#folders)) | No |
   </Tab>
 </Tabs>
 
@@ -858,6 +876,80 @@ Ingest a public YouTube video (async). Returns a **build_id**; use [Get build st
     ```
   </Tab>
 </Tabs>
+
+## Folders
+
+Every ingest method takes an optional `folder`: the [folder](/sdk/sources/folders) to store the new source in, as a `/`-separated path such as `Contracts/2026`. A folder that does not exist is created.
+
+<FoldersSdkVersions />
+
+| `folder` | `ingest_file` / `ingestFile` | `ingest_url`, `ingest_github`, `ingest_youtube` |
+|----------|------------------------------|-------------------------------------------------|
+| omitted | the top level | a new source goes to the top level; a source that replaces one of the same name keeps that source's folder |
+| `None` / `null` | not accepted (leave `folder` out) | the same as omitted |
+| `""` or `"/"` | the top level | the top level, also when it replaces a source |
+| a path | that folder | that folder |
+
+- **File names stay unique per project, whatever the folder**: a file with the same name as a source elsewhere is stored as `name (1).ext`.
+- **An invalid path** raises `BadRequestError` (400) on `ingest_file` and `UnprocessableEntityError` (422) on the link methods, with code `request.invalid`, before anything is stored.
+- **Large files** go through an upload session, whose folder is fixed when the session is created. If the folder is renamed or deleted before the upload finishes, the source is still stored at the path you passed.
+- **`reprocess` keeps the source's folder**; use [`move`](/sdk/sources/folders#move-sources) to change it.
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from pathlib import Path
+    from graphor import Graphor
+
+    client = Graphor()
+
+    response = client.sources.ingest_file(file=Path("./contract.pdf"), folder="Contracts/2026")
+    client.sources.ingest_url(url="https://example.com/terms", folder="Policies")
+    client.sources.ingest_github(url="https://github.com/organization/repository", folder="Code")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+    import fs from 'fs';
+
+    const client = new Graphor();
+
+    const { build_id: buildId } = await client.sources.ingestFile({
+      file: fs.createReadStream('./contract.pdf'),
+      folder: 'Contracts/2026',
+    });
+    await client.sources.ingestURL({ url: 'https://example.com/terms', folder: 'Policies' });
+    await client.sources.ingestGitHub({ url: 'https://github.com/organization/repository', folder: 'Code' });
+    ```
+  </Tab>
+</Tabs>
+
+### Confirm where sources landed
+
+The build status does not report the folder. List the folder once the builds have started, or list the new sources by id:
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    in_folder = client.sources.list(folder="Contracts/2026", recursive=False)
+    # file_id values from get_build_status
+    by_id = client.sources.list(file_ids=["file_abc123", "file_def456"])
+    for source in by_id:
+        print(source.file_name, source.folder)
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    const inFolder = await client.sources.list({ folder: 'Contracts/2026', recursive: false });
+    // file_id values from getBuildStatus
+    const byId = await client.sources.list({ file_ids: ['file_abc123', 'file_def456'] });
+    for (const source of byId) console.log(source.file_name, source.folder);
+    ```
+  </Tab>
+</Tabs>
+
+On an API without folder support, a large file's upload (above the direct limit) raises `FolderScopeNotAppliedError` and sends nothing, also when that API has no upload sessions at all; a `501` (sessions turned off) still falls back to a direct upload. A small file uploaded directly, and a URL, GitHub or YouTube ingest, are not checked (the source already exists when the response arrives) and land at the top level, so confirm with `list` as above (see [Folders](/sdk/sources/folders#when-the-api-does-not-apply-a-folder)).
 
 ## Advanced Configuration
 
@@ -940,14 +1032,16 @@ async def ingest_many_files(file_paths: list):
 
 | Error Type | Status Code | Description |
 |------------|-------------|-------------|
-| `BadRequestError` | 400 | Invalid file type, missing filename, or malformed request |
+| `BadRequestError` | 400 | Invalid file type, missing filename, malformed request, or an invalid `folder` on `ingest_file` |
 | `AuthenticationError` | 401 | Invalid or missing API key |
 | `PermissionDeniedError` | 403 | Access denied to the specified project |
 | `NotFoundError` | 404 | Project or source not found |
+| `UnprocessableEntityError` | 422 | An invalid `folder` on `ingest_url`, `ingest_github` or `ingest_youtube` |
 | `RateLimitError` | 429 | Too many requests, please retry after waiting |
-| `InternalServerError` | ≥500 | Server-side processing error |
+| `InternalServerError` | ≥500 | Server-side processing error (`503 service.unavailable`: the target folder could not be recorded and nothing started; retry) |
 | `APIConnectionError` | N/A | Network connectivity issues |
 | `APITimeoutError` | N/A | Request timed out |
+| `FolderScopeNotAppliedError` | N/A | `folder` was passed for a large file and the API did not confirm it; nothing was uploaded |
 
 ## Next Steps
 

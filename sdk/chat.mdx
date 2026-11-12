@@ -3,6 +3,8 @@ title: 'Chat'
 description: 'Ask questions about your documents using the Graphor SDK'
 ---
 
+import FoldersSdkVersions from '/snippets/folders-sdk-versions.mdx';
+
 The `ask` method allows you to ask questions about your ingested documents and receive answers grounded in your content. The SDK supports conversational memory, enabling follow-up questions that maintain context.
 
 ## Method Overview
@@ -40,6 +42,7 @@ The `ask` method allows you to ask questions about your ingested documents and r
         reset: bool | None = None,
         file_ids: list[str] | None = None,
         file_names: list[str] | None = None,          # Deprecated
+        folders: list[str] | None = None,             # Scope to these folders
         output_schema: dict | None = None,
         thinking_level: str | None = None,
         include_citation_images: bool | None = None,
@@ -56,6 +59,7 @@ The `ask` method allows you to ask questions about your ingested documents and r
       reset?: boolean | null,
       file_ids?: string[] | null,
       file_names?: string[] | null,                              // Deprecated
+      folders?: string[] | null,                                 // Scope to these folders
       output_schema?: Record<string, unknown> | null,
       thinking_level?: 'fast' | 'balanced' | 'accurate' | null,
       include_citation_images?: boolean | null,
@@ -76,6 +80,7 @@ The `ask` method allows you to ask questions about your ingested documents and r
     | `reset` | `bool` | When `True`, starts a new conversation and ignores previous history | No |
     | `file_ids` | `list[str]` | Restrict search to specific documents by file ID (preferred) | No |
     | `file_names` | `list[str]` | Restrict search to specific documents by file name (deprecated, use `file_ids`) | No |
+    | `folders` | `list[str]` | Restrict search to every source at or below each [folder](/sdk/sources/folders), together with `file_ids`. An empty list is no folder scope. See [Scope by folder](#scope-by-folder). | No |
     | `output_schema` | `dict` | JSON Schema to request structured output (see below) | No |
     | `thinking_level` | `str` | Controls model and thinking configuration: `"fast"`, `"balanced"`, `"accurate"` (default) | No |
     | `include_citation_images` | `bool` | When `True`, populates `image_base64` (base64 PNG of the cited page) inside each `citations` entry. Default `False`. See [When to use `include_citation_images`](#when-to-use-include-citation-images). | No |
@@ -90,6 +95,7 @@ The `ask` method allows you to ask questions about your ingested documents and r
     | `reset` | `boolean \| null` | When `true`, starts a new conversation and ignores previous history | No |
     | `file_ids` | `string[]  \| null` | Restrict search to specific documents by file ID (preferred) | No |
     | `file_names` | `string[] \| null` | Restrict search to specific documents by file name (deprecated, use `file_ids`) | No |
+    | `folders` | `string[] \| null` | Restrict search to every source at or below each [folder](/sdk/sources/folders), together with `file_ids`. An empty list is no folder scope. See [Scope by folder](#scope-by-folder). | No |
     | `output_schema` | `Record<string, unknown> \| null` | JSON Schema to request structured output (see below) | No |
     | `thinking_level` | `'fast' \| 'balanced' \| 'accurate' \| null` | Controls model and thinking configuration (default: `"accurate"`) | No |
     | `include_citation_images` | `boolean \| null` | When `true`, populates `image_base64` inside each `citations` entry. Default `false`. See [When to use `include_citation_images`](#when-to-use-include-citation-images). | No |
@@ -115,6 +121,7 @@ The method returns a `SourceAskResponse` object:
 |----------|------|-------------|
 | `answer` | `str` | The answer to your question, with inline `[N]` markers pointing to entries in `citations`. When `output_schema` is provided, this will be a short status message. |
 | `conversation_id` | `str \| None` | Conversation identifier for follow-up questions |
+| `folders` | `list[str] \| None` | The folders the scope was resolved from; `None` when the call named no folder |
 | `structured_output` | `dict \| None` | Structured output validated against the requested `output_schema`. Present only when `output_schema` is provided. |
 | `raw_json` | `str \| None` | Raw JSON-text produced by the model before validation. Present only when `output_schema` is provided. |
 | `citations` | `list[Citation] \| None` | Structured references resolving each `[N]` marker in `answer`. May be empty/`None` when the agent did not ground its answer (e.g. small-talk follow-ups). See [Citations](#citations). |
@@ -353,6 +360,64 @@ Restrict the search to specific files using `file_ids` (preferred):
     ```
   </Tab>
 </Tabs>
+
+### Scope by folder
+
+Pass `folders` to ask about everything in one or more [folders](/sdk/sources/folders):
+
+<FoldersSdkVersions />
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor, FolderScopeNotAppliedError
+
+    client = Graphor()
+
+    try:
+        response = client.sources.ask(
+            question="Which contracts renew automatically?",
+            folders=["Contracts/2026"],
+        )
+        print(response.answer)
+        print("Scoped to:", response.folders)
+    except FolderScopeNotAppliedError:
+        # The API answered without the folder scope; the answer is withheld.
+        # Ask again with reset=True (or without conversation_id) once folders are available.
+        raise
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor, { FolderScopeNotAppliedError } from 'graphor';
+
+    const client = new Graphor();
+
+    try {
+      const response = await client.sources.ask({
+        question: 'Which contracts renew automatically?',
+        folders: ['Contracts/2026'],
+      });
+      console.log(response.answer);
+      console.log('Scoped to:', response.folders);
+    } catch (err) {
+      if (err instanceof FolderScopeNotAppliedError) {
+        // The API answered without the folder scope; the answer is withheld.
+        // Ask again with reset: true (or without conversation_id) once folders are available.
+      }
+      throw err;
+    }
+    ```
+  </Tab>
+</Tabs>
+
+- Each folder covers **every source at or below it**, read when the request arrives; it combines with `file_ids` (the union of both).
+- **An empty list is no folder scope**: `folders=[]` behaves as if it were omitted, so with no `file_ids` either the question covers the whole project. If you build the list in code, check for an empty list yourself.
+- A folder that holds no source refuses the whole call: `BadRequestError` with code `chat.folder_scope_empty`.
+- The top level (`""`, `"/"`) is not a folder, and `folders` cannot be combined with `file_names`: both raise `UnprocessableEntityError` (`request.invalid`). At most 1,000 entries.
+- The response carries `folders`, the folders the scope was resolved from. If the API did not apply the scope, the SDK raises `FolderScopeNotAppliedError` instead of returning the result (see [Folders](/sdk/sources/folders#when-the-api-does-not-apply-a-folder)).
+- The scope applies to this call only: send `folders` again on a follow-up in the same conversation to keep it.
+- After `FolderScopeNotAppliedError`, the API has already recorded the unscoped answer in the conversation. Repeat the question with `reset=True` (`reset: true`) or in a new conversation.
 
 ### Working with Citations
 
@@ -1452,14 +1517,17 @@ When using `output_schema`, follow these guidelines:
 
 | Error Type | Status Code | Description |
 |------------|-------------|-------------|
-| `BadRequestError` | 400 | Invalid parameters or request format |
+| `BadRequestError` | 400 | Invalid parameters or request format; `chat.folder_scope_empty` when a folder in `folders` holds no source |
 | `AuthenticationError` | 401 | Invalid or missing API key |
 | `NotFoundError` | 404 | Specified file not found |
-| `UnprocessableEntityError` | 422 | Invalid `output_schema` or structured output validation failed |
+| `UnprocessableEntityError` | 422 | Invalid `output_schema` or structured output validation failed; `request.invalid` for an invalid folder, the top level as a folder, or `folders` with `file_names` |
 | `RateLimitError` | 429 | Too many requests, please retry after waiting |
-| `InternalServerError` | ≥500 | Server-side error |
+| `InternalServerError` | ≥500 | Server-side error (`503 service.unavailable`: the folder scope could not be read; retry) |
 | `APIConnectionError` | N/A | Network connectivity issues |
 | `APITimeoutError` | N/A | Request timed out |
+| `FolderScopeNotAppliedError` | N/A | `folders` was passed and the API did not apply the scope; the result is withheld |
+
+When a call with `folders` fails after the API started streaming its answer, the SDK raises the error for the status the API reports (for example `InternalServerError`), with the body's `retry_after` as the error's `Retry-After` header, not `FolderScopeNotAppliedError`. A `folders` value that is not a list (Python: list or tuple) or an array (TypeScript), such as a single string, raises a plain `GraphorError` before any request.
 
 ## Best Practices
 
@@ -1467,7 +1535,7 @@ When using `output_schema`, follow these guidelines:
 
 2. **Be specific** — Clear, specific questions get better answers
 
-3. **Scope when needed** — Use `file_ids` to focus on specific documents for faster, more accurate responses
+3. **Scope when needed** — Use `file_ids` to focus on specific documents, or `folders` to cover everything in a folder, for faster, more accurate responses
 
 4. **Use structured output for integration** — Provide `output_schema` to get JSON you can reliably parse in code
 

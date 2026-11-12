@@ -1,0 +1,472 @@
+---
+title: 'Folders'
+description: 'Organize sources in folders, move them, and manage folders using the Graphor SDK'
+---
+
+import FoldersSdkVersions from '/snippets/folders-sdk-versions.mdx';
+
+Folders organize the sources of a project. A folder is a `/`-separated path such as `Contracts/2026`; every source is either in one folder or at the **top level** (`""`). The methods on this page list, create, rename, remove and delete folders, and move sources between them. Folders also appear on other methods:
+
+- [`list`](/sdk/sources/list#filter-by-folder) returns each source's `folder` and can filter by folder.
+- [`ingest_file`, `ingest_url`, `ingest_github`, `ingest_youtube`](/sdk/sources/upload#folders) take an optional `folder`.
+- [`ask`](/sdk/chat#scope-by-folder), [`extract`](/sdk/extract#scope-by-folder) and [`retrieve_chunks`](/sdk/prebuilt-rag#scope-by-folder) take an optional `folders` list.
+
+<FoldersSdkVersions />
+
+The rules for paths, the top level and the error codes are the REST API's: see [Folders in the API reference](/api-reference/sources/folders#how-folders-work). The SDKs do not check paths themselves; they send the value and raise the API's error.
+
+## Method overview
+
+<Tabs>
+  <Tab title="Python">
+    | Method | Description | Safe to repeat |
+    |--------|-------------|----------------|
+    | [`client.sources.list_folders()`](#list-folders) | Every folder of the project, sorted | Yes |
+    | [`client.sources.create_folder()`](#create-a-folder) | Create a folder that stays listed while empty | Yes |
+    | [`client.sources.rename_folder()`](#rename-or-move-a-folder) | Rename a folder, or move it under another folder | No (never retried) |
+    | [`client.sources.remove_folder()`](#remove-a-folder) | Remove a folder, moving its content into the folder above | No (never retried) |
+    | [`client.sources.delete_folder()`](#delete-an-empty-folder) | Delete a folder that holds no source | No (never retried) |
+    | [`client.sources.move()`](#move-sources) | Move up to 1,000 sources to a folder or to the top level | Yes |
+  </Tab>
+  <Tab title="TypeScript">
+    | Method | Description | Safe to repeat |
+    |--------|-------------|----------------|
+    | [`client.sources.listFolders()`](#list-folders) | Every folder of the project, sorted | Yes |
+    | [`client.sources.createFolder()`](#create-a-folder) | Create a folder that stays listed while empty | Yes |
+    | [`client.sources.renameFolder()`](#rename-or-move-a-folder) | Rename a folder, or move it under another folder | No (never retried) |
+    | [`client.sources.removeFolder()`](#remove-a-folder) | Remove a folder, moving its content into the folder above | No (never retried) |
+    | [`client.sources.deleteFolder()`](#delete-an-empty-folder) | Delete a folder that holds no source | No (never retried) |
+    | [`client.sources.move()`](#move-sources) | Move up to 1,000 sources to a folder or to the top level | Yes |
+  </Tab>
+</Tabs>
+
+## List folders
+
+Returns every folder of the project: folders created empty, folders that hold sources and folders that uploads are on their way to, each with the folders above it, sorted. At most 10,000 are returned; `truncated` is `true` when the project has more.
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    client.sources.list_folders() -> SourceListFoldersResponse
+    ```
+
+    ```python
+    from graphor import Graphor
+
+    client = Graphor()
+
+    result = client.sources.list_folders()
+    for item in result.folders:
+        print(item.folder)          # "Contracts", "Contracts/2026", ...
+    if result.truncated:
+        print("More than 10,000 folders; only the first 10,000 are listed")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    await client.sources.listFolders(): Promise<SourceListFoldersResponse>
+    ```
+
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    const result = await client.sources.listFolders();
+    for (const item of result.folders) {
+      console.log(item.folder); // "Contracts", "Contracts/2026", ...
+    }
+    if (result.truncated) console.log('More than 10,000 folders; only the first 10,000 are listed');
+    ```
+  </Tab>
+</Tabs>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `folders` | list of `{ folder }` | One entry per folder, sorted by path; the top level is not listed |
+| `truncated` | `bool` | `true` when the project has more than 10,000 folders |
+
+## Create a folder
+
+Creates a folder, and the folders above it, that stays listed while it is empty. Safe to repeat: `created` is `false` when it already existed. You do not need to create a folder before uploading or moving into it.
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    client.sources.create_folder(folder: str) -> SourceCreateFolderResponse
+    ```
+
+    ```python
+    result = client.sources.create_folder(folder="Contracts/2026")
+    print(result.folder, result.created)   # Contracts/2026 True
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    await client.sources.createFolder({ folder: string }): Promise<SourceCreateFolderResponse>
+    ```
+
+    ```typescript
+    const result = await client.sources.createFolder({ folder: 'Contracts/2026' });
+    console.log(result.folder, result.created); // Contracts/2026 true
+    ```
+  </Tab>
+</Tabs>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `folder` | `str` | The folder's normalized path |
+| `created` | `bool` | `false` when the folder already existed |
+
+## Rename or move a folder
+
+Renames a folder, or moves it under another folder, with its sources and subfolders. With `merge`, a folder that already exists at `new_folder` is merged instead of refused.
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    client.sources.rename_folder(
+        folder: str,                  # Required: the folder to rename
+        new_folder: str,              # Required: its new path
+        merge: bool | Omit = omit,    # Optional: merge into an existing new_folder (API default: False)
+    ) -> SourceRenameFolderResponse
+    ```
+
+    ```python
+    result = client.sources.rename_folder(folder="Contracts/2026", new_folder="Archive/2026")
+    print(f"{result.folder} -> {result.new_folder}: {result.moved} sources moved")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    await client.sources.renameFolder({
+      folder: string,       // Required: the folder to rename
+      new_folder: string,   // Required: its new path
+      merge?: boolean,      // Optional: merge into an existing new_folder
+    }): Promise<SourceRenameFolderResponse>
+    ```
+
+    ```typescript
+    const result = await client.sources.renameFolder({
+      folder: 'Contracts/2026',
+      new_folder: 'Archive/2026',
+    });
+    console.log(`${result.folder} -> ${result.new_folder}: ${result.moved} sources moved`);
+    ```
+  </Tab>
+</Tabs>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `folder` | `str` | The folder's former path |
+| `new_folder` | `str` | Its new path |
+| `moved` | `int` | Number of sources moved |
+
+## Remove a folder
+
+Removes a folder and moves its sources and subfolders into the folder above it (the top level for a top-level folder). With `merge`, a subfolder that lands on a folder of the same name is merged instead of refused.
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    client.sources.remove_folder(
+        folder: str,                  # Required
+        merge: bool | Omit = omit,    # Optional (API default: False)
+    ) -> SourceRemoveFolderResponse
+    ```
+
+    ```python
+    result = client.sources.remove_folder(folder="Contracts/2026")
+    print(f"{result.moved} sources moved to '{result.parent}'")   # '' is the top level
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    await client.sources.removeFolder({
+      folder: string,       // Required
+      merge?: boolean,      // Optional
+    }): Promise<SourceRemoveFolderResponse>
+    ```
+
+    ```typescript
+    const result = await client.sources.removeFolder({ folder: 'Contracts/2026' });
+    console.log(`${result.moved} sources moved to '${result.parent}'`); // '' is the top level
+    ```
+  </Tab>
+</Tabs>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `folder` | `str` | The removed folder's path |
+| `parent` | `str` | Where its content went; `""` is the top level |
+| `moved` | `int` | Number of sources moved |
+
+## Delete an empty folder
+
+Deletes a folder that holds no source, with the empty folders below it. Move or delete its sources first.
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    client.sources.delete_folder(folder: str) -> SourceDeleteFolderResponse
+    ```
+
+    ```python
+    result = client.sources.delete_folder(folder="Contracts/2026")
+    print(f"{result.deleted} folders removed")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    await client.sources.deleteFolder({ folder: string }): Promise<SourceDeleteFolderResponse>
+    ```
+
+    ```typescript
+    const result = await client.sources.deleteFolder({ folder: 'Contracts/2026' });
+    console.log(`${result.deleted} folders removed`);
+    ```
+  </Tab>
+</Tabs>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `folder` | `str` | The deleted folder's path |
+| `deleted` | `int` | Folders removed: the folder and its empty subfolders |
+
+## Move sources
+
+Moves 1 to 1,000 sources to a folder; `""` or `"/"` is the top level. A folder that does not exist is created. Ids that match no source of the project come back in `not_found`. Safe to repeat.
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    client.sources.move(
+        file_ids: list[str],  # Required: 1 to 1,000 ids
+        folder: str,          # Required: "" or "/" is the top level
+    ) -> SourceMoveResponse
+    ```
+
+    ```python
+    result = client.sources.move(file_ids=["file_abc123", "file_def456"], folder="Contracts/2026")
+    print(f"Moved {result.moved}; not found: {result.not_found}")
+
+    # Back to the top level
+    client.sources.move(file_ids=["file_abc123"], folder="")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    await client.sources.move({
+      file_ids: string[],   // Required: 1 to 1,000 ids
+      folder: string,       // Required: '' or '/' is the top level
+    }): Promise<SourceMoveResponse>
+    ```
+
+    ```typescript
+    const result = await client.sources.move({
+      file_ids: ['file_abc123', 'file_def456'],
+      folder: 'Contracts/2026',
+    });
+    console.log(`Moved ${result.moved}; not found: ${result.not_found}`);
+
+    // Back to the top level
+    await client.sources.move({ file_ids: ['file_abc123'], folder: '' });
+    ```
+  </Tab>
+</Tabs>
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `folder` | `str` | The target folder, normalized; `""` is the top level |
+| `moved` | `int` | Number of sources moved |
+| `not_found` | `list[str]` | Ids that matched no source of the project |
+
+## Retries
+
+`rename_folder`, `remove_folder` and `delete_folder` (`renameFolder`, `removeFolder`, `deleteFolder`) **never retry on their own**, whatever `max_retries` / `maxRetries` says on the client or on the call. After a `503`, a timeout or a lost connection the change may have been saved, and a repeated call would answer `NotFoundError` with code `folder.not_found`. Before repeating one of them yourself, call [`list_folders`](#list-folders) and check whether the change is already there.
+
+`list_folders`, `create_folder` and `move` are safe to repeat and follow the client's retry setting. Folder conflicts (`409`) are never retried: the API marks them as final.
+
+## Error handling
+
+Errors are the SDK's usual status errors. The API's `code` is in the error body: `e.body["code"]` in Python, `err.error.code` in TypeScript.
+
+| Error type | Status | Codes |
+|------------|--------|-------|
+| `UnprocessableEntityError` | 422 | `request.invalid`: an invalid path, the top level where a folder is required, more than 1,000 ids |
+| `BadRequestError` | 400 | `folder.into_itself`, `folder.path_too_long` (rename) |
+| `NotFoundError` | 404 | `folder.not_found` |
+| `ConflictError` | 409 | `folder.exists`, `folder.not_empty`, `folder.uploads_pending`, `folder.too_many` |
+| `InternalServerError` | 503 | `service.unavailable` |
+| `FolderScopeNotAppliedError` | — | The API does not offer the folder methods (see [below](#when-the-api-does-not-apply-a-folder)) |
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from typing import Optional
+
+    import graphor
+    from graphor import Graphor
+
+    client = Graphor()
+
+    def code_of(err: graphor.APIStatusError) -> Optional[str]:
+        return err.body.get("code") if isinstance(err.body, dict) else None
+
+    try:
+        client.sources.rename_folder(folder="Drafts", new_folder="Contracts")
+    except graphor.ConflictError as e:
+        if code_of(e) == "folder.exists":
+            # Contracts already exists: merge Drafts into it
+            client.sources.rename_folder(folder="Drafts", new_folder="Contracts", merge=True)
+        else:
+            raise
+    except graphor.NotFoundError as e:
+        print(f"No such folder ({code_of(e)})")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor, { ConflictError, NotFoundError } from 'graphor';
+
+    const client = new Graphor();
+
+    const codeOf = (err: { error?: unknown }) => (err.error as { code?: string } | undefined)?.code;
+
+    try {
+      await client.sources.renameFolder({ folder: 'Drafts', new_folder: 'Contracts' });
+    } catch (err) {
+      if (err instanceof ConflictError && codeOf(err) === 'folder.exists') {
+        // Contracts already exists: merge Drafts into it
+        await client.sources.renameFolder({ folder: 'Drafts', new_folder: 'Contracts', merge: true });
+      } else if (err instanceof NotFoundError) {
+        console.log(`No such folder (${codeOf(err)})`);
+      } else {
+        throw err;
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+The full list of codes, with what each means, is in [Folders: Error codes](/api-reference/sources/folders#error-codes).
+
+## When the API does not apply a folder
+
+The SDK never returns a result whose folder filter or scope the API did not apply. It raises **`FolderScopeNotAppliedError`** instead (exported from `graphor` in both SDKs; a subclass of `GraphorError`, not an HTTP status error, and never retried). This happens only against an API without folder support, for example an older or separate deployment. Its `parameter` says what was not applied, and after `ask` it also carries the conversation id (`conversation_id` in Python, `conversationId` in TypeScript). It is raised by:
+
+| Call | When | `parameter` |
+|------|------|-------------|
+| `list` with `folder` or `recursive` | a returned source has no `folder` | `folder` (`recursive` when only `recursive` was passed) |
+| `ask`, `extract`, `retrieve_chunks` with a non-empty `folders` | the response has no `folders` echo | `folders` |
+| `ingest_file` with `folder`, for a file sent through an upload session (above the direct limit) | the session has no `folder` echo, or the API has no upload sessions at all (it answers `404` without a `code` to the session request); nothing is uploaded. A `501` (sessions turned off) still falls back to a direct upload | `folder` |
+| The six folder methods on this page | the API answers `404` whose `code` is missing, empty or `null` (it has no such route) | the route: `GET /sources/folders`, `POST /sources/create-folder`, `POST /sources/rename-folder`, `POST /sources/remove-folder`, `POST /sources/delete-folder` or `POST /sources/move-sources` |
+
+After `FolderScopeNotAppliedError` on `ask`, the API has already answered the question in its conversation, unscoped. Repeat the question with `reset=True` (`reset: true`) or without `conversation_id`, so the next answer does not build on it.
+
+A direct `ingest_file` (small files) and `ingest_url`, `ingest_github`, `ingest_youtube` are not checked, because the source is already created when the response arrives; on an API without folder support they land at the top level. Check where they landed with [`list(folder=...)`](/sdk/sources/list#filter-by-folder).
+
+The checks run on every parsed result, including Python's `with_raw_response` / `with_streaming_response` `.parse()` (also `.parse(to=dict)` or a list of dicts) and TypeScript's `.withResponse()`. Reading the raw response skips them: Python `.read()`, `.text()`, `.json()`, `http_response`, or `.parse(to=...)` into `httpx.Response`, `str`, `bytes` or `bytearray`; TypeScript `.asResponse()` (except on the six folder methods, where a missing route is still raised).
+
+When a scoped `ask` or `extract` fails after the API started streaming, the SDK raises the status error the API reports, with `retry_after` from the body available as the error's `Retry-After` header; in Python this holds in strict response-validation mode too.
+
+`folders` must be a list (Python: a list or a tuple) or an array (TypeScript). Any other value, such as a single string or a set, raises a plain `GraphorError` before any request is sent.
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor, FolderScopeNotAppliedError
+
+    client = Graphor()
+
+    try:
+        sources = client.sources.list(folder="Contracts")
+    except FolderScopeNotAppliedError as e:
+        print(f"The API did not apply the folder filter: {e}")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor, { FolderScopeNotAppliedError } from 'graphor';
+
+    const client = new Graphor();
+
+    try {
+      const sources = await client.sources.list({ folder: 'Contracts' });
+    } catch (err) {
+      if (err instanceof FolderScopeNotAppliedError) {
+        console.log('The API did not apply the folder filter:', err.message);
+      } else {
+        throw err;
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Example: file sources by year
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from graphor import Graphor
+
+    client = Graphor()
+
+    # Everything at the top level whose name starts with a year goes into that year's folder
+    by_year: dict[str, list[str]] = {}
+    for source in client.sources.list(folder=""):
+        year = source.file_name[:4]
+        if year.isdigit() and source.file_id:
+            by_year.setdefault(year, []).append(source.file_id)
+
+    for year, ids in by_year.items():
+        for start in range(0, len(ids), 1000):
+            result = client.sources.move(file_ids=ids[start:start + 1000], folder=f"Archive/{year}")
+            print(f"Archive/{year}: {result.moved} moved")
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor from 'graphor';
+
+    const client = new Graphor();
+
+    // Everything at the top level whose name starts with a year goes into that year's folder
+    const byYear = new Map<string, string[]>();
+    for (const source of await client.sources.list({ folder: '' })) {
+      const year = source.file_name.slice(0, 4);
+      if (/^\d{4}$/.test(year) && source.file_id) {
+        byYear.set(year, [...(byYear.get(year) ?? []), source.file_id]);
+      }
+    }
+
+    for (const [year, ids] of byYear) {
+      for (let start = 0; start < ids.length; start += 1000) {
+        const result = await client.sources.move({
+          file_ids: ids.slice(start, start + 1000),
+          folder: `Archive/${year}`,
+        });
+        console.log(`Archive/${year}: ${result.moved} moved`);
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="List sources" icon="list" href="/sdk/sources/list#filter-by-folder">
+    List the sources of a folder
+  </Card>
+  <Card title="Ingest sources" icon="arrow-up-from-bracket" href="/sdk/sources/upload#folders">
+    Store new sources in a folder
+  </Card>
+  <Card title="Chat" icon="comments" href="/sdk/chat#scope-by-folder">
+    Ask questions about the sources of a folder
+  </Card>
+  <Card title="Folders API reference" icon="code" href="/api-reference/sources/folders">
+    Paths, the top level, error codes and limits
+  </Card>
+</CardGroup>
