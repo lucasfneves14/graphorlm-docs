@@ -199,7 +199,7 @@ When the build has been persisted, the response includes `success`, `status`, `f
 - **`Processing failed`** — Build failed; check `error` for details.
 - **`not_found`** — No history yet (build not started or invalid `build_id`).
 
-A URL, GitHub or YouTube build whose link can't be fetched fails with the `error` `This link can't be fetched. Check that it is a full, public web address, then delete the source and add it again.` (code `ingestion.invalid_link` in the [REST API](/api-reference/sources/upload#when-a-link-fails-during-processing)). Reprocessing fails the same way: delete the source and ingest it again with a full, public link.
+A URL, GitHub or YouTube build whose link can't be fetched fails with the `error` `This link can't be fetched. Check that it is a full, public web address, then delete the source and add it again.` (code `ingestion.invalid_link` in the [REST API](/api-reference/sources/upload#when-a-link-fails-during-processing)). Reprocessing fails the same way: delete the source and ingest it again with a full, public link. A build that fails with `error_code` `source.link_kind_changed` was a link sent to two ingest methods at the same time (see [Sending a link again](#sending-a-link-again)).
 
 Use `file_id` from a response where `success` is `true` for subsequent API calls.
 
@@ -207,7 +207,7 @@ The response also reports how the build was processed:
 
 - **`enrichment`** — The enrichment option the build ran with: `'full'` or `'none'` (see [Ingestion options](#ingestion-options)).
 - **`indexing`** — The indexing option the build ran with: `'full'` or `'none'` (see [Ingestion options](#ingestion-options)).
-- **`searchable`** — Boolean. `true` only when the build completed, its chunks are indexed, and it is still the active build for the source. When `false`, ask, extract, and retrieve return nothing for this source.
+- **`searchable`** — Boolean. `true` only when the build completed, its chunks are indexed, and it is still the active build for the source. When `false`, ask, extract, and retrieve do not use this build: they return nothing for a source that has no other searchable build, and they use the newer build when a newer build of the same source replaced this one (see [Sending a link again](#sending-a-link-again)).
 
 
 ### Poll until complete
@@ -594,6 +594,8 @@ Ingest methods throw on invalid file type, a file too large, or server errors. U
 
 Ingest a web page by URL (async). Returns a **build_id**; use [Get build status](#get-build-status) to poll until ready.
 
+Sending a web page link that is already a source refreshes that source: it keeps its `file_id`, and its previous version stays in use until the new one is ready. A link to a file replaces the source, which gets a new `file_id` (see [Sending a link again](#sending-a-link-again)).
+
 ### Method signature
 
 <Tabs>
@@ -637,7 +639,7 @@ Ingest a web page by URL (async). Returns a **build_id**; use [Get build status]
     | `method` | `str \| None` | One of: `auto`, `fast`, `balanced`, `accurate`, `agentic`. `auto` is PDF-only and only effective when the URL resolves to a PDF. | No |
     | `enrichment` | `str \| None` | `'full'` (default) or `'none'` (see [Ingestion options](#ingestion-options)) | No |
     | `indexing` | `str \| None` | `'full'` (default) or `'none'` (see [Ingestion options](#ingestion-options)) | No |
-    | `folder` | `str \| None` | The folder to store the source in; `""` or `"/"` is the top level. When omitted, a new source goes to the top level and a source that replaces one of the same name keeps its folder (see [Folders](#folders)) | No |
+    | `folder` | `str \| None` | The folder to store the source in; `""` or `"/"` is the top level. When omitted, a new source goes to the top level and a link that is already a source keeps that source's folder (see [Folders](#folders) and [Sending a link again](#sending-a-link-again)) | No |
     | `timeout` | `float` | Request timeout in seconds | No |
   </Tab>
   <Tab title="TypeScript">
@@ -648,7 +650,7 @@ Ingest a web page by URL (async). Returns a **build_id**; use [Get build status]
     | `method` | `string \| null` | One of: `auto`, `fast`, `balanced`, `accurate`, `agentic`. `auto` is PDF-only and only effective when the URL resolves to a PDF. | No |
     | `enrichment` | `string` | `'full'` (default) or `'none'` (see [Ingestion options](#ingestion-options)) | No |
     | `indexing` | `string` | `'full'` (default) or `'none'` (see [Ingestion options](#ingestion-options)) | No |
-    | `folder` | `string \| null` | The folder to store the source in; `''` or `'/'` is the top level. When omitted, a new source goes to the top level and a source that replaces one of the same name keeps its folder (see [Folders](#folders)) | No |
+    | `folder` | `string \| null` | The folder to store the source in; `''` or `'/'` is the top level. When omitted, a new source goes to the top level and a link that is already a source keeps that source's folder (see [Folders](#folders) and [Sending a link again](#sending-a-link-again)) | No |
   </Tab>
 </Tabs>
 
@@ -722,6 +724,8 @@ Ingest a web page by URL (async). Returns a **build_id**; use [Get build status]
 ## Ingest GitHub
 
 Ingest a public GitHub repository (async). Returns a **build_id**; use [Get build status](#get-build-status) to poll until ready.
+
+Sending a link that is already a source refreshes that source: it keeps its `file_id`, and its previous version stays in use until the new one is ready (see [Sending a link again](#sending-a-link-again)).
 
 ### Method signature
 
@@ -808,6 +812,8 @@ Ingest a public GitHub repository (async). Returns a **build_id**; use [Get buil
 
 Ingest a public YouTube video (async). Returns a **build_id**; use [Get build status](#get-build-status) to poll until ready.
 
+Sending a link that is already a source refreshes that source: it keeps its `file_id`, and its previous version stays in use until the new one is ready (see [Sending a link again](#sending-a-link-again)).
+
 ### Method signature
 
 <Tabs>
@@ -889,6 +895,51 @@ Ingest a public YouTube video (async). Returns a **build_id**; use [Get build st
   </Tab>
 </Tabs>
 
+## Sending a link again
+
+`ingest_url`, `ingest_github` and `ingest_youtube` match a link to a source by its URL, exactly as stored (after the spaces at both ends are removed).
+
+- **A web page, GitHub or YouTube link that is already a source refreshes that source.** The new build belongs to the same source: it keeps its `file_id`, and its folder unless you pass `folder` (then the source is moved there first). The method returns a new `build_id`, and [`get_build_status`](#get-build-status) reports the same `file_id` from the start.
+- **The previous version stays in use until the new one is ready.** While the new build runs, the source is listed as `Processing`. When the build completes it becomes the active version; if it fails, the previous version is still the one in use.
+- **The latest request wins.** When several builds of one source run at the same time (sending the link twice, or a [reprocess](/sdk/sources/process) while a refresh runs), the one requested last becomes the active version, whatever order they finish in. An earlier build that finishes after the later one is active ends `Completed` with `searchable` `false`.
+- **A link to a file replaces the source.** When `ingest_url` finds a file behind a link that is already a source, the source is replaced: the new one gets a new `file_id` and keeps the folder unless `folder` is given.
+- **A link is one kind of source.** A link added with one method can't be refreshed with another (for example a GitHub link added with `ingest_url`, then sent to `ingest_github`), and a web page source whose link now serves a file can't be refreshed either: the method raises `ConflictError` (409) with code `source.link_kind_changed` and nothing starts. Delete the source and add it again. If the same new link is sent to two methods at the same time, one source is created, and the other build fails with `error_code` `source.link_kind_changed`.
+- **A source that is being deleted** raises `InternalServerError` (503) with code `service.unavailable`, and nothing starts. Retry after `Retry-After`: once the delete has finished, the link is added as a new source.
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import graphor
+    from graphor import Graphor
+
+    client = Graphor()
+
+    try:
+        build_id = client.sources.ingest_url(url="https://example.com/article").build_id
+    except graphor.ConflictError as e:
+        if isinstance(e.body, dict) and e.body.get("code") == "source.link_kind_changed":
+            print("This link is already a source of another kind: delete it to add it again.")
+        else:
+            raise
+    ```
+  </Tab>
+  <Tab title="TypeScript">
+    ```typescript
+    import Graphor, { ConflictError } from 'graphor';
+
+    const client = new Graphor();
+
+    try {
+      const { build_id: buildId } = await client.sources.ingestURL({ url: 'https://example.com/article' });
+    } catch (err) {
+      const code = err instanceof ConflictError ? (err.error as { code?: string } | undefined)?.code : undefined;
+      if (code !== 'source.link_kind_changed') throw err;
+      console.log('This link is already a source of another kind: delete it to add it again.');
+    }
+    ```
+  </Tab>
+</Tabs>
+
 ## Folders
 
 Every ingest method takes an optional `folder`: the [folder](/sdk/sources/folders) to store the new source in, as a `/`-separated path such as `Contracts/2026`. A folder that does not exist is created.
@@ -897,10 +948,10 @@ Every ingest method takes an optional `folder`: the [folder](/sdk/sources/folder
 
 | `folder` | `ingest_file` / `ingestFile` | `ingest_url`, `ingest_github`, `ingest_youtube` |
 |----------|------------------------------|-------------------------------------------------|
-| omitted | the top level | a new source goes to the top level; a source that replaces one of the same name keeps that source's folder |
+| omitted | the top level | a new source goes to the top level; a link that is already a source keeps that source's folder (see [Sending a link again](#sending-a-link-again)) |
 | `None` / `null` | not accepted (leave `folder` out) | the same as omitted |
-| `""` or `"/"` | the top level | the top level, also when it replaces a source |
-| a path | that folder | that folder |
+| `""` or `"/"` | the top level | the top level, also when the link is already a source (it is moved there) |
+| a path | that folder | that folder (a link that is already a source is moved there) |
 
 - **File names stay unique per project, whatever the folder**: a file with the same name as a source elsewhere is stored as `name (1).ext`.
 - **An invalid path** raises `BadRequestError` (400) on `ingest_file` and `UnprocessableEntityError` (422) on the link methods, with code `request.invalid`, before anything is stored.
@@ -997,7 +1048,7 @@ For large files or slow connections, increase the ingest request timeout. Use [G
 
 ### Retry configuration
 
-Requests are not retried by default. With retries enabled, the SDK follows the API's `x-should-retry` header and waits as long as its `Retry-After` header says, so a link method's `503` is retried after 30 seconds and its `400` and `413` answers are not. Configure automatic retries for transient errors on ingest or get_build_status:
+Requests are not retried by default. With retries enabled, the SDK follows the API's `x-should-retry` header and waits as long as its `Retry-After` header says, so a link method's `503` is retried after 30 seconds and its `400`, `409` and `413` answers are not. Configure automatic retries for transient errors on ingest or get_build_status:
 
 <Tabs>
   <Tab title="Python">
@@ -1050,7 +1101,9 @@ The link methods (`ingest_url`, `ingest_github`, `ingest_youtube`) check the URL
 | `BadRequestError` | 400 | `ingestion.invalid_link` | `ingest_url` only: the host is not public or does not resolve, or the file at the link could not be downloaded or took too long | No |
 | `BadRequestError` | 400 | (none) | `ingest_url` only: the file at the link is of a type that is not supported | No |
 | `APIStatusError` (Python), `APIError` (TypeScript) | 413 | `ingestion.file_too_large` | `ingest_url` only: the file at the link is larger than 50 MB | No: use `ingest_file` |
+| `ConflictError` | 409 | `source.link_kind_changed` | The link is already a source of another kind, or a web page source whose link now serves a file (see [Sending a link again](#sending-a-link-again)); nothing started | No: delete the source and add it again |
 | `InternalServerError` | 503 | `service.unavailable` | `ingest_url` only: the link could not be checked right now, or too many link downloads are running; nothing was stored | Yes, after `Retry-After` (30 seconds) |
+| `InternalServerError` | 503 | `service.unavailable` | The link is a source that is being deleted; nothing started | Yes, after `Retry-After` (30 seconds) |
 
 See the [REST API reference](/api-reference/sources/upload#links) for the exact messages.
 
@@ -1062,9 +1115,10 @@ See the [REST API reference](/api-reference/sources/upload#links) for the exact 
 | `AuthenticationError` | 401 | Invalid or revoked API key |
 | `PermissionDeniedError` | 403 | Access denied to the specified project, or `Inactive user`: the key belongs to a deactivated account (do not retry) |
 | `NotFoundError` | 404 | Project or source not found |
+| `ConflictError` | 409 | A link that is already a source of another kind on `ingest_url`, `ingest_github` or `ingest_youtube` (`source.link_kind_changed`); do not retry |
 | `UnprocessableEntityError` | 422 | An invalid `url` or `folder` on `ingest_url`, `ingest_github` or `ingest_youtube` |
 | `RateLimitError` | 429 | Too many requests, please retry after waiting |
-| `InternalServerError` | ≥500 | Server-side processing error (`503 service.unavailable`: the target folder could not be recorded, a link could not be checked or downloaded right now, or the API key could not be checked; nothing started; retry after `Retry-After`) |
+| `InternalServerError` | ≥500 | Server-side processing error (`503 service.unavailable`: the target folder could not be recorded, a link could not be checked or downloaded right now, the link's source is being deleted, or the API key could not be checked; nothing started; retry after `Retry-After`) |
 | `APIConnectionError` | N/A | Network connectivity issues |
 | `APITimeoutError` | N/A | Request timed out |
 | `FolderScopeNotAppliedError` | N/A | `folder` was passed for a large file and the API did not confirm it; nothing was uploaded |

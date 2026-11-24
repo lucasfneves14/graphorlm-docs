@@ -84,7 +84,7 @@ The top level is the project itself, not a folder. A value made only of spaces (
 | Where | Omitted or `null` | The top level (`""`, `"/"`) |
 |-------|-------------------|-----------------------------|
 | [Ingest file](/api-reference/sources/upload#ingest-file), [upload sessions](/api-reference/sources/upload#upload-sessions) | the top level | the top level |
-| [Ingest URL, GitHub, YouTube](/api-reference/sources/upload#folders) | a new source goes to the top level; a source that replaces one of the same name keeps that source's folder | the top level, also when it replaces a source |
+| [Ingest URL, GitHub, YouTube](/api-reference/sources/upload#folders) | a new source goes to the top level; a link that is already a source keeps that source's folder (see [Sending a link again](/api-reference/sources/upload#sending-a-link-again)) | the top level, also when the link is already a source |
 | [Move sources](#move-sources) | `request.invalid` (`folder` is required) | the top level |
 | [List sources](/api-reference/sources/list#filter-by-folder) `folder` | no folder filter | only the sources at the top level |
 | [Create](#create-a-folder), [rename](#rename-or-move-a-folder), [remove](#remove-a-folder), [delete](#delete-an-empty-folder) | `request.invalid` | `request.invalid` |

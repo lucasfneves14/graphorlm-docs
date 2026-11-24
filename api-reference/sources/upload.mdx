@@ -107,9 +107,9 @@ Every ingest endpoint on this page takes an optional `folder`: the [folder](/api
 
 | `folder` | Ingest file, upload sessions | Ingest URL, GitHub, YouTube |
 |----------|------------------------------|-----------------------------|
-| omitted or `null` | the top level | a new source goes to the top level; a source that replaces one of the same name keeps that source's folder |
-| `""` or `"/"` | the top level | the top level, also when it replaces a source |
-| a path | that folder | that folder |
+| omitted or `null` | the top level | a new source goes to the top level; a link that is already a source keeps that source's folder (see [Sending a link again](#sending-a-link-again)) |
+| `""` or `"/"` | the top level | the top level, also when the link is already a source (it is moved there) |
+| a path | that folder | that folder (a link that is already a source is moved there) |
 
 - **File names stay unique per project, whatever the folder.** A file uploaded into `Contracts/2026` with the same name as a source elsewhere is stored as `name (1).ext`.
 - **An invalid path** is refused before anything is stored: `400 request.invalid` on Ingest file and upload sessions, `422 request.invalid` on the JSON endpoints (see [Folder paths](/api-reference/sources/folders#folder-paths)).
@@ -168,6 +168,17 @@ When Ingest URL finds a file instead of a web page, it downloads the file before
 
 For larger files, download the file yourself and use [Ingest file](#ingest-file) or [upload sessions](#upload-sessions) (up to 200 MB).
 
+### Sending a link again
+
+A link is matched to a source by its URL, exactly as stored (after the spaces at both ends are removed).
+
+- **A web page, GitHub or YouTube link that is already a source refreshes that source.** The new build belongs to the same source: it keeps its `file_id`, and its folder unless the request names a `folder` (then the source is moved there first). The response is a new `build_id`, and [Get build status](#get-build-status) reports the same `file_id` from the start.
+- **The previous version stays in use until the new one is ready.** While the new build runs, the source is listed as `Processing`. When the build completes it becomes the active version; if it fails, the previous version is still the one in use, and the source's status returns to that version's.
+- **The latest request wins.** When several builds of one source run at the same time (sending the link twice, or a [reprocess](/api-reference/sources/process) while a refresh runs), the one requested last becomes the active version, whatever order they finish in. An earlier build that finishes after the later one is active ends `Completed` (or `Completed with errors`) with `searchable: false`, and the later one stays in use.
+- **A link to a file replaces the source.** When Ingest URL finds a file behind a link that is already a source, the source is replaced: the new one gets a new `file_id` and keeps the folder unless `folder` is given.
+- **A link is one kind of source.** A link added through one endpoint can't be refreshed through another (for example a GitHub link added with Ingest URL, then sent to Ingest GitHub), and a web page source whose link now serves a file can't be refreshed either. The request answers `409` with `code: "source.link_kind_changed"` and nothing starts: delete the source and add it again. If the same new link is sent to two endpoints at the same time, one source is created, and the other build fails with `error_code: "source.link_kind_changed"`.
+- **A source that is being deleted** answers `503` `service.unavailable` and nothing starts. Retry after `Retry-After`: once the delete has finished, the link is added as a new source.
+
 ### Errors on the link endpoints
 
 Errors carry `detail` (a message you can show, or for `422` the list of validation errors) and, for the coded ones, `code`.
@@ -178,12 +189,14 @@ Errors carry `detail` (a message you can show, or for `422` the list of validati
 | `400` | `ingestion.invalid_link` | `The file at this link could not be downloaded.` | No: check that the link opens in a browser without signing in, then send it again |
 | `400` | `ingestion.invalid_link` | `The file at this link took too long to download.` | No: download the file yourself and use [Ingest file](#ingest-file) or [upload sessions](#upload-sessions) |
 | `400` | (none) | `File type '<ext>' is not supported. Allowed types: ...` | No |
+| `409` | `source.link_kind_changed` | `This link was added as a different kind of source. Delete it to add it again.` | No: delete the source and add it again (see [Sending a link again](#sending-a-link-again)) |
 | `413` | `ingestion.file_too_large` | `The file at this link is larger than 50 MB.` | No: use [Ingest file](#ingest-file) or [upload sessions](#upload-sessions) |
 | `422` | `request.invalid` | a validation error on `url` | No: correct the URL |
 | `503` | `service.unavailable` | `This link could not be checked right now. Try again shortly.` | Yes, after `Retry-After` |
 | `503` | `service.unavailable` | `Too many link downloads are running. Try again shortly.` | Yes, after `Retry-After` |
+| `503` | `service.unavailable` | `This feature is temporarily unavailable. Try again later.` (the source is being deleted) | Yes, after `Retry-After` |
 
-The `ingestion.invalid_link` and `ingestion.file_too_large` answers carry `x-should-retry: false`. The link `503`s carry `Retry-After: 30` and `x-should-retry: true`; nothing was stored, so repeating the request is safe. The `400`, `413` and `503` answers about a link come from Ingest URL only: GitHub and YouTube links are fetched during processing.
+The `ingestion.invalid_link`, `ingestion.file_too_large` and `source.link_kind_changed` answers carry `x-should-retry: false`. The link `503`s carry `Retry-After: 30` and `x-should-retry: true`; nothing was stored, so repeating the request is safe. The `400`, `413` and the first two `503` answers come from Ingest URL only: GitHub and YouTube links are fetched during processing. The `409` and the `503` for a source being deleted come from all three endpoints.
 
 ### When a link fails during processing
 
@@ -292,7 +305,7 @@ When the build is still in progress (running):
 | `file_id` | string \| null | Source file ID; present when the build has been persisted |
 | `file_name` | string \| null | Display name of the source; present when persisted |
 | `error` | string \| null | Error message from the pipeline when the build failed |
-| `error_code` | string \| null | Stable code of the failure when the build failed, e.g. `ingestion.invalid_link` (see [When a link fails during processing](#when-a-link-fails-during-processing)) |
+| `error_code` | string \| null | Stable code of the failure when the build failed, e.g. `ingestion.invalid_link` (see [When a link fails during processing](#when-a-link-fails-during-processing)) or `source.link_kind_changed` (see [Sending a link again](#sending-a-link-again)) |
 | `method` | string \| null | Strategy used (e.g. `auto`, `fast`, `balanced`, `accurate`, `agentic`) |
 | `enrichment` | string | Enrichment level used for the build: `full` or `none` (see [Enrichment and indexing options](#enrichment-and-indexing-options)) |
 | `indexing` | string | Indexing level used for the build: `full` or `none` (see [Enrichment and indexing options](#enrichment-and-indexing-options)) |
@@ -557,6 +570,8 @@ If sessions are not available, create answers `501`: send the file to [Ingest fi
 
 Ingest a web page (or multiple pages via crawling) as a source. The job runs in the background; use the returned **build_id** to poll [Get build status](#get-build-status). If the URL points to a downloadable file (by extension or Content-Type), the file is downloaded (up to 50 MB; see [Files behind a link](#files-behind-a-link)) and then processed in the background.
 
+Sending a web page link that is already a source refreshes that source: it keeps its `file_id`, and its previous version stays in use until the new one is ready. A link to a file replaces the source, which gets a new `file_id` (see [Sending a link again](#sending-a-link-again)).
+
 ### Endpoint overview
 
 <CardGroup cols={2}>
@@ -586,7 +601,7 @@ Ingest a web page (or multiple pages via crawling) as a source. The job runs in 
 | `method` | string | One of: `auto`, `fast`, `balanced`, `accurate`, `agentic`. `auto` is PDF-only and only effective when the URL resolves to a PDF; non-PDF URLs fall back to `fast`. | No |
 | `enrichment` | string | Annotation level: `full` (default) or `none` (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
 | `indexing` | string | Index level: `full` (default) or `none`. With `none`, the source is parsed but not searchable (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
-| `folder` | string \| null | The folder to store the source in; `""` or `"/"` is the top level. When omitted, a new source goes to the top level and a source that replaces one of the same name keeps that source's folder (see [Folders](#folders)) | No |
+| `folder` | string \| null | The folder to store the source in; `""` or `"/"` is the top level. When omitted, a new source goes to the top level and a link that is already a source keeps that source's folder (see [Folders](#folders) and [Sending a link again](#sending-a-link-again)) | No |
 
 ### Success response (200 OK)
 
@@ -652,10 +667,11 @@ curl -X POST https://sources.graphorlm.com/ingest-url \
 |-------------|-------------|
 | `400` | Unsupported file type detected from a file URL, or invalid `enrichment`/`indexing` value (the response lists the valid values) |
 | `400` | `ingestion.invalid_link`: the link can't be fetched (its host is not public or does not resolve), or its file could not be downloaded or took too long to download; do not retry (see [Errors on the link endpoints](#errors-on-the-link-endpoints)) |
+| `409` | `source.link_kind_changed`: the link is already a source of another kind, or a web page source whose link now serves a file; delete the source to add it again; do not retry (see [Sending a link again](#sending-a-link-again)) |
 | `413` | `ingestion.file_too_large`: the file at the link is larger than 50 MB; do not retry |
 | `422` | Invalid `url` or invalid `folder` (`code: "request.invalid"`); see [What a link must look like](#what-a-link-must-look-like) |
 | `500` | Internal server error during URL processing |
-| `503` | `service.unavailable`: the link could not be checked right now, too many link downloads are running, or the target folder could not be recorded; nothing started; retry after `Retry-After` |
+| `503` | `service.unavailable`: the link could not be checked right now, too many link downloads are running, the target folder could not be recorded, or the source is being deleted; nothing started; retry after `Retry-After` |
 
 <Note>
   To ingest local files (PDF, DOCX, etc.), use [Ingest file](#ingest-file).
@@ -666,6 +682,8 @@ curl -X POST https://sources.graphorlm.com/ingest-url \
 ## Ingest GitHub
 
 Ingest a public GitHub repository as a source. Processing runs in the background; use the returned **build_id** with [Get build status](#get-build-status).
+
+Sending a link that is already a source refreshes that source: it keeps its `file_id`, and its previous version stays in use until the new one is ready (see [Sending a link again](#sending-a-link-again)).
 
 ### Endpoint overview
 
@@ -694,7 +712,7 @@ Ingest a public GitHub repository as a source. Processing runs in the background
 | `url` | string | GitHub repository URL (e.g. `https://github.com/owner/repo`) | Yes |
 | `enrichment` | string | Annotation level: `full` (default) or `none` (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
 | `indexing` | string | Index level: `full` (default) or `none`. With `none`, the source is parsed but not searchable (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
-| `folder` | string \| null | The folder to store the source in; `""` or `"/"` is the top level. When omitted, a new source goes to the top level and a source that replaces one of the same name keeps that source's folder (see [Folders](#folders)) | No |
+| `folder` | string \| null | The folder to store the source in; `""` or `"/"` is the top level. When omitted, a new source goes to the top level and a link that is already a source keeps that source's folder (see [Folders](#folders) and [Sending a link again](#sending-a-link-again)) | No |
 
 ### Success response (200 OK)
 
@@ -755,9 +773,10 @@ curl -X POST https://sources.graphorlm.com/ingest-github \
 | Status Code | Description |
 |-------------|-------------|
 | `400` | Invalid `enrichment` or `indexing` value (the response lists the valid values) |
+| `409` | `source.link_kind_changed`: the link is already a source of another kind; delete the source to add it again; do not retry (see [Sending a link again](#sending-a-link-again)) |
 | `422` | Invalid `url` (not a link on an accepted git host; see [What a link must look like](#what-a-link-must-look-like)) or invalid `folder` (`code: "request.invalid"`) |
 | `500` | Internal server error during GitHub processing |
-| `503` | `service.unavailable`: the target folder could not be recorded and nothing started; retry |
+| `503` | `service.unavailable`: the target folder could not be recorded, or the source is being deleted; nothing started; retry |
 
 <Note>
   Only **public** repositories are supported, on `github.com`, `gist.github.com`, `gitlab.com`, `bitbucket.org`, `gitea.com` or `codeberg.org`.
@@ -768,6 +787,8 @@ curl -X POST https://sources.graphorlm.com/ingest-github \
 ## Ingest YouTube
 
 Ingest a public YouTube video (transcript/captions) as a source. Processing runs in the background; use the returned **build_id** with [Get build status](#get-build-status).
+
+Sending a link that is already a source refreshes that source: it keeps its `file_id`, and its previous version stays in use until the new one is ready (see [Sending a link again](#sending-a-link-again)).
 
 ### Endpoint overview
 
@@ -796,7 +817,7 @@ Ingest a public YouTube video (transcript/captions) as a source. Processing runs
 | `url` | string | YouTube video URL (e.g. `https://www.youtube.com/watch?v=...`) | Yes |
 | `enrichment` | string | Annotation level: `full` (default) or `none` (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
 | `indexing` | string | Index level: `full` (default) or `none`. With `none`, the source is parsed but not searchable (see [Enrichment and indexing options](#enrichment-and-indexing-options)) | No |
-| `folder` | string \| null | The folder to store the source in; `""` or `"/"` is the top level. When omitted, a new source goes to the top level and a source that replaces one of the same name keeps that source's folder (see [Folders](#folders)) | No |
+| `folder` | string \| null | The folder to store the source in; `""` or `"/"` is the top level. When omitted, a new source goes to the top level and a link that is already a source keeps that source's folder (see [Folders](#folders) and [Sending a link again](#sending-a-link-again)) | No |
 
 ### Success response (200 OK)
 
@@ -857,9 +878,10 @@ curl -X POST https://sources.graphorlm.com/ingest-youtube \
 | Status Code | Description |
 |-------------|-------------|
 | `400` | Invalid `enrichment` or `indexing` value (the response lists the valid values) |
+| `409` | `source.link_kind_changed`: the link is already a source of another kind; delete the source to add it again; do not retry (see [Sending a link again](#sending-a-link-again)) |
 | `422` | Invalid `url` (not a link to one YouTube video; see [What a link must look like](#what-a-link-must-look-like)) or invalid `folder` (`code: "request.invalid"`) |
 | `500` | Internal server error during YouTube processing |
-| `503` | `service.unavailable`: the target folder could not be recorded and nothing started; retry |
+| `503` | `service.unavailable`: the target folder could not be recorded, or the source is being deleted; nothing started; retry |
 
 <Note>
   The video must be **public**; transcripts/captions are downloaded and processed in the background.

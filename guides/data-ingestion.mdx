@@ -112,6 +112,16 @@ Graphor will extract audio from the video, perform speech-to-text transcription,
 - Video-based knowledge extraction
 - Audio content analysis
 
+### Adding a link again
+
+Adding a web page, GitHub or YouTube link that is already a source updates that source instead of creating a new one:
+
+- The source keeps its identity, its folder and its [version history](#version-history); the new parsing is added as a new version.
+- The previous version stays active until the new one completes. If the new parsing fails, the previous version is still the one in use.
+- If you add the same link again while it is still processing, the most recent request becomes the active version.
+- A link to a file (for example a PDF behind a URL) replaces the source instead: the new source has a new identity.
+- A link added as one kind of source (for example a GitHub repository added as a web page) can't be updated as another kind. Delete the source and add the link again.
+
 ## Advanced OCR Processing
 
 Graphor utilizes state-of-the-art OCR (Optical Character Recognition) to extract text from images and scanned documents.
@@ -239,7 +249,7 @@ Each version displays:
 Version management features:
 - **Compare different parsing methods** — Try multiple methods and compare results side by side
 - **Switch active version** — Click on any version to set it as active
-- **Automatic activation** — When a new parsing completes successfully, it's automatically set as the active version
+- **Automatic activation** — When a new parsing completes successfully, it's automatically set as the active version, unless a parsing of the same source requested later is already active
 - **Preserve history** — Previous versions are never deleted, allowing you to revert at any time
 
 The active version (marked with a green "active" badge) is the one used for Document Chat and Data Extraction.
