@@ -45,6 +45,14 @@ All endpoints on this page require authentication using an API token. Include yo
   Learn how to create and manage API tokens in the [API Tokens guide](/guides/api-tokens).
 </Note>
 
+Every endpoint on this page can answer these authentication errors (see [Authentication errors](/api-reference/overview#authentication-errors)):
+
+- `401` `Invalid token`: the token is wrong or revoked. Do not retry.
+- `403` `Not authenticated` (no `Authorization: Bearer` header) or `Invalid authentication credentials` (a scheme other than `Bearer`). Do not retry: send `Authorization: Bearer <token>`.
+- `403` `Inactive user`: the token belongs to a deactivated account. Do not retry.
+- `404` `User not found` or `Project not found`: the token's account or project no longer exists. Do not retry.
+- `503` `service.unavailable` with `Retry-After`: the token could not be checked right now. Retry after `Retry-After`.
+
 ## Async ingestion flow
 
 1. **Call one of the ingest endpoints** (file, URL, GitHub, or YouTube). The request is validated and the job is scheduled; the response returns immediately with a **`build_id`**.
@@ -128,6 +136,58 @@ curl -X POST https://sources.graphorlm.com/ingest-url \
 ```
 
 <FoldersSdkVersions />
+
+## Links
+
+[Ingest URL](#ingest-url), [Ingest GitHub](#ingest-github) and [Ingest YouTube](#ingest-youtube) check the `url` before anything is stored. Spaces and line breaks at both ends of the URL are removed, and the trimmed URL is the one stored.
+
+### What a link must look like
+
+| Endpoint | Accepted |
+|----------|----------|
+| Ingest URL | An absolute `http://` or `https://` URL with a host |
+| Ingest GitHub | An `http://` or `https://` URL whose host is exactly one of `github.com`, `gist.github.com`, `gitlab.com`, `bitbucket.org`, `gitea.com` or `codeberg.org`, or the same link without the scheme (`github.com/owner/repo`). Other hosts, `www.github.com` and self-hosted servers included, are refused |
+| Ingest YouTube | A link to one video on `youtube.com`, `www.youtube.com`, `m.youtube.com`, `music.youtube.com`, `youtu.be`, `youtube-nocookie.com` or `www.youtube-nocookie.com`, in one of these forms: `/watch?v=ID` (exactly one `v`), `/embed/ID`, `/shorts/ID`, `/live/ID`, `/v/ID` or `youtu.be/ID`, where `ID` is the 11-character video id. Other query parameters are ignored, so a watch link with a `list` parameter ingests that one video; a port, a `/playlist` page or a channel link is refused |
+
+On every link endpoint, a URL with a user name or password (`user:pass@host`), a backslash, a space or a control character inside it is refused. On Ingest GitHub, a path with a `.` or `..` segment is refused too.
+
+A refused link answers `422` with `code: "request.invalid"`; the validation error's `loc` is `["body", "url"]`. Nothing is stored. Do not retry the same request: correct the URL first.
+
+### Public addresses only
+
+The host of a link must resolve to public internet addresses. A host that resolves to a private, loopback, link-local or other reserved address, or that does not resolve at all, is refused. The same rule applies to every redirect the link follows and, with `crawlUrls`, to the `robots.txt`, the sitemaps and the links read while crawling.
+
+### Files behind a link
+
+When Ingest URL finds a file instead of a web page, it downloads the file before it answers:
+
+- **Types:** the same as [Ingest file](#ingest-file) (see [File requirements](#file-requirements)); another type answers `400` with the list of allowed types.
+- **Size:** at most 50 MB.
+- **Time:** the download must finish within 2 minutes, and a download that stalls or slows to a trickle is stopped.
+- **At the same time:** file downloads are limited per user and in total. A request whose download cannot start within 30 seconds answers `503`. Send several file links one after another rather than all at once.
+
+For larger files, download the file yourself and use [Ingest file](#ingest-file) or [upload sessions](#upload-sessions) (up to 200 MB).
+
+### Errors on the link endpoints
+
+Errors carry `detail` (a message you can show, or for `422` the list of validation errors) and, for the coded ones, `code`.
+
+| Status | `code` | `detail` | Retry? |
+|--------|--------|----------|--------|
+| `400` | `ingestion.invalid_link` | `This link can't be fetched. Use a full, public web address.` | No: the host is not public or does not resolve. Use a public address |
+| `400` | `ingestion.invalid_link` | `The file at this link could not be downloaded.` | No: check that the link opens in a browser without signing in, then send it again |
+| `400` | `ingestion.invalid_link` | `The file at this link took too long to download.` | No: download the file yourself and use [Ingest file](#ingest-file) or [upload sessions](#upload-sessions) |
+| `400` | (none) | `File type '<ext>' is not supported. Allowed types: ...` | No |
+| `413` | `ingestion.file_too_large` | `The file at this link is larger than 50 MB.` | No: use [Ingest file](#ingest-file) or [upload sessions](#upload-sessions) |
+| `422` | `request.invalid` | a validation error on `url` | No: correct the URL |
+| `503` | `service.unavailable` | `This link could not be checked right now. Try again shortly.` | Yes, after `Retry-After` |
+| `503` | `service.unavailable` | `Too many link downloads are running. Try again shortly.` | Yes, after `Retry-After` |
+
+The `ingestion.invalid_link` and `ingestion.file_too_large` answers carry `x-should-retry: false`. The link `503`s carry `Retry-After: 30` and `x-should-retry: true`; nothing was stored, so repeating the request is safe. The `400`, `413` and `503` answers about a link come from Ingest URL only: GitHub and YouTube links are fetched during processing.
+
+### When a link fails during processing
+
+A link that passed these checks can still fail while it is processed, for example when a web page, once opened, navigates to a non-public address, or when a stored link from before these checks is [reprocessed](/api-reference/sources/process). The build then ends with `status: "Processing failed"`, `error_code: "ingestion.invalid_link"` and the `error` `This link can't be fetched. Check that it is a full, public web address, then delete the source and add it again.` Reprocessing the same link fails the same way: delete the source and ingest it again with a full, public link.
 
 ## Get build status
 
@@ -232,6 +292,7 @@ When the build is still in progress (running):
 | `file_id` | string \| null | Source file ID; present when the build has been persisted |
 | `file_name` | string \| null | Display name of the source; present when persisted |
 | `error` | string \| null | Error message from the pipeline when the build failed |
+| `error_code` | string \| null | Stable code of the failure when the build failed, e.g. `ingestion.invalid_link` (see [When a link fails during processing](#when-a-link-fails-during-processing)) |
 | `method` | string \| null | Strategy used (e.g. `auto`, `fast`, `balanced`, `accurate`, `agentic`) |
 | `enrichment` | string | Enrichment level used for the build: `full` or `none` (see [Enrichment and indexing options](#enrichment-and-indexing-options)) |
 | `indexing` | string | Indexing level used for the build: `full` or `none` (see [Enrichment and indexing options](#enrichment-and-indexing-options)) |
@@ -494,7 +555,7 @@ If sessions are not available, create answers `501`: send the file to [Ingest fi
 
 ## Ingest URL
 
-Ingest a web page (or multiple pages via crawling) as a source. The job runs in the background; use the returned **build_id** to poll [Get build status](#get-build-status). If the URL points to a downloadable file (by extension or Content-Type), the file is downloaded and then processed in the background.
+Ingest a web page (or multiple pages via crawling) as a source. The job runs in the background; use the returned **build_id** to poll [Get build status](#get-build-status). If the URL points to a downloadable file (by extension or Content-Type), the file is downloaded (up to 50 MB; see [Files behind a link](#files-behind-a-link)) and then processed in the background.
 
 ### Endpoint overview
 
@@ -590,9 +651,11 @@ curl -X POST https://sources.graphorlm.com/ingest-url \
 | Status Code | Description |
 |-------------|-------------|
 | `400` | Unsupported file type detected from a file URL, or invalid `enrichment`/`indexing` value (the response lists the valid values) |
-| `422` | Invalid `folder` (`code: "request.invalid"`) |
+| `400` | `ingestion.invalid_link`: the link can't be fetched (its host is not public or does not resolve), or its file could not be downloaded or took too long to download; do not retry (see [Errors on the link endpoints](#errors-on-the-link-endpoints)) |
+| `413` | `ingestion.file_too_large`: the file at the link is larger than 50 MB; do not retry |
+| `422` | Invalid `url` or invalid `folder` (`code: "request.invalid"`); see [What a link must look like](#what-a-link-must-look-like) |
 | `500` | Internal server error during URL processing |
-| `503` | `service.unavailable`: the target folder could not be recorded and nothing started; retry |
+| `503` | `service.unavailable`: the link could not be checked right now, too many link downloads are running, or the target folder could not be recorded; nothing started; retry after `Retry-After` |
 
 <Note>
   To ingest local files (PDF, DOCX, etc.), use [Ingest file](#ingest-file).
@@ -692,12 +755,12 @@ curl -X POST https://sources.graphorlm.com/ingest-github \
 | Status Code | Description |
 |-------------|-------------|
 | `400` | Invalid `enrichment` or `indexing` value (the response lists the valid values) |
-| `422` | Invalid `folder` (`code: "request.invalid"`) |
+| `422` | Invalid `url` (not a link on an accepted git host; see [What a link must look like](#what-a-link-must-look-like)) or invalid `folder` (`code: "request.invalid"`) |
 | `500` | Internal server error during GitHub processing |
 | `503` | `service.unavailable`: the target folder could not be recorded and nothing started; retry |
 
 <Note>
-  Only **public** repositories are supported.
+  Only **public** repositories are supported, on `github.com`, `gist.github.com`, `gitlab.com`, `bitbucket.org`, `gitea.com` or `codeberg.org`.
 </Note>
 
 ---
@@ -794,7 +857,7 @@ curl -X POST https://sources.graphorlm.com/ingest-youtube \
 | Status Code | Description |
 |-------------|-------------|
 | `400` | Invalid `enrichment` or `indexing` value (the response lists the valid values) |
-| `422` | Invalid `folder` (`code: "request.invalid"`) |
+| `422` | Invalid `url` (not a link to one YouTube video; see [What a link must look like](#what-a-link-must-look-like)) or invalid `folder` (`code: "request.invalid"`) |
 | `500` | Internal server error during YouTube processing |
 | `503` | `service.unavailable`: the target folder could not be recorded and nothing started; retry |
 

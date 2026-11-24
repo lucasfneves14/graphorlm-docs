@@ -1017,8 +1017,8 @@ The SDK provides typed exceptions for different error scenarios:
 | Status Code | Error Type | Description |
 |-------------|------------|-------------|
 | 400 | `BadRequestError` | Invalid parameters or malformed request |
-| 401 | `AuthenticationError` | Invalid or missing API key |
-| 403 | `PermissionDeniedError` | Access denied to resource |
+| 401 | `AuthenticationError` | Invalid or revoked API key |
+| 403 | `PermissionDeniedError` | Access denied to resource, or `Inactive user`: the key belongs to a deactivated account |
 | 404 | `NotFoundError` | Resource doesn't exist |
 | 422 | `UnprocessableEntityError` | Validation error |
 | 429 | `RateLimitError` | Too many requests |
@@ -1031,7 +1031,7 @@ The SDK provides typed exceptions for different error scenarios:
 
 ### Retries
 
-Certain errors are automatically retried 2 times by default with exponential backoff:
+Requests are not retried by default (`max_retries=0` / `maxRetries: 0`). With retries enabled, connection errors and `408`, `409`, `429` and `5xx` answers are retried with exponential backoff. An answer's `x-should-retry` header overrides that (`false`: never retried, `true`: retried), and a `Retry-After` header sets the wait:
 
 <Tabs>
   <Tab title="Python">
@@ -1039,7 +1039,7 @@ Certain errors are automatically retried 2 times by default with exponential bac
     from graphor import Graphor
 
     # Configure default retries
-    client = Graphor(max_retries=0)  # Disable retries
+    client = Graphor(max_retries=2)  # Enable retries
 
     # Or per-request
     client.with_options(max_retries=5).sources.ingest_file(file=b"...")
@@ -1050,7 +1050,7 @@ Certain errors are automatically retried 2 times by default with exponential bac
     import Graphor from 'graphor';
 
     // Configure default retries
-    const client = new Graphor({ maxRetries: 0 }); // Disable retries
+    const client = new Graphor({ maxRetries: 2 }); // Enable retries
 
     // Or per-request
     await client.sources.ask({ question: '...' }, { maxRetries: 5 });
@@ -1121,7 +1121,7 @@ asyncio.run(main())
 
 - **Batch Operations**: Process multiple files sequentially or with controlled concurrency
 - **Async Processing**: Use `AsyncGraphor` (Python) or `Promise.all` (TypeScript) for concurrent operations
-- **Retry Logic**: The SDK handles retries automatically; configure `max_retries` / `maxRetries` as needed
+- **Retry Logic**: Retries are off by default; enable them with `max_retries` / `maxRetries`
 - **Timeout Handling**: Increase timeouts for large documents or complex processing
 
 ### Best Practices

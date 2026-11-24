@@ -199,6 +199,8 @@ When the build has been persisted, the response includes `success`, `status`, `f
 - **`Processing failed`** — Build failed; check `error` for details.
 - **`not_found`** — No history yet (build not started or invalid `build_id`).
 
+A URL, GitHub or YouTube build whose link can't be fetched fails with the `error` `This link can't be fetched. Check that it is a full, public web address, then delete the source and add it again.` (code `ingestion.invalid_link` in the [REST API](/api-reference/sources/upload#when-a-link-fails-during-processing)). Reprocessing fails the same way: delete the source and ingest it again with a full, public link.
+
 Use `file_id` from a response where `success` is `true` for subsequent API calls.
 
 The response also reports how the build was processed:
@@ -550,7 +552,7 @@ Skip LLM enrichment and indexing for a fast, parse-only ingestion (see [Ingestio
 
 ### Error handling
 
-Ingest methods throw on invalid file type, a file too large, or server errors. Use [Get build status](#get-build-status) to detect processing failures (e.g. `status.error`).
+Ingest methods throw on invalid file type, a file too large, or server errors. Use [Get build status](#get-build-status) to detect processing failures (e.g. `status.error`). For the errors of the link methods, see [Link errors](#link-errors).
 
 <Tabs>
   <Tab title="Python">
@@ -660,8 +662,16 @@ Ingest a web page by URL (async). Returns a **build_id**; use [Get build status]
   </Accordion>
   
   <Accordion icon="shield" title="Access requirements">
-    - The URL must be publicly reachable over HTTPS
+    - An absolute `http://` or `https://` URL with a host; no user name or password in it, and no spaces, backslashes or control characters inside it (spaces at both ends are removed)
+    - The host must resolve to public internet addresses: private, loopback, link-local and other reserved addresses are refused, also after a redirect
     - Authentication-protected pages are not supported
+  </Accordion>
+
+  <Accordion icon="file" title="Files behind a URL">
+    - When the URL points to a file, the file is downloaded before the method returns
+    - The same file types as [`ingest_file`](#file-requirements), at most 50 MB, downloaded within 2 minutes
+    - For larger files, download the file yourself and use `ingest_file` / `ingestFile` (up to 200 MB)
+    - Send several file links one after another rather than all at once: each user has one download at a time, and a link that cannot start its download within 30 seconds raises a `503`
   </Accordion>
 </AccordionGroup>
 
@@ -759,8 +769,9 @@ Ingest a public GitHub repository (async). Returns a **build_id**; use [Get buil
 
 <AccordionGroup>
   <Accordion icon="link" title="Supported URLs">
-    - Public GitHub repositories
-    - HTTPS URLs (`https://github.com/...`)
+    - Public repositories on `github.com`, `gist.github.com`, `gitlab.com`, `bitbucket.org`, `gitea.com` or `codeberg.org` (the host must match exactly: `www.github.com` and self-hosted servers are refused)
+    - `https://` or `http://` URLs (`https://github.com/owner/repo`), or the same without the scheme (`github.com/owner/repo`)
+    - No user name or password in the URL, and no `.` or `..` path segments
   </Accordion>
   
   <Accordion icon="shield" title="Access requirements">
@@ -843,8 +854,9 @@ Ingest a public YouTube video (async). Returns a **build_id**; use [Get build st
 
 <AccordionGroup>
   <Accordion icon="link" title="Supported URLs">
-    - Public YouTube video URLs (HTTPS)
-    - Standard watch URLs (`https://www.youtube.com/watch?v=VIDEO_ID`)
+    - A link to one video on `youtube.com`, `www.youtube.com`, `m.youtube.com`, `music.youtube.com`, `youtu.be`, `youtube-nocookie.com` or `www.youtube-nocookie.com`, without a port
+    - Forms: `/watch?v=VIDEO_ID` (exactly one `v`), `/embed/VIDEO_ID`, `/shorts/VIDEO_ID`, `/live/VIDEO_ID`, `/v/VIDEO_ID` or `youtu.be/VIDEO_ID`, where `VIDEO_ID` has 11 characters; other query parameters are ignored
+    - A watch link with a `list` parameter ingests that one video; a `/playlist` page or a channel link is refused
   </Accordion>
   
   <Accordion icon="shield" title="Access requirements">
@@ -985,7 +997,7 @@ For large files or slow connections, increase the ingest request timeout. Use [G
 
 ### Retry configuration
 
-Configure automatic retries for transient errors on ingest or get_build_status:
+Requests are not retried by default. With retries enabled, the SDK follows the API's `x-should-retry` header and waits as long as its `Retry-After` header says, so a link method's `503` is retried after 30 seconds and its `400` and `413` answers are not. Configure automatic retries for transient errors on ingest or get_build_status:
 
 <Tabs>
   <Tab title="Python">
@@ -1028,17 +1040,31 @@ async def ingest_many_files(file_paths: list):
 # pip install graphor[aiohttp]
 ```
 
+## Link errors
+
+The link methods (`ingest_url`, `ingest_github`, `ingest_youtube`) check the URL before anything is stored (see the requirements of each method above). The error's body carries `detail` and, for the coded errors, `code`: read it from `e.body` in Python and from `err.error` in TypeScript.
+
+| Error Type | Status | `code` | When | Retry? |
+|------------|--------|--------|------|--------|
+| `UnprocessableEntityError` | 422 | `request.invalid` | The URL does not meet the method's requirements | No: correct the URL |
+| `BadRequestError` | 400 | `ingestion.invalid_link` | `ingest_url` only: the host is not public or does not resolve, or the file at the link could not be downloaded or took too long | No |
+| `BadRequestError` | 400 | (none) | `ingest_url` only: the file at the link is of a type that is not supported | No |
+| `APIStatusError` (Python), `APIError` (TypeScript) | 413 | `ingestion.file_too_large` | `ingest_url` only: the file at the link is larger than 50 MB | No: use `ingest_file` |
+| `InternalServerError` | 503 | `service.unavailable` | `ingest_url` only: the link could not be checked right now, or too many link downloads are running; nothing was stored | Yes, after `Retry-After` (30 seconds) |
+
+See the [REST API reference](/api-reference/sources/upload#links) for the exact messages.
+
 ## Error Reference
 
 | Error Type | Status Code | Description |
 |------------|-------------|-------------|
-| `BadRequestError` | 400 | Invalid file type, missing filename, malformed request, or an invalid `folder` on `ingest_file` |
-| `AuthenticationError` | 401 | Invalid or missing API key |
-| `PermissionDeniedError` | 403 | Access denied to the specified project |
+| `BadRequestError` | 400 | Invalid file type, missing filename, malformed request, an invalid `folder` on `ingest_file`, or a link that can't be fetched on `ingest_url` (`ingestion.invalid_link`) |
+| `AuthenticationError` | 401 | Invalid or revoked API key |
+| `PermissionDeniedError` | 403 | Access denied to the specified project, or `Inactive user`: the key belongs to a deactivated account (do not retry) |
 | `NotFoundError` | 404 | Project or source not found |
-| `UnprocessableEntityError` | 422 | An invalid `folder` on `ingest_url`, `ingest_github` or `ingest_youtube` |
+| `UnprocessableEntityError` | 422 | An invalid `url` or `folder` on `ingest_url`, `ingest_github` or `ingest_youtube` |
 | `RateLimitError` | 429 | Too many requests, please retry after waiting |
-| `InternalServerError` | ≥500 | Server-side processing error (`503 service.unavailable`: the target folder could not be recorded and nothing started; retry) |
+| `InternalServerError` | ≥500 | Server-side processing error (`503 service.unavailable`: the target folder could not be recorded, a link could not be checked or downloaded right now, or the API key could not be checked; nothing started; retry after `Retry-After`) |
 | `APIConnectionError` | N/A | Network connectivity issues |
 | `APITimeoutError` | N/A | Request timed out |
 | `FolderScopeNotAppliedError` | N/A | `folder` was passed for a large file and the API did not confirm it; nothing was uploaded |

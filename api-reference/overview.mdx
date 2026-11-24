@@ -115,6 +115,22 @@ Authorization: Bearer YOUR_API_TOKEN
 Learn how to generate and manage API tokens in the [API Tokens guide](/guides/api-tokens).
 </Note>
 
+### Authentication errors
+
+Every endpoint that takes a token checks it first and can answer:
+
+| Status | Body | Meaning | Retry? |
+|--------|------|---------|--------|
+| **401** | `{"detail": "Invalid token"}` | The token is wrong or revoked | No: send a valid token |
+| **403** | `{"detail": "Not authenticated"}` | No `Authorization: Bearer` header was sent | No: send the token |
+| **403** | `{"detail": "Invalid authentication credentials"}` | The `Authorization` header uses a scheme other than `Bearer` | No: send `Authorization: Bearer <token>` |
+| **403** | `{"detail": "Inactive user"}` | The token belongs to a deactivated account | No: ask the project's administrator, or use a token of an active account |
+| **403** | `{"detail": "Forbidden"}` | The token's account no longer has access to the project | No |
+| **404** | `{"detail": "User not found"}` or `{"detail": "Project not found"}` | The token's account or project no longer exists | No: create a new token in an existing project |
+| **503** | `{"detail": "This feature is temporarily unavailable. Try again later.", "code": "service.unavailable", "reference": "ref_..."}` | The token could not be checked right now | Yes, after `Retry-After` (30 seconds); the answer also carries `x-should-retry: true` |
+
+Deactivating an account revokes its tokens, so they then answer `401`. If the account is reactivated, its earlier tokens stay revoked: create new ones.
+
 ### Token Security
 
 - **Never expose tokens** in client-side code or public repositories
@@ -166,16 +182,29 @@ Use `build_id` with **GET /builds/{build_id}** to poll until the job completes. 
 }
 ```
 
+Many errors also carry a stable `code` (for example `request.invalid`, `ingestion.invalid_link` or `service.unavailable`), and a `5xx` may carry a `reference` to quote to support. Match on `code` rather than on the text of `detail`.
+
+### Retrying
+
+`x-should-retry` takes precedence over `Retry-After`:
+
+- An answer with `x-should-retry: false` must not be repeated automatically, even when it also carries `Retry-After`: fix the request, or check the state first (for example, [list the folders](/api-reference/sources/folders) before repeating a folder rename, remove or delete).
+- An answer with `Retry-After` (in seconds) and without `x-should-retry: false` can be repeated after that wait.
+- Do not retry other `4xx` answers (except `408` and `429`) without changing the request.
+
 ### Common Status Codes
 
 | Code | Meaning | Usage |
 |------|---------|-------|
 | **200** | OK | Successful GET, POST, PATCH operations |
 | **400** | Bad Request | Invalid parameters or malformed requests |
-| **401** | Unauthorized | Invalid or missing API token |
+| **401** | Unauthorized | Invalid or revoked API token |
+| **403** | Forbidden | Missing `Authorization` header, deactivated account, or no access to the project |
 | **404** | Not Found | Resource doesn't exist |
 | **413** | Payload Too Large | File size exceeds limits |
+| **422** | Unprocessable Entity | A field failed validation (`code: "request.invalid"`) |
 | **500** | Internal Server Error | Server-side processing errors |
+| **503** | Service Unavailable | Temporarily unavailable; retry after `Retry-After` |
 
 ## Complete Workflow Example
 
@@ -528,27 +557,41 @@ def analyze_documents(documents: List[str]):
 ### Error Handling Best Practices
 
 ```javascript
+function isRetryable(response) {
+  const header = response.headers.get('x-should-retry');
+  if (header === 'true') return true;
+  if (header === 'false') return false;
+  return response.status === 408 || response.status === 429 || response.status >= 500;
+}
+
 async function robustAPICall(url, options, maxRetries = 3) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    let response;
     try {
-      const response = await fetch(url, options);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`HTTP ${response.status}: ${errorData.detail}`);
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.warn(`Attempt ${attempt} failed:`, error.message);
-      
-      if (attempt === maxRetries) {
-        throw error;
-      }
-      
-      // Exponential backoff
+      response = await fetch(url, options);
+    } catch (networkError) {
+      // Network failure: retry with exponential backoff
+      if (attempt === maxRetries) throw networkError;
       await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+      continue;
     }
+
+    if (response.ok) {
+      return await response.json();
+    }
+
+    const errorData = await response.json().catch(() => ({}));
+    const error = new Error(`HTTP ${response.status} ${errorData.code ?? ''}: ${JSON.stringify(errorData.detail)}`);
+
+    if (!isRetryable(response) || attempt === maxRetries) {
+      throw error;
+    }
+    console.warn(`Attempt ${attempt} failed:`, error.message);
+
+    // Wait as long as Retry-After says, else back off exponentially
+    const retryAfter = Number(response.headers.get('retry-after'));
+    const waitMs = retryAfter > 0 ? retryAfter * 1000 : Math.pow(2, attempt) * 1000;
+    await new Promise(resolve => setTimeout(resolve, waitMs));
   }
 }
 ```

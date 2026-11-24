@@ -309,6 +309,14 @@ def reprocess_and_wait(api_token, file_id, partition_method="balanced", poll_int
     **Cause**: Internal error during re-processing.  
     **Solution**: Retry later or try a different `partition_method`; check file integrity.
   </Accordion>
+
+  <Accordion icon="link" title="Link can't be fetched (build failure)">
+    ```json
+    { "status": "Processing failed", "error_code": "ingestion.invalid_link", "error": "This link can't be fetched. Check that it is a full, public web address, then delete the source and add it again." }
+    ```
+    **Cause**: A URL, GitHub or YouTube source whose stored link can't be used (see [Links](/api-reference/sources/upload#links)). This shows in [Get build status](/api-reference/sources/upload#get-build-status), not in the reprocess response.  
+    **Solution**: Do not reprocess again. Delete the source and ingest it again with a full, public link.
+  </Accordion>
 </AccordionGroup>
 
 ## When to reprocess

@@ -265,8 +265,8 @@ for source in list_folder("grlm_your_api_token_here", "Contracts"):
 
 | Status code | Description |
 |-------------|-------------|
-| `401` | Invalid or missing API token |
-| `403` | Access denied to the project |
+| `401` | Invalid or revoked API token |
+| `403` | `Not authenticated` (no `Authorization: Bearer` header), or access denied to the project |
 | `422` | Invalid `folder` (`code: "request.invalid"`, `detail` starting with `Invalid folder:`) |
 | `500` | Unexpected internal error while retrieving sources |
 

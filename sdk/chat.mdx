@@ -1518,7 +1518,7 @@ When using `output_schema`, follow these guidelines:
 | Error Type | Status Code | Description |
 |------------|-------------|-------------|
 | `BadRequestError` | 400 | Invalid parameters or request format; `chat.folder_scope_empty` when a folder in `folders` holds no source |
-| `AuthenticationError` | 401 | Invalid or missing API key |
+| `AuthenticationError` | 401 | Invalid or revoked API key |
 | `NotFoundError` | 404 | Specified file not found |
 | `UnprocessableEntityError` | 422 | Invalid `output_schema` or structured output validation failed; `request.invalid` for an invalid folder, the top level as a folder, or `folders` with `file_names` |
 | `RateLimitError` | 429 | Too many requests, please retry after waiting |

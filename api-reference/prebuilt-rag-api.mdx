@@ -163,7 +163,8 @@ Each chunk in the `chunks` array contains:
 | Status Code | Description |
 |-------------|-------------|
 | 400 | Bad Request - Invalid parameters; `chat.folder_scope_empty` when a folder in `folders` holds no source |
-| 401 | Unauthorized - Invalid or missing API token |
+| 401 | Unauthorized - Invalid or revoked API token |
+| 403 | Forbidden - `Not authenticated`: no `Authorization: Bearer` header was sent |
 | 404 | Not Found - Specified file not found |
 | 422 | `request.invalid`: an invalid folder, the top level as a folder, or `folders` together with `file_names` |
 | 500 | Internal Server Error |
