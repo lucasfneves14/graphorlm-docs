@@ -48,6 +48,7 @@ Send a JSON body with the following fields:
 - Makes the build the source's active build.
 - Sets the build's indexing level to `full`.
 - Afterwards, ask, extraction, and prebuilt RAG retrieval see the source, and [Get build status](/api-reference/sources/upload#get-build-status) reports `searchable: true`.
+- Counts as the source's latest request: a build of the same source requested earlier (a reprocess, or a link sent again) that finishes later does not replace it. If a build requested later becomes active while this one is being indexed, this build is not activated and the request answers `409` `source.activation_superseded`.
 
 <Note>
   The request is **synchronous** — the response arrives when indexing has finished. For large documents the connection is kept alive with whitespace heartbeats that JSON parsers ignore, so no client changes are needed.
@@ -167,6 +168,7 @@ curl -X POST https://sources.graphorlm.com/index \
 |-------------|-------------|
 | `400` | Indexing is unavailable on the deployment, the build is not in a settled status, the build has no partitions, or the build is already indexed — the response `detail` says which |
 | `404` | Unknown `file_id` or `build_id` |
+| `409` | `source.activation_superseded`: a newer version of the source was activated while this build was indexed, so this build was not activated; do not retry |
 
 ### Error response format
 
@@ -175,6 +177,8 @@ curl -X POST https://sources.graphorlm.com/index \
   "detail": "Human-readable description of the problem"
 }
 ```
+
+A coded error also carries `code`, for example `{"detail": "A newer version of this source was activated first, so this version wasn't activated.", "code": "source.activation_superseded"}`. When the response has already started its heartbeats, an error arrives in the `200` body with its `code` instead of as an error status, so check the body for `detail` before reading `chunks_indexed`.
 
 ### Error examples
 
@@ -198,6 +202,10 @@ curl -X POST https://sources.graphorlm.com/index \
   <Accordion icon="file-xmark" title="File or build not found (404)">
     **Cause**: The given `file_id` (or `build_id`) does not exist in your project.  
     **Solution**: Verify the IDs (e.g. from [List sources](/api-reference/sources/list) or a previous [build status](/api-reference/sources/upload#get-build-status) response).
+  </Accordion>
+  <Accordion icon="code-branch" title="A newer version was activated first (409)">
+    **Cause**: While this build was being indexed, a build of the same source requested later (a [reprocess](/api-reference/sources/process), or a [link sent again](/api-reference/sources/upload#sending-a-link-again)) became the active version. The newer version stays in use and this build was not activated.  
+    **Solution**: Nothing is needed to keep the newer version. To use this build anyway, call this endpoint again with its `build_id` once no other build of the source is running.
   </Accordion>
 </AccordionGroup>
 

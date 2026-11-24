@@ -287,7 +287,7 @@ The `method` parameter controls the partitioning strategy: `auto`, `fast`, `bala
 
 A folder is a `/`-separated path such as `Contracts/2026`; the top level of the project is `""`. Folders work in the tools as in the [API](/api-reference/sources/folders):
 
-- **`folder` on the ingest tools** stores the new source in that folder (created if needed); `""` or `"/"` is the top level. On `ingest_url`, `ingest_github` and `ingest_youtube`, leaving `folder` out keeps the folder of a source of the same name that the ingest replaces.
+- **`folder` on the ingest tools** stores the new source in that folder (created if needed); `""` or `"/"` is the top level. A web page, GitHub or YouTube link that is already a source refreshes that source: it keeps its `file_id`, and leaving `folder` out keeps its folder. A link to a file replaces the source, which gets a new `file_id` (see [Sending a link again](/api-reference/sources/upload#sending-a-link-again)).
 - **`list_sources`** with a path lists that folder and everything below it; with `recursive: false`, only that folder. With `""` or `"/"` it lists only the sources at the top level.
 - **`folders` on `ask`, `extract` and `retrieve_chunks`** scopes the call to every source at or below each folder, together with `file_ids`. An empty `folders` list is no folder scope. A folder that holds no source refuses the call (`chat.folder_scope_empty`).
 - **`move_sources`** moves up to 1,000 sources; `folder: ""` moves them to the top level.
@@ -314,6 +314,8 @@ With the MCP server, your agent can perform any operation available in the Graph
     1. Call `ingest_file` (or `ingest_url` / `ingest_github` / `ingest_youtube`) → receive `build_id`
     2. Call `get_build_status` with `build_id` repeatedly until `success: true`. Status may be `Pending` (request received, build not started), then `Processing`, then `Completed`.
     3. Use the returned `file_id` for all subsequent operations
+
+    Ingesting a web page, GitHub or YouTube link that is already a source refreshes that source: the `file_id` stays the same, and the previous version stays in use until the new one is ready. A link that is already a source of another kind is refused with `source.link_kind_changed`: delete the source and ingest the link again.
   </Accordion>
 
   <Accordion icon="list" title="List & Manage Sources">
