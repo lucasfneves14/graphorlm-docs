@@ -350,7 +350,7 @@ Reprocess multiple sources by `file_id`; each call returns a `build_id`. Poll [G
 | Error Type | Status Code | Description |
 |------------|-------------|-------------|
 | `BadRequestError` | 400 | Invalid request format or partition method, or `indexing: 'none'` on a deployment without indexing support |
-| `AuthenticationError` | 401 | Invalid or missing API key |
+| `AuthenticationError` | 401 | Invalid or revoked API key |
 | `PermissionDeniedError` | 403 | Access denied to the specified project |
 | `NotFoundError` | 404 | Source not found for the given file_id |
 | `RateLimitError` | 429 | Too many requests, please retry after waiting |

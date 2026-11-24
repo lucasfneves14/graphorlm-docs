@@ -180,8 +180,8 @@ curl -X DELETE https://sources.graphorlm.com/delete \
 | Status Code | Error Type | Description |
 |-------------|------------|-------------|
 | `400` | Bad Request | Invalid request format or missing file_id |
-| `401` | Unauthorized | Invalid or missing API token |
-| `403` | Forbidden | Access denied to the specified project |
+| `401` | Unauthorized | Invalid or revoked API token |
+| `403` | Forbidden | `Not authenticated` (no `Authorization: Bearer` header), or access denied to the specified project |
 | `404` | Not Found | File not found in the project |
 | `500` | Internal Server Error | Server-side error during deletion |
 
@@ -214,11 +214,11 @@ curl -X DELETE https://sources.graphorlm.com/delete \
   <Accordion icon="key" title="Invalid API Token (401)">
     ```json
     {
-      "detail": "Invalid authentication credentials"
+      "detail": "Invalid token"
     }
     ```
     
-    **Cause**: API token is invalid, expired, or malformed
+    **Cause**: API token is invalid, revoked, or malformed
     
     **Solutions**:
     - Check your API token format (should start with "grlm_")
@@ -229,11 +229,11 @@ curl -X DELETE https://sources.graphorlm.com/delete \
   <Accordion icon="lock" title="Access Denied (403)">
     ```json
     {
-      "detail": "Permission denied"
+      "detail": "Forbidden"
     }
     ```
     
-    **Cause**: Insufficient permissions or API token doesn't have access
+    **Cause**: The token's account no longer has access to the project. A missing `Authorization: Bearer` header answers `403` with `Not authenticated`
     
     **Solutions**:
     - Verify you're using the correct API token for this project

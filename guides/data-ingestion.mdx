@@ -512,15 +512,23 @@ Common issues and solutions:
   </Accordion>
   <Accordion icon="github" title="GitHub repository access issues">
     If you're having trouble importing from GitHub:
-    - Ensure the repository is public or you have proper access permissions
-    - Check that the repository URL is correctly formatted
+    - Ensure the repository is public
+    - Check that the repository URL is correctly formatted and on `github.com`, `gist.github.com`, `gitlab.com`, `bitbucket.org`, `gitea.com` or `codeberg.org`
     - Large repositories may take longer to process - be patient during import
   </Accordion>
   <Accordion icon="youtube" title="YouTube video processing issues">
     For YouTube video import problems:
     - Verify the video URL is accessible and not private
+    - Use a link to one video (a watch, shorts, live, embed or `youtu.be` link), not a `/playlist` page or a channel; a watch link with a `list` parameter ingests that one video
     - Note that very long videos may take significant processing time
     - Audio quality affects transcription accuracy
+  </Accordion>
+  <Accordion icon="link" title="This link can't be fetched">
+    When a URL, GitHub or YouTube source fails with "This link can't be fetched":
+    - Check that the link is a full web address (starting with `https://` or `http://`) on the public internet; links to private or internal addresses are refused
+    - Delete the source (if a source was created) and add it again with the corrected link; processing the same link again fails the same way
+    - Files behind a URL can be at most 50 MB; upload larger files directly
+    - See [Links](/api-reference/sources/upload#links) for the exact rules and API answers
   </Accordion>
   <Accordion icon="volume-up" title="Audio/Video processing issues">
     For audio and video file problems:

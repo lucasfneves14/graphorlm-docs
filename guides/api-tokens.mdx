@@ -40,6 +40,10 @@ To revoke a token that is no longer needed or may be compromised:
 
 Once revoked, a token cannot be restored. Any services using the token will immediately lose access to your Graphor resources.
 
+### Deactivated accounts
+
+A token works only while the account that created it is active. When an account is deactivated, its tokens are revoked and requests with them answer `401` (or `403` `Inactive user`). If the account is reactivated later, its earlier tokens stay revoked: create new ones.
+
 ## Token Security Best Practices
 
 API tokens provide access to your Graphor resources, so it's important to handle them securely:
@@ -67,7 +71,9 @@ API tokens provide access to your Graphor resources, so it's important to handle
   <Accordion icon="key" title="Authentication failures">
     **Solutions**:
     - Verify you're using the full token string
-    - Check that the token hasn't been revoked
+    - Check that the token hasn't been revoked (a `401` with `Invalid token`)
+    - A `403` with `Inactive user` means the token's account is deactivated: use a token of an active account
+    - A `503` with `service.unavailable` is temporary: retry after the `Retry-After` header's wait
     - Confirm you're using the correct Authorization format
   </Accordion>
   <Accordion icon="arrow-right-to-bracket" title="Access denied errors">

@@ -93,7 +93,8 @@ Plain-text and other non-visual formats are not supported and will return `404`.
 
 | Status | Description |
 |--------|-------------|
-| `401` | Unauthorized — invalid or missing API token. |
+| `401` | Unauthorized: invalid or revoked API token. |
+| `403` | Forbidden: `Not authenticated` (no `Authorization: Bearer` header was sent). |
 | `404` | File not found, unsupported file type, or invalid page number. |
 | `500` | Unexpected internal error while rendering. |
 

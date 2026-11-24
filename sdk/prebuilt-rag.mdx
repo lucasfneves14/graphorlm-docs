@@ -1461,7 +1461,7 @@ Create custom Q&A systems with full control over:
 | Error Type | Status Code | Description |
 |------------|-------------|-------------|
 | `BadRequestError` | 400 | Invalid parameters; `chat.folder_scope_empty` when a folder in `folders` holds no source |
-| `AuthenticationError` | 401 | Invalid or missing API key |
+| `AuthenticationError` | 401 | Invalid or revoked API key |
 | `PermissionDeniedError` | 403 | Access denied to the project |
 | `NotFoundError` | 404 | Specified file not found |
 | `UnprocessableEntityError` | 422 | `request.invalid`: an invalid folder, the top level as a folder, or `folders` with `file_names` |
